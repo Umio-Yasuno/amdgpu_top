@@ -94,7 +94,7 @@ fn main() {
 
     siv.add_layer(
         LinearLayout::vertical()
-            .child(TextView::new(format!("WIP: amdgpu_top")).center())
+            .child(TextView::new(format!("amdgpu_top")).center())
             .child(TextView::new(mark_name).center())
             .child(TextView::new(info_bar).center())
             .child(TextView::new("\n"))
