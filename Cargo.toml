@@ -7,5 +7,5 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libdrm_amdgpu_sys = { path = "../libdrm-amdgpu-sys/" }
+libdrm_amdgpu_sys = { git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs" }
 cursive = "0.20"
