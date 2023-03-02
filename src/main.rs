@@ -1,6 +1,7 @@
-use cursive::views::{Dialog, TextContent, TextView, ProgressBar, LinearLayout};
+use cursive::views::{TextContent, TextView, LinearLayout};
 use libdrm_amdgpu_sys::*;
 use AMDGPU::GPU_INFO;
+use std::sync::{Arc, Mutex};
 
 mod grbm;
 use grbm::*;
@@ -8,11 +9,44 @@ use grbm::*;
 mod srbm;
 use srbm::*;
 
+mod srbm2;
+use srbm2::*;
+
 mod cp_stat;
 use cp_stat::*;
 
 mod vram_usage;
 use vram_usage::*;
+
+mod sensors;
+use sensors::*;
+
+#[derive(Debug, Clone)]
+struct UserOptions {
+    grbm: bool,
+    uvd: bool,
+    srbm: bool,
+    cp_stat: bool,
+    vram: bool,
+    sensor: bool,
+}
+
+impl Default for UserOptions {
+    fn default() -> Self {
+        Self {
+            grbm: true,
+            uvd: true,
+            srbm: true,
+            cp_stat: false,
+            vram: true,
+            sensor: true,
+        }
+    }
+}
+
+type Opt = Arc<Mutex<UserOptions>>;
+
+const TOGGLE_HELP: &str = "\n v(g)t (u)vd (s)rbm (c)p_stat\n (v)ram se(n)sor (q)uit";
 
 fn main() {
     let (amdgpu_dev, _major, _minor) = {
@@ -24,13 +58,17 @@ fn main() {
         AMDGPU::DeviceHandle::init(fd.into_raw_fd()).unwrap()
     };
     let ext_info = amdgpu_dev.device_info().unwrap();
+
     let mut grbm = GRBM::new();
     let mut srbm = SRBM::new();
+    let mut srbm2 = SRBM2::new();
     let mut cp_stat = CP_STAT::new();
 
-    let grbm_view = TextContent::new(grbm.verbose_stat()); // 0%
-    let srbm_view = TextContent::new(srbm.stat()); // 0%
-    let cp_stat_view = TextContent::new(cp_stat.stat());
+    let grbm_view = TextContent::new(grbm.verbose_stat()); 
+    let srbm_view = TextContent::new(srbm.stat());
+    let srbm2_view = TextContent::new(srbm2.stat());
+    let sensor_view = TextContent::new(Sensor::stat(&amdgpu_dev));
+    let cp_stat_view = TextContent::new("");
     let vram_view = TextContent::new(
         if let Ok(info) = amdgpu_dev.memory_info() {
             VRAM_USAGE::from(info).stat()
@@ -48,42 +86,81 @@ fn main() {
     );
 
     let mut siv = cursive::default();
+    let user_opt = Arc::new(Mutex::new(UserOptions::default()));
+    let mark_name = match amdgpu_dev.get_marketing_name() {
+        Ok(name) => name,
+        Err(_) => "".to_string(),
+    };
+
     siv.add_layer(
         LinearLayout::vertical()
             .child(TextView::new(format!("WIP: amdgpu_top")).center())
-            .child(TextView::new(
-                if let Ok(mark_name) = amdgpu_dev.get_marketing_name() {
-                    mark_name
-                } else {
-                    "".to_string()
-                }
-            ).center())
+            .child(TextView::new(mark_name).center())
             .child(TextView::new(info_bar).center())
+            .child(TextView::new("\n"))
             .child(TextView::new_with_content(grbm_view.clone()).center())
+            .child(TextView::new("\n"))
             .child(TextView::new_with_content(srbm_view.clone()).center())
+            .child(TextView::new("\n"))
+            .child(TextView::new_with_content(srbm2_view.clone()).center())
+            .child(TextView::new("\n"))
             .child(TextView::new_with_content(cp_stat_view.clone()).center())
+            .child(TextView::new("\n"))
             .child(TextView::new_with_content(vram_view.clone()).center())
-            .child(TextView::new("\n___").center())
+            .child(TextView::new("\n"))
+            .child(TextView::new_with_content(sensor_view.clone()).center())
+            .child(TextView::new("\n"))
+            .child(TextView::new(TOGGLE_HELP))
     );
     siv.add_global_callback('q', cursive::Cursive::quit);
-    /*
     siv.add_global_callback('u', |s| {
-        s.call_on(
-            &view::Selector::Name("Debug1"),
-            |view: &mut TextView| {
-                view.set_content("UUU");
-            },
-        );
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.uvd ^= true;
+        });
     });
-    */
-    let cb_sink = siv.cb_sink().clone();
-    let delay = std::time::Duration::from_millis(1);
+    siv.add_global_callback('s', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.srbm ^= true;
+        });
+    });
+    siv.add_global_callback('g', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.grbm ^= true;
+        });
+    });
+    siv.add_global_callback('c', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.cp_stat ^= true;
+        });
+    });
+    siv.add_global_callback('v', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.vram ^= true;
+        });
+    });
+    siv.add_global_callback('n', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.sensor ^= true;
+        });
+    });
+    siv.set_user_data(user_opt.clone());
 
-    let grbm_offset = ext_info.get_family_name().get_grbm_offset();
-    let srbm_offset = ext_info.get_family_name().get_srbm_offset();
-    let cp_stat_offset = ext_info.get_family_name().get_cp_stat_offset();
+    let cb_sink = siv.cb_sink().clone();
 
     std::thread::spawn(move || {
+        let grbm_offset = ext_info.get_family_name().get_grbm_offset();
+        let srbm_offset = ext_info.get_family_name().get_srbm_offset();
+        let srbm2_offset = ext_info.get_family_name().get_srbm2_offset();
+        let cp_stat_offset = ext_info.get_family_name().get_cp_stat_offset();
+        let delay = std::time::Duration::from_millis(1);
+        let opt_clone = user_opt.clone();
+
         loop {
             for _ in 0..100 {
                 if let Ok(out) = amdgpu_dev.read_mm_registers(grbm_offset) {
@@ -92,27 +169,62 @@ fn main() {
                 if let Ok(out) = amdgpu_dev.read_mm_registers(srbm_offset) {
                     srbm.acc(out);
                 }
+                if let Ok(out) = amdgpu_dev.read_mm_registers(srbm2_offset) {
+                    srbm2.acc(out);
+                }
                 if let Ok(out) = amdgpu_dev.read_mm_registers(cp_stat_offset) {
                     cp_stat.acc(out);
                 }
                 std::thread::sleep(delay);
             }
 
-            grbm_view.set_content(grbm.verbose_stat());
-            srbm_view.set_content(srbm.stat());
-            cp_stat_view.set_content(cp_stat.stat());
+            if let Ok(opt) = opt_clone.try_lock() {
+                if opt.grbm {
+                    grbm_view.set_content(grbm.verbose_stat());
+                } else {
+                    grbm_view.set_content("");
+                }
+
+                if opt.uvd {
+                    srbm_view.set_content(srbm.stat());
+                } else {
+                    srbm_view.set_content("");
+                }
+
+                if opt.srbm {
+                    srbm2_view.set_content(srbm2.stat());
+                } else {
+                    srbm2_view.set_content("");
+                }
+
+                if opt.cp_stat {
+                    cp_stat_view.set_content(cp_stat.verbose_stat());
+                } else {
+                    cp_stat_view.set_content("");
+                }
+
+                if opt.vram {
+                    if let Ok(info) = amdgpu_dev.memory_info() {
+                        vram_view.set_content(VRAM_USAGE::from(info).stat());
+                    }
+                } else {
+                    vram_view.set_content("");
+                }
+
+                if opt.sensor {
+                    sensor_view.set_content(Sensor::stat(&amdgpu_dev));
+                } else { 
+                    sensor_view.set_content("");
+                }
+            }
 
             grbm.clear();
             srbm.clear();
+            srbm2.clear();
             cp_stat.clear();
-
-            if let Ok(info) = amdgpu_dev.memory_info() {
-                vram_view.set_content(VRAM_USAGE::from(info).stat());
-            }
 
             cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
         }
-        cb_sink.send(Box::new(cursive::Cursive::quit)).unwrap();
     });
 
     // Starts the event loop.

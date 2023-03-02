@@ -65,7 +65,7 @@ impl GRBM {
         self.gui_active += get_bit!(reg, 31);
     }
 
-    pub fn stat(&self) -> String {
+    pub fn _stat(&self) -> String {
         format!(
             concat!(
                 " TA:{ta:3}%  VGT:{vgt:3}%\n",
@@ -87,22 +87,30 @@ impl GRBM {
     pub fn verbose_stat(&self) -> String {
         format!(
             concat!(
-                " Texture Addressor:               {ta:3}% \n",
-                " Vertex Grouper and Tessellator:  {vgt:3}% \n",
-                " Shader Export:                   {sx:3}% \n",
-                " Shader Pipe Interpolator:        {spi:3}% \n",
-                " Depth Block:                     {db:3}% \n",
-                " Color Buffer:                    {cb:3}% \n",
-                " Command Processor:               {cp:3}% \n",
-                " GUI Active:                      {gui:3}% \n",
+                " {ta_name:<30 } {ta:3}% \n",
+                " {vgt_name:<30} {vgt:3}% \n",
+                " {sx_name:<30 } {sx:3}% \n",
+                " {spi_name:<30} {spi:3}% \n",
+                " {db_name:<30 } {db:3}% \n",
+                " {cb_name:<30 } {cb:3}% \n",
+                " {cp_name:<30 } {cp:3}% \n",
+                " {gui_name:<30} {gui:3}% \n",
             ),
+            ta_name = "Texture Addressor",
             ta = self.ta,
+            vgt_name = "Vertex Grouper and Tessellator",
             vgt = self.vgt,
+            sx_name = "Shader Export",
             sx = self.sx,
+            spi_name = "Shader Pipe Interpolator",
             spi = self.spi,
+            db_name = "Depth Block",
             db = self.db,
+            cb_name = "Color Buffer",
             cb = self.cb,
+            cp_name = "Command Processor",
             cp = self.cp,
+            gui_name = "GUI Active",
             gui = self.gui_active,
         )
     }
