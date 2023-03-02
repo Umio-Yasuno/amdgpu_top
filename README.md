@@ -1,7 +1,7 @@
 # amdgpu\_top
 `amdgpu_top` is tool that show AMD GPU utilization, like [umr](https://gitlab.freedesktop.org/tomstdenis/umr/) or [clbr/radeontop](https://github.com/clbr/radeontop).  
 
-[amdgpu_top screenshot](/docs/ss0.png)
+![amdgpu_top screenshot](/docs/ss0.png)
 
 ## Usage
 ```
@@ -40,3 +40,4 @@ cargo run
  * Currently tested only on AMD Polaris11 GPU (Radeon RX 560)
  * RDNA 3 support
  * more commands
+ * update theme
