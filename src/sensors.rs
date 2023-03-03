@@ -4,6 +4,7 @@ use crate::AMDGPU::{
 };
 
 const NA: &str = "n/a";
+// TODO: check asic name?
 const SENSORS_LIST: [(SENSOR_TYPE, &str, u32); 7] = [
     (SENSOR_TYPE::GFX_SCLK, "MHz", 1),
     (SENSOR_TYPE::GFX_MCLK, "MHz", 1),
@@ -27,7 +28,7 @@ impl Sensor {
                 let val = val.saturating_div(*div);
                 s.push_str(&format!(" {sensor_name:<15} {val:>6} {unit:3} \n"));
             } else {
-                s.push_str(&format!(" {sensor_name:<15} {NA:>6} \n"));
+                s.push_str(&format!(" {sensor_name:<15} {NA:>10} \n"));
             }
         }
 
