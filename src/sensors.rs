@@ -3,14 +3,15 @@ use crate::AMDGPU::{
     SENSOR_INFO::*,
 };
 
-const SENSORS_LIST: [SENSOR_TYPE; 7] = [
-    SENSOR_TYPE::GFX_SCLK,
-    SENSOR_TYPE::GFX_MCLK,
-    SENSOR_TYPE::GPU_TEMP,
-    SENSOR_TYPE::GPU_LOAD,
-    SENSOR_TYPE::GPU_AVG_POWER,
-    SENSOR_TYPE::VDDNB,
-    SENSOR_TYPE::VDDGFX,
+const NA: &str = "n/a";
+const SENSORS_LIST: [(SENSOR_TYPE, &str, u32); 7] = [
+    (SENSOR_TYPE::GFX_SCLK, "MHz", 1),
+    (SENSOR_TYPE::GFX_MCLK, "MHz", 1),
+    (SENSOR_TYPE::GPU_TEMP, "C", 1000),
+    (SENSOR_TYPE::GPU_LOAD, "%", 1),
+    (SENSOR_TYPE::GPU_AVG_POWER, "W", 1),
+    (SENSOR_TYPE::VDDNB, "mV", 1),
+    (SENSOR_TYPE::VDDGFX, "mV", 1),
 ];
 
 pub struct Sensor;
@@ -19,13 +20,14 @@ impl Sensor {
     pub fn stat(amdgpu_dev: &DeviceHandle) -> String {
         let mut s = String::new();
 
-        for sensor in &SENSORS_LIST {
+        for (sensor, unit, div) in &SENSORS_LIST {
             let sensor_name = sensor.to_string();
 
             if let Ok(val) = amdgpu_dev.sensor_info(*sensor) {
-                s.push_str(&format!(" {sensor_name:<15} {val:>6} \n"));
+                let val = val.saturating_div(*div);
+                s.push_str(&format!(" {sensor_name:<15} {val:>6} {unit:3} \n"));
             } else {
-                s.push_str(&format!(" {sensor_name:<15} {:>6} \n", "n/a"));
+                s.push_str(&format!(" {sensor_name:<15} {NA:>6} \n"));
             }
         }
 
