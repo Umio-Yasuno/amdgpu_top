@@ -1,8 +1,4 @@
-/* ref: https://gitlab.freedesktop.org/tomstdenis/umr/ */
-/* ref: https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/gallium/drivers/radeonsi/si_gpu_load.c */
-
-/* ref: https://developer.amd.com/wordpress/media/2013/10/R6xx_R7xx_3D.pdf */
-/* ref: http://developer.amd.com/wordpress/media/2013/10/CIK_3D_registers_v2.pdf */
+/* GRBM: Graphics Register Block */
 
 macro_rules! get_bit {
     ($reg: expr, $shift: expr) => {
@@ -20,9 +16,9 @@ pub struct GRBM {
     pub bci: u8, // Barycentric interpolation control
     pub sc: u8, // Scan Convertor
     pub pa: u8, // Primitive Assembly
-    pub db: u8, // Depth Block? Depth Buffer?
+    pub db: u8, // Depth Block/Buffer
     pub cp: u8, // Command Processor?
-    pub cb: u8, // Color Buffer
+    pub cb: u8, // Color Block/Buffer
     pub gui_active: u8,
 }
 
@@ -89,24 +85,30 @@ impl GRBM {
             concat!(
                 " {ta_name:<30 } => {ta:3}% \n",
                 " {vgt_name:<30} => {vgt:3}% \n",
+                " {ia_name:<30 } => {ia:3}% \n",
                 " {sx_name:<30 } => {sx:3}% \n",
                 " {spi_name:<30} => {spi:3}% \n",
+                " {pa_name:<30 } => {pa:3}% \n",
                 " {db_name:<30 } => {db:3}% \n",
                 " {cb_name:<30 } => {cb:3}% \n",
                 " {cp_name:<30 } => {cp:3}% \n",
                 " {gui_name:<30} => {gui:3}% \n",
             ),
-            ta_name = "Texture Addressor",
+            ta_name = "Texture Addresser",
             ta = self.ta,
-            vgt_name = "Vertex Grouper and Tessellator",
+            vgt_name = "Vertex Grouper / Tessellator",
             vgt = self.vgt,
+            ia_name = "Input Assembly",
+            ia = self.ia,
             sx_name = "Shader Export",
             sx = self.sx,
-            spi_name = "Shader Pipe Interpolator",
+            spi_name = "Shader Processor Interpolator",
             spi = self.spi,
+            pa_name = "Primitive Assembly",
+            pa = self.pa,
             db_name = "Depth Block",
             db = self.db,
-            cb_name = "Color Buffer",
+            cb_name = "Color Block",
             cb = self.cb,
             cp_name = "Command Processor",
             cp = self.cp,
