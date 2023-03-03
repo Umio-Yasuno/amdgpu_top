@@ -17,6 +17,7 @@ cargo run
 | c   | toggle CP_STAT (Prefetch Parser, Micro Engine, Scratch Memory, ..) |
 | v   | toggle VRAM/GTT Usage               |
 | n   | toggle Sensors                      |
+| h   | change update interval (high = 100ms, low = 1000ms) |
 | q   | Quit                                |
 
 ## Library
@@ -31,6 +32,8 @@ cargo run
     * [R6xx_R7xx_3D.pdf](https://developer.amd.com/wordpress/media/2013/10/R6xx_R7xx_3D.pdf)
     * [CIK_3D_registers_v2.pdf](http://developer.amd.com/wordpress/media/2013/10/CIK_3D_registers_v2.pdf)
  * Linux Kernel AMDGPU Driver
+    * libdrm_amdgpu API
+        * `/drivers/gpu/drm/amd/amdgpu/amdgpu_kms.c`
     * `amdgpu_allowed_register_entry`
         * `/drivers/gpu/drm/amd/amdgpu/{cik,nv,vi,si,soc15,soc21}.c`
     * Register Offset
@@ -38,6 +41,5 @@ cargo run
 
 ## TODO
  * Currently tested only on AMD Polaris11 GPU (Radeon RX 560)
- * RDNA 3 support
  * more commands
  * update theme
