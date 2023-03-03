@@ -58,11 +58,23 @@ fn main() {
         AMDGPU::DeviceHandle::init(fd.into_raw_fd()).unwrap()
     };
     let ext_info = amdgpu_dev.device_info().unwrap();
+    let family_name = ext_info.get_family_name();
 
     let mut grbm = GRBM::new();
     let mut srbm = SRBM::new();
     let mut srbm2 = SRBM2::new();
     let mut cp_stat = CP_STAT::new();
+
+    let grbm_offset = family_name.get_grbm_offset();
+    let srbm_offset = family_name.get_srbm_offset();
+    let srbm2_offset = family_name.get_srbm2_offset();
+    let cp_stat_offset = family_name.get_cp_stat_offset();
+
+    // check register offset
+    check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", grbm_offset);
+    check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", srbm_offset);
+    check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", srbm2_offset);
+    check_register_offset(&amdgpu_dev, "mmCP_STAT", cp_stat_offset);
 
     let grbm_view = TextContent::new(grbm.verbose_stat()); 
     let srbm_view = TextContent::new(srbm.stat());
@@ -117,12 +129,8 @@ fn main() {
     let cb_sink = siv.cb_sink().clone();
 
     std::thread::spawn(move || {
-        let grbm_offset = ext_info.get_family_name().get_grbm_offset();
-        let srbm_offset = ext_info.get_family_name().get_srbm_offset();
-        let srbm2_offset = ext_info.get_family_name().get_srbm2_offset();
-        let cp_stat_offset = ext_info.get_family_name().get_cp_stat_offset();
         let delay = std::time::Duration::from_millis(1);
-        let opt_clone = user_opt.clone();
+        let opt = user_opt.clone();
 
         loop {
             for _ in 0..100 {
@@ -141,7 +149,7 @@ fn main() {
                 std::thread::sleep(delay);
             }
 
-            if let Ok(opt) = opt_clone.try_lock() {
+            if let Ok(opt) = opt.try_lock() {
                 if opt.grbm {
                     grbm_view.set_content(grbm.verbose_stat());
                 } else {
@@ -194,6 +202,39 @@ fn main() {
     });
 
     siv.run();
+}
+
+fn check_register_offset(amdgpu_dev: &AMDGPU::DeviceHandle, name: &str, offset: u32) {
+    if let Err(err) = amdgpu_dev.read_mm_registers(offset) {
+        eprintln!("{name} ({offset:#X}) register could not be read. ({err})");
+        dump_info(amdgpu_dev);
+        panic!();
+    }
+}
+
+fn dump_info(amdgpu_dev: &AMDGPU::DeviceHandle) {
+    if let Ok(drm_ver) = amdgpu_dev.get_drm_version() {
+        let (major, minor, patchlevel) = drm_ver;
+        println!("drm version:\t{major}.{minor}.{patchlevel}");
+    }
+
+    if let Ok(mark_name) = amdgpu_dev.get_marketing_name() {
+        println!("Marketing Name:\t[{mark_name}]");
+    }
+
+    if let Ok(ext_info) = amdgpu_dev.device_info() {
+        println!(
+            "DeviceID.RevID:\t{:#0X}.{:#0X}",
+            ext_info.device_id(),
+            ext_info.pci_rev_id()
+        );
+
+        println!("Family:\t\t{}", ext_info.get_family_name());
+        println!("ASIC Name:\t{}", ext_info.get_asic_name());
+        println!("Chip class:\t{}", ext_info.get_chip_class());
+        println!("VRAM Type:\t{}", ext_info.get_vram_type());
+        println!("VRAM Bit Width:\t{}-bit", ext_info.vram_bit_width);
+    }
 }
 
 fn set_global_cb(siv: &mut cursive::Cursive) {
