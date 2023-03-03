@@ -14,7 +14,7 @@ cargo run
 | g   | toggle GRBM                         |
 | u   | toggle UVD                          |
 | s   | toggle SRBM (SDMA, VCE)             |
-| c   | toggle CP_STAT (Scratch Memory, ..) |
+| c   | toggle CP_STAT (Prefetch Parser, Micro Engine, Scratch Memory, ..) |
 | v   | toggle VRAM/GTT Usage               |
 | n   | toggle Sensors                      |
 | q   | Quit                                |
