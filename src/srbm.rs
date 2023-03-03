@@ -29,8 +29,7 @@ impl SRBM {
     pub fn stat(&self) -> String {
         format!(
             concat!(
-                "\n",
-                " {name:<10} {uvd:3}% \n",
+                " {name:<10} => {uvd:3}% \n",
                 // "MCC:           {mcc:3}%\n",
                 // "MCD:           {mcd:3}%\n",
                 // "Bus Interface: {bif}%\n",

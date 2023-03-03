@@ -1,4 +1,5 @@
-use cursive::views::{TextContent, TextView, LinearLayout};
+use cursive::views::{TextContent, TextView, LinearLayout, Panel};
+use cursive::align::HAlign;
 use libdrm_amdgpu_sys::*;
 use AMDGPU::GPU_INFO;
 use std::sync::{Arc, Mutex};
@@ -147,14 +148,55 @@ fn main() {
 
     siv.add_layer(
         LinearLayout::vertical()
-            .child(TextView::new(format!(" amdgpu_top @ {mark_name} ")).center())
-            .child(TextView::new(info_bar).center())
-            .child(TextView::new_with_content(grbm_view.clone()).center())
-            .child(TextView::new_with_content(srbm_view.clone()).center())
-            .child(TextView::new_with_content(srbm2_view.clone()).center())
-            .child(TextView::new_with_content(cp_stat_view.clone()).center())
-            .child(TextView::new_with_content(vram_view.clone()).center())
-            .child(TextView::new_with_content(sensor_view.clone()).center())
+            .child(
+                Panel::new(
+                    TextView::new(&info_bar).center()
+                )
+                .title(format!(" amdgpu_top @ {mark_name} "))
+                .title_position(HAlign::Center)
+            )
+            .child(
+                Panel::new(
+                    TextView::new_with_content(grbm_view.clone())
+                )
+                .title("GRBM")
+                .title_position(HAlign::Left)
+            )
+            .child(
+                Panel::new(
+                    TextView::new_with_content(srbm_view.clone())
+                )
+                .title("SRBM")
+                .title_position(HAlign::Left)
+            )
+            .child(
+                Panel::new(
+                    TextView::new_with_content(srbm2_view.clone())
+                )
+                .title("SRBM2")
+                .title_position(HAlign::Left)
+            )
+            .child(
+                Panel::new(
+                    TextView::new_with_content(cp_stat_view.clone())
+                )
+                .title("CP_STAT")
+                .title_position(HAlign::Left)
+            )
+            .child(
+                Panel::new(
+                    TextView::new_with_content(vram_view.clone())
+                )
+                .title("Memory Usage")
+                .title_position(HAlign::Left)
+            )
+            .child(
+                Panel::new(
+                    TextView::new_with_content(sensor_view.clone())
+                )
+                .title("Sensors")
+                .title_position(HAlign::Left)
+            )
             .child(TextView::new(TOGGLE_HELP))
     );
     set_global_cb(&mut siv);

@@ -35,13 +35,9 @@ impl SRBM2 {
     pub fn stat(&self) -> String {
         format!(
             concat!(
-                "\n",
-                "{vce0_name:<10} {vce0:3}%\n",
-                "{vce1_name:<10} {vce1:3}%\n",
-                "{sdma0_name:<10} {sdma0:3}%\n",
-                "{sdma1_name:<10} {sdma1:3}%\n",
-                "{sdma2_name:<10} {sdma2:3}%\n",
-                "{sdma3_name:<10} {sdma3:3}%\n",
+                " {vce0_name:<10 } => {vce0:3 }%, {vce1_name:<10 } => {vce1:3}% \n",
+                " {sdma0_name:<10} => {sdma0:3}%, {sdma1_name:<10} => {sdma1:3}% \n",
+                " {sdma2_name:<10} => {sdma2:3}%, {sdma3_name:<10} => {sdma3:3}% \n",
             ),
             vce0_name = "VCE0",
             vce0 = self.vce0,

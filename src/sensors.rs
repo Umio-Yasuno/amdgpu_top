@@ -19,16 +19,16 @@ pub struct Sensor;
 
 impl Sensor {
     pub fn stat(amdgpu_dev: &DeviceHandle) -> String {
-        let mut s = String::from("\n");
+        let mut s = String::new();
 
         for (sensor, unit, div) in &SENSORS_LIST {
             let sensor_name = sensor.to_string();
 
             if let Ok(val) = amdgpu_dev.sensor_info(*sensor) {
                 let val = val.saturating_div(*div);
-                s.push_str(&format!(" {sensor_name:<15} {val:>6} {unit:3} \n"));
+                s.push_str(&format!(" {sensor_name:<15} => {val:>6} {unit:3} \n"));
             } else {
-                s.push_str(&format!(" {sensor_name:<15} {NA:>10} \n"));
+                s.push_str(&format!(" {sensor_name:<15} => {NA:>10} \n"));
             }
         }
 

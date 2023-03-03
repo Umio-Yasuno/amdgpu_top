@@ -6,9 +6,8 @@ impl VRAM_USAGE {
     pub fn stat(&self) -> String {
         format!(
             concat!(
-                "\n",
-                " {vram_label:<5} Usage: {vram_usage:>6}/{vram_total:<6} MiB \n",
-                " {gtt_label:<5 } Usage: {gtt_usage:>6}/{gtt_total:<6} MiB \n",
+                " {vram_label:<10} => {vram_usage:>6}/{vram_total:<6} MiB \n",
+                " {gtt_label:<10 } => {gtt_usage:>6}/{gtt_total:<6} MiB \n",
             ),
             vram_label = "VRAM",
             vram_usage = self.0.vram.heap_usage.saturating_div(1024 * 1024),

@@ -87,15 +87,14 @@ impl GRBM {
     pub fn verbose_stat(&self) -> String {
         format!(
             concat!(
-                "\n",
-                " {ta_name:<30 } {ta:3}% \n",
-                " {vgt_name:<30} {vgt:3}% \n",
-                " {sx_name:<30 } {sx:3}% \n",
-                " {spi_name:<30} {spi:3}% \n",
-                " {db_name:<30 } {db:3}% \n",
-                " {cb_name:<30 } {cb:3}% \n",
-                " {cp_name:<30 } {cp:3}% \n",
-                " {gui_name:<30} {gui:3}% \n",
+                " {ta_name:<30 } => {ta:3}% \n",
+                " {vgt_name:<30} => {vgt:3}% \n",
+                " {sx_name:<30 } => {sx:3}% \n",
+                " {spi_name:<30} => {spi:3}% \n",
+                " {db_name:<30 } => {db:3}% \n",
+                " {cb_name:<30 } => {cb:3}% \n",
+                " {cp_name:<30 } => {cp:3}% \n",
+                " {gui_name:<30} => {gui:3}% \n",
             ),
             ta_name = "Texture Addressor",
             ta = self.ta,
