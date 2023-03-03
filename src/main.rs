@@ -89,20 +89,46 @@ fn main() {
         }
     );
 
+    let [min_gpu_clk, min_memory_clk] = {
+        if let Ok(pci_bus) = amdgpu_dev.get_pci_bus_info() {
+            [
+                if let Some(gpu) = amdgpu_dev.get_min_gpu_clock_from_sysfs(&pci_bus) {
+                    gpu
+                } else {
+                    0
+                },
+                if let Some(mem) = amdgpu_dev.get_min_memory_clock_from_sysfs(&pci_bus) {
+                    mem
+                } else {
+                    0
+                },
+            ]
+        } else {
+            [0, 0]
+        }
+    };
+
     let info_bar = format!(
-        "{asic}, {num_cu} CU, {vram_type} {vram_bus_width}-bit",
+        concat!(
+            "{asic}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
+            "{vram_type} {vram_bus_width}-bit, {min_memory_clk}-{max_memory_clk} MHz",
+        ),
         asic = ext_info.get_asic_name(),
         num_cu = ext_info.cu_active_number(),
+        min_gpu_clk = min_gpu_clk,
+        max_gpu_clk = ext_info.max_engine_clock().saturating_div(1000),
         vram_type = ext_info.get_vram_type(),
         vram_bus_width = ext_info.vram_bit_width,
+        min_memory_clk = min_memory_clk,
+        max_memory_clk = ext_info.max_memory_clock().saturating_div(1000),
     );
-
-    let mut siv = cursive::default();
-    let user_opt = Arc::new(Mutex::new(UserOptions::default()));
     let mark_name = match amdgpu_dev.get_marketing_name() {
         Ok(name) => name,
         Err(_) => "".to_string(),
     };
+    let user_opt = Arc::new(Mutex::new(UserOptions::default()));
+
+    let mut siv = cursive::default();
 
     siv.add_layer(
         LinearLayout::vertical()
