@@ -94,14 +94,13 @@ fn main() {
 
     siv.add_layer(
         LinearLayout::vertical()
-            .child(TextView::new(format!("amdgpu_top")).center())
+            .child(TextView::new("amdgpu_top").center())
             .child(TextView::new(mark_name).center())
             .child(TextView::new(info_bar).center())
             .child(TextView::new("\n"))
             .child(TextView::new_with_content(grbm_view.clone()).center())
             .child(TextView::new("\n"))
             .child(TextView::new_with_content(srbm_view.clone()).center())
-            .child(TextView::new("\n"))
             .child(TextView::new_with_content(srbm2_view.clone()).center())
             .child(TextView::new("\n"))
             .child(TextView::new_with_content(cp_stat_view.clone()).center())
@@ -112,43 +111,7 @@ fn main() {
             .child(TextView::new("\n"))
             .child(TextView::new(TOGGLE_HELP))
     );
-    siv.add_global_callback('q', cursive::Cursive::quit);
-    siv.add_global_callback('u', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.uvd ^= true;
-        });
-    });
-    siv.add_global_callback('s', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.srbm ^= true;
-        });
-    });
-    siv.add_global_callback('g', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.grbm ^= true;
-        });
-    });
-    siv.add_global_callback('c', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.cp_stat ^= true;
-        });
-    });
-    siv.add_global_callback('v', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.vram ^= true;
-        });
-    });
-    siv.add_global_callback('n', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.sensor ^= true;
-        });
-    });
+    set_global_cb(&mut siv);
     siv.set_user_data(user_opt.clone());
 
     let cb_sink = siv.cb_sink().clone();
@@ -216,6 +179,9 @@ fn main() {
                 } else { 
                     sensor_view.set_content("");
                 }
+            } else {
+                cb_sink.send(Box::new(cursive::Cursive::quit)).unwrap();
+                return;
             }
 
             grbm.clear();
@@ -227,6 +193,45 @@ fn main() {
         }
     });
 
-    // Starts the event loop.
     siv.run();
+}
+
+fn set_global_cb(siv: &mut cursive::Cursive) {
+    siv.add_global_callback('q', cursive::Cursive::quit);
+    siv.add_global_callback('u', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.uvd ^= true;
+        });
+    });
+    siv.add_global_callback('s', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.srbm ^= true;
+        });
+    });
+    siv.add_global_callback('g', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.grbm ^= true;
+        });
+    });
+    siv.add_global_callback('c', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.cp_stat ^= true;
+        });
+    });
+    siv.add_global_callback('v', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.vram ^= true;
+        });
+    });
+    siv.add_global_callback('n', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.sensor ^= true;
+        });
+    });
 }
