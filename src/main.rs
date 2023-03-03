@@ -29,6 +29,7 @@ struct UserOptions {
     cp_stat: bool,
     vram: bool,
     sensor: bool,
+    high_freq: bool,
 }
 
 impl Default for UserOptions {
@@ -40,11 +41,32 @@ impl Default for UserOptions {
             cp_stat: false,
             vram: true,
             sensor: true,
+            high_freq: false,
         }
     }
 }
 
-const TOGGLE_HELP: &str = "\n\n v(g)t (u)vd (s)rbm (c)p_stat\n (v)ram se(n)sor (q)uit";
+struct Sampling {
+    count: usize,
+    delay: std::time::Duration,
+}
+
+impl Sampling {
+    const fn low() -> Self {
+        Self {
+            count: 100,
+            delay: std::time::Duration::from_millis(10),
+        }
+    }
+    const fn high() -> Self {
+        Self {
+            count: 100,
+            delay: std::time::Duration::from_millis(1),
+        }
+    }
+}
+
+const TOGGLE_HELP: &str = " v(g)t (u)vd (s)rbm (c)p_stat\n (v)ram se(n)sor (h)igh_freq (q)uit";
 
 fn main() {
     let (amdgpu_dev, _major, _minor) = {
@@ -139,13 +161,13 @@ fn main() {
     siv.set_user_data(user_opt.clone());
 
     let cb_sink = siv.cb_sink().clone();
+    let opt = user_opt.clone();
+
+    let mut sample = Sampling::low();
 
     std::thread::spawn(move || {
-        let delay = std::time::Duration::from_millis(1);
-        let opt = user_opt.clone();
-
         loop {
-            for _ in 0..100 {
+            for _ in 0..sample.count {
                 if let Ok(out) = amdgpu_dev.read_mm_registers(grbm_offset) {
                     grbm.acc(out);
                 }
@@ -158,7 +180,7 @@ fn main() {
                 if let Ok(out) = amdgpu_dev.read_mm_registers(cp_stat_offset) {
                     cp_stat.acc(out);
                 }
-                std::thread::sleep(delay);
+                std::thread::sleep(sample.delay);
             }
 
             if let Ok(opt) = opt.try_lock() {
@@ -198,6 +220,12 @@ fn main() {
                     sensor_view.set_content(Sensor::stat(&amdgpu_dev));
                 } else { 
                     sensor_view.set_content("");
+                }
+
+                if opt.high_freq {
+                    sample = Sampling::high();
+                } else {
+                    sample = Sampling::low();
                 }
             } else {
                 cb_sink.send(Box::new(cursive::Cursive::quit)).unwrap();
@@ -292,6 +320,12 @@ fn set_global_cb(siv: &mut cursive::Cursive) {
         s.with_user_data(|opt: &mut Opt| {
             let mut opt = opt.lock().unwrap();
             opt.sensor ^= true;
+        });
+    });
+    siv.add_global_callback('h', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.high_freq ^= true;
         });
     });
 }
