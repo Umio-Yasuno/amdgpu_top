@@ -44,8 +44,6 @@ impl Default for UserOptions {
     }
 }
 
-type Opt = Arc<Mutex<UserOptions>>;
-
 const TOGGLE_HELP: &str = "\n\n v(g)t (u)vd (s)rbm (c)p_stat\n (v)ram se(n)sor (q)uit";
 
 fn main() {
@@ -58,17 +56,16 @@ fn main() {
         AMDGPU::DeviceHandle::init(fd.into_raw_fd()).unwrap()
     };
     let ext_info = amdgpu_dev.device_info().unwrap();
-    let family_name = ext_info.get_family_name();
 
     let mut grbm = GRBM::new();
     let mut srbm = SRBM::new();
     let mut srbm2 = SRBM2::new();
     let mut cp_stat = CP_STAT::new();
 
-    let grbm_offset = family_name.get_grbm_offset();
-    let srbm_offset = family_name.get_srbm_offset();
-    let srbm2_offset = family_name.get_srbm2_offset();
-    let cp_stat_offset = family_name.get_cp_stat_offset();
+    let grbm_offset = ext_info.get_grbm_offset();
+    let srbm_offset = ext_info.get_srbm_offset();
+    let srbm2_offset = ext_info.get_srbm2_offset();
+    let cp_stat_offset = ext_info.get_cp_stat_offset();
 
     // check register offset
     check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", grbm_offset);
@@ -132,8 +129,7 @@ fn main() {
 
     siv.add_layer(
         LinearLayout::vertical()
-            .child(TextView::new("amdgpu_top").center())
-            .child(TextView::new(mark_name).center())
+            .child(TextView::new(format!(" amdgpu_top @ {mark_name} ")).center())
             .child(TextView::new(info_bar).center())
             .child(TextView::new_with_content(grbm_view.clone()).center())
             .child(TextView::new_with_content(srbm_view.clone()).center())
@@ -244,20 +240,27 @@ fn dump_info(amdgpu_dev: &AMDGPU::DeviceHandle) {
 
     if let Ok(ext_info) = amdgpu_dev.device_info() {
         println!(
-            "DeviceID.RevID:\t{:#0X}.{:#0X}",
-            ext_info.device_id(),
-            ext_info.pci_rev_id()
+            concat!(
+                "DeviceID.RevID:\t{did:#04X}.{rid:#04X}\n",
+                "Family:\t{family}\n",
+                "ASIC:\t{asic}\n",
+                "Chip class:\t{chip_class}\n",
+                "VRAM: {vram_type} {vram_width}-bits"
+            ),
+            did = ext_info.device_id(),
+            rid = ext_info.pci_rev_id(),
+            family = ext_info.get_family_name(),
+            asic = ext_info.get_asic_name(),
+            chip_class = ext_info.get_chip_class(),
+            vram_type = ext_info.get_vram_type(),
+            vram_width = ext_info.vram_bit_width,
         );
-
-        println!("Family:\t\t{}", ext_info.get_family_name());
-        println!("ASIC Name:\t{}", ext_info.get_asic_name());
-        println!("Chip class:\t{}", ext_info.get_chip_class());
-        println!("VRAM Type:\t{}", ext_info.get_vram_type());
-        println!("VRAM Bit Width:\t{}-bit", ext_info.vram_bit_width);
     }
 }
 
 fn set_global_cb(siv: &mut cursive::Cursive) {
+    type Opt = Arc<Mutex<UserOptions>>;
+
     siv.add_global_callback('q', cursive::Cursive::quit);
     siv.add_global_callback('u', |s| {
         s.with_user_data(|opt: &mut Opt| {
