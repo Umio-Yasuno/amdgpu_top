@@ -88,18 +88,14 @@ fn main() {
 
     let [min_gpu_clk, min_memory_clk] = {
         if let Ok(pci_bus) = amdgpu_dev.get_pci_bus_info() {
-            [
-                if let Some(gpu) = amdgpu_dev.get_min_gpu_clock_from_sysfs(&pci_bus) {
-                    gpu
-                } else {
-                    0
-                },
-                if let Some(mem) = amdgpu_dev.get_min_memory_clock_from_sysfs(&pci_bus) {
-                    mem
-                } else {
-                    0
-                },
-            ]
+            if let [Some(gpu), Some(mem)] = [
+                amdgpu_dev.get_min_gpu_clock_from_sysfs(&pci_bus),
+                amdgpu_dev.get_min_memory_clock_from_sysfs(&pci_bus),
+            ] {
+                [gpu, mem]
+            } else {
+                [0, 0]
+            }
         } else {
             [0, 0]
         }
