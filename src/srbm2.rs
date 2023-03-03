@@ -35,6 +35,7 @@ impl SRBM2 {
     pub fn stat(&self) -> String {
         format!(
             concat!(
+                "\n",
                 "{vce0_name:<10} {vce0:3}%\n",
                 "{vce1_name:<10} {vce1:3}%\n",
                 "{sdma0_name:<10} {sdma0:3}%\n",

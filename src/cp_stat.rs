@@ -67,6 +67,7 @@ impl CP_STAT {
     pub fn verbose_stat(&self) -> String {
         format!(
             concat!(
+                "\n",
                 " {pfp_name:<30           } {pfp:3}% \n",
                 " {me_name:<30            } {me:3}% \n",
                 " {surface_sync_name:<30  } {surface_sync:3}% \n",

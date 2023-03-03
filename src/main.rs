@@ -46,7 +46,7 @@ impl Default for UserOptions {
 
 type Opt = Arc<Mutex<UserOptions>>;
 
-const TOGGLE_HELP: &str = "\n v(g)t (u)vd (s)rbm (c)p_stat\n (v)ram se(n)sor (q)uit";
+const TOGGLE_HELP: &str = "\n\n v(g)t (u)vd (s)rbm (c)p_stat\n (v)ram se(n)sor (q)uit";
 
 fn main() {
     let (amdgpu_dev, _major, _minor) = {
@@ -135,18 +135,12 @@ fn main() {
             .child(TextView::new("amdgpu_top").center())
             .child(TextView::new(mark_name).center())
             .child(TextView::new(info_bar).center())
-            .child(TextView::new("\n"))
             .child(TextView::new_with_content(grbm_view.clone()).center())
-            .child(TextView::new("\n"))
             .child(TextView::new_with_content(srbm_view.clone()).center())
             .child(TextView::new_with_content(srbm2_view.clone()).center())
-            .child(TextView::new("\n"))
             .child(TextView::new_with_content(cp_stat_view.clone()).center())
-            .child(TextView::new("\n"))
             .child(TextView::new_with_content(vram_view.clone()).center())
-            .child(TextView::new("\n"))
             .child(TextView::new_with_content(sensor_view.clone()).center())
-            .child(TextView::new("\n"))
             .child(TextView::new(TOGGLE_HELP))
     );
     set_global_cb(&mut siv);

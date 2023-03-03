@@ -19,7 +19,7 @@ pub struct Sensor;
 
 impl Sensor {
     pub fn stat(amdgpu_dev: &DeviceHandle) -> String {
-        let mut s = String::new();
+        let mut s = String::from("\n");
 
         for (sensor, unit, div) in &SENSORS_LIST {
             let sensor_name = sensor.to_string();
