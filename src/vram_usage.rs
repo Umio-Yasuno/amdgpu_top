@@ -1,26 +1,36 @@
 use libdrm_amdgpu_sys::AMDGPU::drm_amdgpu_memory_info;
 
-pub struct VRAM_USAGE(drm_amdgpu_memory_info);
+pub struct VRAM_INFO {
+    pub usable_vram: u64,
+    pub usage_vram: u64,
+    pub usable_gtt: u64,
+    pub usage_gtt: u64,
+}
 
-impl VRAM_USAGE {
+impl VRAM_INFO {
     pub fn stat(&self) -> String {
         format!(
             concat!(
-                " {vram_label:<10} => {vram_usage:>6}/{vram_total:<6} MiB \n",
-                " {gtt_label:<10 } => {gtt_usage:>6}/{gtt_total:<6} MiB \n",
+                " {vram_label:<10} => {usage_vram:>6}/{total_vram:<6} MiB \n",
+                " {gtt_label:<10 } => {usage_gtt:>6}/{total_gtt:<6} MiB \n",
             ),
             vram_label = "VRAM",
-            vram_usage = self.0.vram.heap_usage.saturating_div(1024 * 1024),
-            vram_total = self.0.vram.total_heap_size.saturating_div(1024 * 1024),
+            usage_vram = self.usage_vram.saturating_div(1024 * 1024),
+            total_vram = self.usable_vram.saturating_div(1024 * 1024),
             gtt_label = "GTT",
-            gtt_usage = self.0.gtt.heap_usage.saturating_div(1024 * 1024),
-            gtt_total = self.0.gtt.total_heap_size.saturating_div(1024 * 1024),
+            usage_gtt = self.usage_gtt.saturating_div(1024 * 1024),
+            total_gtt = self.usable_gtt.saturating_div(1024 * 1024),
         )
     }
 }
 
-impl From<drm_amdgpu_memory_info> for VRAM_USAGE {
-    fn from(info: drm_amdgpu_memory_info) -> Self {
-        Self(info)
+impl From<&drm_amdgpu_memory_info> for VRAM_INFO {
+    fn from(info: &drm_amdgpu_memory_info) -> Self {
+        Self {
+            usable_vram: info.vram.usable_heap_size, // (real_vram_size - pin_size - reserved_size)
+            usage_vram: info.vram.heap_usage,
+            usable_gtt: info.gtt.usable_heap_size,
+            usage_gtt: info.gtt.heap_usage,
+        }
     }
 }

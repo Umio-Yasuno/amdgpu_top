@@ -84,6 +84,7 @@ fn main() {
     let mut srbm = SRBM::new();
     let mut srbm2 = SRBM2::new();
     let mut cp_stat = CP_STAT::new();
+    let mut vram = VRAM_INFO::from(&amdgpu_dev.memory_info().unwrap());
 
     let grbm_offset = ext_info.get_grbm_offset();
     let srbm_offset = ext_info.get_srbm_offset();
@@ -101,13 +102,7 @@ fn main() {
     let srbm2_view = TextContent::new(srbm2.stat());
     let sensor_view = TextContent::new(Sensor::stat(&amdgpu_dev));
     let cp_stat_view = TextContent::new("");
-    let vram_view = TextContent::new(
-        if let Ok(info) = amdgpu_dev.memory_info() {
-            VRAM_USAGE::from(info).stat()
-        } else {
-            "".to_string()
-        }
-    );
+    let vram_view = TextContent::new(vram.stat());
 
     let [min_gpu_clk, min_memory_clk] = {
         if let Ok(pci_bus) = amdgpu_dev.get_pci_bus_info() {
@@ -251,8 +246,14 @@ fn main() {
                 }
 
                 if opt.vram {
-                    if let Ok(info) = amdgpu_dev.memory_info() {
-                        vram_view.set_content(VRAM_USAGE::from(info).stat());
+                    if let [Ok(usage_vram), Ok(usage_gtt)] = [
+                        amdgpu_dev.vram_usage_info(),
+                        amdgpu_dev.gtt_usage_info(),
+                    ] {
+                        vram.usage_vram = usage_vram;
+                        vram.usage_gtt = usage_gtt;
+
+                        vram_view.set_content(vram.stat());
                     }
                 } else {
                     vram_view.set_content("");
