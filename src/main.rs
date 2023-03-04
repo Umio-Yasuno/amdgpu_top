@@ -119,11 +119,19 @@ fn main() {
         }
     };
 
+    let mark_name = match amdgpu_dev.get_marketing_name() {
+        Ok(name) => name,
+        Err(_) => "".to_string(),
+    };
     let info_bar = format!(
         concat!(
+            "{mark_name} ({did:#06X}:{rid:#04X})\n",
             "{asic}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
             "{vram_type} {vram_bus_width}-bit, {min_memory_clk}-{max_memory_clk} MHz",
         ),
+        mark_name = mark_name,
+        did = ext_info.device_id(),
+        rid = ext_info.pci_rev_id(),
         asic = ext_info.get_asic_name(),
         num_cu = ext_info.cu_active_number(),
         min_gpu_clk = min_gpu_clk,
@@ -133,10 +141,6 @@ fn main() {
         min_memory_clk = min_memory_clk,
         max_memory_clk = ext_info.max_memory_clock().saturating_div(1000),
     );
-    let mark_name = match amdgpu_dev.get_marketing_name() {
-        Ok(name) => name,
-        Err(_) => "".to_string(),
-    };
     let user_opt = Arc::new(Mutex::new(UserOptions::default()));
 
     let mut siv = cursive::default();
@@ -147,7 +151,7 @@ fn main() {
                 Panel::new(
                     TextView::new(&info_bar).center()
                 )
-                .title(format!(" amdgpu_top @ {mark_name} "))
+                .title("amdgpu_top")
                 .title_position(HAlign::Center)
             )
             .child(
@@ -308,7 +312,7 @@ fn dump_info(amdgpu_dev: &AMDGPU::DeviceHandle) {
     if let Ok(ext_info) = amdgpu_dev.device_info() {
         println!(
             concat!(
-                "DeviceID.RevID:\t{did:#04X}.{rid:#04X}\n",
+                "DeviceID.RevID:\t{did:#06X}.{rid:#04X}\n",
                 "Family:\t{family}\n",
                 "ASIC:\t{asic}\n",
                 "Chip class:\t{chip_class}\n",
