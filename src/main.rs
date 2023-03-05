@@ -86,7 +86,8 @@ fn main() {
     let mut cp_stat = CP_STAT::new();
     let mut vram = VRAM_INFO::from(&amdgpu_dev.memory_info().unwrap());
 
-    let grbm_offset = ext_info.get_grbm_offset();
+    // let grbm_offset = ext_info.get_grbm_offset();
+    let grbm_offset = GRBM_OFFSET;
     let srbm_offset = ext_info.get_srbm_offset();
     let srbm2_offset = ext_info.get_srbm2_offset();
     let cp_stat_offset = ext_info.get_cp_stat_offset();

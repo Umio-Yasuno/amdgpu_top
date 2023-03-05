@@ -1,4 +1,5 @@
 /* GRBM: Graphics Register Block */
+pub const GRBM_OFFSET: u32 = 0x2004;
 
 macro_rules! get_bit {
     ($reg: expr, $shift: expr) => {
