@@ -275,9 +275,6 @@ fn main() {
                 } else {
                     sample = Sampling::low();
                 }
-            } else {
-                cb_sink.send(Box::new(cursive::Cursive::quit)).unwrap();
-                return;
             }
 
             grbm.clear();
