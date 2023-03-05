@@ -40,7 +40,12 @@ cargo run
     * Register Offset
         * `include/asic_reg/`
 
-## TODO
+## Note
  * Currently tested only on AMD Polaris11 GPU (Radeon RX 560)
+ * Only `amdgpu_read_mm_registers` function is used to read registers.
+    * In the case of the `Cezanne/Green Sardine` APU, it does not return an error for register offsets that are not allowed.
+    * <https://gitlab.freedesktop.org/drm/amd/-/issues/2442>
+
+## TODO
  * more commands
  * update theme
