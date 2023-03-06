@@ -23,7 +23,7 @@ mod sensors;
 use sensors::*;
 
 #[derive(Debug, Clone)]
-struct UserOptions {
+struct ToggleOptions {
     grbm: bool,
     uvd: bool,
     srbm: bool,
@@ -33,7 +33,7 @@ struct UserOptions {
     high_freq: bool,
 }
 
-impl Default for UserOptions {
+impl Default for ToggleOptions {
     fn default() -> Self {
         Self {
             grbm: true,
@@ -92,7 +92,7 @@ fn main() {
     let srbm2_offset = AMDGPU::SRBM2_OFFSET;
     let cp_stat_offset = AMDGPU::CP_STAT_OFFSET;
 
-    let mut user_opt = UserOptions::default();
+    let mut user_opt = ToggleOptions::default();
 
     // check register offset
     user_opt.grbm = check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", grbm_offset);
@@ -335,7 +335,7 @@ fn dump_info(amdgpu_dev: &AMDGPU::DeviceHandle) {
 }
 
 fn set_global_cb(siv: &mut cursive::Cursive) {
-    type Opt = Arc<Mutex<UserOptions>>;
+    type Opt = Arc<Mutex<ToggleOptions>>;
 
     siv.add_global_callback('q', cursive::Cursive::quit);
     siv.add_global_callback('u', |s| {
