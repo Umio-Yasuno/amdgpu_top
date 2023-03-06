@@ -4,7 +4,6 @@ use crate::AMDGPU::{
 };
 
 const NA: &str = "n/a";
-// TODO: check asic name?
 const SENSORS_LIST: [(SENSOR_TYPE, &str, u32); 7] = [
     (SENSOR_TYPE::GFX_SCLK, "MHz", 1),
     (SENSOR_TYPE::GFX_MCLK, "MHz", 1),

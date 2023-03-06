@@ -1,5 +1,4 @@
 /* GRBM: Graphics Register Block */
-pub const GRBM_OFFSET: u32 = 0x2004;
 
 macro_rules! get_bit {
     ($reg: expr, $shift: expr) => {
@@ -8,24 +7,26 @@ macro_rules! get_bit {
 }
 
 pub struct GRBM {
-    pub ta: u8, // Texture Addresser?
-    pub gds: u8, // Global Data Share
-    pub vgt: u8, // Vertex Grouper and Tessellator
-    pub ia: u8, // Input Assembly?
-    pub sx: u8, // Shader Export
-    pub spi: u8, // Shader Pipe Interpolator
-    pub bci: u8, // Barycentric interpolation control
-    pub sc: u8, // Scan Convertor
-    pub pa: u8, // Primitive Assembly
-    pub db: u8, // Depth Block/Buffer
-    pub cp: u8, // Command Processor?
-    pub cb: u8, // Color Block/Buffer
-    pub gui_active: u8,
+    pub flag: bool,
+    ta: u8, // Texture Addresser?
+    gds: u8, // Global Data Share
+    vgt: u8, // Vertex Grouper and Tessellator
+    ia: u8, // Input Assembly?
+    sx: u8, // Shader Export
+    spi: u8, // Shader Pipe Interpolator
+    bci: u8, // Barycentric interpolation control
+    sc: u8, // Scan Convertor
+    pa: u8, // Primitive Assembly
+    db: u8, // Depth Block/Buffer
+    cp: u8, // Command Processor?
+    cb: u8, // Color Block/Buffer
+    gui_active: u8,
 }
 
 impl GRBM {
     pub const fn new() -> Self {
         Self {
+            flag: true,
             ta: 0,
             gds: 0,
             vgt: 0,
@@ -43,7 +44,19 @@ impl GRBM {
     }
 
     pub fn clear(&mut self) {
-        *self = Self::new()
+        self.ta = 0;
+        self.gds = 0;
+        self.vgt = 0;
+        self.ia = 0;
+        self.sx = 0;
+        self.spi = 0;
+        self.bci = 0;
+        self.sc = 0;
+        self.pa = 0;
+        self.db = 0;
+        self.cp = 0;
+        self.cb = 0;
+        self.gui_active = 0;
     }
 
     pub fn acc(&mut self, reg: u32) {
@@ -62,26 +75,11 @@ impl GRBM {
         self.gui_active += get_bit!(reg, 31);
     }
 
-    pub fn _stat(&self) -> String {
-        format!(
-            concat!(
-                " TA:{ta:3}%  VGT:{vgt:3}%\n",
-                " SX:{sx:3}%  SPI:{spi:3}%\n",
-                " DB:{db:3}%   CB:{cb:3}%\n",
-                " CP:{cp:3}%  GUI:{gui:3}%\n",
-            ),
-            ta = self.ta,
-            vgt = self.vgt,
-            sx = self.sx,
-            spi = self.spi,
-            db = self.db,
-            cb = self.cb,
-            cp = self.cp,
-            gui = self.gui_active,
-        )
-    }
+    pub fn stat(&self) -> String {
+        if !self.flag {
+            return "".to_string();
+        }
 
-    pub fn verbose_stat(&self) -> String {
         format!(
             concat!(
                 " {ta_name:<30 } => {ta:3}% \n",

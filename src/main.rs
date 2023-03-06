@@ -81,28 +81,39 @@ fn main() {
     let ext_info = amdgpu_dev.device_info().unwrap();
 
     let mut grbm = GRBM::new();
-    let mut srbm = SRBM::new();
+    let mut uvd = SRBM::new();
     let mut srbm2 = SRBM2::new();
     let mut cp_stat = CP_STAT::new();
     let mut vram = VRAM_INFO::from(&amdgpu_dev.memory_info().unwrap());
 
     // let grbm_offset = ext_info.get_grbm_offset();
-    let grbm_offset = GRBM_OFFSET;
-    let srbm_offset = ext_info.get_srbm_offset();
-    let srbm2_offset = ext_info.get_srbm2_offset();
-    let cp_stat_offset = ext_info.get_cp_stat_offset();
+    let grbm_offset = AMDGPU::GRBM_OFFSET;
+    let srbm_offset = AMDGPU::SRBM_OFFSET;
+    let srbm2_offset = AMDGPU::SRBM2_OFFSET;
+    let cp_stat_offset = AMDGPU::CP_STAT_OFFSET;
+
+    let mut user_opt = UserOptions::default();
 
     // check register offset
-    check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", grbm_offset);
-    check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", srbm_offset);
-    check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", srbm2_offset);
-    check_register_offset(&amdgpu_dev, "mmCP_STAT", cp_stat_offset);
+    user_opt.grbm = check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", grbm_offset);
+    grbm.flag = user_opt.grbm;
 
-    let grbm_view = TextContent::new(grbm.verbose_stat()); 
-    let srbm_view = TextContent::new(srbm.stat());
+    user_opt.uvd = check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", srbm_offset);
+    uvd.flag = user_opt.uvd;
+
+    user_opt.srbm = check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", srbm2_offset);
+    srbm2.flag = user_opt.srbm;
+
+    let _ = check_register_offset(&amdgpu_dev, "mmCP_STAT", cp_stat_offset);
+    user_opt.cp_stat = false;
+    cp_stat.flag = false;
+
+    let grbm_view = TextContent::new(grbm.stat()); 
+    // mmSRBM_STATUS/mmSRBM_STATUS2 does not exist in GFX9 (soc15) or later.
+    let uvd_view = TextContent::new(uvd.stat());
     let srbm2_view = TextContent::new(srbm2.stat());
+    let cp_stat_view = TextContent::new(cp_stat.stat());
     let sensor_view = TextContent::new(Sensor::stat(&amdgpu_dev));
-    let cp_stat_view = TextContent::new("");
     let vram_view = TextContent::new(vram.stat());
 
     let [min_gpu_clk, min_memory_clk] = {
@@ -119,7 +130,6 @@ fn main() {
             [0, 0]
         }
     };
-
     let mark_name = match amdgpu_dev.get_marketing_name() {
         Ok(name) => name,
         Err(_) => "".to_string(),
@@ -142,7 +152,7 @@ fn main() {
         min_memory_clk = min_memory_clk,
         max_memory_clk = ext_info.max_memory_clock().saturating_div(1000),
     );
-    let user_opt = Arc::new(Mutex::new(UserOptions::default()));
+    let user_opt = Arc::new(Mutex::new(user_opt));
 
     let mut siv = cursive::default();
 
@@ -164,9 +174,9 @@ fn main() {
             )
             .child(
                 Panel::new(
-                    TextView::new_with_content(srbm_view.clone())
+                    TextView::new_with_content(uvd_view.clone())
                 )
-                .title("SRBM")
+                .title("UVD")
                 .title_position(HAlign::Left)
             )
             .child(
@@ -205,50 +215,41 @@ fn main() {
     let cb_sink = siv.cb_sink().clone();
     let opt = user_opt.clone();
 
-    let mut sample = Sampling::low();
-
     std::thread::spawn(move || {
+        let mut sample = Sampling::low();
+
         loop {
             for _ in 0..sample.count {
-                if let Ok(out) = amdgpu_dev.read_mm_registers(grbm_offset) {
-                    grbm.acc(out);
+                // high frequency accesses to registers can cause high GPU clocks
+                if grbm.flag {
+                    if let Ok(out) = amdgpu_dev.read_mm_registers(grbm_offset) {
+                        grbm.acc(out);
+                    }
                 }
-                if let Ok(out) = amdgpu_dev.read_mm_registers(srbm_offset) {
-                    srbm.acc(out);
+                if uvd.flag {
+                    if let Ok(out) = amdgpu_dev.read_mm_registers(srbm_offset) {
+                        uvd.acc(out);
+                    }
                 }
-                if let Ok(out) = amdgpu_dev.read_mm_registers(srbm2_offset) {
-                    srbm2.acc(out);
+                if srbm2.flag {
+                    if let Ok(out) = amdgpu_dev.read_mm_registers(srbm2_offset) {
+                        srbm2.acc(out);
+                    }
                 }
-                if let Ok(out) = amdgpu_dev.read_mm_registers(cp_stat_offset) {
-                    cp_stat.acc(out);
+                if cp_stat.flag {
+                    if let Ok(out) = amdgpu_dev.read_mm_registers(cp_stat_offset) {
+                        cp_stat.acc(out);
+                    }
                 }
+
                 std::thread::sleep(sample.delay);
             }
 
             if let Ok(opt) = opt.try_lock() {
-                if opt.grbm {
-                    grbm_view.set_content(grbm.verbose_stat());
-                } else {
-                    grbm_view.set_content("");
-                }
-
-                if opt.uvd {
-                    srbm_view.set_content(srbm.stat());
-                } else {
-                    srbm_view.set_content("");
-                }
-
-                if opt.srbm {
-                    srbm2_view.set_content(srbm2.stat());
-                } else {
-                    srbm2_view.set_content("");
-                }
-
-                if opt.cp_stat {
-                    cp_stat_view.set_content(cp_stat.verbose_stat());
-                } else {
-                    cp_stat_view.set_content("");
-                }
+                grbm.flag = opt.grbm;
+                uvd.flag = opt.uvd;
+                srbm2.flag = opt.srbm;
+                cp_stat.flag = opt.cp_stat;
 
                 if opt.vram {
                     if let [Ok(usage_vram), Ok(usage_gtt)] = [
@@ -270,15 +271,20 @@ fn main() {
                     sensor_view.set_content("");
                 }
 
-                if opt.high_freq {
-                    sample = Sampling::high();
+                sample = if opt.high_freq {
+                    Sampling::high()
                 } else {
-                    sample = Sampling::low();
-                }
+                    Sampling::low()
+                };
             }
 
+            grbm_view.set_content(grbm.stat());
+            uvd_view.set_content(uvd.stat());
+            srbm2_view.set_content(srbm2.stat());
+            cp_stat_view.set_content(cp_stat.stat());
+
             grbm.clear();
-            srbm.clear();
+            uvd.clear();
             srbm2.clear();
             cp_stat.clear();
 
@@ -289,12 +295,13 @@ fn main() {
     siv.run();
 }
 
-fn check_register_offset(amdgpu_dev: &AMDGPU::DeviceHandle, name: &str, offset: u32) {
+fn check_register_offset(amdgpu_dev: &AMDGPU::DeviceHandle, name: &str, offset: u32) -> bool {
     if let Err(err) = amdgpu_dev.read_mm_registers(offset) {
-        eprintln!("{name} ({offset:#X}) register could not be read. ({err})");
-        dump_info(amdgpu_dev);
-        panic!();
+        println!("{name} ({offset:#X}) register is not allowed. ({err})");
+        return false;
     }
+
+    true
 }
 
 fn dump_info(amdgpu_dev: &AMDGPU::DeviceHandle) {

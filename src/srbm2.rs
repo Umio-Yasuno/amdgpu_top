@@ -1,15 +1,17 @@
 pub struct SRBM2 {
-    pub sdma0: u8,
-    pub sdma1: u8,
-    pub vce0: u8,
-    pub sdma2: u8,
-    pub sdma3: u8,
-    pub vce1: u8,
+    pub flag: bool,
+    sdma0: u8,
+    sdma1: u8,
+    vce0: u8,
+    sdma2: u8,
+    sdma3: u8,
+    vce1: u8,
 }
 
 impl SRBM2 {
     pub const fn new() -> Self {
         Self {
+            flag: true,
             sdma0: 0,
             sdma1: 0,
             vce0: 0,
@@ -20,7 +22,12 @@ impl SRBM2 {
     }
 
     pub fn clear(&mut self) {
-        *self = Self::new()
+        self.sdma0 = 0;
+        self.sdma1 = 0;
+        self.vce0 = 0;
+        self.sdma2 = 0;
+        self.sdma3 = 0;
+        self.vce1 = 0;
     }
 
     pub fn acc(&mut self, reg: u32) {
@@ -33,6 +40,10 @@ impl SRBM2 {
     }
 
     pub fn stat(&self) -> String {
+        if !self.flag {
+            return "".to_string();
+        }
+
         format!(
             concat!(
                 " {vce0_name:<10 } => {vce0:3 }%, {vce1_name:<10 } => {vce1:3}% \n",

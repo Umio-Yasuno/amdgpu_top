@@ -1,15 +1,17 @@
 /* System Register Block */
 
 pub struct SRBM {
+    pub flag: bool,
     // pub mcc: u8, // ?
     // pub mcd: u8, // ?
-    pub uvd: u8, // Unified Video Decoder
+    uvd: u8, // Unified Video Decoder
     // pub bif: u8, // Bus Interface
 }
 
 impl SRBM {
     pub const fn new() -> Self {
         Self {
+            flag: true,
             // mcc: 0,
             // mcd: 0,
             uvd: 0,
@@ -18,7 +20,7 @@ impl SRBM {
     }
 
     pub fn clear(&mut self) {
-        *self = Self::new()
+        self.uvd = 0;
     }
 
     pub fn acc(&mut self, reg: u32) {
@@ -29,6 +31,10 @@ impl SRBM {
     }
 
     pub fn stat(&self) -> String {
+        if !self.flag {
+            return "".to_string();
+        }
+
         format!(
             concat!(
                 " {name:<10} => {uvd:3}% \n",

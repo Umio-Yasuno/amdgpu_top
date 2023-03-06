@@ -1,10 +1,5 @@
-macro_rules! get_bit {
-    ($reg: expr, $shift: expr) => {
-        (($reg >> $shift) & 0b1) as u8
-    };
-}
-
 pub struct CP_STAT {
+    pub flag: bool,
     // dc: u8, // Data Cache?
     pfp: u8, // Prefetch Parser
     // meq: u8, // Micro Engine Queue?
@@ -24,6 +19,7 @@ pub struct CP_STAT {
 impl CP_STAT {
     pub const fn new() -> Self {
         Self {
+            flag: false,
             pfp: 0,
             // meq: 0,
             me: 0,
@@ -35,36 +31,27 @@ impl CP_STAT {
     }
 
     pub fn clear(&mut self) {
-        *self = Self::new()
+        self.pfp = 0;
+        self.me = 0;
+        self.surface_sync = 0;
+        self.dma = 0;
+        self.scratch_memory = 0;
     }
 
     pub fn acc(&mut self, reg: u32) {
-        self.pfp += get_bit!(reg, 15);
+        self.pfp += ((reg >> 15) & 0b1) as u8;
         // self.meq += get_bit!(reg, 16);
-        self.me += get_bit!(reg, 17);
-        self.surface_sync += get_bit!(reg, 21);
-        self.dma += get_bit!(reg, 22);
-        self.scratch_memory += get_bit!(reg, 24);
+        self.me += ((reg >> 17) & 0b1) as u8;
+        self.surface_sync += ((reg >> 21) & 0b1) as u8;
+        self.dma += ((reg >> 22) & 0b1) as u8;
+        self.scratch_memory += ((reg >> 24) & 0b1) as u8;
     }
 
-    pub fn _stat(&self) -> String {
-        format!(
-            concat!(
-                "PFP_BUSY:       {pfp:3}%\n",
-                "ME_BUSY:        {me:3}%\n",
-                "SURFACE_SYNC:   {surface_sync:3}%\n",
-                "DMA_BUSY:       {dma:3}%\n",
-                "SCRATCH_MEMORY: {scratch_memory:3}%\n",
-            ),
-            pfp = self.pfp,
-            me = self.me,
-            surface_sync = self.surface_sync,
-            dma = self.dma,
-            scratch_memory = self.scratch_memory,
-        )
-    }
+    pub fn stat(&self) -> String {
+        if !self.flag {
+            return "".to_string();
+        }
 
-    pub fn verbose_stat(&self) -> String {
         format!(
             concat!(
                 " {pfp_name:<30           } => {pfp:3}% \n",
