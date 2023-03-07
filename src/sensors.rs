@@ -14,23 +14,37 @@ const SENSORS_LIST: [(SENSOR_TYPE, &str, u32); 7] = [
     (SENSOR_TYPE::VDDGFX, "mV", 1),
 ];
 
-pub struct Sensor;
+pub struct Sensor {
+    pub(crate) buf: String,
+}
+
+impl Default for Sensor {
+    fn default() -> Self {
+        Self {
+            buf: String::new(),
+        }
+    }
+}
 
 impl Sensor {
-    pub fn stat(amdgpu_dev: &DeviceHandle) -> String {
-        let mut s = String::new();
+    pub(crate) fn clear(&mut self) {
+        self.buf.clear();
+    }
+
+    pub fn stat(&mut self, amdgpu_dev: &DeviceHandle) {
+        use std::fmt::Write;
+
+        self.buf.clear();
 
         for (sensor, unit, div) in &SENSORS_LIST {
             let sensor_name = sensor.to_string();
 
             if let Ok(val) = amdgpu_dev.sensor_info(*sensor) {
                 let val = val.saturating_div(*div);
-                s.push_str(&format!(" {sensor_name:<15} => {val:>6} {unit:3} \n"));
+                writeln!(self.buf, " {sensor_name:<15} => {val:>6} {unit:3} ").unwrap();
             } else {
-                s.push_str(&format!(" {sensor_name:<15} => {NA:^10} \n"));
+                writeln!(self.buf, " {sensor_name:<15} => {NA:^10} ").unwrap();
             }
         }
-
-        s
     }
 }

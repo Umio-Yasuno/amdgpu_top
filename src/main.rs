@@ -120,6 +120,7 @@ fn main() {
     let mut cp_stat = cp_stat::CP_STAT::default();
     let mut vram = vram_usage::VRAM_INFO::from(&memory_info);
     let mut gem = gem_info::GemView::default();
+    let mut sensor = sensors::Sensor::default();
 
     let grbm_offset = AMDGPU::GRBM_OFFSET;
     let srbm_offset = AMDGPU::SRBM_OFFSET;
@@ -149,15 +150,17 @@ fn main() {
         } else {
             toggle_opt.gem = false;
         }
+
+        sensor.stat(&amdgpu_dev);
     }
 
     let grbm_view = TextContent::new(grbm.stat());
     let uvd_view = TextContent::new(uvd.stat());
     let srbm2_view = TextContent::new(srbm2.stat());
     let cp_stat_view = TextContent::new(cp_stat.stat());
-    let sensor_view = TextContent::new(sensors::Sensor::stat(&amdgpu_dev));
     let vram_view = TextContent::new(vram.stat());
     let gem_info_view = TextContent::new(&gem.buf);
+    let sensor_view = TextContent::new(&sensor.buf);
 
     let mut siv = cursive::default();
     {
@@ -306,9 +309,9 @@ fn main() {
                 }
 
                 if opt.sensor {
-                    sensor_view.set_content(sensors::Sensor::stat(&amdgpu_dev));
+                    sensor.stat(&amdgpu_dev);
                 } else { 
-                    sensor_view.set_content("");
+                    sensor.clear();
                 }
 
                 if opt.gem {
@@ -331,6 +334,7 @@ fn main() {
             srbm2_view.set_content(srbm2.stat());
             cp_stat_view.set_content(cp_stat.stat());
             gem_info_view.set_content(&gem.buf);
+            sensor_view.set_content(&sensor.buf);
 
             grbm.clear();
             uvd.clear();
