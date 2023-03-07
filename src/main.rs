@@ -11,6 +11,7 @@ mod cp_stat;
 mod vram_usage;
 mod args;
 mod sensors;
+mod gem_info;
 
 #[derive(Debug, Clone)]
 struct ToggleOptions {
@@ -21,6 +22,7 @@ struct ToggleOptions {
     vram: bool,
     sensor: bool,
     high_freq: bool,
+    gem: bool,
 }
 
 impl Default for ToggleOptions {
@@ -33,6 +35,7 @@ impl Default for ToggleOptions {
             vram: true,
             sensor: true,
             high_freq: false,
+            gem: true,
         }
     }
 }
@@ -119,13 +122,18 @@ fn main() {
         return;
     }
 
+    let gem_info_path = format!(
+        "/sys/kernel/debug/dri/{i}/amdgpu_gem_info",
+        i = main_opt.instance,
+    );
+
     let mut grbm = grbm::GRBM::new();
     let mut uvd = srbm::SRBM::new();
     let mut srbm2 = srbm2::SRBM2::new();
     let mut cp_stat = cp_stat::CP_STAT::new();
     let mut vram = vram_usage::VRAM_INFO::from(&memory_info);
+    let mut gem = gem_info::GemView::default();
 
-    // let grbm_offset = ext_info.get_grbm_offset();
     let grbm_offset = AMDGPU::GRBM_OFFSET;
     let srbm_offset = AMDGPU::SRBM_OFFSET;
     let srbm2_offset = AMDGPU::SRBM2_OFFSET;
@@ -146,6 +154,14 @@ fn main() {
         let _ = check_register_offset(&amdgpu_dev, "mmCP_STAT", cp_stat_offset);
         toggle_opt.cp_stat = false;
         cp_stat.flag = false;
+
+        if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
+            toggle_opt.gem = true;
+
+            gem.set(f);
+        } else {
+            toggle_opt.gem = false;
+        }
     }
 
     let grbm_view = TextContent::new(grbm.stat());
@@ -154,6 +170,7 @@ fn main() {
     let cp_stat_view = TextContent::new(cp_stat.stat());
     let sensor_view = TextContent::new(sensors::Sensor::stat(&amdgpu_dev));
     let vram_view = TextContent::new(vram.stat());
+    let gem_info_view = TextContent::new(&gem.buf);
 
     let mut siv = cursive::default();
     {
@@ -203,7 +220,7 @@ fn main() {
                 });
             });
         }
-       layout.add_child(
+        layout.add_child(
             Panel::new(
                 TextView::new_with_content(cp_stat_view.clone())
             )
@@ -224,6 +241,21 @@ fn main() {
             .title("Sensors")
             .title_position(HAlign::Left)
         );
+        if toggle_opt.gem {
+            layout.add_child(
+                Panel::new(
+                    TextView::new_with_content(gem_info_view.clone())
+                )
+                .title("GEM Info")
+                .title_position(HAlign::Left)
+            );
+            siv.add_global_callback('e', |s| {
+                s.with_user_data(|opt: &mut Opt| {
+                    let mut opt = opt.lock().unwrap();
+                    opt.gem ^= true;
+                });
+            });
+        }
         layout.add_child(TextView::new(TOGGLE_HELP));
 
         siv.add_layer(layout);
@@ -234,10 +266,10 @@ fn main() {
     set_global_cb(&mut siv);
 
     let cb_sink = siv.cb_sink().clone();
-    let opt = toggle_opt.clone();
 
     std::thread::spawn(move || {
         let mut sample = Sampling::low();
+        let opt = toggle_opt.clone();
 
         loop {
             for _ in 0..sample.count {
@@ -292,6 +324,14 @@ fn main() {
                     sensor_view.set_content("");
                 }
 
+                if opt.gem {
+                    if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
+                        gem.set(f);
+                    }
+                } else {
+                    gem.clear();
+                }
+
                 sample = if opt.high_freq {
                     Sampling::high()
                 } else {
@@ -303,6 +343,7 @@ fn main() {
             uvd_view.set_content(uvd.stat());
             srbm2_view.set_content(srbm2.stat());
             cp_stat_view.set_content(cp_stat.stat());
+            gem_info_view.set_content(&gem.buf);
 
             grbm.clear();
             uvd.clear();
@@ -327,20 +368,6 @@ fn check_register_offset(amdgpu_dev: &AMDGPU::DeviceHandle, name: &str, offset: 
 
 fn set_global_cb(siv: &mut cursive::Cursive) {
     siv.add_global_callback('q', cursive::Cursive::quit);
-    /*
-    siv.add_global_callback('u', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.uvd ^= true;
-        });
-    });
-    siv.add_global_callback('s', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.srbm ^= true;
-        });
-    });
-    */
     siv.add_global_callback('g', |s| {
         s.with_user_data(|opt: &mut Opt| {
             let mut opt = opt.lock().unwrap();

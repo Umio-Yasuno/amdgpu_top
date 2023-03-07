@@ -38,7 +38,7 @@ impl MainOpt {
                 },
                 "-d" | "--dump" => {
                     opt.dump = true;
-                }
+                },
                 _ => {
                     eprintln!("Unknown option: {arg}")
                 },
