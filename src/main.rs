@@ -5,22 +5,12 @@ use AMDGPU::GPU_INFO;
 use std::sync::{Arc, Mutex};
 
 mod grbm;
-use grbm::*;
-
 mod srbm;
-use srbm::*;
-
 mod srbm2;
-use srbm2::*;
-
 mod cp_stat;
-use cp_stat::*;
-
 mod vram_usage;
-use vram_usage::*;
-
+mod args;
 mod sensors;
-use sensors::*;
 
 #[derive(Debug, Clone)]
 struct ToggleOptions {
@@ -47,6 +37,8 @@ impl Default for ToggleOptions {
     }
 }
 
+type Opt = Arc<Mutex<ToggleOptions>>;
+
 struct Sampling {
     count: usize,
     delay: std::time::Duration,
@@ -70,52 +62,19 @@ impl Sampling {
 const TOGGLE_HELP: &str = " v(g)t (u)vd (s)rbm (c)p_stat\n (v)ram se(n)sor (h)igh_freq (q)uit";
 
 fn main() {
+    let main_opt = args::MainOpt::parse();
+
     let (amdgpu_dev, _major, _minor) = {
         use std::fs::File;
         use std::os::fd::IntoRawFd;
 
-        let fd = File::open("/dev/dri/renderD128").unwrap();
+        let path = format!("/dev/dri/renderD{}", 128 + main_opt.instance);
+        let f = File::open(&path).unwrap();
 
-        AMDGPU::DeviceHandle::init(fd.into_raw_fd()).unwrap()
+        AMDGPU::DeviceHandle::init(f.into_raw_fd()).unwrap()
     };
     let ext_info = amdgpu_dev.device_info().unwrap();
-
-    let mut grbm = GRBM::new();
-    let mut uvd = SRBM::new();
-    let mut srbm2 = SRBM2::new();
-    let mut cp_stat = CP_STAT::new();
-    let mut vram = VRAM_INFO::from(&amdgpu_dev.memory_info().unwrap());
-
-    // let grbm_offset = ext_info.get_grbm_offset();
-    let grbm_offset = AMDGPU::GRBM_OFFSET;
-    let srbm_offset = AMDGPU::SRBM_OFFSET;
-    let srbm2_offset = AMDGPU::SRBM2_OFFSET;
-    let cp_stat_offset = AMDGPU::CP_STAT_OFFSET;
-
-    let mut user_opt = ToggleOptions::default();
-
-    // check register offset
-    user_opt.grbm = check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", grbm_offset);
-    grbm.flag = user_opt.grbm;
-
-    user_opt.uvd = check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", srbm_offset);
-    uvd.flag = user_opt.uvd;
-
-    user_opt.srbm = check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", srbm2_offset);
-    srbm2.flag = user_opt.srbm;
-
-    let _ = check_register_offset(&amdgpu_dev, "mmCP_STAT", cp_stat_offset);
-    user_opt.cp_stat = false;
-    cp_stat.flag = false;
-
-    let grbm_view = TextContent::new(grbm.stat()); 
-    // mmSRBM_STATUS/mmSRBM_STATUS2 does not exist in GFX9 (soc15) or later.
-    let uvd_view = TextContent::new(uvd.stat());
-    let srbm2_view = TextContent::new(srbm2.stat());
-    let cp_stat_view = TextContent::new(cp_stat.stat());
-    let sensor_view = TextContent::new(Sensor::stat(&amdgpu_dev));
-    let vram_view = TextContent::new(vram.stat());
-
+    let memory_info = amdgpu_dev.memory_info().unwrap();
     let [min_gpu_clk, min_memory_clk] = {
         if let Ok(pci_bus) = amdgpu_dev.get_pci_bus_info() {
             if let [Some(gpu), Some(mem)] = [
@@ -138,7 +97,8 @@ fn main() {
         concat!(
             "{mark_name} ({did:#06X}:{rid:#04X})\n",
             "{asic}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
-            "{vram_type} {vram_bus_width}-bit, {min_memory_clk}-{max_memory_clk} MHz",
+            "{vram_type} {vram_bus_width}-bit, {vram_size} MiB, ",
+            "{min_memory_clk}-{max_memory_clk} MHz",
         ),
         mark_name = mark_name,
         did = ext_info.device_id(),
@@ -149,15 +109,55 @@ fn main() {
         max_gpu_clk = ext_info.max_engine_clock().saturating_div(1000),
         vram_type = ext_info.get_vram_type(),
         vram_bus_width = ext_info.vram_bit_width,
+        vram_size = memory_info.vram.total_heap_size >> 20,
         min_memory_clk = min_memory_clk,
         max_memory_clk = ext_info.max_memory_clock().saturating_div(1000),
     );
-    let user_opt = Arc::new(Mutex::new(user_opt));
+
+    if main_opt.dump {
+        println!("--- AMDGPU info dump ---\n{info_bar}");
+        return;
+    }
+
+    let mut grbm = grbm::GRBM::new();
+    let mut uvd = srbm::SRBM::new();
+    let mut srbm2 = srbm2::SRBM2::new();
+    let mut cp_stat = cp_stat::CP_STAT::new();
+    let mut vram = vram_usage::VRAM_INFO::from(&memory_info);
+
+    // let grbm_offset = ext_info.get_grbm_offset();
+    let grbm_offset = AMDGPU::GRBM_OFFSET;
+    let srbm_offset = AMDGPU::SRBM_OFFSET;
+    let srbm2_offset = AMDGPU::SRBM2_OFFSET;
+    let cp_stat_offset = AMDGPU::CP_STAT_OFFSET;
+
+    let mut toggle_opt = ToggleOptions::default();
+
+    {   // check register offset
+        toggle_opt.grbm = check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", grbm_offset);
+        grbm.flag = toggle_opt.grbm;
+
+        toggle_opt.uvd = check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", srbm_offset);
+        uvd.flag = toggle_opt.uvd;
+
+        toggle_opt.srbm = check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", srbm2_offset);
+        srbm2.flag = toggle_opt.srbm;
+
+        let _ = check_register_offset(&amdgpu_dev, "mmCP_STAT", cp_stat_offset);
+        toggle_opt.cp_stat = false;
+        cp_stat.flag = false;
+    }
+
+    let grbm_view = TextContent::new(grbm.stat());
+    let uvd_view = TextContent::new(uvd.stat());
+    let srbm2_view = TextContent::new(srbm2.stat());
+    let cp_stat_view = TextContent::new(cp_stat.stat());
+    let sensor_view = TextContent::new(sensors::Sensor::stat(&amdgpu_dev));
+    let vram_view = TextContent::new(vram.stat());
 
     let mut siv = cursive::default();
-
-    siv.add_layer(
-        LinearLayout::vertical()
+    {
+        let mut layout = LinearLayout::vertical()
             .child(
                 Panel::new(
                     TextView::new(&info_bar).center()
@@ -171,49 +171,70 @@ fn main() {
                 )
                 .title("GRBM")
                 .title_position(HAlign::Left)
-            )
-            .child(
+            );
+        // mmSRBM_STATUS/mmSRBM_STATUS2 does not exist in GFX9 (soc15) or later.
+        if toggle_opt.uvd {
+            layout.add_child(
                 Panel::new(
                     TextView::new_with_content(uvd_view.clone())
                 )
                 .title("UVD")
                 .title_position(HAlign::Left)
-            )
-            .child(
+            );
+            siv.add_global_callback('u', |s| {
+                s.with_user_data(|opt: &mut Opt| {
+                    let mut opt = opt.lock().unwrap();
+                    opt.uvd ^= true;
+                });
+            });
+        }
+        if toggle_opt.srbm {
+            layout.add_child(
                 Panel::new(
                     TextView::new_with_content(srbm2_view.clone())
                 )
                 .title("SRBM2")
                 .title_position(HAlign::Left)
+            );
+            siv.add_global_callback('s', |s| {
+                s.with_user_data(|opt: &mut Opt| {
+                    let mut opt = opt.lock().unwrap();
+                    opt.srbm ^= true;
+                });
+            });
+        }
+       layout.add_child(
+            Panel::new(
+                TextView::new_with_content(cp_stat_view.clone())
             )
-            .child(
-                Panel::new(
-                    TextView::new_with_content(cp_stat_view.clone())
-                )
-                .title("CP_STAT")
-                .title_position(HAlign::Left)
+            .title("CP_STAT")
+            .title_position(HAlign::Left)
+        );
+        layout.add_child(
+            Panel::new(
+                TextView::new_with_content(vram_view.clone())
             )
-            .child(
-                Panel::new(
-                    TextView::new_with_content(vram_view.clone())
-                )
-                .title("Memory Usage")
-                .title_position(HAlign::Left)
+            .title("Memory Usage")
+            .title_position(HAlign::Left)
+        );
+        layout.add_child(
+            Panel::new(
+                TextView::new_with_content(sensor_view.clone())
             )
-            .child(
-                Panel::new(
-                    TextView::new_with_content(sensor_view.clone())
-                )
-                .title("Sensors")
-                .title_position(HAlign::Left)
-            )
-            .child(TextView::new(TOGGLE_HELP))
-    );
+            .title("Sensors")
+            .title_position(HAlign::Left)
+        );
+        layout.add_child(TextView::new(TOGGLE_HELP));
+
+        siv.add_layer(layout);
+    }
+
+    let toggle_opt = Arc::new(Mutex::new(toggle_opt));
+    siv.set_user_data(toggle_opt.clone());
     set_global_cb(&mut siv);
-    siv.set_user_data(user_opt.clone());
 
     let cb_sink = siv.cb_sink().clone();
-    let opt = user_opt.clone();
+    let opt = toggle_opt.clone();
 
     std::thread::spawn(move || {
         let mut sample = Sampling::low();
@@ -266,7 +287,7 @@ fn main() {
                 }
 
                 if opt.sensor {
-                    sensor_view.set_content(Sensor::stat(&amdgpu_dev));
+                    sensor_view.set_content(sensors::Sensor::stat(&amdgpu_dev));
                 } else { 
                     sensor_view.set_content("");
                 }
@@ -304,40 +325,9 @@ fn check_register_offset(amdgpu_dev: &AMDGPU::DeviceHandle, name: &str, offset: 
     true
 }
 
-fn dump_info(amdgpu_dev: &AMDGPU::DeviceHandle) {
-    if let Ok(drm_ver) = amdgpu_dev.get_drm_version() {
-        let (major, minor, patchlevel) = drm_ver;
-        println!("drm version:\t{major}.{minor}.{patchlevel}");
-    }
-
-    if let Ok(mark_name) = amdgpu_dev.get_marketing_name() {
-        println!("Marketing Name:\t[{mark_name}]");
-    }
-
-    if let Ok(ext_info) = amdgpu_dev.device_info() {
-        println!(
-            concat!(
-                "DeviceID.RevID:\t{did:#06X}.{rid:#04X}\n",
-                "Family:\t{family}\n",
-                "ASIC:\t{asic}\n",
-                "Chip class:\t{chip_class}\n",
-                "VRAM: {vram_type} {vram_width}-bits"
-            ),
-            did = ext_info.device_id(),
-            rid = ext_info.pci_rev_id(),
-            family = ext_info.get_family_name(),
-            asic = ext_info.get_asic_name(),
-            chip_class = ext_info.get_chip_class(),
-            vram_type = ext_info.get_vram_type(),
-            vram_width = ext_info.vram_bit_width,
-        );
-    }
-}
-
 fn set_global_cb(siv: &mut cursive::Cursive) {
-    type Opt = Arc<Mutex<ToggleOptions>>;
-
     siv.add_global_callback('q', cursive::Cursive::quit);
+    /*
     siv.add_global_callback('u', |s| {
         s.with_user_data(|opt: &mut Opt| {
             let mut opt = opt.lock().unwrap();
@@ -350,6 +340,7 @@ fn set_global_cb(siv: &mut cursive::Cursive) {
             opt.srbm ^= true;
         });
     });
+    */
     siv.add_global_callback('g', |s| {
         s.with_user_data(|opt: &mut Opt| {
             let mut opt = opt.lock().unwrap();
