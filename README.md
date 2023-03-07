@@ -8,6 +8,17 @@
 cargo run
 ```
 
+### Option
+```
+FLAGS:
+    -d
+        Dump AMDGPU info
+
+OPTIONS
+    -i <u32>
+        Select GPU instance
+```
+
 ### Command
 | key |                                     |
 | :-- | :---------------------------------: |
@@ -16,6 +27,7 @@ cargo run
 | s   | toggle SRBM (SDMA, VCE)             |
 | c   | toggle CP_STAT (Prefetch Parser, Micro Engine, Scratch Memory, ..) |
 | v   | toggle VRAM/GTT Usage               |
+| e   | toggle GEM info (root privileges required) |
 | n   | toggle Sensors                      |
 | h   | change update interval (high = 100ms, low = 1000ms) |
 | q   | Quit                                |
