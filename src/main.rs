@@ -62,7 +62,7 @@ impl Sampling {
     }
 }
 
-const TOGGLE_HELP: &str = " v(g)t (u)vd (s)rbm (c)p_stat\n (v)ram se(n)sor (h)igh_freq (q)uit";
+const TOGGLE_HELP: &str = " v(g)t (u)vd (s)rbm (c)p_stat\n (v)ram g(e)m se(n)sor (h)igh_freq (q)uit";
 
 fn main() {
     let main_opt = args::MainOpt::parse();
@@ -78,20 +78,7 @@ fn main() {
     };
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
-    let [min_gpu_clk, min_memory_clk] = {
-        if let Ok(pci_bus) = amdgpu_dev.get_pci_bus_info() {
-            if let [Some(gpu), Some(mem)] = [
-                amdgpu_dev.get_min_gpu_clock_from_sysfs(&pci_bus),
-                amdgpu_dev.get_min_memory_clock_from_sysfs(&pci_bus),
-            ] {
-                [gpu, mem]
-            } else {
-                [0, 0]
-            }
-        } else {
-            [0, 0]
-        }
-    };
+    let (min_gpu_clk, min_memory_clk) = get_min_clk(&amdgpu_dev);
     let mark_name = match amdgpu_dev.get_marketing_name() {
         Ok(name) => name,
         Err(_) => "".to_string(),
@@ -234,13 +221,6 @@ fn main() {
             .title("Memory Usage")
             .title_position(HAlign::Left)
         );
-        layout.add_child(
-            Panel::new(
-                TextView::new_with_content(sensor_view.clone())
-            )
-            .title("Sensors")
-            .title_position(HAlign::Left)
-        );
         if toggle_opt.gem {
             layout.add_child(
                 Panel::new(
@@ -256,6 +236,13 @@ fn main() {
                 });
             });
         }
+        layout.add_child(
+            Panel::new(
+                TextView::new_with_content(sensor_view.clone())
+            )
+            .title("Sensors")
+            .title_position(HAlign::Left)
+        );
         layout.add_child(TextView::new(TOGGLE_HELP));
 
         siv.add_layer(layout);
@@ -355,6 +342,21 @@ fn main() {
     });
 
     siv.run();
+}
+
+fn get_min_clk(amdgpu_dev: &AMDGPU::DeviceHandle) -> (u64, u64) {
+    if let Ok(pci_bus) = amdgpu_dev.get_pci_bus_info() {
+        if let [Some(gpu), Some(mem)] = [
+            amdgpu_dev.get_min_gpu_clock_from_sysfs(&pci_bus),
+            amdgpu_dev.get_min_memory_clock_from_sysfs(&pci_bus),
+        ] {
+            (gpu, mem)
+        } else {
+            (0, 0)
+        }
+    } else {
+        (0, 0)
+    }
 }
 
 fn check_register_offset(amdgpu_dev: &AMDGPU::DeviceHandle, name: &str, offset: u32) -> bool {

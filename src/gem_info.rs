@@ -1,9 +1,9 @@
 #[derive(Debug, Clone)]
 pub(crate) struct GemInfo {
-    pub(crate) pid: u32,
-    pub(crate) vram_usage: u64,
-    pub(crate) gtt_usage: u64,
-    pub(crate) command_name: String,
+    pid: u32,
+    vram_usage: u64,
+    gtt_usage: u64,
+    command_name: String,
 }
 
 impl Default for GemInfo {
@@ -104,11 +104,11 @@ impl GemView {
 
             writeln!(
                 self.buf,
-                "{command_name:<10}({pid:>6}): {vram_usage:5} MiB VRAM, {gtt_usage:5} MiB GTT",
+                " {command_name:<10}({pid:>6}): {vram_usage:5} MiB VRAM, {gtt_usage:5} MiB GTT ",
                 command_name = g.command_name,
                 pid = g.pid,
-                vram_usage = g.vram_usage >> 20,
-                gtt_usage = g.gtt_usage >> 20,
+                vram_usage = g.vram_usage >> 20, // MiB
+                gtt_usage = g.gtt_usage >> 20, // MiB
             ).unwrap();
         }
     }

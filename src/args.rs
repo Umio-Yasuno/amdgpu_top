@@ -18,8 +18,9 @@ impl MainOpt {
         let mut skip = false;
 
         let args: Vec<String> = std::env::args().collect();
+        let args = &args[1..];
 
-        for (idx, arg) in args[1..].iter().enumerate() {
+        for (idx, arg) in args.iter().enumerate() {
             if skip {
                 skip = false;
                 continue;
@@ -31,9 +32,12 @@ impl MainOpt {
 
             match arg.as_str() {
                 "-i" => {
-                    if let Some(val_str) = args.get(idx+2) {
+                    if let Some(val_str) = args.get(idx+1) {
                         opt.instance = val_str.parse::<u32>().unwrap();
                         skip = true;
+                    } else {
+                        eprintln!("missing argument: \"-i <u32>\"");
+                        std::process::exit(1);
                     }
                 },
                 "-d" | "--dump" => {
