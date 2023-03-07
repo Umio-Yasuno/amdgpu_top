@@ -17,11 +17,11 @@ impl VRAM_INFO {
                 " {gtt_label:<10 } => {usage_gtt:>6}/{total_gtt:<6} MiB \n",
             ),
             vram_label = "VRAM",
-            usage_vram = self.usage_vram.saturating_div(1024 * 1024),
-            total_vram = self.total_vram.saturating_div(1024 * 1024),
+            usage_vram = self.usage_vram >> 20,
+            total_vram = self.total_vram >> 20,
             gtt_label = "GTT",
-            usage_gtt = self.usage_gtt.saturating_div(1024 * 1024),
-            total_gtt = self.total_gtt.saturating_div(1024 * 1024),
+            usage_gtt = self.usage_gtt >> 20,
+            total_gtt = self.total_gtt >> 20,
         )
     }
 }
