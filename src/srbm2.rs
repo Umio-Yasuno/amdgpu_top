@@ -46,9 +46,9 @@ impl SRBM2 {
 
         format!(
             concat!(
-                " {vce0_name:<10 } => {vce0:3 }%, {vce1_name:<10 } => {vce1:3}% \n",
-                " {sdma0_name:<10} => {sdma0:3}%, {sdma1_name:<10} => {sdma1:3}% \n",
-                " {sdma2_name:<10} => {sdma2:3}%, {sdma3_name:<10} => {sdma3:3}% \n",
+                " {vce0_name:<30 } => {vce0:3 }%, {vce1_name:<30 } => {vce1:3}% \n",
+                " {sdma0_name:<30} => {sdma0:3}%, {sdma1_name:<30} => {sdma1:3}% \n",
+                " {sdma2_name:<30} => {sdma2:3}%, {sdma3_name:<30} => {sdma3:3}% \n",
             ),
             vce0_name = "VCE0",
             vce0 = self.vce0,

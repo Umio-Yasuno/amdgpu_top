@@ -104,7 +104,7 @@ impl GemView {
 
             writeln!(
                 self.buf,
-                " {command_name:<10}({pid:>6}): {vram_usage:5} MiB VRAM, {gtt_usage:5} MiB GTT ",
+                " {command_name:<15}({pid:>6}): {vram_usage:5} MiB VRAM, {gtt_usage:5} MiB GTT ",
                 command_name = g.command_name,
                 pid = g.pid,
                 vram_usage = g.vram_usage >> 20, // MiB

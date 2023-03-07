@@ -27,7 +27,7 @@ impl Sensor {
                 let val = val.saturating_div(*div);
                 s.push_str(&format!(" {sensor_name:<15} => {val:>6} {unit:3} \n"));
             } else {
-                s.push_str(&format!(" {sensor_name:<15} => {NA:>10} \n"));
+                s.push_str(&format!(" {sensor_name:<15} => {NA:^10} \n"));
             }
         }
 

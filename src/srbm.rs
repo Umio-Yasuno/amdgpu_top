@@ -37,7 +37,7 @@ impl SRBM {
 
         format!(
             concat!(
-                " {name:<10} => {uvd:3}% \n",
+                " {name:<30} => {uvd:3}% \n",
                 // "MCC:           {mcc:3}%\n",
                 // "MCD:           {mcd:3}%\n",
                 // "Bus Interface: {bif}%\n",

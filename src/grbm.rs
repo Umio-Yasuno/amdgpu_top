@@ -82,15 +82,15 @@ impl GRBM {
 
         format!(
             concat!(
-                " {ta_name:<30 } => {ta:3}% \n",
+                " {ta_name:<30 } => {ta:3}%,",
                 " {vgt_name:<30} => {vgt:3}% \n",
-                " {ia_name:<30 } => {ia:3}% \n",
+                " {ia_name:<30 } => {ia:3}%,",
                 " {sx_name:<30 } => {sx:3}% \n",
-                " {spi_name:<30} => {spi:3}% \n",
+                " {spi_name:<30} => {spi:3}%,",
                 " {pa_name:<30 } => {pa:3}% \n",
-                " {db_name:<30 } => {db:3}% \n",
+                " {db_name:<30 } => {db:3}%,",
                 " {cb_name:<30 } => {cb:3}% \n",
-                " {cp_name:<30 } => {cp:3}% \n",
+                " {cp_name:<30 } => {cp:3}%,",
                 " {gui_name:<30} => {gui:3}% \n",
             ),
             ta_name = "Texture Addresser",
