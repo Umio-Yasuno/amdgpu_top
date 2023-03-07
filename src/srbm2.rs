@@ -8,8 +8,8 @@ pub struct SRBM2 {
     vce1: u8,
 }
 
-impl SRBM2 {
-    pub const fn new() -> Self {
+impl Default for SRBM2 {
+    fn default() -> Self {
         Self {
             flag: true,
             sdma0: 0,
@@ -20,7 +20,9 @@ impl SRBM2 {
             vce1: 0,
         }
     }
+}
 
+impl SRBM2 {
     pub fn clear(&mut self) {
         self.sdma0 = 0;
         self.sdma1 = 0;

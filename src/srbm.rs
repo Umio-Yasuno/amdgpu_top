@@ -8,8 +8,8 @@ pub struct SRBM {
     // pub bif: u8, // Bus Interface
 }
 
-impl SRBM {
-    pub const fn new() -> Self {
+impl Default for SRBM {
+    fn default() -> Self {
         Self {
             flag: true,
             // mcc: 0,
@@ -18,7 +18,9 @@ impl SRBM {
             // bif: 0,
         }
     }
+}
 
+impl SRBM {
     pub fn clear(&mut self) {
         self.uvd = 0;
     }

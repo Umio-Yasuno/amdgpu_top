@@ -114,10 +114,10 @@ fn main() {
         i = main_opt.instance,
     );
 
-    let mut grbm = grbm::GRBM::new();
-    let mut uvd = srbm::SRBM::new();
-    let mut srbm2 = srbm2::SRBM2::new();
-    let mut cp_stat = cp_stat::CP_STAT::new();
+    let mut grbm = grbm::GRBM::default();
+    let mut uvd = srbm::SRBM::default();
+    let mut srbm2 = srbm2::SRBM2::default();
+    let mut cp_stat = cp_stat::CP_STAT::default();
     let mut vram = vram_usage::VRAM_INFO::from(&memory_info);
     let mut gem = gem_info::GemView::default();
 

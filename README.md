@@ -49,8 +49,6 @@ OPTIONS
         * `/drivers/gpu/drm/amd/amdgpu/amdgpu_kms.c`
     * `amdgpu_allowed_register_entry`
         * `/drivers/gpu/drm/amd/amdgpu/{cik,nv,vi,si,soc15,soc21}.c`
-    * Register Offset
-        * `include/asic_reg/`
 
 ## Note
  * Currently tested only on AMD Polaris11 GPU (Radeon RX 560)

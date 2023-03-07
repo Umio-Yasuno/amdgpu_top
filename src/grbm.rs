@@ -23,8 +23,8 @@ pub struct GRBM {
     gui_active: u8,
 }
 
-impl GRBM {
-    pub const fn new() -> Self {
+impl Default for GRBM {
+    fn default() -> Self {
         Self {
             flag: true,
             ta: 0,
@@ -42,7 +42,9 @@ impl GRBM {
             gui_active: 0,
         }
     }
+}
 
+impl GRBM {
     pub fn clear(&mut self) {
         self.ta = 0;
         self.gds = 0;

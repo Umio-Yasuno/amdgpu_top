@@ -1,3 +1,4 @@
+#[allow(non_camel_case_types)]
 pub struct CP_STAT {
     pub flag: bool,
     // dc: u8, // Data Cache?
@@ -16,8 +17,8 @@ pub struct CP_STAT {
     // cp: u8, // Command Processor
 }
 
-impl CP_STAT {
-    pub const fn new() -> Self {
+impl Default for CP_STAT {
+    fn default() -> Self {
         Self {
             flag: false,
             pfp: 0,
@@ -29,7 +30,9 @@ impl CP_STAT {
             scratch_memory: 0,
         }
     }
+}
 
+impl CP_STAT {
     pub fn clear(&mut self) {
         self.pfp = 0;
         self.me = 0;

@@ -1,5 +1,6 @@
 use libdrm_amdgpu_sys::AMDGPU::drm_amdgpu_memory_info;
 
+#[allow(non_camel_case_types)]
 pub struct VRAM_INFO {
     pub total_vram: u64,
     pub usable_vram: u64,
