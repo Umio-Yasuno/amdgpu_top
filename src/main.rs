@@ -269,7 +269,7 @@ fn main() {
 
     std::thread::spawn(move || {
         let mut sample = Sampling::low();
-        let opt = toggle_opt.clone();
+        let opt = toggle_opt;
 
         loop {
             for _ in 0..sample.count {

@@ -13,8 +13,8 @@ impl VRAM_INFO {
     pub fn stat(&self) -> String {
         format!(
             concat!(
-                " {vram_label:<10} => {usage_vram:>6}/{total_vram:<6} MiB \n",
-                " {gtt_label:<10 } => {usage_gtt:>6}/{total_gtt:<6} MiB \n",
+                " {vram_label:<5} => {usage_vram:^5}/{total_vram:^5} MiB,",
+                " {gtt_label:<5 } => {usage_gtt:^5}/{total_gtt:^5} MiB",
             ),
             vram_label = "VRAM",
             usage_vram = self.usage_vram >> 20,

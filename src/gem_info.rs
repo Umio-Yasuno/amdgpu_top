@@ -17,59 +17,6 @@ impl Default for GemInfo {
     }
 }
 
-impl GemInfo {
-    pub(crate) fn get(raw: &String, gem_vec: &mut Vec<Self>) {
-        let mut gem;
-        // let mut gem_vec: Vec<GemInfo> = Vec::new();
-        // let mut lines = gem_info.lines().peekable();
-        let mut lines = raw.lines().peekable();
-
-        'main: loop {
-            gem = GemInfo::default();
-
-            let d = match lines.next() {
-                Some(d) => d,
-                None => break 'main,
-            };
-
-            if !d.starts_with("pid") {
-                continue;
-            }
-
-            {
-                let tmp: Vec<&str> = d.split(' ').collect();
-                gem.pid = tmp[tmp.len() - 3].parse().unwrap();
-                gem.command_name = tmp[tmp.len() - 1].to_string();
-            }
-
-            'calc_usage: loop {
-                let d = match lines.peek() {
-                    Some(&d) => d,
-                    None => {
-                        gem_vec.push(gem);
-                        break 'main;
-                    },
-                };
-
-                if d.starts_with("pid") {
-                    gem_vec.push(gem);
-                    break 'calc_usage;
-                }
-
-                let _ = lines.next();
-
-                let split: Vec<&str> = d.split(" byte ").collect();
-                let byte: u64 = split[0][13..].trim_start().parse().unwrap();
-                match &split[1][..4] {
-                    "VRAM" => gem.vram_usage += byte,
-                    " GTT" => gem.gtt_usage += byte,
-                    _ => {},
-                }
-            }
-        }
-    }
-}
-
 pub(crate) struct GemView {
     pub(crate) raw: String,
     pub(crate) vec_gem: Vec<GemInfo>,
@@ -97,7 +44,50 @@ impl GemView {
     }
 
     pub(crate) fn parse_raw_file(&mut self) {
-        GemInfo::get(&self.raw, &mut self.vec_gem)
+        let mut gem;
+        let mut lines = self.raw.lines().peekable();
+
+        'main: loop {
+            gem = GemInfo::default();
+
+            let line = match lines.next() {
+                Some(line) => line,
+                None => break 'main,
+            };
+
+            if line.starts_with("pid") {
+                let tmp: Vec<&str> = line.split(' ').collect();
+                gem.pid = tmp[tmp.len() - 3].parse().unwrap();
+                gem.command_name = tmp[tmp.len() - 1].to_string();
+            } else {
+                continue;
+            }
+
+            'calc_usage: loop {
+                let mem_line = match lines.peek() {
+                    Some(&mem_line) => mem_line,
+                    None => {
+                        self.vec_gem.push(gem);
+                        break 'main;
+                    },
+                };
+
+                if mem_line.starts_with("pid") {
+                    self.vec_gem.push(gem);
+                    break 'calc_usage;
+                }
+
+                let _ = lines.next();
+
+                let split: Vec<&str> = mem_line.split(" byte ").collect();
+                let byte: u64 = split[0][13..].trim_start().parse().unwrap();
+                match &split[1][..4] {
+                    "VRAM" => gem.vram_usage += byte,
+                    " GTT" => gem.gtt_usage += byte,
+                    _ => {},
+                }
+            } // 'calc_usage
+        } // 'main
     }
 
     pub(crate) fn print(&mut self) {
@@ -114,7 +104,7 @@ impl GemView {
 
             writeln!(
                 self.buf,
-                "{command_name:<10}({pid:^6}): {vram_usage:5} MiB VRAM, {gtt_usage:5} MiB GTT",
+                "{command_name:<10}({pid:>6}): {vram_usage:5} MiB VRAM, {gtt_usage:5} MiB GTT",
                 command_name = g.command_name,
                 pid = g.pid,
                 vram_usage = g.vram_usage >> 20,
