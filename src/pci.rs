@@ -36,7 +36,7 @@ impl PCI_LINK_INFO {
 
         writeln!(
             self.buf,
-            " PCI ({pci_bus}): Gen{cur_gen}x{cur_width} @ Gen{max_gen}x{max_width} (Max) ",
+            " PCI ({pci_bus}): Gen{cur_gen}x{cur_width:<2} @ Gen{max_gen}x{max_width:<2} (Max) ",
             pci_bus = pci_bus,
             cur_gen = self.cur.gen,
             cur_width = self.cur.width,
