@@ -55,6 +55,7 @@ impl GemView {
                 None => break 'main,
             };
 
+            /* pid     1479 command Xorg: */
             if line.starts_with("pid") {
                 let tmp: Vec<&str> = line.split(' ').collect();
                 gem.pid = tmp[tmp.len() - 3].parse().unwrap();
@@ -79,6 +80,7 @@ impl GemView {
 
                 let _ = lines.next();
 
+                /* 		0x00000001:      2097152 byte VRAM NO_CPU_ACCESS CPU_GTT_USWC */
                 let split: Vec<&str> = mem_line.split(" byte ").collect();
                 let byte: u64 = split[0][13..].trim_start().parse().unwrap();
                 match &split[1][..4] {
@@ -104,7 +106,7 @@ impl GemView {
 
             writeln!(
                 self.buf,
-                " {command_name:<15}({pid:>6}): {vram_usage:5} MiB VRAM, {gtt_usage:5} MiB GTT ",
+                " {command_name:<15}({pid:>8}): {vram_usage:5} MiB VRAM, {gtt_usage:5} MiB GTT ",
                 command_name = g.command_name,
                 pid = g.pid,
                 vram_usage = g.vram_usage >> 20, // MiB
