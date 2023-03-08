@@ -12,6 +12,8 @@ mod vram_usage;
 mod args;
 mod sensors;
 mod gem_info;
+mod pci;
+mod util;
 
 #[derive(Debug, Clone)]
 struct ToggleOptions {
@@ -19,6 +21,7 @@ struct ToggleOptions {
     uvd: bool,
     srbm: bool,
     cp_stat: bool,
+    pci: bool,
     vram: bool,
     sensor: bool,
     high_freq: bool,
@@ -32,6 +35,7 @@ impl Default for ToggleOptions {
             uvd: true,
             srbm: true,
             cp_stat: false,
+            pci: true,
             vram: true,
             sensor: true,
             high_freq: false,
@@ -62,7 +66,7 @@ impl Sampling {
     }
 }
 
-const TOGGLE_HELP: &str = " v(g)t (u)vd (s)rbm (c)p_stat\n (v)ram g(e)m se(n)sor (h)igh_freq (q)uit";
+const TOGGLE_HELP: &str = " v(g)t (u)vd (s)rbm (c)p_stat (p)ci\n (v)ram g(e)m se(n)sor (h)igh_freq (q)uit";
 
 fn main() {
     let main_opt = args::MainOpt::parse();
@@ -78,10 +82,12 @@ fn main() {
     };
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
-    let (min_gpu_clk, min_memory_clk) = get_min_clk(&amdgpu_dev);
+    let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
+
+    let (min_gpu_clk, min_memory_clk) = util::get_min_clk(&amdgpu_dev, &pci_bus);
     let mark_name = match amdgpu_dev.get_marketing_name() {
         Ok(name) => name,
-        Err(_) => "".to_string(),
+        Err(_) => "".to_string(), // unreachable
     };
     let info_bar = format!(
         concat!(
@@ -106,6 +112,8 @@ fn main() {
 
     if main_opt.dump {
         println!("--- AMDGPU info dump ---\n{info_bar}");
+        println!("PCI (domain:bus:dev.func): {pci_bus}");
+        util::vbios_info(&amdgpu_dev);
         return;
     }
 
@@ -121,6 +129,7 @@ fn main() {
     let mut vram = vram_usage::VRAM_INFO::from(&memory_info);
     let mut gem = gem_info::GemView::default();
     let mut sensor = sensors::Sensor::default();
+    let mut pci = pci::PCI_LINK_INFO::new(&pci_bus);
 
     let grbm_offset = AMDGPU::GRBM_OFFSET;
     let srbm_offset = AMDGPU::SRBM_OFFSET;
@@ -130,16 +139,16 @@ fn main() {
     let mut toggle_opt = ToggleOptions::default();
 
     {   // check register offset
-        toggle_opt.grbm = check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", grbm_offset);
+        toggle_opt.grbm = util::check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", grbm_offset);
         grbm.flag = toggle_opt.grbm;
 
-        toggle_opt.uvd = check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", srbm_offset);
+        toggle_opt.uvd = util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", srbm_offset);
         uvd.flag = toggle_opt.uvd;
 
-        toggle_opt.srbm = check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", srbm2_offset);
+        toggle_opt.srbm = util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", srbm2_offset);
         srbm2.flag = toggle_opt.srbm;
 
-        let _ = check_register_offset(&amdgpu_dev, "mmCP_STAT", cp_stat_offset);
+        let _ = util::check_register_offset(&amdgpu_dev, "mmCP_STAT", cp_stat_offset);
         toggle_opt.cp_stat = false;
         cp_stat.flag = false;
 
@@ -152,12 +161,14 @@ fn main() {
         }
 
         sensor.stat(&amdgpu_dev);
+        pci.print(&pci_bus);
     }
 
     let grbm_view = TextContent::new(grbm.stat());
     let uvd_view = TextContent::new(uvd.stat());
     let srbm2_view = TextContent::new(srbm2.stat());
     let cp_stat_view = TextContent::new(cp_stat.stat());
+    let pci_view = TextContent::new(&pci.buf);
     let vram_view = TextContent::new(vram.stat());
     let gem_info_view = TextContent::new(&gem.buf);
     let sensor_view = TextContent::new(&sensor.buf);
@@ -215,6 +226,13 @@ fn main() {
                 TextView::new_with_content(cp_stat_view.clone())
             )
             .title("CP_STAT")
+            .title_position(HAlign::Left)
+        );
+        layout.add_child(
+            Panel::new(
+                TextView::new_with_content(pci_view.clone())
+            )
+            .title("PCI")
             .title_position(HAlign::Left)
         );
         layout.add_child(
@@ -294,6 +312,12 @@ fn main() {
                 srbm2.flag = opt.srbm;
                 cp_stat.flag = opt.cp_stat;
 
+                if opt.pci {
+                    pci.update_print(&pci_bus);
+                } else {
+                    pci.clear();
+                }
+
                 if opt.vram {
                     if let [Ok(usage_vram), Ok(usage_gtt)] = [
                         amdgpu_dev.vram_usage_info(),
@@ -333,6 +357,7 @@ fn main() {
             uvd_view.set_content(uvd.stat());
             srbm2_view.set_content(srbm2.stat());
             cp_stat_view.set_content(cp_stat.stat());
+            pci_view.set_content(&pci.buf);
             gem_info_view.set_content(&gem.buf);
             sensor_view.set_content(&sensor.buf);
 
@@ -348,30 +373,6 @@ fn main() {
     siv.run();
 }
 
-fn get_min_clk(amdgpu_dev: &AMDGPU::DeviceHandle) -> (u64, u64) {
-    if let Ok(pci_bus) = amdgpu_dev.get_pci_bus_info() {
-        if let [Some(gpu), Some(mem)] = [
-            amdgpu_dev.get_min_gpu_clock_from_sysfs(&pci_bus),
-            amdgpu_dev.get_min_memory_clock_from_sysfs(&pci_bus),
-        ] {
-            (gpu, mem)
-        } else {
-            (0, 0)
-        }
-    } else {
-        (0, 0)
-    }
-}
-
-fn check_register_offset(amdgpu_dev: &AMDGPU::DeviceHandle, name: &str, offset: u32) -> bool {
-    if let Err(err) = amdgpu_dev.read_mm_registers(offset) {
-        println!("{name} ({offset:#X}) register is not allowed. ({err})");
-        return false;
-    }
-
-    true
-}
-
 fn set_global_cb(siv: &mut cursive::Cursive) {
     siv.add_global_callback('q', cursive::Cursive::quit);
     siv.add_global_callback('g', |s| {
@@ -384,6 +385,12 @@ fn set_global_cb(siv: &mut cursive::Cursive) {
         s.with_user_data(|opt: &mut Opt| {
             let mut opt = opt.lock().unwrap();
             opt.cp_stat ^= true;
+        });
+    });
+    siv.add_global_callback('p', |s| {
+        s.with_user_data(|opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.pci ^= true;
         });
     });
     siv.add_global_callback('v', |s| {
