@@ -9,3 +9,8 @@ license = "MIT"
 [dependencies]
 libdrm_amdgpu_sys = { git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs" }
 cursive = "0.20"
+
+[profile.release]
+opt-level = 2
+strip = true
+lto = true
