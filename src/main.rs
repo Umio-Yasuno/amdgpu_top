@@ -1,4 +1,5 @@
 use cursive::views::{TextContent, TextView, LinearLayout, Panel};
+use cursive::view::Scrollable;
 use cursive::align::HAlign;
 use libdrm_amdgpu_sys::*;
 use AMDGPU::GPU_INFO;
@@ -266,7 +267,11 @@ fn main() {
         );
         layout.add_child(TextView::new(TOGGLE_HELP));
 
-        siv.add_layer(layout);
+        siv.add_layer(
+            layout
+                .scrollable()
+                .scroll_y(true)
+        );
     }
 
     let toggle_opt = Arc::new(Mutex::new(toggle_opt));
