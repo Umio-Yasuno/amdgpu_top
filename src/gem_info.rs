@@ -1,3 +1,6 @@
+/* ref: drivers/gpu/drm/amd/amdgpu/amdgpu_gem.c */
+/* ref: drivers/gpu/drm/amd/amdgpu/amdgpu_object.c */
+
 #[derive(Debug, Clone)]
 pub(crate) struct GemInfo {
     pid: u32,
@@ -12,7 +15,7 @@ impl Default for GemInfo {
             pid: 0,
             vram_usage: 0,
             gtt_usage: 0,
-            command_name: "".to_string(),
+            command_name: String::new(),
         }
     }
 }
@@ -55,11 +58,27 @@ impl GemView {
                 None => break 'main,
             };
 
-            /* pid     1479 command Xorg: */
+            /* "pid     1479 command Xorg:" */
+            /* "pid %8d command %s:\n" */
             if line.starts_with("pid") {
-                let tmp: Vec<&str> = line.split(' ').collect();
-                gem.pid = tmp[tmp.len() - 3].parse().unwrap();
-                gem.command_name = tmp[tmp.len() - 1].to_string();
+                const PID_RANGE: std::ops::Range<usize> = {
+                    const PID_START: usize = 4;
+                    const PID_LEN: usize = 8;
+
+                    PID_START..(PID_START+PID_LEN)
+                };
+                const COMMAND_NAME: std::ops::RangeFrom<usize> = {
+                    const COMMAND_NAME_START: usize = PID_RANGE.end + 9;
+
+                    COMMAND_NAME_START..
+                };
+
+                gem.pid = line[PID_RANGE].trim_start().parse().unwrap();
+                gem.command_name = line[COMMAND_NAME].to_string();
+
+                if gem.command_name == "amdgpu_top:" {
+                    continue;
+                }
             } else {
                 continue;
             }
@@ -80,13 +99,26 @@ impl GemView {
 
                 let _ = lines.next();
 
-                /* 		0x00000001:      2097152 byte VRAM NO_CPU_ACCESS CPU_GTT_USWC */
-                let split: Vec<&str> = mem_line.split(" byte ").collect();
-                let byte: u64 = split[0][13..].trim_start().parse().unwrap();
-                match &split[1][..4] {
+                /* "		0x00000001:      2097152 byte VRAM NO_CPU_ACCESS CPU_GTT_USWC" */
+                /* "\t\t0x%08x: %12lld byte %s" */
+                const USAGE_RANGE: std::ops::Range<usize> = {
+                    const USAGE_START: usize = 4 + 8 + 2;
+                    const USAGE_LEN: usize = 12;
+
+                    USAGE_START..(USAGE_START+USAGE_LEN)
+                };
+                const MEM_TYPE_RANGE: std::ops::Range<usize> = {
+                    const MEM_TYPE_START: usize = USAGE_RANGE.end + 6;
+                    const MEM_TYPE_LEN: usize = 4;
+
+                    MEM_TYPE_START..(MEM_TYPE_START+MEM_TYPE_LEN)
+                };
+
+                let byte: u64 = mem_line[USAGE_RANGE].trim_start().parse().unwrap();
+                match &mem_line[MEM_TYPE_RANGE] {
                     "VRAM" => gem.vram_usage += byte,
                     " GTT" => gem.gtt_usage += byte,
-                    _ => {},
+                    " CPU" | _ => {},
                 }
             } // 'calc_usage
         } // 'main
@@ -97,16 +129,13 @@ impl GemView {
         const MIB: u64 = 1 << 20;
 
         for g in &self.vec_gem {
-            if g.command_name == "amdgpu_top:" {
-                continue;
-            }
             if g.vram_usage < MIB {
                 continue;
             }
 
             writeln!(
                 self.buf,
-                " {command_name:<15}({pid:>8}): {vram_usage:5} MiB VRAM, {gtt_usage:5} MiB GTT ",
+                " {command_name:<20}({pid:>8}): {vram_usage:5} MiB VRAM, {gtt_usage:5} MiB GTT ",
                 command_name = g.command_name,
                 pid = g.pid,
                 vram_usage = g.vram_usage >> 20, // MiB
