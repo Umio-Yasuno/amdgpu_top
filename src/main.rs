@@ -76,7 +76,7 @@ fn main() {
         use std::os::fd::IntoRawFd;
 
         let path = format!("/dev/dri/renderD{}", 128 + main_opt.instance);
-        let f = File::open(&path).unwrap();
+        let f = File::open(path).unwrap();
 
         AMDGPU::DeviceHandle::init(f.into_raw_fd()).unwrap()
     };
