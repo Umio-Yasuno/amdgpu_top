@@ -3,6 +3,7 @@ use cursive::view::Scrollable;
 use cursive::align::HAlign;
 use libdrm_amdgpu_sys::*;
 use AMDGPU::{CHIP_CLASS, GPU_INFO};
+use AMDGPU::{GRBM_OFFSET, SRBM_OFFSET, SRBM2_OFFSET, CP_STAT_OFFSET};
 use std::sync::{Arc, Mutex};
 
 mod grbm;
@@ -133,24 +134,19 @@ fn main() {
     let mut sensor = sensors::Sensor::default();
     let mut pci = pci::PCI_LINK_INFO::new(&pci_bus);
 
-    let grbm_offset = AMDGPU::GRBM_OFFSET;
-    let srbm_offset = AMDGPU::SRBM_OFFSET;
-    let srbm2_offset = AMDGPU::SRBM2_OFFSET;
-    let cp_stat_offset = AMDGPU::CP_STAT_OFFSET;
-
     let mut toggle_opt = ToggleOptions::default();
 
     {   // check register offset
         [toggle_opt.grbm, grbm.flag] =
-            [util::check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", grbm_offset); 2];
+            [util::check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", GRBM_OFFSET); 2];
 
         [toggle_opt.uvd, uvd.flag] =
-            [util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", srbm_offset); 2];
+            [util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", SRBM_OFFSET); 2];
 
         [toggle_opt.srbm, srbm2.flag] =
-            [util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", srbm2_offset); 2];
+            [util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", SRBM2_OFFSET); 2];
 
-        let _ = util::check_register_offset(&amdgpu_dev, "mmCP_STAT", cp_stat_offset);
+        let _ = util::check_register_offset(&amdgpu_dev, "mmCP_STAT", CP_STAT_OFFSET);
         [toggle_opt.cp_stat, cp_stat.flag] = [false; 2];
 
         if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
@@ -295,22 +291,22 @@ fn main() {
             for _ in 0..sample.count {
                 // high frequency accesses to registers can cause high GPU clocks
                 if grbm.flag {
-                    if let Ok(out) = amdgpu_dev.read_mm_registers(grbm_offset) {
+                    if let Ok(out) = amdgpu_dev.read_mm_registers(GRBM_OFFSET) {
                         grbm.bits.acc(out);
                     }
                 }
                 if uvd.flag {
-                    if let Ok(out) = amdgpu_dev.read_mm_registers(srbm_offset) {
+                    if let Ok(out) = amdgpu_dev.read_mm_registers(SRBM_OFFSET) {
                         uvd.bits.acc(out);
                     }
                 }
                 if srbm2.flag {
-                    if let Ok(out) = amdgpu_dev.read_mm_registers(srbm2_offset) {
+                    if let Ok(out) = amdgpu_dev.read_mm_registers(SRBM2_OFFSET) {
                         srbm2.bits.acc(out);
                     }
                 }
                 if cp_stat.flag {
-                    if let Ok(out) = amdgpu_dev.read_mm_registers(cp_stat_offset) {
+                    if let Ok(out) = amdgpu_dev.read_mm_registers(CP_STAT_OFFSET) {
                         cp_stat.bits.acc(out);
                     }
                 }
