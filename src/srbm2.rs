@@ -1,3 +1,6 @@
+use super::get_bit;
+
+#[derive(Default)]
 pub struct SRBM2 {
     pub flag: bool,
     sdma0: u8,
@@ -6,24 +9,11 @@ pub struct SRBM2 {
     sdma2: u8,
     sdma3: u8,
     vce1: u8,
-}
-
-impl Default for SRBM2 {
-    fn default() -> Self {
-        Self {
-            flag: true,
-            sdma0: 0,
-            sdma1: 0,
-            vce0: 0,
-            sdma2: 0,
-            sdma3: 0,
-            vce1: 0,
-        }
-    }
+    pub buf: String,
 }
 
 impl SRBM2 {
-    pub fn clear(&mut self) {
+    pub fn reg_clear(&mut self) {
         self.sdma0 = 0;
         self.sdma1 = 0;
         self.vce0 = 0;
@@ -33,20 +23,25 @@ impl SRBM2 {
     }
 
     pub fn acc(&mut self, reg: u32) {
-        self.sdma0 += ((reg >> 5) & 0b1) as u8;
-        self.sdma1 += ((reg >> 6) & 0b1) as u8;
-        self.vce0 += ((reg >> 7) & 0b1) as u8;
-        self.sdma2 += ((reg >> 10) & 0b1) as u8;
-        self.sdma3 += ((reg >> 11) & 0b1) as u8;
-        self.vce1 += ((reg >> 14) & 0b1) as u8;
+        self.sdma0 += get_bit!(reg, 5);
+        self.sdma1 += get_bit!(reg, 6);
+        self.vce0 += get_bit!(reg, 7);
+        self.sdma2 += get_bit!(reg, 10);
+        self.sdma3 += get_bit!(reg, 11);
+        self.vce1 += get_bit!(reg, 14);
     }
 
-    pub fn stat(&self) -> String {
+    pub fn print(&mut self) {
+        use std::fmt::Write;
+
+        self.buf.clear();
+
         if !self.flag {
-            return "".to_string();
+            return;
         }
 
-        format!(
+        write!(
+            self.buf,
             concat!(
                 " {vce0_name:<30 } => {vce0:3 }%, {vce1_name:<30 } => {vce1:3}% \n",
                 " {sdma0_name:<30} => {sdma0:3}%, {sdma1_name:<30} => {sdma1:3}% \n",
@@ -65,5 +60,6 @@ impl SRBM2 {
             sdma3_name = "SDMA3",
             sdma3 = self.sdma3,
         )
+        .unwrap();
     }
 }

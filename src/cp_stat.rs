@@ -1,4 +1,7 @@
+use super::get_bit;
+
 #[allow(non_camel_case_types)]
+#[derive(Default)]
 pub struct CP_STAT {
     pub flag: bool,
     // dc: u8, // Data Cache?
@@ -13,27 +16,14 @@ pub struct CP_STAT {
     // rciu: u8, // ?
     scratch_memory: u8, // LocalDataShare?
     // cpc_cpg: u8, // Command Processor Compute/Graphics?
-    // ce: u8, // ?
+    // cpf: u8, // Command Processor Fetchers
+    // ce: u8, // Constant Engine?
     // cp: u8, // Command Processor
-}
-
-impl Default for CP_STAT {
-    fn default() -> Self {
-        Self {
-            flag: false,
-            pfp: 0,
-            // meq: 0,
-            me: 0,
-            // query: 0,
-            surface_sync: 0,
-            dma: 0,
-            scratch_memory: 0,
-        }
-    }
+    pub buf: String,
 }
 
 impl CP_STAT {
-    pub fn clear(&mut self) {
+    pub fn reg_clear(&mut self) {
         self.pfp = 0;
         self.me = 0;
         self.surface_sync = 0;
@@ -42,20 +32,25 @@ impl CP_STAT {
     }
 
     pub fn acc(&mut self, reg: u32) {
-        self.pfp += ((reg >> 15) & 0b1) as u8;
+        self.pfp += get_bit!(reg, 15);
         // self.meq += get_bit!(reg, 16);
-        self.me += ((reg >> 17) & 0b1) as u8;
-        self.surface_sync += ((reg >> 21) & 0b1) as u8;
-        self.dma += ((reg >> 22) & 0b1) as u8;
-        self.scratch_memory += ((reg >> 24) & 0b1) as u8;
+        self.me += get_bit!(reg, 17);
+        self.surface_sync += get_bit!(reg, 21);
+        self.dma += get_bit!(reg, 22);
+        self.scratch_memory += get_bit!(reg, 24);
     }
 
-    pub fn stat(&self) -> String {
+    pub fn print(&mut self) {
+        use std::fmt::Write;
+
+        self.buf.clear();
+
         if !self.flag {
-            return "".to_string();
+            return;
         }
 
-        format!(
+        write!(
+            self.buf,
             concat!(
                 " {pfp_name:<30           } => {pfp:3}%,",
                 " {me_name:<30            } => {me:3}% \n",
@@ -74,5 +69,7 @@ impl CP_STAT {
             scratch_memory_name = "Scratch Memory",
             scratch_memory = self.scratch_memory,
         )
+        .unwrap();
     }
+
 }

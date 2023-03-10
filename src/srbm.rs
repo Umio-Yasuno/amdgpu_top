@@ -1,54 +1,41 @@
 /* System Register Block */
 
+use super::get_bit;
+
+#[derive(Default)]
 pub struct SRBM {
     pub flag: bool,
-    // pub mcc: u8, // ?
-    // pub mcd: u8, // ?
     uvd: u8, // Unified Video Decoder
-    // pub bif: u8, // Bus Interface
-}
-
-impl Default for SRBM {
-    fn default() -> Self {
-        Self {
-            flag: true,
-            // mcc: 0,
-            // mcd: 0,
-            uvd: 0,
-            // bif: 0,
-        }
-    }
+    pub buf: String,
 }
 
 impl SRBM {
-    pub fn clear(&mut self) {
+    pub fn reg_clear(&mut self) {
         self.uvd = 0;
     }
 
     pub fn acc(&mut self, reg: u32) {
-        // self.mcc += ((reg >> 11) & 0b1) as u8;
-        // self.mcd += ((reg >> 12) & 0b1) as u8;
-        self.uvd += ((reg >> 19) & 0b1) as u8;
-        // self.bif += ((reg >> 29) & 0b1) as u8;
+        self.uvd += get_bit!(reg, 19);
     }
 
-    pub fn stat(&self) -> String {
+    pub fn print(&mut self) {
+        use std::fmt::Write;
+
+        self.buf.clear();
+
         if !self.flag {
-            return "".to_string();
+            return;
         }
 
-        format!(
+        write!(
+            self.buf,
             concat!(
-                " {name:<30} => {uvd:3}% \n",
-                // "MCC:           {mcc:3}%\n",
-                // "MCD:           {mcd:3}%\n",
-                // "Bus Interface: {bif}%\n",
+                " {name:<30} => {uvd:3}%",
             ),
             name = "UVD",
             uvd = self.uvd,
-            // mcc = self.mcc,
-            // mcd = self.mcd,
-            // bif = self.bif,
         )
+        .unwrap();
     }
+
 }

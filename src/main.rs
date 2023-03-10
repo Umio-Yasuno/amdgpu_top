@@ -140,18 +140,17 @@ fn main() {
     let mut toggle_opt = ToggleOptions::default();
 
     {   // check register offset
-        toggle_opt.grbm = util::check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", grbm_offset);
-        grbm.flag = toggle_opt.grbm;
+        [toggle_opt.grbm, grbm.flag] =
+            [util::check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", grbm_offset); 2];
 
-        toggle_opt.uvd = util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", srbm_offset);
-        uvd.flag = toggle_opt.uvd;
+        [toggle_opt.uvd, uvd.flag] =
+            [util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", srbm_offset); 2];
 
-        toggle_opt.srbm = util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", srbm2_offset);
-        srbm2.flag = toggle_opt.srbm;
+        [toggle_opt.srbm, srbm2.flag] =
+            [util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", srbm2_offset); 2];
 
         let _ = util::check_register_offset(&amdgpu_dev, "mmCP_STAT", cp_stat_offset);
-        toggle_opt.cp_stat = false;
-        cp_stat.flag = false;
+        [toggle_opt.cp_stat, cp_stat.flag] = [false; 2];
 
         if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
             toggle_opt.gem = true;
@@ -161,16 +160,21 @@ fn main() {
             toggle_opt.gem = false;
         }
 
-        sensor.stat(&amdgpu_dev);
-        pci.print(&pci_bus);
+        grbm.print();
+        uvd.print();
+        srbm2.print();
+        cp_stat.print();
+        vram.print();
+        sensor.print(&amdgpu_dev);
+        pci.print();
     }
 
-    let grbm_view = TextContent::new(grbm.stat());
-    let uvd_view = TextContent::new(uvd.stat());
-    let srbm2_view = TextContent::new(srbm2.stat());
-    let cp_stat_view = TextContent::new(cp_stat.stat());
+    let grbm_view = TextContent::new(&grbm.buf);
+    let uvd_view = TextContent::new(&uvd.buf);
+    let srbm2_view = TextContent::new(&srbm2.buf);
+    let cp_stat_view = TextContent::new(&cp_stat.buf);
     let pci_view = TextContent::new(&pci.buf);
-    let vram_view = TextContent::new(vram.stat());
+    let vram_view = TextContent::new(&vram.buf);
     let gem_info_view = TextContent::new(&gem.buf);
     let sensor_view = TextContent::new(&sensor.buf);
 
@@ -318,29 +322,22 @@ fn main() {
                 cp_stat.flag = opt.cp_stat;
 
                 if opt.pci {
-                    pci.update_print(&pci_bus);
+                    pci.update_print();
                 } else {
                     pci.clear();
                 }
 
                 if opt.vram {
-                    if let [Ok(usage_vram), Ok(usage_gtt)] = [
-                        amdgpu_dev.vram_usage_info(),
-                        amdgpu_dev.gtt_usage_info(),
-                    ] {
-                        vram.usage_vram = usage_vram;
-                        vram.usage_gtt = usage_gtt;
-
-                        vram_view.set_content(vram.stat());
-                    }
+                    vram.update_usage(&amdgpu_dev);
+                    vram.print();
                 } else {
-                    vram_view.set_content("");
+                    vram.buf.clear();
                 }
 
                 if opt.sensor {
-                    sensor.stat(&amdgpu_dev);
+                    sensor.print(&amdgpu_dev);
                 } else { 
-                    sensor.clear();
+                    sensor.buf.clear();
                 }
 
                 if opt.gem {
@@ -358,18 +355,26 @@ fn main() {
                 };
             }
 
-            grbm_view.set_content(grbm.stat());
-            uvd_view.set_content(uvd.stat());
-            srbm2_view.set_content(srbm2.stat());
-            cp_stat_view.set_content(cp_stat.stat());
+            grbm.print();
+            uvd.print();
+            srbm2.print();
+            cp_stat.print();
+
+            grbm_view.set_content(&grbm.buf);
+            uvd_view.set_content(&uvd.buf);
+            srbm2_view.set_content(&srbm2.buf);
+            cp_stat_view.set_content(&cp_stat.buf);
+
+            vram_view.set_content(&vram.buf);
+
             pci_view.set_content(&pci.buf);
             gem_info_view.set_content(&gem.buf);
             sensor_view.set_content(&sensor.buf);
 
-            grbm.clear();
-            uvd.clear();
-            srbm2.clear();
-            cp_stat.clear();
+            grbm.reg_clear();
+            uvd.reg_clear();
+            srbm2.reg_clear();
+            cp_stat.reg_clear();
 
             cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
         }

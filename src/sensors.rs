@@ -14,24 +14,13 @@ const SENSORS_LIST: [(SENSOR_TYPE, &str, u32); 7] = [
     (SENSOR_TYPE::VDDGFX, "mV", 1),
 ];
 
+#[derive(Default)]
 pub struct Sensor {
-    pub(crate) buf: String,
-}
-
-impl Default for Sensor {
-    fn default() -> Self {
-        Self {
-            buf: String::new(),
-        }
-    }
+    pub buf: String,
 }
 
 impl Sensor {
-    pub(crate) fn clear(&mut self) {
-        self.buf.clear();
-    }
-
-    pub fn stat(&mut self, amdgpu_dev: &DeviceHandle) {
+    pub fn print(&mut self, amdgpu_dev: &DeviceHandle) {
         use std::fmt::Write;
 
         self.buf.clear();

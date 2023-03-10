@@ -1,19 +1,11 @@
-pub(crate) struct MainOpt {
-    pub(crate) instance: u32,
-    pub(crate) dump: bool,
-}
-
-impl Default for MainOpt {
-    fn default() -> Self {
-        Self {
-            instance: 0,
-            dump: false,
-        }
-    }
+#[derive(Default)]
+pub struct MainOpt {
+    pub instance: u32,
+    pub dump: bool,
 }
 
 impl MainOpt {
-    pub(crate) fn parse() -> Self {
+    pub fn parse() -> Self {
         let mut opt = Self::default();
         let mut skip = false;
 

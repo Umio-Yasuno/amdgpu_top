@@ -1,7 +1,14 @@
 use libdrm_amdgpu_sys::*;
 // use AMDGPU::GPU_INFO;
 
-pub(crate) fn get_min_clk(
+#[macro_export]
+macro_rules! get_bit {
+    ($reg: expr, $shift: expr) => {
+        (($reg >> $shift) & 0b1) as u8
+    };
+}
+
+pub fn get_min_clk(
     amdgpu_dev: &AMDGPU::DeviceHandle,
     pci_bus: &PCI::BUS_INFO
 ) -> (u64, u64) {
@@ -15,7 +22,7 @@ pub(crate) fn get_min_clk(
     }
 }
 
-pub(crate) fn check_register_offset(
+pub fn check_register_offset(
     amdgpu_dev: &AMDGPU::DeviceHandle,
     name: &str,
     offset: u32
@@ -28,7 +35,7 @@ pub(crate) fn check_register_offset(
     true
 }
 
-pub(crate) fn vbios_info(amdgpu_dev: &AMDGPU::DeviceHandle) {
+pub fn vbios_info(amdgpu_dev: &AMDGPU::DeviceHandle) {
     if let Ok(vbios) = unsafe { amdgpu_dev.vbios_info() } {
         let [name, pn, ver_str, date] = [
             vbios.name.to_vec(),

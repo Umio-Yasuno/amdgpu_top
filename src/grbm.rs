@@ -1,18 +1,17 @@
-/* GRBM: Graphics Register Block */
+/* GRBM: Graphics Register Block, Graphics Register Bus Manager? */
+/* ref: https://github.com/freedesktop/mesa-r600_demo/blob/master/r600_lib.c */
 
-macro_rules! get_bit {
-    ($reg: expr, $shift: expr) => {
-        (($reg >> $shift) & 0b1) as u8
-    };
-}
+use super::get_bit;
 
+#[derive(Default)]
 pub struct GRBM {
     pub flag: bool,
-    ta: u8, // Texture Addresser?
+    ta: u8, // Texture Pipe, Texture Addresser?
     gds: u8, // Global Data Share
     vgt: u8, // Vertex Grouper and Tessellator
     ia: u8, // Input Assembly?
     sx: u8, // Shader Export
+    wd_ge: u8, // Work Distributor, Geometry Engine? from GFX10
     spi: u8, // Shader Pipe Interpolator
     bci: u8, // Barycentric interpolation control
     sc: u8, // Scan Convertor
@@ -21,36 +20,17 @@ pub struct GRBM {
     cp: u8, // Command Processor?
     cb: u8, // Color Block/Buffer
     gui_active: u8,
-}
-
-impl Default for GRBM {
-    fn default() -> Self {
-        Self {
-            flag: true,
-            ta: 0,
-            gds: 0,
-            vgt: 0,
-            ia: 0,
-            sx: 0,
-            spi: 0,
-            bci: 0,
-            sc: 0,
-            pa: 0,
-            db: 0,
-            cp: 0,
-            cb: 0,
-            gui_active: 0,
-        }
-    }
+    pub buf: String,
 }
 
 impl GRBM {
-    pub fn clear(&mut self) {
+    pub fn reg_clear(&mut self) {
         self.ta = 0;
         self.gds = 0;
         self.vgt = 0;
         self.ia = 0;
         self.sx = 0;
+        self.wd_ge = 0;
         self.spi = 0;
         self.bci = 0;
         self.sc = 0;
@@ -67,6 +47,7 @@ impl GRBM {
         self.vgt += get_bit!(reg, 17);
         self.ia += get_bit!(reg, 19);
         self.sx += get_bit!(reg, 20);
+        self.wd_ge += get_bit!(reg, 21);
         self.spi += get_bit!(reg, 22);
         self.bci += get_bit!(reg, 23);
         self.sc += get_bit!(reg, 24);
@@ -77,12 +58,17 @@ impl GRBM {
         self.gui_active += get_bit!(reg, 31);
     }
 
-    pub fn stat(&self) -> String {
+    pub fn print(&mut self) {
+        use std::fmt::Write;
+
+        self.buf.clear();
+
         if !self.flag {
-            return "".to_string();
+            return;
         }
 
-        format!(
+        write!(
+            self.buf,
             concat!(
                 " {ta_name:<30 } => {ta:3}%,",
                 " {vgt_name:<30} => {vgt:3}% \n",
@@ -94,8 +80,9 @@ impl GRBM {
                 " {cb_name:<30 } => {cb:3}% \n",
                 " {cp_name:<30 } => {cp:3}%,",
                 " {gui_name:<30} => {gui:3}% \n",
+                " {wd_ge_name:<30} => {wd_ge}%",
             ),
-            ta_name = "Texture Addresser",
+            ta_name = "Texture Pipe",
             ta = self.ta,
             vgt_name = "Vertex Grouper / Tessellator",
             vgt = self.vgt,
@@ -113,8 +100,12 @@ impl GRBM {
             cb = self.cb,
             cp_name = "Command Processor",
             cp = self.cp,
-            gui_name = "GUI Active",
+            gui_name = "Graphics Pipe",
             gui = self.gui_active,
+            wd_ge_name = "Work Distributor / Geometry Engine",
+            wd_ge = self.wd_ge,
         )
+        .unwrap();
     }
+
 }

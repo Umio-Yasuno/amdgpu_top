@@ -1,52 +1,42 @@
 /* ref: drivers/gpu/drm/amd/amdgpu/amdgpu_gem.c */
 /* ref: drivers/gpu/drm/amd/amdgpu/amdgpu_object.c */
 
-#[derive(Debug, Clone)]
-pub(crate) struct GemInfo {
+#[derive(Debug, Default, Clone)]
+struct GemInfo {
     pid: u32,
     vram_usage: u64,
     gtt_usage: u64,
     command_name: String,
 }
 
-impl Default for GemInfo {
-    fn default() -> Self {
-        Self {
-            pid: 0,
-            vram_usage: 0,
-            gtt_usage: 0,
-            command_name: String::new(),
-        }
-    }
-}
-
-pub(crate) struct GemView {
-    pub(crate) raw: String,
-    pub(crate) vec_gem: Vec<GemInfo>,
-    pub(crate) buf: String,
+#[derive(Default)]
+pub struct GemView {
+    raw: String,
+    vec_gem: Vec<GemInfo>,
+    pub buf: String,
 }
 
 impl GemView {
-    pub(crate) fn clear(&mut self) {
+    pub fn clear(&mut self) {
         self.raw.clear();
         self.vec_gem.clear();
         self.buf.clear();
     }
 
-    pub(crate) fn set(&mut self, f: &mut std::fs::File) {
+    pub fn set(&mut self, f: &mut std::fs::File) {
         self.clear();
         self.read_to_string(f);
         self.parse_raw_file();
         self.print();
     }
 
-    pub(crate) fn read_to_string(&mut self, f: &mut std::fs::File) {
+    pub fn read_to_string(&mut self, f: &mut std::fs::File) {
         use std::io::Read;
 
         f.read_to_string(&mut self.raw).unwrap();
     }
 
-    pub(crate) fn parse_raw_file(&mut self) {
+    pub fn parse_raw_file(&mut self) {
         let mut gem;
         let mut lines = self.raw.lines().peekable();
 
@@ -124,7 +114,7 @@ impl GemView {
         } // 'main
     }
 
-    pub(crate) fn print(&mut self) {
+    pub fn print(&mut self) {
         use std::fmt::Write;
         const MIB: u64 = 1 << 20;
 
@@ -141,16 +131,6 @@ impl GemView {
                 vram_usage = g.vram_usage >> 20, // MiB
                 gtt_usage = g.gtt_usage >> 20, // MiB
             ).unwrap();
-        }
-    }
-}
-
-impl Default for GemView {
-    fn default() -> Self {
-        Self {
-            raw: String::new(),
-            vec_gem: Vec::new(),
-            buf: String::new(),
         }
     }
 }
