@@ -2,6 +2,7 @@
 /* ref: https://github.com/freedesktop/mesa-r600_demo/blob/master/r600_lib.c */
 use crate::util::Text;
 use super::get_bit;
+use libdrm_amdgpu_sys::AMDGPU::CHIP_CLASS;
 
 #[derive(Default)]
 #[allow(non_camel_case_types)]
@@ -53,7 +54,7 @@ pub struct GRBM {
 }
 
 impl GRBM {
-    pub fn print(&mut self) {
+    pub fn print(&mut self, chip_class: &CHIP_CLASS) {
         use std::fmt::Write;
 
         self.text.clear();
@@ -61,6 +62,12 @@ impl GRBM {
         if !self.flag {
             return;
         }
+
+        let wd_ge_name = if CHIP_CLASS::GFX10 <= *chip_class {
+            "Geometry Engine"
+        } else {
+            "Work Distributor"
+        };
 
         write!(
             self.text.buf,
@@ -75,7 +82,7 @@ impl GRBM {
                 " {cb_name:<30 } => {cb:3}% \n",
                 " {cp_name:<30 } => {cp:3}%,",
                 " {gui_name:<30} => {gui:3}% \n",
-                " {wd_ge_name:<30} => {wd_ge}%",
+                " {wd_ge_name:<30} => {wd_ge:3}%",
             ),
             ta_name = "Texture Pipe",
             ta = self.bits.ta,
@@ -97,14 +104,14 @@ impl GRBM {
             cp = self.bits.cp,
             gui_name = "Graphics Pipe",
             gui = self.bits.gui_active,
-            wd_ge_name = "Work Distributor / Geometry Engine",
+            wd_ge_name = wd_ge_name,
             wd_ge = self.bits.wd_ge,
         )
         .unwrap();
     }
 
-    pub fn dump(&mut self) {
-        self.print();
+    pub fn dump(&mut self, chip_class: &CHIP_CLASS) {
+        self.print(chip_class);
         self.text.set();
         self.bits.clear();
     }

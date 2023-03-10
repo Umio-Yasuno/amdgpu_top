@@ -2,7 +2,7 @@ use cursive::views::{TextView, LinearLayout, Panel};
 use cursive::view::Scrollable;
 use cursive::align::HAlign;
 use libdrm_amdgpu_sys::*;
-use AMDGPU::GPU_INFO;
+use AMDGPU::{CHIP_CLASS, GPU_INFO};
 use std::sync::{Arc, Mutex};
 
 mod grbm;
@@ -84,6 +84,7 @@ fn main() {
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
+    let chip_class = ext_info.get_chip_class();
 
     let (min_gpu_clk, min_memory_clk) = util::get_min_clk(&amdgpu_dev, &pci_bus);
     let mark_name = match amdgpu_dev.get_marketing_name() {
@@ -161,10 +162,11 @@ fn main() {
             toggle_opt.gem = false;
         }
 
-        grbm.dump();
+        grbm.dump(&chip_class);
         uvd.dump();
         srbm2.dump();
         cp_stat.dump();
+
         {
             vram.print();
             vram.text.set();
@@ -197,7 +199,7 @@ fn main() {
                 .title_position(HAlign::Left)
             );
         // mmSRBM_STATUS/mmSRBM_STATUS2 does not exist in GFX9 (soc15) or later.
-        if toggle_opt.uvd {
+        if toggle_opt.uvd && (chip_class < CHIP_CLASS::GFX9) {
             layout.add_child(
                 Panel::new(
                     TextView::new_with_content(uvd.text.content.clone())
@@ -212,7 +214,7 @@ fn main() {
                 });
             });
         }
-        if toggle_opt.srbm {
+        if toggle_opt.srbm && (chip_class < CHIP_CLASS::GFX9) {
             layout.add_child(
                 Panel::new(
                     TextView::new_with_content(srbm2.text.content.clone())
@@ -356,7 +358,7 @@ fn main() {
                 };
             }
 
-            grbm.dump();
+            grbm.dump(&chip_class);
             uvd.dump();
             cp_stat.dump();
             srbm2.dump();
