@@ -1,3 +1,5 @@
+use crate::util::Text;
+
 /* ref: drivers/gpu/drm/amd/amdgpu/amdgpu_gem.c */
 /* ref: drivers/gpu/drm/amd/amdgpu/amdgpu_object.c */
 
@@ -13,17 +15,17 @@ struct GemInfo {
 pub struct GemView {
     raw: String,
     vec_gem: Vec<GemInfo>,
-    pub buf: String,
+    pub text: Text,
 }
 
 impl GemView {
     pub fn clear(&mut self) {
         self.raw.clear();
         self.vec_gem.clear();
-        self.buf.clear();
+        self.text.clear();
     }
 
-    pub fn set(&mut self, f: &mut std::fs::File) {
+    pub fn read_to_print(&mut self, f: &mut std::fs::File) {
         self.clear();
         self.read_to_string(f);
         self.parse_raw_file();
@@ -124,13 +126,14 @@ impl GemView {
             }
 
             writeln!(
-                self.buf,
+                self.text.buf,
                 " {command_name:<20}({pid:>8}): {vram_usage:5} MiB VRAM, {gtt_usage:5} MiB GTT ",
                 command_name = g.command_name,
                 pid = g.pid,
                 vram_usage = g.vram_usage >> 20, // MiB
                 gtt_usage = g.gtt_usage >> 20, // MiB
-            ).unwrap();
+            )
+            .unwrap();
         }
     }
 }

@@ -1,5 +1,30 @@
 use libdrm_amdgpu_sys::*;
 // use AMDGPU::GPU_INFO;
+use cursive::views::TextContent;
+
+pub struct Text {
+    pub buf: String,
+    pub content: TextContent,
+}
+
+impl Text {
+    pub fn clear(&mut self) {
+        self.buf.clear();
+    }
+
+    pub fn set(&self) {
+        self.content.set_content(&self.buf);
+    }
+}
+
+impl Default for Text {
+    fn default() -> Self {
+        Self {
+            buf: String::new(),
+            content: TextContent::new(""),
+        }
+    }
+}
 
 #[macro_export]
 macro_rules! get_bit {

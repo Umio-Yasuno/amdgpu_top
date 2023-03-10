@@ -1,4 +1,4 @@
-use cursive::views::{TextContent, TextView, LinearLayout, Panel};
+use cursive::views::{TextView, LinearLayout, Panel};
 use cursive::view::Scrollable;
 use cursive::align::HAlign;
 use libdrm_amdgpu_sys::*;
@@ -127,8 +127,8 @@ fn main() {
     let mut uvd = srbm::SRBM::default();
     let mut srbm2 = srbm2::SRBM2::default();
     let mut cp_stat = cp_stat::CP_STAT::default();
-    let mut vram = vram_usage::VRAM_INFO::from(&memory_info);
-    let mut gem = gem_info::GemView::default();
+    let mut vram = vram_usage::VRAM_INFO::new(&memory_info);
+    let mut gem_info = gem_info::GemView::default();
     let mut sensor = sensors::Sensor::default();
     let mut pci = pci::PCI_LINK_INFO::new(&pci_bus);
 
@@ -155,28 +155,29 @@ fn main() {
         if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
             toggle_opt.gem = true;
 
-            gem.set(f);
+            gem_info.read_to_print(f);
+            gem_info.text.set();
         } else {
             toggle_opt.gem = false;
         }
 
-        grbm.print();
-        uvd.print();
-        srbm2.print();
-        cp_stat.print();
-        vram.print();
-        sensor.print(&amdgpu_dev);
-        pci.print();
+        grbm.dump();
+        uvd.dump();
+        srbm2.dump();
+        cp_stat.dump();
+        {
+            vram.print();
+            vram.text.set();
+        }
+        {
+            sensor.print(&amdgpu_dev);
+            sensor.text.set();
+        }
+        {
+            pci.print();
+            pci.text.set();
+        }
     }
-
-    let grbm_view = TextContent::new(&grbm.buf);
-    let uvd_view = TextContent::new(&uvd.buf);
-    let srbm2_view = TextContent::new(&srbm2.buf);
-    let cp_stat_view = TextContent::new(&cp_stat.buf);
-    let pci_view = TextContent::new(&pci.buf);
-    let vram_view = TextContent::new(&vram.buf);
-    let gem_info_view = TextContent::new(&gem.buf);
-    let sensor_view = TextContent::new(&sensor.buf);
 
     let mut siv = cursive::default();
     {
@@ -190,7 +191,7 @@ fn main() {
             )
             .child(
                 Panel::new(
-                    TextView::new_with_content(grbm_view.clone())
+                    TextView::new_with_content(grbm.text.content.clone())
                 )
                 .title("GRBM")
                 .title_position(HAlign::Left)
@@ -199,7 +200,7 @@ fn main() {
         if toggle_opt.uvd {
             layout.add_child(
                 Panel::new(
-                    TextView::new_with_content(uvd_view.clone())
+                    TextView::new_with_content(uvd.text.content.clone())
                 )
                 .title("UVD")
                 .title_position(HAlign::Left)
@@ -214,7 +215,7 @@ fn main() {
         if toggle_opt.srbm {
             layout.add_child(
                 Panel::new(
-                    TextView::new_with_content(srbm2_view.clone())
+                    TextView::new_with_content(srbm2.text.content.clone())
                 )
                 .title("SRBM2")
                 .title_position(HAlign::Left)
@@ -228,21 +229,21 @@ fn main() {
         }
         layout.add_child(
             Panel::new(
-                TextView::new_with_content(cp_stat_view.clone())
+                TextView::new_with_content(cp_stat.text.content.clone())
             )
             .title("CP_STAT")
             .title_position(HAlign::Left)
         );
         layout.add_child(
             Panel::new(
-                TextView::new_with_content(pci_view.clone())
+                TextView::new_with_content(pci.text.content.clone())
             )
             .title("PCI")
             .title_position(HAlign::Left)
         );
         layout.add_child(
             Panel::new(
-                TextView::new_with_content(vram_view.clone())
+                TextView::new_with_content(vram.text.content.clone())
             )
             .title("Memory Usage")
             .title_position(HAlign::Left)
@@ -250,7 +251,7 @@ fn main() {
         if toggle_opt.gem {
             layout.add_child(
                 Panel::new(
-                    TextView::new_with_content(gem_info_view.clone())
+                    TextView::new_with_content(gem_info.text.content.clone())
                 )
                 .title("GEM Info")
                 .title_position(HAlign::Left)
@@ -264,7 +265,7 @@ fn main() {
         }
         layout.add_child(
             Panel::new(
-                TextView::new_with_content(sensor_view.clone())
+                TextView::new_with_content(sensor.text.content.clone())
             )
             .title("Sensors")
             .title_position(HAlign::Left)
@@ -293,22 +294,22 @@ fn main() {
                 // high frequency accesses to registers can cause high GPU clocks
                 if grbm.flag {
                     if let Ok(out) = amdgpu_dev.read_mm_registers(grbm_offset) {
-                        grbm.acc(out);
+                        grbm.bits.acc(out);
                     }
                 }
                 if uvd.flag {
                     if let Ok(out) = amdgpu_dev.read_mm_registers(srbm_offset) {
-                        uvd.acc(out);
+                        uvd.bits.acc(out);
                     }
                 }
                 if srbm2.flag {
                     if let Ok(out) = amdgpu_dev.read_mm_registers(srbm2_offset) {
-                        srbm2.acc(out);
+                        srbm2.bits.acc(out);
                     }
                 }
                 if cp_stat.flag {
                     if let Ok(out) = amdgpu_dev.read_mm_registers(cp_stat_offset) {
-                        cp_stat.acc(out);
+                        cp_stat.bits.acc(out);
                     }
                 }
 
@@ -324,28 +325,28 @@ fn main() {
                 if opt.pci {
                     pci.update_print();
                 } else {
-                    pci.clear();
+                    pci.text.clear();
                 }
 
                 if opt.vram {
                     vram.update_usage(&amdgpu_dev);
                     vram.print();
                 } else {
-                    vram.buf.clear();
+                    vram.text.clear();
                 }
 
                 if opt.sensor {
                     sensor.print(&amdgpu_dev);
                 } else { 
-                    sensor.buf.clear();
+                    sensor.text.clear();
                 }
 
                 if opt.gem {
                     if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
-                        gem.set(f);
+                        gem_info.read_to_print(f);
                     }
                 } else {
-                    gem.clear();
+                    gem_info.clear();
                 }
 
                 sample = if opt.high_freq {
@@ -355,26 +356,15 @@ fn main() {
                 };
             }
 
-            grbm.print();
-            uvd.print();
-            srbm2.print();
-            cp_stat.print();
+            grbm.dump();
+            uvd.dump();
+            cp_stat.dump();
+            srbm2.dump();
 
-            grbm_view.set_content(&grbm.buf);
-            uvd_view.set_content(&uvd.buf);
-            srbm2_view.set_content(&srbm2.buf);
-            cp_stat_view.set_content(&cp_stat.buf);
-
-            vram_view.set_content(&vram.buf);
-
-            pci_view.set_content(&pci.buf);
-            gem_info_view.set_content(&gem.buf);
-            sensor_view.set_content(&sensor.buf);
-
-            grbm.reg_clear();
-            uvd.reg_clear();
-            srbm2.reg_clear();
-            cp_stat.reg_clear();
+            vram.text.set();
+            pci.text.set();
+            gem_info.text.set();
+            sensor.text.set();
 
             cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
         }

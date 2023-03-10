@@ -1,3 +1,4 @@
+use crate::util::Text;
 use crate::AMDGPU::{
     DeviceHandle,
     SENSOR_INFO::*,
@@ -16,23 +17,23 @@ const SENSORS_LIST: [(SENSOR_TYPE, &str, u32); 7] = [
 
 #[derive(Default)]
 pub struct Sensor {
-    pub buf: String,
+    pub text: Text,
 }
 
 impl Sensor {
     pub fn print(&mut self, amdgpu_dev: &DeviceHandle) {
         use std::fmt::Write;
 
-        self.buf.clear();
+        self.text.clear();
 
         for (sensor, unit, div) in &SENSORS_LIST {
             let sensor_name = sensor.to_string();
 
             if let Ok(val) = amdgpu_dev.sensor_info(*sensor) {
                 let val = val.saturating_div(*div);
-                writeln!(self.buf, " {sensor_name:<15} => {val:>6} {unit:3} ").unwrap();
+                writeln!(self.text.buf, " {sensor_name:<15} => {val:>6} {unit:3} ").unwrap();
             } else {
-                writeln!(self.buf, " {sensor_name:<15} => {NA:^10} ").unwrap();
+                writeln!(self.text.buf, " {sensor_name:<15} => {NA:^10} ").unwrap();
             }
         }
     }

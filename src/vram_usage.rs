@@ -1,17 +1,32 @@
+use crate::util::Text;
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, drm_amdgpu_memory_info};
 
 #[allow(non_camel_case_types)]
 pub struct VRAM_INFO {
-    pub total_vram: u64,
-    pub usable_vram: u64,
-    pub usage_vram: u64,
-    pub total_gtt: u64,
-    pub usable_gtt: u64,
-    pub usage_gtt: u64,
-    pub buf: String,
+    total_vram: u64,
+    _usable_vram: u64,
+    usage_vram: u64,
+    total_gtt: u64,
+    _usable_gtt: u64,
+    usage_gtt: u64,
+    pub text: Text,
 }
 
 impl VRAM_INFO {
+    pub fn new(info: &drm_amdgpu_memory_info) -> Self {
+        // usable_heap_size is not fixed.
+        // usable_heap_size = real_vram_size - pin_size - reserved_size
+        Self {
+            total_vram: info.vram.total_heap_size,
+            _usable_vram: info.vram.usable_heap_size,
+            usage_vram: info.vram.heap_usage,
+            total_gtt: info.gtt.total_heap_size,
+            _usable_gtt: info.gtt.usable_heap_size,
+            usage_gtt: info.gtt.heap_usage,
+            text: Text::default(),
+        }
+    }
+
     pub fn update_usage(&mut self, amdgpu_dev: &DeviceHandle) {
         if let [Ok(usage_vram), Ok(usage_gtt)] = [
             amdgpu_dev.vram_usage_info(),
@@ -25,10 +40,10 @@ impl VRAM_INFO {
     pub fn print(&mut self) {
         use std::fmt::Write;
 
-        self.buf.clear();
+        self.text.clear();
 
         write!(
-            self.buf,
+            self.text.buf,
             concat!(
                 " {vram_label:<5} => {usage_vram:>5}/{total_vram:<5} MiB,",
                 " {gtt_label:>17 } => {usage_gtt:>5}/{total_gtt:<5} MiB ",
@@ -41,21 +56,5 @@ impl VRAM_INFO {
             total_gtt = self.total_gtt >> 20,
         )
         .unwrap();
-    }
-}
-
-impl From<&drm_amdgpu_memory_info> for VRAM_INFO {
-    fn from(info: &drm_amdgpu_memory_info) -> Self {
-        // usable_heap_size is not fixed.
-        // usable_heap_size = real_vram_size - pin_size - reserved_size
-        Self {
-            total_vram: info.vram.total_heap_size,
-            usable_vram: info.vram.usable_heap_size, 
-            usage_vram: info.vram.heap_usage,
-            total_gtt: info.gtt.total_heap_size,
-            usable_gtt: info.gtt.usable_heap_size,
-            usage_gtt: info.gtt.heap_usage,
-            buf: String::new(),
-        }
     }
 }

@@ -1,3 +1,4 @@
+use crate::util::Text;
 use libdrm_amdgpu_sys::PCI;
 
 #[allow(non_camel_case_types)]
@@ -5,7 +6,7 @@ pub struct PCI_LINK_INFO {
     cur: PCI::LINK,
     max: PCI::LINK,
     bus_info: PCI::BUS_INFO,
-    pub buf: String,
+    pub text: Text,
 }
 
 impl PCI_LINK_INFO {
@@ -14,12 +15,8 @@ impl PCI_LINK_INFO {
             cur: pci_bus.get_link_info(PCI::STATUS::Current),
             max: pci_bus.get_link_info(PCI::STATUS::Max),
             bus_info: pci_bus.clone(),
-            buf: String::new(),
+            text: Text::default(),
         }
-    }
-
-    pub fn clear(&mut self) {
-        self.buf.clear()
     }
 
     pub fn update_print(&mut self) {
@@ -34,10 +31,10 @@ impl PCI_LINK_INFO {
     pub fn print(&mut self) {
         use std::fmt::Write;
 
-        self.clear();
+        self.text.clear();
 
         write!(
-            self.buf,
+            self.text.buf,
             " PCI ({pci_bus}): Gen{cur_gen}x{cur_width:<2} @ Gen{max_gen}x{max_width:<2} (Max) ",
             pci_bus = self.bus_info,
             cur_gen = self.cur.gen,

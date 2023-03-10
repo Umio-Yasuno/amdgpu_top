@@ -1,9 +1,9 @@
 use super::get_bit;
+use crate::util::Text;
 
-#[allow(non_camel_case_types)]
 #[derive(Default)]
-pub struct CP_STAT {
-    pub flag: bool,
+#[allow(non_camel_case_types)]
+pub struct CP_STAT_BITS {
     // dc: u8, // Data Cache?
     pfp: u8, // Prefetch Parser
     // meq: u8, // Micro Engine Queue?
@@ -19,16 +19,11 @@ pub struct CP_STAT {
     // cpf: u8, // Command Processor Fetchers
     // ce: u8, // Constant Engine?
     // cp: u8, // Command Processor
-    pub buf: String,
 }
 
-impl CP_STAT {
-    pub fn reg_clear(&mut self) {
-        self.pfp = 0;
-        self.me = 0;
-        self.surface_sync = 0;
-        self.dma = 0;
-        self.scratch_memory = 0;
+impl CP_STAT_BITS {
+    pub fn clear(&mut self) {
+        *self = Self::default()
     }
 
     pub fn acc(&mut self, reg: u32) {
@@ -39,18 +34,28 @@ impl CP_STAT {
         self.dma += get_bit!(reg, 22);
         self.scratch_memory += get_bit!(reg, 24);
     }
+}
 
+#[derive(Default)]
+#[allow(non_camel_case_types)]
+pub struct CP_STAT {
+    pub flag: bool,
+    pub bits: CP_STAT_BITS,
+    pub text: Text,
+}
+
+impl CP_STAT {
     pub fn print(&mut self) {
         use std::fmt::Write;
 
-        self.buf.clear();
+        self.text.clear();
 
         if !self.flag {
             return;
         }
 
         write!(
-            self.buf,
+            self.text.buf,
             concat!(
                 " {pfp_name:<30           } => {pfp:3}%,",
                 " {me_name:<30            } => {me:3}% \n",
@@ -59,17 +64,22 @@ impl CP_STAT {
                 " {scratch_memory_name:<30} => {scratch_memory:3}% \n",
             ),
             pfp_name = "Prefetch Parser",
-            pfp = self.pfp,
+            pfp = self.bits.pfp,
             me_name = "Micro Engine",
-            me = self.me,
+            me = self.bits.me,
             surface_sync_name = "Surface Sync",
-            surface_sync = self.surface_sync,
+            surface_sync = self.bits.surface_sync,
             dma_name = "DMA",
-            dma = self.dma,
+            dma = self.bits.dma,
             scratch_memory_name = "Scratch Memory",
-            scratch_memory = self.scratch_memory,
+            scratch_memory = self.bits.scratch_memory,
         )
         .unwrap();
     }
 
+    pub fn dump(&mut self) {
+        self.print();
+        self.text.set();
+        self.bits.clear();
+    }
 }

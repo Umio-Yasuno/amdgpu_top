@@ -1,11 +1,11 @@
 /* GRBM: Graphics Register Block, Graphics Register Bus Manager? */
 /* ref: https://github.com/freedesktop/mesa-r600_demo/blob/master/r600_lib.c */
-
+use crate::util::Text;
 use super::get_bit;
 
 #[derive(Default)]
-pub struct GRBM {
-    pub flag: bool,
+#[allow(non_camel_case_types)]
+pub struct GRBM_BITS {
     ta: u8, // Texture Pipe, Texture Addresser?
     gds: u8, // Global Data Share
     vgt: u8, // Vertex Grouper and Tessellator
@@ -20,25 +20,11 @@ pub struct GRBM {
     cp: u8, // Command Processor?
     cb: u8, // Color Block/Buffer
     gui_active: u8,
-    pub buf: String,
 }
 
-impl GRBM {
-    pub fn reg_clear(&mut self) {
-        self.ta = 0;
-        self.gds = 0;
-        self.vgt = 0;
-        self.ia = 0;
-        self.sx = 0;
-        self.wd_ge = 0;
-        self.spi = 0;
-        self.bci = 0;
-        self.sc = 0;
-        self.pa = 0;
-        self.db = 0;
-        self.cp = 0;
-        self.cb = 0;
-        self.gui_active = 0;
+impl GRBM_BITS {
+    pub fn clear(&mut self) {
+        *self = Self::default();
     }
 
     pub fn acc(&mut self, reg: u32) {
@@ -57,18 +43,27 @@ impl GRBM {
         self.cb += get_bit!(reg, 30);
         self.gui_active += get_bit!(reg, 31);
     }
+}
 
+#[derive(Default)]
+pub struct GRBM {
+    pub flag: bool,
+    pub bits: GRBM_BITS,
+    pub text: Text,
+}
+
+impl GRBM {
     pub fn print(&mut self) {
         use std::fmt::Write;
 
-        self.buf.clear();
+        self.text.clear();
 
         if !self.flag {
             return;
         }
 
         write!(
-            self.buf,
+            self.text.buf,
             concat!(
                 " {ta_name:<30 } => {ta:3}%,",
                 " {vgt_name:<30} => {vgt:3}% \n",
@@ -83,29 +78,34 @@ impl GRBM {
                 " {wd_ge_name:<30} => {wd_ge}%",
             ),
             ta_name = "Texture Pipe",
-            ta = self.ta,
+            ta = self.bits.ta,
             vgt_name = "Vertex Grouper / Tessellator",
-            vgt = self.vgt,
+            vgt = self.bits.vgt,
             ia_name = "Input Assembly",
-            ia = self.ia,
+            ia = self.bits.ia,
             sx_name = "Shader Export",
-            sx = self.sx,
+            sx = self.bits.sx,
             spi_name = "Shader Processor Interpolator",
-            spi = self.spi,
+            spi = self.bits.spi,
             pa_name = "Primitive Assembly",
-            pa = self.pa,
+            pa = self.bits.pa,
             db_name = "Depth Block",
-            db = self.db,
+            db = self.bits.db,
             cb_name = "Color Block",
-            cb = self.cb,
+            cb = self.bits.cb,
             cp_name = "Command Processor",
-            cp = self.cp,
+            cp = self.bits.cp,
             gui_name = "Graphics Pipe",
-            gui = self.gui_active,
+            gui = self.bits.gui_active,
             wd_ge_name = "Work Distributor / Geometry Engine",
-            wd_ge = self.wd_ge,
+            wd_ge = self.bits.wd_ge,
         )
         .unwrap();
     }
 
+    pub fn dump(&mut self) {
+        self.print();
+        self.text.set();
+        self.bits.clear();
+    }
 }
