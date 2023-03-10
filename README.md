@@ -43,6 +43,8 @@ OPTIONS
  * AMD Documentation
     * [R6xx_R7xx_3D.pdf](https://developer.amd.com/wordpress/media/2013/10/R6xx_R7xx_3D.pdf)
     * [CIK_3D_registers_v2.pdf](http://developer.amd.com/wordpress/media/2013/10/CIK_3D_registers_v2.pdf)
+ * <https://github.com/AMDResearch/omniperf/tree/v1.0.4/src/perfmon_pub>
+ * <https://github.com/freedesktop/mesa-r600_demo>
  * [radeonhd:r6xxErrata](https://www.x.org/wiki/radeonhd:r6xxErrata/)
  * Linux Kernel AMDGPU Driver
     * libdrm_amdgpu API
