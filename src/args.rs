@@ -4,6 +4,22 @@ pub struct MainOpt {
     pub dump: bool,
 }
 
+const HELP_MSG: &str = concat!(
+    "amdgpu_top ", env!("CARGO_PKG_VERSION"), "\n",
+    "https://github.com/Umio-Yasuno/amdgpu_top\n",
+    "\n",
+    "USAGE:\n",
+    "    cargo run -- [options ..] or <amdgpu_top> [options ..]\n",
+    "\n",
+    "FLAGS:\n",
+    "   -d, --dump\n",
+    "       Dump AMDGPU info (name, clock, chip_class, VRAM, PCI, VBIOS)\n",
+    "\n",
+    "OPTIONS:\n",
+    "   -i <u32>\n",
+    "       Select GPU instance\n",
+);
+
 impl MainOpt {
     pub fn parse() -> Self {
         let mut opt = Self::default();
@@ -34,6 +50,10 @@ impl MainOpt {
                 },
                 "-d" | "--dump" => {
                     opt.dump = true;
+                },
+                "-h" | "--help" => {
+                    println!("{HELP_MSG}");
+                    std::process::exit(0);
                 },
                 _ => {
                     eprintln!("Unknown option: {arg}")

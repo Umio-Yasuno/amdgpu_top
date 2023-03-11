@@ -5,18 +5,18 @@
 
 ## Usage
 ```
-cargo run
+cargo run -- [options ..]
 ```
 
 ### Option
 ```
 FLAGS:
-    -d, --dump
-        Dump AMDGPU info (name, clock, chip_class, VRAM, PCI, VBIOS)
+   -d, --dump
+       Dump AMDGPU info (name, clock, chip_class, VRAM, PCI, VBIOS)
 
-OPTIONS
-    -i <u32>
-        Select GPU instance
+OPTIONS:
+   -i <u32>
+       Select GPU instance
 ```
 
 ### Command
