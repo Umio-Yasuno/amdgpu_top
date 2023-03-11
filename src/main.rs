@@ -149,6 +149,8 @@ fn main() {
         let _ = util::check_register_offset(&amdgpu_dev, "mmCP_STAT", CP_STAT_OFFSET);
         [toggle_opt.cp_stat, cp_stat.flag] = [false; 2];
 
+        grbm.is_gfx10_plus = CHIP_CLASS::GFX10 <= chip_class;
+
         if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
             toggle_opt.gem = true;
 
@@ -158,7 +160,7 @@ fn main() {
             toggle_opt.gem = false;
         }
 
-        grbm.dump(&chip_class);
+        grbm.dump();
         uvd.dump();
         srbm2.dump();
         cp_stat.dump();
@@ -321,7 +323,8 @@ fn main() {
                 cp_stat.flag = opt.cp_stat;
 
                 if opt.pci {
-                    pci.update_print();
+                    pci.update_status();
+                    pci.print();
                 } else {
                     pci.text.clear();
                 }
@@ -354,7 +357,7 @@ fn main() {
                 };
             }
 
-            grbm.dump(&chip_class);
+            grbm.dump();
             uvd.dump();
             cp_stat.dump();
             srbm2.dump();

@@ -19,11 +19,6 @@ impl PCI_LINK_INFO {
         }
     }
 
-    pub fn update_print(&mut self) {
-        self.update_status();
-        self.print();
-    }
-
     pub fn update_status(&mut self) {
         self.cur = self.bus_info.get_link_info(PCI::STATUS::Current)
     }
@@ -41,6 +36,7 @@ impl PCI_LINK_INFO {
             cur_width = self.cur.width,
             max_gen = self.max.gen,
             max_width = self.max.width,
-        ).unwrap();
+        )
+        .unwrap();
     }
 }

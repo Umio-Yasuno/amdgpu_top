@@ -2,7 +2,6 @@
 /* ref: https://github.com/freedesktop/mesa-r600_demo/blob/master/r600_lib.c */
 use crate::util::Text;
 use super::get_bit;
-use libdrm_amdgpu_sys::AMDGPU::CHIP_CLASS;
 
 #[derive(Default)]
 #[allow(non_camel_case_types)]
@@ -49,12 +48,13 @@ impl GRBM_BITS {
 #[derive(Default)]
 pub struct GRBM {
     pub flag: bool,
+    pub is_gfx10_plus: bool,
     pub bits: GRBM_BITS,
     pub text: Text,
 }
 
 impl GRBM {
-    pub fn print(&mut self, chip_class: &CHIP_CLASS) {
+    pub fn print(&mut self) {
         use std::fmt::Write;
 
         self.text.clear();
@@ -63,7 +63,7 @@ impl GRBM {
             return;
         }
 
-        let wd_ge_name = if CHIP_CLASS::GFX10 <= *chip_class {
+        let wd_ge_name = if self.is_gfx10_plus {
             "Geometry Engine"
         } else {
             "Work Distributor"
@@ -110,8 +110,8 @@ impl GRBM {
         .unwrap();
     }
 
-    pub fn dump(&mut self, chip_class: &CHIP_CLASS) {
-        self.print(chip_class);
+    pub fn dump(&mut self) {
+        self.print();
         self.text.set();
         self.bits.clear();
     }
