@@ -82,7 +82,8 @@ impl GRBM {
                 " {cb_name:<30 } => {cb:3}% \n",
                 " {cp_name:<30 } => {cp:3}%,",
                 " {gui_name:<30} => {gui:3}% \n",
-                " {wd_ge_name:<30} => {wd_ge:3}%",
+                " {wd_ge_name:<30} => {wd_ge:3}%,",
+                " {gds_name:<30} => {gds:3}% \n",
             ),
             ta_name = "Texture Pipe",
             ta = self.bits.ta,
@@ -106,6 +107,8 @@ impl GRBM {
             gui = self.bits.gui_active,
             wd_ge_name = wd_ge_name,
             wd_ge = self.bits.wd_ge,
+            gds_name = "Global Data Share",
+            gds = self.bits.gds,
         )
         .unwrap();
     }
