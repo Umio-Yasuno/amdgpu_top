@@ -3,10 +3,11 @@ use cursive::view::Scrollable;
 use cursive::align::HAlign;
 use libdrm_amdgpu_sys::*;
 use AMDGPU::{CHIP_CLASS, GPU_INFO};
-use AMDGPU::{GRBM_OFFSET, SRBM_OFFSET, SRBM2_OFFSET, CP_STAT_OFFSET};
+use AMDGPU::{GRBM_OFFSET, GRBM2_OFFSET, SRBM_OFFSET, SRBM2_OFFSET, CP_STAT_OFFSET};
 use std::sync::{Arc, Mutex};
 
 mod grbm;
+mod grbm2;
 mod srbm;
 mod srbm2;
 mod cp_stat;
@@ -20,6 +21,7 @@ mod util;
 #[derive(Debug, Clone)]
 struct ToggleOptions {
     grbm: bool,
+    grbm2: bool,
     uvd: bool,
     srbm: bool,
     cp_stat: bool,
@@ -34,6 +36,7 @@ impl Default for ToggleOptions {
     fn default() -> Self {
         Self {
             grbm: true,
+            grbm2: true,
             uvd: true,
             srbm: true,
             cp_stat: false,
@@ -68,7 +71,7 @@ impl Sampling {
     }
 }
 
-const TOGGLE_HELP: &str = " v(g)t (u)vd (s)rbm (c)p_stat (p)ci\n (v)ram g(e)m se(n)sor (h)igh_freq (q)uit";
+const TOGGLE_HELP: &str = " (g)rbm g(r)bm2 (u)vd (s)rbm (c)p_stat (p)ci\n (v)ram g(e)m se(n)sor (h)igh_freq (q)uit";
 
 fn main() {
     let main_opt = args::MainOpt::parse();
@@ -126,6 +129,7 @@ fn main() {
     );
 
     let mut grbm = grbm::GRBM::default();
+    let mut grbm2 = grbm2::GRBM2::default();
     let mut uvd = srbm::SRBM::default();
     let mut srbm2 = srbm2::SRBM2::default();
     let mut cp_stat = cp_stat::CP_STAT::default();
@@ -139,6 +143,8 @@ fn main() {
     {   // check register offset
         [toggle_opt.grbm, grbm.flag] =
             [util::check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", GRBM_OFFSET); 2];
+        [toggle_opt.grbm2, grbm2.flag] =
+            [util::check_register_offset(&amdgpu_dev, "mmGRBM2_STATUS", GRBM2_OFFSET); 2];
 
         [toggle_opt.uvd, uvd.flag] =
             [util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", SRBM_OFFSET); 2];
@@ -161,6 +167,7 @@ fn main() {
         }
 
         grbm.dump();
+        grbm2.dump();
         uvd.dump();
         srbm2.dump();
         cp_stat.dump();
@@ -196,6 +203,21 @@ fn main() {
                 .title("GRBM")
                 .title_position(HAlign::Left)
             );
+        if toggle_opt.grbm2 {
+            layout.add_child(
+                Panel::new(
+                    TextView::new_with_content(grbm2.text.content.clone())
+                )
+                .title("GRBM2")
+                .title_position(HAlign::Left)
+            );
+            siv.add_global_callback('r', |s| {
+                s.with_user_data(|opt: &mut Opt| {
+                    let mut opt = opt.lock().unwrap();
+                    opt.grbm2 ^= true;
+                });
+            });
+        }
         // mmSRBM_STATUS/mmSRBM_STATUS2 does not exist in GFX9 (soc15) or later.
         if toggle_opt.uvd && (chip_class < CHIP_CLASS::GFX9) {
             layout.add_child(
@@ -297,6 +319,11 @@ fn main() {
                         grbm.bits.acc(out);
                     }
                 }
+                if grbm2.flag {
+                    if let Ok(out) = amdgpu_dev.read_mm_registers(GRBM2_OFFSET) {
+                        grbm2.bits.acc(out);
+                    }
+                }
                 if uvd.flag {
                     if let Ok(out) = amdgpu_dev.read_mm_registers(SRBM_OFFSET) {
                         uvd.bits.acc(out);
@@ -318,6 +345,7 @@ fn main() {
 
             if let Ok(opt) = opt.try_lock() {
                 grbm.flag = opt.grbm;
+                grbm2.flag = opt.grbm2;
                 uvd.flag = opt.uvd;
                 srbm2.flag = opt.srbm;
                 cp_stat.flag = opt.cp_stat;
@@ -358,6 +386,7 @@ fn main() {
             }
 
             grbm.dump();
+            grbm2.dump();
             uvd.dump();
             cp_stat.dump();
             srbm2.dump();
