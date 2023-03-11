@@ -11,8 +11,8 @@ cargo run
 ### Option
 ```
 FLAGS:
-    -d
-        Dump AMDGPU info
+    -d, --dump
+        Dump AMDGPU info (name, clock, chip_class, VRAM, PCI, VBIOS)
 
 OPTIONS
     -i <u32>
@@ -23,6 +23,7 @@ OPTIONS
 | key |                                     |
 | :-- | :---------------------------------: |
 | g   | toggle GRBM                         |
+| r   | toggle GRBM2                        |
 | u   | toggle UVD                          |
 | s   | toggle SRBM (SDMA, VCE)             |
 | c   | toggle CP_STAT (Prefetch Parser, Micro Engine, Scratch Memory, ..) |
@@ -43,6 +44,8 @@ OPTIONS
  * AMD Documentation
     * [R6xx_R7xx_3D.pdf](https://developer.amd.com/wordpress/media/2013/10/R6xx_R7xx_3D.pdf)
     * [CIK_3D_registers_v2.pdf](http://developer.amd.com/wordpress/media/2013/10/CIK_3D_registers_v2.pdf)
+    * [MI200 Performance Counters: Listing](https://docs.amd.com/bundle/AMD-Instinct-MI200-Performance-Counters-v5.3/page/MI200_Performance_Counters_Listing.html)
+    * [MI200 Performance Counters: Abbreviations](https://docs.amd.com/bundle/AMD-Instinct-MI200-Performance-Counters-v5.3/page/MI200_Performance_Counters_Abbreviations.html)
  * <https://github.com/AMDResearch/omniperf/tree/v1.0.4/src/perfmon_pub>
  * <https://github.com/freedesktop/mesa-r600_demo>
  * [radeonhd:r6xxErrata](https://www.x.org/wiki/radeonhd:r6xxErrata/)
