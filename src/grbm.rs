@@ -63,6 +63,24 @@ impl GRBM {
             return;
         }
 
+        if !self.is_gfx10_plus {
+            write!(
+                self.text.buf,
+                " {vgt_name:<30} => {vgt:3}%,",
+                vgt_name = "Vertex Grouper / Tessellator",
+                vgt = self.bits.vgt,
+            )
+            .unwrap();
+
+            write!(
+                self.text.buf,
+                " {ia_name:<30} => {ia:3}% \n",
+                ia_name = "Input Assembly",
+                ia = self.bits.ia,
+            )
+            .unwrap();
+        }
+
         let wd_ge_name = if self.is_gfx10_plus {
             "Geometry Engine"
         } else {
@@ -73,8 +91,6 @@ impl GRBM {
             self.text.buf,
             concat!(
                 " {ta_name:<30 } => {ta:3}%,",
-                " {vgt_name:<30} => {vgt:3}% \n",
-                " {ia_name:<30 } => {ia:3}%,",
                 " {sx_name:<30 } => {sx:3}% \n",
                 " {spi_name:<30} => {spi:3}%,",
                 " {pa_name:<30 } => {pa:3}% \n",
@@ -87,10 +103,6 @@ impl GRBM {
             ),
             ta_name = "Texture Pipe",
             ta = self.bits.ta,
-            vgt_name = "Vertex Grouper / Tessellator",
-            vgt = self.bits.vgt,
-            ia_name = "Input Assembly",
-            ia = self.bits.ia,
             sx_name = "Shader Export",
             sx = self.bits.sx,
             spi_name = "Shader Processor Interpolator",
