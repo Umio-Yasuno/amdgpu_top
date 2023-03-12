@@ -98,7 +98,7 @@ fn main() {
     let info_bar = format!(
         concat!(
             "{mark_name} ({did:#06X}:{rid:#04X})\n",
-            "{asic}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
+            "{asic}, {chip_class}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
             "{vram_type} {vram_bus_width}-bit, {vram_size} MiB, ",
             "{min_memory_clk}-{max_memory_clk} MHz",
         ),
@@ -106,6 +106,7 @@ fn main() {
         did = ext_info.device_id(),
         rid = ext_info.pci_rev_id(),
         asic = ext_info.get_asic_name(),
+        chip_class = chip_class,
         num_cu = ext_info.cu_active_number(),
         min_gpu_clk = min_gpu_clk,
         max_gpu_clk = ext_info.max_engine_clock().saturating_div(1000),
@@ -117,8 +118,11 @@ fn main() {
     );
 
     if main_opt.dump {
+        let link = pci_bus.get_link_info(PCI::STATUS::Current);
+
         println!("--- AMDGPU info dump ---\n{info_bar}");
         println!("PCI (domain:bus:dev.func): {pci_bus}");
+        println!("PCI Link: Gen{}x{}", link.gen, link.width);
         util::vbios_info(&amdgpu_dev);
         return;
     }
@@ -166,12 +170,12 @@ fn main() {
             toggle_opt.gem = false;
         }
 
+        // fill
         grbm.dump();
         grbm2.dump();
         uvd.dump();
         srbm2.dump();
         cp_stat.dump();
-
         {
             vram.print();
             vram.text.set();
