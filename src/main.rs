@@ -76,7 +76,7 @@ const TOGGLE_HELP: &str = " (g)rbm g(r)bm2 (u)vd (s)rbm (c)p_stat (p)ci\n (v)ram
 fn main() {
     let main_opt = args::MainOpt::parse();
 
-    let (amdgpu_dev, _major, _minor) = {
+    let (amdgpu_dev, major, minor) = {
         use std::fs::File;
         use std::os::fd::IntoRawFd;
 
@@ -120,7 +120,9 @@ fn main() {
     if main_opt.dump {
         let link = pci_bus.get_link_info(PCI::STATUS::Current);
 
-        println!("--- AMDGPU info dump ---\n{info_bar}");
+        println!("--- AMDGPU info dump ---");
+        println!("drm: {major}.{minor}");
+        println!("{info_bar}");
         println!("PCI (domain:bus:dev.func): {pci_bus}");
         println!("PCI Link: Gen{}x{}", link.gen, link.width);
         util::vbios_info(&amdgpu_dev);

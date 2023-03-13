@@ -1,33 +1,9 @@
-use crate::util::Text;
-use crate::get_bit;
-
-#[derive(Default)]
-#[allow(non_camel_case_types)]
-pub struct GRBM2_BITS {
-    // ea: u8, Efficiency Arbiter, GFX9+
-    tc: u8, // Texture Cache, Texture Cache per Pipe (GFX10+) Vector L1 Cache
-    cpf: u8, // Command Processor - Fetcher
-    cpc: u8, // Command Processor - Compute
-    cpg: u8, // Command Processor - Graphics
-}
-
-impl GRBM2_BITS {
-    pub fn clear(&mut self) {
-        *self = Self::default();
-    }
-
-    pub fn acc(&mut self, reg: u32) {
-        self.tc += get_bit!(reg, 25);
-        self.cpf += get_bit!(reg, 28);
-        self.cpc += get_bit!(reg, 29);
-        self.cpg += get_bit!(reg, 30);
-    }
-}
+use crate::util::{BITS, Text};
 
 #[derive(Default)]
 pub struct GRBM2 {
     pub flag: bool,
-    pub bits: GRBM2_BITS,
+    pub bits: BITS,
     pub text: Text,
 }
 
@@ -50,13 +26,13 @@ impl GRBM2 {
                 " {cpg_name:<30} => {cpg:3}% \n",
             ),
             tc_name = "Texture Cache",
-            tc = self.bits.tc,
+            tc = self.bits.0[25],
             cpf_name = "Command Processor Fetcher",
-            cpf = self.bits.cpf,
+            cpf = self.bits.0[28],
             cpc_name = "Command Processor Compute",
-            cpc = self.bits.cpc,
+            cpc = self.bits.0[29],
             cpg_name = "Command Processor Graphics",
-            cpg = self.bits.cpg,
+            cpg = self.bits.0[30],
         )
         .unwrap();
     }
