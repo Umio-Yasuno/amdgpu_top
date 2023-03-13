@@ -3,6 +3,8 @@ use crate::util::Text;
 /* ref: drivers/gpu/drm/amd/amdgpu/amdgpu_gem.c */
 /* ref: drivers/gpu/drm/amd/amdgpu/amdgpu_object.c */
 
+const MIB: u64 = 1 << 20;
+
 #[derive(Debug, Default, Clone)]
 struct GemInfo {
     pid: u32,
@@ -76,16 +78,12 @@ impl GemView {
             }
 
             'calc_usage: loop {
-                let mem_line = match lines.peek() {
-                    Some(&mem_line) => mem_line,
-                    None => {
-                        self.vec_gem.push(gem);
-                        break 'main;
-                    },
-                };
+                let mem_line = *lines.peek().unwrap_or_else(|| &"pid");
 
                 if mem_line.starts_with("pid") {
-                    self.vec_gem.push(gem);
+                    if MIB < gem.vram_usage {
+                        self.vec_gem.push(gem);
+                    }
                     break 'calc_usage;
                 }
 
@@ -118,13 +116,8 @@ impl GemView {
 
     pub fn print(&mut self) {
         use std::fmt::Write;
-        const MIB: u64 = 1 << 20;
 
         for g in &self.vec_gem {
-            if g.vram_usage < MIB {
-                continue;
-            }
-
             writeln!(
                 self.text.buf,
                 " {command_name:<20}({pid:>8}): {vram_usage:5} MiB VRAM, {gtt_usage:5} MiB GTT ",
