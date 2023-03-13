@@ -202,21 +202,10 @@ fn main() {
                 .title("amdgpu_top")
                 .title_position(HAlign::Center)
             )
-            .child(
-                Panel::new(
-                    TextView::new_with_content(grbm.text.content.clone())
-                )
-                .title("GRBM")
-                .title_position(HAlign::Left)
-            );
+            .child(grbm.text.panel("GRBM"));
+
         if toggle_opt.grbm2 {
-            layout.add_child(
-                Panel::new(
-                    TextView::new_with_content(grbm2.text.content.clone())
-                )
-                .title("GRBM2")
-                .title_position(HAlign::Left)
-            );
+            layout.add_child(grbm2.text.panel("GRBM2"));
             siv.add_global_callback('r', |s| {
                 s.with_user_data(|opt: &mut Opt| {
                     let mut opt = opt.lock().unwrap();
@@ -226,13 +215,7 @@ fn main() {
         }
         // mmSRBM_STATUS/mmSRBM_STATUS2 does not exist in GFX9 (soc15) or later.
         if toggle_opt.uvd && (chip_class < CHIP_CLASS::GFX9) {
-            layout.add_child(
-                Panel::new(
-                    TextView::new_with_content(uvd.text.content.clone())
-                )
-                .title("UVD")
-                .title_position(HAlign::Left)
-            );
+            layout.add_child(uvd.text.panel("UVD"));
             siv.add_global_callback('u', |s| {
                 s.with_user_data(|opt: &mut Opt| {
                     let mut opt = opt.lock().unwrap();
@@ -241,13 +224,7 @@ fn main() {
             });
         }
         if toggle_opt.srbm && (chip_class < CHIP_CLASS::GFX9) {
-            layout.add_child(
-                Panel::new(
-                    TextView::new_with_content(srbm2.text.content.clone())
-                )
-                .title("SRBM2")
-                .title_position(HAlign::Left)
-            );
+            layout.add_child(srbm2.text.panel("SRBM2"));
             siv.add_global_callback('s', |s| {
                 s.with_user_data(|opt: &mut Opt| {
                     let mut opt = opt.lock().unwrap();
@@ -255,35 +232,13 @@ fn main() {
                 });
             });
         }
-        layout.add_child(
-            Panel::new(
-                TextView::new_with_content(cp_stat.text.content.clone())
-            )
-            .title("CP_STAT")
-            .title_position(HAlign::Left)
-        );
-        layout.add_child(
-            Panel::new(
-                TextView::new_with_content(pci.text.content.clone())
-            )
-            .title("PCI")
-            .title_position(HAlign::Left)
-        );
-        layout.add_child(
-            Panel::new(
-                TextView::new_with_content(vram.text.content.clone())
-            )
-            .title("Memory Usage")
-            .title_position(HAlign::Left)
-        );
+
+        layout.add_child(cp_stat.text.panel("CP_STAT"));
+        layout.add_child(pci.text.panel("PCI"));
+        layout.add_child(vram.text.panel("Memory Usage"));
+
         if toggle_opt.gem {
-            layout.add_child(
-                Panel::new(
-                    TextView::new_with_content(gem_info.text.content.clone())
-                )
-                .title("GEM Info")
-                .title_position(HAlign::Left)
-            );
+            layout.add_child(gem_info.text.panel("GEM Info"));
             siv.add_global_callback('e', |s| {
                 s.with_user_data(|opt: &mut Opt| {
                     let mut opt = opt.lock().unwrap();
@@ -291,13 +246,8 @@ fn main() {
                 });
             });
         }
-        layout.add_child(
-            Panel::new(
-                TextView::new_with_content(sensor.text.content.clone())
-            )
-            .title("Sensors")
-            .title_position(HAlign::Left)
-        );
+
+        layout.add_child(sensor.text.panel("Sensors"));
         layout.add_child(TextView::new(TOGGLE_HELP));
 
         siv.add_layer(

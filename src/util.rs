@@ -1,6 +1,8 @@
 use libdrm_amdgpu_sys::*;
 // use AMDGPU::GPU_INFO;
 use cursive::views::TextContent;
+use cursive::views::{TextView, Panel};
+use cursive::align::HAlign;
 
 pub struct Text {
     pub buf: String,
@@ -14,6 +16,14 @@ impl Text {
 
     pub fn set(&self) {
         self.content.set_content(&self.buf);
+    }
+
+    pub fn panel(&self, title: &str) -> Panel<TextView> {
+       Panel::new(
+            TextView::new_with_content(self.content.clone())
+        )
+        .title(title)
+        .title_position(HAlign::Left)
     }
 }
 
