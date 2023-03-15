@@ -51,7 +51,10 @@ impl Default for ToggleOptions {
 
 type Opt = Arc<Mutex<ToggleOptions>>;
 
-const TOGGLE_HELP: &str = " (g)rbm g(r)bm2 (u)vd (s)rbm (c)p_stat (p)ci\n (v)ram g(e)m se(n)sor (h)igh_freq (q)uit";
+const TOGGLE_HELP: &str = concat!(
+    " (g)rbm g(r)bm2 (u)vd (s)rbm (c)p_stat (p)ci\n",
+    " (v)ram g(e)m se(n)sor (h)igh_freq (q)uit",
+);
 
 fn main() {
     let main_opt = args::MainOpt::parse();

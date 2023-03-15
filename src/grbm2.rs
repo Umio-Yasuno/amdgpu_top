@@ -3,8 +3,8 @@ use crate::Opt;
 
 const GRBM2_INDEX: &'static [(&str, usize)] = &[
     ("Texture Cache", 25),
-    ("Command Processor - Fetcher", 28),
-    ("Command Processor - Compute", 29),
+    ("Command Processor -  Fetcher", 28),
+    ("Command Processor -  Compute", 29),
     ("Command Processor - Graphics", 30),
 ];
 
