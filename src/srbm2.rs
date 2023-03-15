@@ -1,48 +1,45 @@
-use crate::util::{BITS, Text};
+use crate::util::{BITS, TopView, TopProgress, toggle_view};
+use crate::Opt;
 
-#[derive(Default)]
+const SRBM2_INDEX: &'static [(&str, usize)] = &[
+    ("VCE0", 7),
+//    ("VCE1", 14),
+    ("SDMA0", 5),
+    ("SDMA1", 6),
+//    ("SDMA2", 10),
+//    ("SDMA3", 11),
+];
+
 pub struct SRBM2 {
     pub flag: bool,
     pub bits: BITS,
-    pub text: Text,
+    pub views: TopProgress,
 }
 
 impl SRBM2 {
-    pub fn print(&mut self) {
-        use std::fmt::Write;
-
-        self.text.clear();
-
-        if !self.flag {
-            return;
+    pub fn new() -> Self {
+        Self {
+            flag: false,
+            bits: BITS::default(),
+            views: TopProgress::from(SRBM2_INDEX),
         }
-
-        write!(
-            self.text.buf,
-            concat!(
-                " {vce0_name:<30 } => {vce0:3 }%, {vce1_name:<30 } => {vce1:3}% \n",
-                " {sdma0_name:<30} => {sdma0:3}%, {sdma1_name:<30} => {sdma1:3}% \n",
-                " {sdma2_name:<30} => {sdma2:3}%, {sdma3_name:<30} => {sdma3:3}% \n",
-            ),
-            vce0_name = "VCE0",
-            vce0 = self.bits.0[7],
-            vce1_name = "VCE1",
-            vce1 = self.bits.0[14],
-            sdma0_name = "SDMA0",
-            sdma0 = self.bits.0[5],
-            sdma1_name = "SDMA1",
-            sdma1 = self.bits.0[6],
-            sdma2_name = "SDMA2",
-            sdma2 = self.bits.0[10],
-            sdma3_name = "SDMA3",
-            sdma3 = self.bits.0[11],
-        )
-        .unwrap();
     }
 
     pub fn dump(&mut self) {
-        self.print();
-        self.text.set();
+        self.views.set_value(&self.bits);
         self.bits.clear();
+    }
+
+    pub fn cb(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.srbm ^= true;
+        }
+
+        siv.call_on_name("SRBM2", toggle_view);
+    }
+
+    pub fn top_view(&self) -> TopView {
+        self.views.top_view("SRBM2", true)
     }
 }

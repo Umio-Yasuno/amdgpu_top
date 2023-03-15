@@ -1,5 +1,6 @@
 use cursive::views::{TextView, LinearLayout, Panel};
 use cursive::view::Scrollable;
+// use cursive::view::Nameable;
 use cursive::align::HAlign;
 use libdrm_amdgpu_sys::*;
 use AMDGPU::{CHIP_CLASS, GPU_INFO};
@@ -39,7 +40,7 @@ impl Default for ToggleOptions {
             grbm2: true,
             uvd: true,
             srbm: true,
-            cp_stat: false,
+            cp_stat: true,
             pci: true,
             vram: true,
             sensor: true,
@@ -134,11 +135,13 @@ fn main() {
         i = main_opt.instance,
     );
 
-    let mut grbm = grbm::GRBM::default();
-    let mut grbm2 = grbm2::GRBM2::default();
-    let mut uvd = srbm::SRBM::default();
-    let mut srbm2 = srbm2::SRBM2::default();
-    let mut cp_stat = cp_stat::CP_STAT::default();
+    // let mut grbm = grbm::GRBM::default();
+    let mut grbm = grbm::GRBM::new(CHIP_CLASS::GFX10 <= chip_class);
+
+    let mut grbm2 = grbm2::GRBM2::new();
+    let mut uvd = srbm::SRBM::new();
+    let mut srbm2 = srbm2::SRBM2::new();
+    let mut cp_stat = cp_stat::CP_STAT::new();
     let mut vram = vram_usage::VRAM_INFO::new(&memory_info);
     let mut gem_info = gem_info::GemView::default();
     let mut sensor = sensors::Sensor::default();
@@ -160,8 +163,6 @@ fn main() {
 
         let _ = util::check_register_offset(&amdgpu_dev, "mmCP_STAT", CP_STAT_OFFSET);
         [toggle_opt.cp_stat, cp_stat.flag] = [false; 2];
-
-        grbm.is_gfx10_plus = CHIP_CLASS::GFX10 <= chip_class;
 
         if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
             toggle_opt.gem = true;
@@ -201,39 +202,32 @@ fn main() {
                 )
                 .title("amdgpu_top")
                 .title_position(HAlign::Center)
-            )
-            .child(grbm.text.panel("GRBM"));
+            );
 
+        if toggle_opt.grbm {
+            layout.add_child(grbm.top_view());
+            siv.add_global_callback('g', grbm::GRBM::cb);
+        }
         if toggle_opt.grbm2 {
-            layout.add_child(grbm2.text.panel("GRBM2"));
-            siv.add_global_callback('r', |s| {
-                s.with_user_data(|opt: &mut Opt| {
-                    let mut opt = opt.lock().unwrap();
-                    opt.grbm2 ^= true;
-                });
-            });
+            layout.add_child(grbm2.top_view());
+            siv.add_global_callback('r', grbm2::GRBM2::cb);
         }
         // mmSRBM_STATUS/mmSRBM_STATUS2 does not exist in GFX9 (soc15) or later.
         if toggle_opt.uvd && (chip_class < CHIP_CLASS::GFX9) {
-            layout.add_child(uvd.text.panel("UVD"));
-            siv.add_global_callback('u', |s| {
-                s.with_user_data(|opt: &mut Opt| {
-                    let mut opt = opt.lock().unwrap();
-                    opt.uvd ^= true;
-                });
-            });
+            layout.add_child(uvd.top_view());
+            siv.add_global_callback('u', srbm::SRBM::cb);
         }
         if toggle_opt.srbm && (chip_class < CHIP_CLASS::GFX9) {
-            layout.add_child(srbm2.text.panel("SRBM2"));
-            siv.add_global_callback('s', |s| {
-                s.with_user_data(|opt: &mut Opt| {
-                    let mut opt = opt.lock().unwrap();
-                    opt.srbm ^= true;
-                });
-            });
+            layout.add_child(srbm2.top_view());
+            siv.add_global_callback('s', srbm2::SRBM2::cb);
         }
 
-        layout.add_child(cp_stat.text.panel("CP_STAT"));
+        {
+            let visible = toggle_opt.cp_stat;
+            layout.add_child(cp_stat.top_view(visible));
+            siv.add_global_callback('c', cp_stat::CP_STAT::cb);
+        }
+
         layout.add_child(pci.text.panel("PCI"));
         layout.add_child(vram.text.panel("Memory Usage"));
 
@@ -365,12 +359,6 @@ fn set_global_cb(siv: &mut cursive::Cursive) {
         s.with_user_data(|opt: &mut Opt| {
             let mut opt = opt.lock().unwrap();
             opt.grbm ^= true;
-        });
-    });
-    siv.add_global_callback('c', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.cp_stat ^= true;
         });
     });
     siv.add_global_callback('p', |s| {

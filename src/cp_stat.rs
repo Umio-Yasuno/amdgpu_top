@@ -1,49 +1,45 @@
-use crate::util::{BITS, Text};
+use crate::util::{BITS, toggle_view, TopView, TopProgress};
+use crate::Opt;
 
-#[derive(Default)]
+const CP_STAT_INDEX: &'static [(&str, usize)] = &[
+    ("Prefetch Parser", 15),
+    ("Micro Engine", 17),
+    // ("Surface Sync", 21),
+    ("DMA", 22),
+    ("Scratch Memory", 24),
+];
+
 #[allow(non_camel_case_types)]
 pub struct CP_STAT {
     pub flag: bool,
     pub bits: BITS,
-    pub text: Text,
+    pub views: TopProgress,
 }
 
 impl CP_STAT {
-    pub fn print(&mut self) {
-        use std::fmt::Write;
-
-        self.text.clear();
-
-        if !self.flag {
-            return;
+    pub fn new() -> Self {
+        Self {
+            flag: bool::default(),
+            bits: BITS::default(),
+            views: TopProgress::from(CP_STAT_INDEX),
         }
-
-        write!(
-            self.text.buf,
-            concat!(
-                " {pfp_name:<30           } => {pfp:3}%,",
-                " {me_name:<30            } => {me:3}% \n",
-                " {surface_sync_name:<30  } => {surface_sync:3}%,",
-                " {dma_name:<30           } => {dma:3}% \n",
-                " {scratch_memory_name:<30} => {scratch_memory:3}% \n",
-            ),
-            pfp_name = "Prefetch Parser",
-            pfp = self.bits.0[15],
-            me_name = "Micro Engine",
-            me = self.bits.0[17],
-            surface_sync_name = "Surface Sync",
-            surface_sync = self.bits.0[21],
-            dma_name = "DMA",
-            dma = self.bits.0[22],
-            scratch_memory_name = "Scratch Memory",
-            scratch_memory = self.bits.0[24],
-        )
-        .unwrap();
     }
 
     pub fn dump(&mut self) {
-        self.print();
-        self.text.set();
+        self.views.set_value(&self.bits);
         self.bits.clear();
+    }
+
+    pub fn cb(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.cp_stat ^= true;
+        }
+
+        siv.call_on_name("CP_STAT", toggle_view);
+    }
+
+    pub fn top_view(&self, visible: bool) -> TopView {
+        self.views.top_view("CP_STAT", visible)
     }
 }

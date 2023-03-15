@@ -1,88 +1,72 @@
 /* GRBM: Graphics Register Block, Graphics Register Bus Manager? */
 /* ref: https://github.com/freedesktop/mesa-r600_demo/blob/master/r600_lib.c */
-use crate::util::{BITS, Text};
+use crate::util::{BITS, toggle_view, TopView, TopProgress};
+use crate::Opt;
+use cursive::utils::Counter;
 
-#[derive(Default)]
 pub struct GRBM {
     pub flag: bool,
     pub is_gfx10_plus: bool,
-    // pub bits: GRBM_BITS,
+    pub views: TopProgress,
     pub bits: BITS,
-    pub text: Text,
 }
 
+const GRBM_INDEX: &'static [(&str, usize)] = &[
+    ("Graphics Pipe", 31),
+    ("Texture Pipe", 14),
+    ("Command Processor", 29),
+//  ("Global Data Share", 15),
+    ("Shader Export", 20),
+    ("Shader Processor Interpolator", 22),
+    ("Primitive Assembly", 25),
+    ("Depth Block", 26),
+    ("Color Block", 30),
+];
+
 impl GRBM {
-    pub fn print(&mut self) {
-        use std::fmt::Write;
+    pub fn new(is_gfx10_plus: bool) -> Self {
+        let mut index: Vec<(String, usize)> = Vec::with_capacity(32);
 
-        self.text.clear();
-
-        if !self.flag {
-            return;
-        }
-
-        if !self.is_gfx10_plus {
-            write!(
-                self.text.buf,
-                concat!(
-                    " {vgt_name:<30} => {vgt:3}%,",
-                    " {ia_name:<30} => {ia:3}% \n",
-                ),
-                vgt_name = "Vertex Grouper / Tessellator",
-                vgt = self.bits.0[17],
-                ia_name = "Input Assembly",
-                ia = self.bits.0[19],
-            )
-            .unwrap();
-        }
-
-        let wd_ge_name = if self.is_gfx10_plus {
-            "Geometry Engine"
+        if !is_gfx10_plus {
+            index.push(("Vertext Grouper / Tessellator".to_string(), 17));
+            index.push(("Input Assembly".to_string(), 19));
+            index.push(("Work Distributor".to_string(), 21));
         } else {
-            "Work Distributor"
-        };
+            index.push(("Geometry Engine".to_string(), 21));
+        }
 
-        write!(
-            self.text.buf,
-            concat!(
-                " {ta_name:<30 } => {ta:3}%,",
-                " {sx_name:<30 } => {sx:3}% \n",
-                " {spi_name:<30} => {spi:3}%,",
-                " {pa_name:<30 } => {pa:3}% \n",
-                " {db_name:<30 } => {db:3}%,",
-                " {cb_name:<30 } => {cb:3}% \n",
-                " {cp_name:<30 } => {cp:3}%,",
-                " {gui_name:<30} => {gui:3}% \n",
-                " {wd_ge_name:<30} => {wd_ge:3}%,",
-                " {gds_name:<30} => {gds:3}% \n",
-            ),
-            ta_name = "Texture Pipe",
-            ta = self.bits.0[14],
-            sx_name = "Shader Export",
-            sx = self.bits.0[20],
-            spi_name = "Shader Processor Interpolator",
-            spi = self.bits.0[22],
-            pa_name = "Primitive Assembly",
-            pa = self.bits.0[25],
-            db_name = "Depth Block",
-            db = self.bits.0[26],
-            cb_name = "Color Block",
-            cb = self.bits.0[30],
-            cp_name = "Command Processor",
-            cp = self.bits.0[29],
-            gui_name = "Graphics Pipe",
-            gui = self.bits.0[31],
-            wd_ge_name = wd_ge_name,
-            wd_ge = self.bits.0[21],
-            gds_name = "Global Data Share",
-            gds = self.bits.0[15],
-        )
-        .unwrap();
+        for (name, idx) in GRBM_INDEX.iter() {
+            index.push((name.to_string(), *idx));
+        }
+
+        let counters = (0..index.len()).map(|_| Counter::new(0)).collect();
+
+        Self {
+            flag: bool::default(),
+            is_gfx10_plus,
+            views: TopProgress {
+                index,
+                counters,
+            },
+            bits: BITS::default(),
+        }
     }
 
     pub fn dump(&mut self) {
-        self.print();
-        self.text.set();
+        self.views.set_value(&self.bits);
         self.bits.clear();
+    }
+
+    pub fn cb(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.grbm ^= true;
+        }
+
+        siv.call_on_name("GRBM", toggle_view);
+    }
+
+    pub fn top_view(&self) -> TopView {
+        self.views.top_view("GRBM", true)
     }
 }
