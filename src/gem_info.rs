@@ -81,7 +81,7 @@ impl GemView {
                 let mem_line = *lines.peek().unwrap_or_else(|| &"pid");
 
                 if mem_line.starts_with("pid") {
-                    if MIB < gem.vram_usage {
+                    if MIB * 10 < gem.vram_usage {
                         self.vec_gem.push(gem);
                     }
                     break 'calc_usage;
