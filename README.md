@@ -27,6 +27,7 @@ OPTIONS:
 | u   | toggle UVD                          |
 | s   | toggle SRBM (SDMA, VCE)             |
 | c   | toggle CP_STAT (Prefetch Parser, Micro Engine, Scratch Memory, ..) |
+| p   | toggle PCI                          |
 | v   | toggle VRAM/GTT Usage               |
 | e   | toggle GEM info (root privileges required) |
 | n   | toggle Sensors                      |
