@@ -6,9 +6,8 @@ use cursive::utils::Counter;
 
 pub struct GRBM {
     pub flag: bool,
-    pub is_gfx10_plus: bool,
-    pub views: TopProgress,
     pub bits: BITS,
+    views: TopProgress,
 }
 
 const GRBM_INDEX: &'static [(&str, usize)] = &[
@@ -43,7 +42,6 @@ impl GRBM {
 
         Self {
             flag: bool::default(),
-            is_gfx10_plus,
             views: TopProgress {
                 index,
                 counters,

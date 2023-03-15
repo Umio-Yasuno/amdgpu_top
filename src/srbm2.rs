@@ -13,7 +13,7 @@ const SRBM2_INDEX: &'static [(&str, usize)] = &[
 pub struct SRBM2 {
     pub flag: bool,
     pub bits: BITS,
-    pub views: TopProgress,
+    views: TopProgress,
 }
 
 impl SRBM2 {

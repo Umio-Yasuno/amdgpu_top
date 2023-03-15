@@ -11,7 +11,7 @@ const GRBM2_INDEX: &'static [(&str, usize)] = &[
 pub struct GRBM2 {
     pub flag: bool,
     pub bits: BITS,
-    pub views: TopProgress,
+    views: TopProgress,
 }
 
 impl GRBM2 {

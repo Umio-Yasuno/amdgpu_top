@@ -1,4 +1,5 @@
 use crate::util::Text;
+use crate::Opt;
 
 /* ref: drivers/gpu/drm/amd/amdgpu/amdgpu_gem.c */
 /* ref: drivers/gpu/drm/amd/amdgpu/amdgpu_object.c */
@@ -127,6 +128,13 @@ impl GemView {
                 gtt_usage = g.gtt_usage >> 20, // MiB
             )
             .unwrap();
+        }
+    }
+
+    pub fn cb(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.gem ^= true;
         }
     }
 }

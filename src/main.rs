@@ -114,9 +114,7 @@ fn main() {
         i = main_opt.instance,
     );
 
-    // let mut grbm = grbm::GRBM::default();
     let mut grbm = grbm::GRBM::new(CHIP_CLASS::GFX10 <= chip_class);
-
     let mut grbm2 = grbm2::GRBM2::new();
     let mut uvd = srbm::SRBM::new();
     let mut srbm2 = srbm2::SRBM2::new();
@@ -153,11 +151,6 @@ fn main() {
         }
 
         // fill
-        grbm.dump();
-        grbm2.dump();
-        uvd.dump();
-        srbm2.dump();
-        cp_stat.dump();
         {
             vram.print();
             vram.text.set();
@@ -213,15 +206,9 @@ fn main() {
             layout.add_child(vram.text.panel("Memory Usage"));
             siv.add_global_callback('v', vram_usage::VRAM_INFO::cb);
         }
-
         if toggle_opt.gem {
             layout.add_child(gem_info.text.panel("GEM Info"));
-            siv.add_global_callback('e', |s| {
-                s.with_user_data(|opt: &mut Opt| {
-                    let mut opt = opt.lock().unwrap();
-                    opt.gem ^= true;
-                });
-            });
+            siv.add_global_callback('e', gem_info::GemView::cb);
         }
         {
             layout.add_child(sensor.text.panel("Sensors"));
@@ -238,7 +225,8 @@ fn main() {
 
     let toggle_opt = Arc::new(Mutex::new(toggle_opt));
     siv.set_user_data(toggle_opt.clone());
-    set_global_cb(&mut siv);
+    siv.add_global_callback('q', cursive::Cursive::quit);
+    siv.add_global_callback('h', Sampling::cb);
 
     let cb_sink = siv.cb_sink().clone();
 
@@ -338,27 +326,25 @@ fn main() {
     siv.run();
 }
 
-fn set_global_cb(siv: &mut cursive::Cursive) {
-    siv.add_global_callback('q', cursive::Cursive::quit);
-    siv.add_global_callback('h', Sampling::cb);
-}
+use std::time::Duration;
 
 struct Sampling {
     count: usize,
-    delay: std::time::Duration,
+    delay: Duration,
 }
 
 impl Sampling {
     const fn low() -> Self {
         Self {
             count: 100,
-            delay: std::time::Duration::from_millis(10),
+            delay: Duration::from_millis(10),
         }
     }
+
     const fn high() -> Self {
         Self {
             count: 100,
-            delay: std::time::Duration::from_millis(1),
+            delay: Duration::from_millis(1),
         }
     }
 
