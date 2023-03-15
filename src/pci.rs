@@ -1,4 +1,5 @@
 use crate::util::Text;
+use crate::Opt;
 use libdrm_amdgpu_sys::PCI;
 
 #[allow(non_camel_case_types)]
@@ -38,5 +39,12 @@ impl PCI_LINK_INFO {
             max_width = self.max.width,
         )
         .unwrap();
+    }
+
+    pub fn cb(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.pci ^= true;
+        }
     }
 }

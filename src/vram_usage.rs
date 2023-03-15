@@ -1,4 +1,5 @@
 use crate::util::Text;
+use crate::Opt;
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, drm_amdgpu_memory_info};
 
 #[allow(non_camel_case_types)]
@@ -46,7 +47,7 @@ impl VRAM_INFO {
             self.text.buf,
             concat!(
                 " {vram_label:<5} => {usage_vram:>5}/{total_vram:<5} MiB,",
-                " {gtt_label:>17 } => {usage_gtt:>5}/{total_gtt:<5} MiB ",
+                " {gtt_label:>5 } => {usage_gtt:>5}/{total_gtt:<5} MiB ",
             ),
             vram_label = "VRAM",
             usage_vram = self.usage_vram >> 20,
@@ -56,5 +57,12 @@ impl VRAM_INFO {
             total_gtt = self.total_gtt >> 20,
         )
         .unwrap();
+    }
+
+    pub fn cb(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.vram ^= true;
+        }
     }
 }

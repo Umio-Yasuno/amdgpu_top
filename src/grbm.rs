@@ -14,8 +14,8 @@ pub struct GRBM {
 const GRBM_INDEX: &'static [(&str, usize)] = &[
     ("Graphics Pipe", 31),
     ("Texture Pipe", 14),
-    ("Command Processor", 29),
-//  ("Global Data Share", 15),
+    // ("Command Processor", 29),
+    // ("Global Data Share", 15),
     ("Shader Export", 20),
     ("Shader Processor Interpolator", 22),
     ("Primitive Assembly", 25),
@@ -27,16 +27,16 @@ impl GRBM {
     pub fn new(is_gfx10_plus: bool) -> Self {
         let mut index: Vec<(String, usize)> = Vec::with_capacity(32);
 
+        for (name, idx) in GRBM_INDEX.iter() {
+            index.push((name.to_string(), *idx));
+        }
+
         if !is_gfx10_plus {
             index.push(("Vertext Grouper / Tessellator".to_string(), 17));
             index.push(("Input Assembly".to_string(), 19));
             index.push(("Work Distributor".to_string(), 21));
         } else {
             index.push(("Geometry Engine".to_string(), 21));
-        }
-
-        for (name, idx) in GRBM_INDEX.iter() {
-            index.push((name.to_string(), *idx));
         }
 
         let counters = (0..index.len()).map(|_| Counter::new(0)).collect();

@@ -1,10 +1,10 @@
 use crate::util::Text;
+use crate::Opt;
 use crate::AMDGPU::{
     DeviceHandle,
     SENSOR_INFO::*,
 };
 
-const NA: &str = "n/a";
 const SENSORS_LIST: [(SENSOR_TYPE, &str, u32); 7] = [
     (SENSOR_TYPE::GFX_SCLK, "MHz", 1),
     (SENSOR_TYPE::GFX_MCLK, "MHz", 1),
@@ -32,9 +32,14 @@ impl Sensor {
             if let Ok(val) = amdgpu_dev.sensor_info(*sensor) {
                 let val = val.saturating_div(*div);
                 writeln!(self.text.buf, " {sensor_name:<15} => {val:>6} {unit:3} ").unwrap();
-            } else {
-                writeln!(self.text.buf, " {sensor_name:<15} => {NA:^10} ").unwrap();
             }
+        }
+    }
+
+    pub fn cb(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.sensor ^= true;
         }
     }
 }

@@ -1,6 +1,5 @@
 use cursive::views::{TextView, LinearLayout, Panel};
 use cursive::view::Scrollable;
-// use cursive::view::Nameable;
 use cursive::align::HAlign;
 use libdrm_amdgpu_sys::*;
 use AMDGPU::{CHIP_CLASS, GPU_INFO};
@@ -51,26 +50,6 @@ impl Default for ToggleOptions {
 }
 
 type Opt = Arc<Mutex<ToggleOptions>>;
-
-struct Sampling {
-    count: usize,
-    delay: std::time::Duration,
-}
-
-impl Sampling {
-    const fn low() -> Self {
-        Self {
-            count: 100,
-            delay: std::time::Duration::from_millis(10),
-        }
-    }
-    const fn high() -> Self {
-        Self {
-            count: 100,
-            delay: std::time::Duration::from_millis(1),
-        }
-    }
-}
 
 const TOGGLE_HELP: &str = " (g)rbm g(r)bm2 (u)vd (s)rbm (c)p_stat (p)ci\n (v)ram g(e)m se(n)sor (h)igh_freq (q)uit";
 
@@ -221,15 +200,19 @@ fn main() {
             layout.add_child(srbm2.top_view());
             siv.add_global_callback('s', srbm2::SRBM2::cb);
         }
-
         {
             let visible = toggle_opt.cp_stat;
             layout.add_child(cp_stat.top_view(visible));
             siv.add_global_callback('c', cp_stat::CP_STAT::cb);
         }
-
-        layout.add_child(pci.text.panel("PCI"));
-        layout.add_child(vram.text.panel("Memory Usage"));
+        {
+            layout.add_child(pci.text.panel("PCI"));
+            siv.add_global_callback('p', pci::PCI_LINK_INFO::cb);
+        }
+        {
+            layout.add_child(vram.text.panel("Memory Usage"));
+            siv.add_global_callback('v', vram_usage::VRAM_INFO::cb);
+        }
 
         if toggle_opt.gem {
             layout.add_child(gem_info.text.panel("GEM Info"));
@@ -240,8 +223,10 @@ fn main() {
                 });
             });
         }
-
-        layout.add_child(sensor.text.panel("Sensors"));
+        {
+            layout.add_child(sensor.text.panel("Sensors"));
+            siv.add_global_callback('n', sensors::Sensor::cb);
+        }
         layout.add_child(TextView::new(TOGGLE_HELP));
 
         siv.add_layer(
@@ -355,34 +340,32 @@ fn main() {
 
 fn set_global_cb(siv: &mut cursive::Cursive) {
     siv.add_global_callback('q', cursive::Cursive::quit);
-    siv.add_global_callback('g', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.grbm ^= true;
-        });
-    });
-    siv.add_global_callback('p', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.pci ^= true;
-        });
-    });
-    siv.add_global_callback('v', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.vram ^= true;
-        });
-    });
-    siv.add_global_callback('n', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
-            opt.sensor ^= true;
-        });
-    });
-    siv.add_global_callback('h', |s| {
-        s.with_user_data(|opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
+    siv.add_global_callback('h', Sampling::cb);
+}
+
+struct Sampling {
+    count: usize,
+    delay: std::time::Duration,
+}
+
+impl Sampling {
+    const fn low() -> Self {
+        Self {
+            count: 100,
+            delay: std::time::Duration::from_millis(10),
+        }
+    }
+    const fn high() -> Self {
+        Self {
+            count: 100,
+            delay: std::time::Duration::from_millis(1),
+        }
+    }
+
+    pub fn cb(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.high_freq ^= true;
-        });
-    });
+        }
+    }
 }
