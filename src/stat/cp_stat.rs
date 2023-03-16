@@ -1,5 +1,5 @@
-use crate::{DeviceHandle, CP_STAT_OFFSET, Opt};
-use super::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
+use super::{DeviceHandle, Opt};
+use super::{BITS, check_register_offset, CP_STAT_OFFSET, toggle_view, TopView, TopProgress};
 
 const CP_STAT_INDEX: &'static [(&str, usize)] = &[
     ("Prefetch Parser", 15),

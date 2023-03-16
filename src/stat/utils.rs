@@ -145,7 +145,7 @@ pub fn toggle_view(view: &mut HideableView<LinearLayout>) {
     view.set_visible(!view.is_visible());
 }
 
-use crate::AMDGPU::DeviceHandle;
+use super::DeviceHandle;
 
 pub fn check_register_offset(
     amdgpu_dev: &DeviceHandle,

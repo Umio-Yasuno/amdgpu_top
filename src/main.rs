@@ -1,11 +1,11 @@
+use libdrm_amdgpu_sys::{
+    PCI,
+    AMDGPU::{DeviceHandle, CHIP_CLASS, GPU_INFO}
+};
+use std::sync::{Arc, Mutex};
 use cursive::views::{TextView, LinearLayout, Panel};
 use cursive::view::Scrollable;
 use cursive::align::HAlign;
-use libdrm_amdgpu_sys::*;
-use AMDGPU::{CHIP_CLASS, GPU_INFO};
-pub use AMDGPU::{GRBM_OFFSET, GRBM2_OFFSET, SRBM_OFFSET, SRBM2_OFFSET, CP_STAT_OFFSET};
-pub use AMDGPU::DeviceHandle;
-use std::sync::{Arc, Mutex};
 
 mod stat;
 mod args;
@@ -59,7 +59,7 @@ fn main() {
         let path = format!("/dev/dri/renderD{}", 128 + main_opt.instance);
         let f = File::open(path).unwrap();
 
-        AMDGPU::DeviceHandle::init(f.into_raw_fd()).unwrap()
+        DeviceHandle::init(f.into_raw_fd()).unwrap()
     };
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();

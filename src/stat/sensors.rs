@@ -1,6 +1,5 @@
-use super::{Text, Opt};
-use crate::AMDGPU::{
-    DeviceHandle,
+use super::{DeviceHandle, Text, Opt};
+use libdrm_amdgpu_sys::AMDGPU::{
     SENSOR_INFO::*,
 };
 

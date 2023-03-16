@@ -2,6 +2,15 @@ use crate::Opt;
 mod utils;
 use utils::*;
 
+use libdrm_amdgpu_sys::AMDGPU::{
+    DeviceHandle,
+    GRBM_OFFSET,
+    GRBM2_OFFSET,
+    SRBM_OFFSET,
+    SRBM2_OFFSET,
+    CP_STAT_OFFSET
+};
+
 mod grbm;
 pub use grbm::*;
 

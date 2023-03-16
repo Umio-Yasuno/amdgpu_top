@@ -1,7 +1,10 @@
-use libdrm_amdgpu_sys::*;
+use libdrm_amdgpu_sys::{
+    PCI,
+    AMDGPU::DeviceHandle,
+};
 
 pub fn get_min_clk(
-    amdgpu_dev: &AMDGPU::DeviceHandle,
+    amdgpu_dev: &DeviceHandle,
     pci_bus: &PCI::BUS_INFO
 ) -> (u64, u64) {
     if let [Some(gpu), Some(mem)] = [
@@ -14,7 +17,7 @@ pub fn get_min_clk(
     }
 }
 
-pub fn vbios_info(amdgpu_dev: &AMDGPU::DeviceHandle) {
+pub fn vbios_info(amdgpu_dev: &DeviceHandle) {
     if let Ok(vbios) = unsafe { amdgpu_dev.vbios_info() } {
         let [name, pn, ver_str, date] = [
             vbios.name.to_vec(),

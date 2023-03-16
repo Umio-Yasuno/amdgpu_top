@@ -1,6 +1,6 @@
 /* System Register Block */
-use crate::{DeviceHandle, SRBM_OFFSET, Opt};
-use super::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
+use super::{DeviceHandle, Opt};
+use super::{BITS, check_register_offset, SRBM_OFFSET, toggle_view, TopView, TopProgress};
 
 const SRBM_INDEX: &'static [(&str, usize)] = &[
     ("UVD", 19),
