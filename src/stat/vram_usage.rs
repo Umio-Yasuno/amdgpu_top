@@ -1,5 +1,4 @@
-use crate::util::Text;
-use crate::Opt;
+use super::{Text, Opt};
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, drm_amdgpu_memory_info};
 
 #[allow(non_camel_case_types)]

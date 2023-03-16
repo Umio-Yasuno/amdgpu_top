@@ -1,5 +1,4 @@
-use crate::util::Text;
-use crate::Opt;
+use super::{Text, Opt};
 
 /* ref: drivers/gpu/drm/amd/amdgpu/amdgpu_gem.c */
 /* ref: drivers/gpu/drm/amd/amdgpu/amdgpu_object.c */

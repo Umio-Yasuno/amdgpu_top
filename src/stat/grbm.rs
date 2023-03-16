@@ -1,7 +1,7 @@
 /* GRBM: Graphics Register Block, Graphics Register Bus Manager? */
 /* ref: https://github.com/freedesktop/mesa-r600_demo/blob/master/r600_lib.c */
 use crate::{DeviceHandle, GRBM_OFFSET, Opt};
-use crate::util::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
+use super::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
 use cursive::utils::Counter;
 
 pub struct GRBM {

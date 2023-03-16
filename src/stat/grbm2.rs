@@ -1,5 +1,5 @@
 use crate::{DeviceHandle, GRBM2_OFFSET, Opt};
-use crate::util::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
+use super::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
 
 const GRBM2_INDEX: &'static [(&str, usize)] = &[
     ("Texture Cache", 25),

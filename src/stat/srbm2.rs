@@ -1,5 +1,5 @@
 use crate::{DeviceHandle, SRBM2_OFFSET, Opt};
-use crate::util::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
+use super::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
 
 const SRBM2_INDEX: &'static [(&str, usize)] = &[
     ("VCE0", 7),

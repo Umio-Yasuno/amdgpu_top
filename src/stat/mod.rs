@@ -1,3 +1,7 @@
+use crate::Opt;
+mod utils;
+use utils::*;
+
 mod grbm;
 pub use grbm::*;
 

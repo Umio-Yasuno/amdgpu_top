@@ -1,5 +1,4 @@
-use crate::util::Text;
-use crate::Opt;
+use super::{Text, Opt};
 use libdrm_amdgpu_sys::PCI;
 
 #[allow(non_camel_case_types)]

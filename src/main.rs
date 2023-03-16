@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 
 mod stat;
 mod args;
-mod util;
+mod misc;
 
 #[derive(Debug, Clone)]
 struct ToggleOptions {
@@ -66,7 +66,7 @@ fn main() {
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
     let chip_class = ext_info.get_chip_class();
 
-    let (min_gpu_clk, min_memory_clk) = util::get_min_clk(&amdgpu_dev, &pci_bus);
+    let (min_gpu_clk, min_memory_clk) = misc::get_min_clk(&amdgpu_dev, &pci_bus);
     let mark_name = match amdgpu_dev.get_marketing_name() {
         Ok(name) => name,
         Err(_) => "".to_string(), // unreachable
@@ -101,7 +101,7 @@ fn main() {
         println!("{info_bar}");
         println!("PCI (domain:bus:dev.func): {pci_bus}");
         println!("PCI Link: Gen{}x{}", link.gen, link.width);
-        util::vbios_info(&amdgpu_dev);
+        misc::vbios_info(&amdgpu_dev);
         return;
     }
 

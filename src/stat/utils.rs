@@ -1,4 +1,3 @@
-use libdrm_amdgpu_sys::*;
 use cursive::views::{TextContent, TextView, Panel};
 use cursive::align::HAlign;
 
@@ -146,22 +145,10 @@ pub fn toggle_view(view: &mut HideableView<LinearLayout>) {
     view.set_visible(!view.is_visible());
 }
 
-pub fn get_min_clk(
-    amdgpu_dev: &AMDGPU::DeviceHandle,
-    pci_bus: &PCI::BUS_INFO
-) -> (u64, u64) {
-    if let [Some(gpu), Some(mem)] = [
-        amdgpu_dev.get_min_gpu_clock_from_sysfs(pci_bus),
-        amdgpu_dev.get_min_memory_clock_from_sysfs(pci_bus),
-    ] {
-        (gpu, mem)
-    } else {
-        (0, 0)
-    }
-}
+use crate::AMDGPU::DeviceHandle;
 
 pub fn check_register_offset(
-    amdgpu_dev: &AMDGPU::DeviceHandle,
+    amdgpu_dev: &DeviceHandle,
     name: &str,
     offset: u32
 ) -> bool {
@@ -171,26 +158,4 @@ pub fn check_register_offset(
     }
 
     true
-}
-
-pub fn vbios_info(amdgpu_dev: &AMDGPU::DeviceHandle) {
-    if let Ok(vbios) = unsafe { amdgpu_dev.vbios_info() } {
-        let [name, pn, ver_str, date] = [
-            vbios.name.to_vec(),
-            vbios.vbios_pn.to_vec(),
-            vbios.vbios_ver_str.to_vec(),
-            vbios.date.to_vec(),
-        ]
-        .map(|v| {
-            let tmp = String::from_utf8(v).unwrap();
-
-            tmp.trim_end_matches(|c: char| c.is_control() || c.is_whitespace()).to_string()
-        });
-
-        println!("\nVBIOS info:");
-        println!("name:\t[{name}]");
-        println!("pn:\t[{pn}]");
-        println!("ver_str:[{ver_str}]");
-        println!("date:\t[{date}]");
-    }
 }

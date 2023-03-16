@@ -1,5 +1,4 @@
-use crate::util::Text;
-use crate::Opt;
+use super::{Text, Opt};
 use crate::AMDGPU::{
     DeviceHandle,
     SENSOR_INFO::*,
