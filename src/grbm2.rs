@@ -9,7 +9,6 @@ const GRBM2_INDEX: &'static [(&str, usize)] = &[
 ];
 
 pub struct GRBM2 {
-    pub flag: bool,
     pub bits: BITS,
     views: TopProgress,
 }
@@ -17,7 +16,6 @@ pub struct GRBM2 {
 impl GRBM2 {
     pub fn new() -> Self {
         Self {
-            flag: bool::default(),
             bits: BITS::default(),
             views: TopProgress::from(GRBM2_INDEX),
         }

@@ -11,7 +11,6 @@ const SRBM2_INDEX: &'static [(&str, usize)] = &[
 ];
 
 pub struct SRBM2 {
-    pub flag: bool,
     pub bits: BITS,
     views: TopProgress,
 }
@@ -19,7 +18,6 @@ pub struct SRBM2 {
 impl SRBM2 {
     pub fn new() -> Self {
         Self {
-            flag: false,
             bits: BITS::default(),
             views: TopProgress::from(SRBM2_INDEX),
         }

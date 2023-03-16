@@ -11,7 +11,6 @@ const CP_STAT_INDEX: &'static [(&str, usize)] = &[
 
 #[allow(non_camel_case_types)]
 pub struct CP_STAT {
-    pub flag: bool,
     pub bits: BITS,
     views: TopProgress,
 }
@@ -19,7 +18,6 @@ pub struct CP_STAT {
 impl CP_STAT {
     pub fn new() -> Self {
         Self {
-            flag: bool::default(),
             bits: BITS::default(),
             views: TopProgress::from(CP_STAT_INDEX),
         }

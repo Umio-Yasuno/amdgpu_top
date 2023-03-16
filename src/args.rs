@@ -25,8 +25,7 @@ impl MainOpt {
         let mut opt = Self::default();
         let mut skip = false;
 
-        let args: Vec<String> = std::env::args().collect();
-        let args = &args[1..];
+        let args = &std::env::args().collect::<Vec<String>>()[1..];
 
         for (idx, arg) in args.iter().enumerate() {
             if skip {

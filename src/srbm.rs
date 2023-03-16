@@ -7,7 +7,6 @@ const SRBM_INDEX: &'static [(&str, usize)] = &[
 ];
 
 pub struct SRBM {
-    pub flag: bool,
     pub bits: BITS,
     views: TopProgress,
 }
@@ -15,7 +14,6 @@ pub struct SRBM {
 impl SRBM {
     pub fn new() -> Self {
         Self {
-            flag: bool::default(),
             bits: BITS::default(),
             views: TopProgress::from(SRBM_INDEX),
         }

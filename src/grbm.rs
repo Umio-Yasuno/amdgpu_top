@@ -5,7 +5,6 @@ use crate::Opt;
 use cursive::utils::Counter;
 
 pub struct GRBM {
-    pub flag: bool,
     pub bits: BITS,
     views: TopProgress,
 }
@@ -41,7 +40,6 @@ impl GRBM {
         let counters = (0..index.len()).map(|_| Counter::new(0)).collect();
 
         Self {
-            flag: bool::default(),
             views: TopProgress {
                 index,
                 counters,

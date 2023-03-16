@@ -130,19 +130,15 @@ fn main() {
     let mut toggle_opt = ToggleOptions::default();
 
     {   // check register offset
-        [toggle_opt.grbm, grbm.flag] =
-            [util::check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", GRBM_OFFSET); 2];
-        [toggle_opt.grbm2, grbm2.flag] =
-            [util::check_register_offset(&amdgpu_dev, "mmGRBM2_STATUS", GRBM2_OFFSET); 2];
+        toggle_opt.grbm = util::check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", GRBM_OFFSET);
+        toggle_opt.grbm2 = util::check_register_offset(&amdgpu_dev, "mmGRBM2_STATUS", GRBM2_OFFSET);
 
-        [toggle_opt.uvd, uvd.flag] =
-            [util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", SRBM_OFFSET); 2];
+        toggle_opt.uvd = util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", SRBM_OFFSET);
 
-        [toggle_opt.srbm, srbm2.flag] =
-            [util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", SRBM2_OFFSET); 2];
+        toggle_opt.srbm = util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", SRBM2_OFFSET);
 
         let _ = util::check_register_offset(&amdgpu_dev, "mmCP_STAT", CP_STAT_OFFSET);
-        [toggle_opt.cp_stat, cp_stat.flag] = [false; 2];
+        toggle_opt.cp_stat = false;
 
         if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
             toggle_opt.gem = true;
@@ -226,6 +222,7 @@ fn main() {
         );
     }
 
+    let mut flags = toggle_opt.clone();
     let toggle_opt = Arc::new(Mutex::new(toggle_opt));
     siv.set_user_data(toggle_opt.clone());
     siv.add_global_callback('q', cursive::Cursive::quit);
@@ -235,32 +232,31 @@ fn main() {
 
     std::thread::spawn(move || {
         let mut sample = Sampling::low();
-        let opt = toggle_opt;
 
         loop {
             for _ in 0..sample.count {
                 // high frequency accesses to registers can cause high GPU clocks
-                if grbm.flag {
+                if flags.grbm {
                     if let Ok(out) = amdgpu_dev.read_mm_registers(GRBM_OFFSET) {
                         grbm.bits.acc(out);
                     }
                 }
-                if grbm2.flag {
+                if flags.grbm2 {
                     if let Ok(out) = amdgpu_dev.read_mm_registers(GRBM2_OFFSET) {
                         grbm2.bits.acc(out);
                     }
                 }
-                if uvd.flag {
+                if flags.uvd {
                     if let Ok(out) = amdgpu_dev.read_mm_registers(SRBM_OFFSET) {
                         uvd.bits.acc(out);
                     }
                 }
-                if srbm2.flag {
+                if flags.srbm {
                     if let Ok(out) = amdgpu_dev.read_mm_registers(SRBM2_OFFSET) {
                         srbm2.bits.acc(out);
                     }
                 }
-                if cp_stat.flag {
+                if flags.cp_stat {
                     if let Ok(out) = amdgpu_dev.read_mm_registers(CP_STAT_OFFSET) {
                         cp_stat.bits.acc(out);
                     }
@@ -269,47 +265,43 @@ fn main() {
                 std::thread::sleep(sample.delay);
             }
 
-            if let Ok(opt) = opt.try_lock() {
-                grbm.flag = opt.grbm;
-                grbm2.flag = opt.grbm2;
-                uvd.flag = opt.uvd;
-                srbm2.flag = opt.srbm;
-                cp_stat.flag = opt.cp_stat;
-
-                if opt.pci {
-                    pci.update_status();
-                    pci.print();
-                } else {
-                    pci.text.clear();
-                }
-
-                if opt.vram {
-                    vram.update_usage(&amdgpu_dev);
-                    vram.print();
-                } else {
-                    vram.text.clear();
-                }
-
-                if opt.sensor {
-                    sensor.print(&amdgpu_dev);
-                } else { 
-                    sensor.text.clear();
-                }
-
-                if opt.gem {
-                    if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
-                        gem_info.read_to_print(f);
-                    }
-                } else {
-                    gem_info.clear();
-                }
-
-                sample = if opt.high_freq {
-                    Sampling::high()
-                } else {
-                    Sampling::low()
-                };
+            if let Ok(opt) = toggle_opt.try_lock() {
+                flags = opt.clone();
             }
+
+            if flags.pci {
+                pci.update_status();
+                pci.print();
+            } else {
+                pci.text.clear();
+            }
+
+            if flags.vram {
+                vram.update_usage(&amdgpu_dev);
+                vram.print();
+            } else {
+                vram.text.clear();
+            }
+
+            if flags.sensor {
+                sensor.print(&amdgpu_dev);
+            } else {
+                sensor.text.clear();
+            }
+
+            if flags.gem {
+                if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
+                    gem_info.read_to_print(f);
+                }
+            } else {
+                gem_info.clear();
+            }
+
+            sample = if flags.high_freq {
+                Sampling::high()
+            } else {
+                Sampling::low()
+            };
 
             grbm.dump();
             grbm2.dump();
