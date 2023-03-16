@@ -231,6 +231,10 @@ fn main() {
         let mut sample = Sampling::low();
 
         loop {
+            if let Ok(opt) = toggle_opt.try_lock() {
+                flags = opt.clone();
+            }
+
             for _ in 0..sample.count {
                 // high frequency accesses to registers can cause high GPU clocks
                 if flags.grbm {
@@ -250,10 +254,6 @@ fn main() {
                 }
 
                 std::thread::sleep(sample.delay);
-            }
-
-            if let Ok(opt) = toggle_opt.try_lock() {
-                flags = opt.clone();
             }
 
             if flags.pci {

@@ -1,7 +1,5 @@
 use libdrm_amdgpu_sys::*;
-// use AMDGPU::GPU_INFO;
-use cursive::views::TextContent;
-use cursive::views::{TextView, Panel};
+use cursive::views::{TextContent, TextView, Panel};
 use cursive::align::HAlign;
 
 pub struct Text {
@@ -73,7 +71,6 @@ use cursive::views::{FixedLayout, HideableView, LinearLayout, ProgressBar, Named
 use cursive::view::Nameable;
 use cursive::utils::Counter;
 use cursive::Rect;
-// use cursive::align::HAlign;
 
 pub type TopView = Panel<NamedView<HideableView<LinearLayout>>>;
 
