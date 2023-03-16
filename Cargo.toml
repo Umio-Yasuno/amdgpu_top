@@ -14,3 +14,4 @@ cursive = "0.20"
 opt-level = 2
 strip = true
 lto = true
+codegen-units = 1
