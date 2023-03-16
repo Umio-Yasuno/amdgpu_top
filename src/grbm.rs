@@ -1,7 +1,7 @@
 /* GRBM: Graphics Register Block, Graphics Register Bus Manager? */
 /* ref: https://github.com/freedesktop/mesa-r600_demo/blob/master/r600_lib.c */
-use crate::util::{BITS, toggle_view, TopView, TopProgress};
-use crate::Opt;
+use crate::{DeviceHandle, GRBM_OFFSET, Opt};
+use crate::util::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
 use cursive::utils::Counter;
 
 pub struct GRBM {
@@ -64,5 +64,15 @@ impl GRBM {
 
     pub fn top_view(&self) -> TopView {
         self.views.top_view("GRBM", true)
+    }
+
+    pub fn check_reg_offset(amdgpu_dev: &DeviceHandle) -> bool {
+        check_register_offset(amdgpu_dev, "mmGRBM_STATUS", GRBM_OFFSET)
+    }
+
+    pub fn read_reg(&mut self, amdgpu_dev: &DeviceHandle) {
+        if let Ok(out) = amdgpu_dev.read_mm_registers(GRBM_OFFSET) {
+            self.bits.acc(out);
+        }
     }
 }

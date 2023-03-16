@@ -1,5 +1,5 @@
-use crate::util::{BITS, toggle_view, TopView, TopProgress};
-use crate::Opt;
+use crate::{DeviceHandle, GRBM2_OFFSET, Opt};
+use crate::util::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
 
 const GRBM2_INDEX: &'static [(&str, usize)] = &[
     ("Texture Cache", 25),
@@ -37,5 +37,15 @@ impl GRBM2 {
 
     pub fn top_view(&self) -> TopView {
         self.views.top_view("GRBM2", true)
+    }
+
+    pub fn check_reg_offset(amdgpu_dev: &DeviceHandle) -> bool {
+        check_register_offset(amdgpu_dev, "mmGRBM_STATUS2", GRBM2_OFFSET)
+    }
+
+    pub fn read_reg(&mut self, amdgpu_dev: &DeviceHandle) {
+        if let Ok(out) = amdgpu_dev.read_mm_registers(GRBM2_OFFSET) {
+            self.bits.acc(out);
+        }
     }
 }

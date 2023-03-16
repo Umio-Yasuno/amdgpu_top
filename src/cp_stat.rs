@@ -1,5 +1,5 @@
-use crate::util::{BITS, toggle_view, TopView, TopProgress};
-use crate::Opt;
+use crate::{DeviceHandle, CP_STAT_OFFSET, Opt};
+use crate::util::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
 
 const CP_STAT_INDEX: &'static [(&str, usize)] = &[
     ("Prefetch Parser", 15),
@@ -39,5 +39,15 @@ impl CP_STAT {
 
     pub fn top_view(&self, visible: bool) -> TopView {
         self.views.top_view("CP_STAT", visible)
+    }
+
+    pub fn check_reg_offset(amdgpu_dev: &DeviceHandle) -> bool {
+        check_register_offset(amdgpu_dev, "mmCP_STAT", CP_STAT_OFFSET)
+    }
+
+    pub fn read_reg(&mut self, amdgpu_dev: &DeviceHandle) {
+        if let Ok(out) = amdgpu_dev.read_mm_registers(CP_STAT_OFFSET) {
+            self.bits.acc(out);
+        }
     }
 }

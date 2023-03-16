@@ -1,6 +1,6 @@
 /* System Register Block */
-use crate::util::{BITS, toggle_view, TopView, TopProgress};
-use crate::Opt;
+use crate::{DeviceHandle, SRBM_OFFSET, Opt};
+use crate::util::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
 
 const SRBM_INDEX: &'static [(&str, usize)] = &[
     ("UVD", 19),
@@ -35,5 +35,15 @@ impl SRBM {
 
     pub fn top_view(&self) -> TopView {
         self.views.top_view("UVD", true)
+    }
+
+    pub fn check_reg_offset(amdgpu_dev: &DeviceHandle) -> bool {
+        check_register_offset(amdgpu_dev, "mmSRBM_STATUS", SRBM_OFFSET)
+    }
+
+    pub fn read_reg(&mut self, amdgpu_dev: &DeviceHandle) {
+        if let Ok(out) = amdgpu_dev.read_mm_registers(SRBM_OFFSET) {
+            self.bits.acc(out);
+        }
     }
 }

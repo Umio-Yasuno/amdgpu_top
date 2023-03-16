@@ -1,5 +1,5 @@
-use crate::util::{BITS, TopView, TopProgress, toggle_view};
-use crate::Opt;
+use crate::{DeviceHandle, SRBM2_OFFSET, Opt};
+use crate::util::{BITS, check_register_offset, toggle_view, TopView, TopProgress};
 
 const SRBM2_INDEX: &'static [(&str, usize)] = &[
     ("VCE0", 7),
@@ -39,5 +39,15 @@ impl SRBM2 {
 
     pub fn top_view(&self) -> TopView {
         self.views.top_view("SRBM2", true)
+    }
+
+    pub fn check_reg_offset(amdgpu_dev: &DeviceHandle) -> bool {
+        check_register_offset(amdgpu_dev, "mmSRBM_STATUS2", SRBM2_OFFSET)
+    }
+
+    pub fn read_reg(&mut self, amdgpu_dev: &DeviceHandle) {
+        if let Ok(out) = amdgpu_dev.read_mm_registers(SRBM2_OFFSET) {
+            self.bits.acc(out);
+        }
     }
 }

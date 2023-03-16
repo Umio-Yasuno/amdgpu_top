@@ -3,7 +3,8 @@ use cursive::view::Scrollable;
 use cursive::align::HAlign;
 use libdrm_amdgpu_sys::*;
 use AMDGPU::{CHIP_CLASS, GPU_INFO};
-use AMDGPU::{GRBM_OFFSET, GRBM2_OFFSET, SRBM_OFFSET, SRBM2_OFFSET, CP_STAT_OFFSET};
+pub use AMDGPU::{GRBM_OFFSET, GRBM2_OFFSET, SRBM_OFFSET, SRBM2_OFFSET, CP_STAT_OFFSET};
+pub use AMDGPU::DeviceHandle;
 use std::sync::{Arc, Mutex};
 
 mod grbm;
@@ -130,15 +131,11 @@ fn main() {
     let mut toggle_opt = ToggleOptions::default();
 
     {   // check register offset
-        toggle_opt.grbm = util::check_register_offset(&amdgpu_dev, "mmGRBM_STATUS", GRBM_OFFSET);
-        toggle_opt.grbm2 = util::check_register_offset(&amdgpu_dev, "mmGRBM2_STATUS", GRBM2_OFFSET);
-
-        toggle_opt.uvd = util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS", SRBM_OFFSET);
-
-        toggle_opt.srbm = util::check_register_offset(&amdgpu_dev, "mmSRBM_STATUS2", SRBM2_OFFSET);
-
-        let _ = util::check_register_offset(&amdgpu_dev, "mmCP_STAT", CP_STAT_OFFSET);
-        toggle_opt.cp_stat = false;
+        toggle_opt.grbm = grbm::GRBM::check_reg_offset(&amdgpu_dev);
+        toggle_opt.grbm2 = grbm2::GRBM2::check_reg_offset(&amdgpu_dev);
+        toggle_opt.uvd = srbm::SRBM::check_reg_offset(&amdgpu_dev);
+        toggle_opt.srbm = srbm2::SRBM2::check_reg_offset(&amdgpu_dev);
+        [toggle_opt.cp_stat, _] = [false, cp_stat::CP_STAT::check_reg_offset(&amdgpu_dev)];
 
         if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
             toggle_opt.gem = true;
@@ -237,29 +234,19 @@ fn main() {
             for _ in 0..sample.count {
                 // high frequency accesses to registers can cause high GPU clocks
                 if flags.grbm {
-                    if let Ok(out) = amdgpu_dev.read_mm_registers(GRBM_OFFSET) {
-                        grbm.bits.acc(out);
-                    }
+                    grbm.read_reg(&amdgpu_dev);
                 }
                 if flags.grbm2 {
-                    if let Ok(out) = amdgpu_dev.read_mm_registers(GRBM2_OFFSET) {
-                        grbm2.bits.acc(out);
-                    }
+                    grbm2.read_reg(&amdgpu_dev);
                 }
                 if flags.uvd {
-                    if let Ok(out) = amdgpu_dev.read_mm_registers(SRBM_OFFSET) {
-                        uvd.bits.acc(out);
-                    }
+                    uvd.read_reg(&amdgpu_dev);
                 }
                 if flags.srbm {
-                    if let Ok(out) = amdgpu_dev.read_mm_registers(SRBM2_OFFSET) {
-                        srbm2.bits.acc(out);
-                    }
+                    srbm2.read_reg(&amdgpu_dev);
                 }
                 if flags.cp_stat {
-                    if let Ok(out) = amdgpu_dev.read_mm_registers(CP_STAT_OFFSET) {
-                        cp_stat.bits.acc(out);
-                    }
+                    cp_stat.read_reg(&amdgpu_dev);
                 }
 
                 std::thread::sleep(sample.delay);
