@@ -7,16 +7,8 @@ pub use AMDGPU::{GRBM_OFFSET, GRBM2_OFFSET, SRBM_OFFSET, SRBM2_OFFSET, CP_STAT_O
 pub use AMDGPU::DeviceHandle;
 use std::sync::{Arc, Mutex};
 
-mod grbm;
-mod grbm2;
-mod srbm;
-mod srbm2;
-mod cp_stat;
-mod vram_usage;
+mod stat;
 mod args;
-mod sensors;
-mod gem_info;
-mod pci;
 mod util;
 
 #[derive(Debug, Clone)]
@@ -118,24 +110,24 @@ fn main() {
         i = main_opt.instance,
     );
 
-    let mut grbm = grbm::GRBM::new(CHIP_CLASS::GFX10 <= chip_class);
-    let mut grbm2 = grbm2::GRBM2::new();
-    let mut uvd = srbm::SRBM::new();
-    let mut srbm2 = srbm2::SRBM2::new();
-    let mut cp_stat = cp_stat::CP_STAT::new();
-    let mut vram = vram_usage::VRAM_INFO::new(&memory_info);
-    let mut gem_info = gem_info::GemView::default();
-    let mut sensor = sensors::Sensor::default();
-    let mut pci = pci::PCI_LINK_INFO::new(&pci_bus);
+    let mut grbm = stat::GRBM::new(CHIP_CLASS::GFX10 <= chip_class);
+    let mut grbm2 = stat::GRBM2::new();
+    let mut uvd = stat::SRBM::new();
+    let mut srbm2 = stat::SRBM2::new();
+    let mut cp_stat = stat::CP_STAT::new();
+    let mut vram = stat::VRAM_INFO::new(&memory_info);
+    let mut gem_info = stat::GemView::default();
+    let mut sensor = stat::Sensor::default();
+    let mut pci = stat::PCI_LINK_INFO::new(&pci_bus);
 
     let mut toggle_opt = ToggleOptions::default();
 
     {   // check register offset
-        toggle_opt.grbm = grbm::GRBM::check_reg_offset(&amdgpu_dev);
-        toggle_opt.grbm2 = grbm2::GRBM2::check_reg_offset(&amdgpu_dev);
-        toggle_opt.uvd = srbm::SRBM::check_reg_offset(&amdgpu_dev);
-        toggle_opt.srbm = srbm2::SRBM2::check_reg_offset(&amdgpu_dev);
-        [toggle_opt.cp_stat, _] = [false, cp_stat::CP_STAT::check_reg_offset(&amdgpu_dev)];
+        toggle_opt.grbm = stat::GRBM::check_reg_offset(&amdgpu_dev);
+        toggle_opt.grbm2 = stat::GRBM2::check_reg_offset(&amdgpu_dev);
+        toggle_opt.uvd = stat::SRBM::check_reg_offset(&amdgpu_dev);
+        toggle_opt.srbm = stat::SRBM2::check_reg_offset(&amdgpu_dev);
+        [toggle_opt.cp_stat, _] = [false, stat::CP_STAT::check_reg_offset(&amdgpu_dev)];
 
         if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
             toggle_opt.gem = true;
@@ -174,41 +166,41 @@ fn main() {
 
         if toggle_opt.grbm {
             layout.add_child(grbm.top_view());
-            siv.add_global_callback('g', grbm::GRBM::cb);
+            siv.add_global_callback('g', stat::GRBM::cb);
         }
         if toggle_opt.grbm2 {
             layout.add_child(grbm2.top_view());
-            siv.add_global_callback('r', grbm2::GRBM2::cb);
+            siv.add_global_callback('r', stat::GRBM2::cb);
         }
         // mmSRBM_STATUS/mmSRBM_STATUS2 does not exist in GFX9 (soc15) or later.
         if toggle_opt.uvd && (chip_class < CHIP_CLASS::GFX9) {
             layout.add_child(uvd.top_view());
-            siv.add_global_callback('u', srbm::SRBM::cb);
+            siv.add_global_callback('u', stat::SRBM::cb);
         }
         if toggle_opt.srbm && (chip_class < CHIP_CLASS::GFX9) {
             layout.add_child(srbm2.top_view());
-            siv.add_global_callback('s', srbm2::SRBM2::cb);
+            siv.add_global_callback('s', stat::SRBM2::cb);
         }
         {
             let visible = toggle_opt.cp_stat;
             layout.add_child(cp_stat.top_view(visible));
-            siv.add_global_callback('c', cp_stat::CP_STAT::cb);
+            siv.add_global_callback('c', stat::CP_STAT::cb);
         }
         {
             layout.add_child(pci.text.panel("PCI"));
-            siv.add_global_callback('p', pci::PCI_LINK_INFO::cb);
+            siv.add_global_callback('p', stat::PCI_LINK_INFO::cb);
         }
         {
             layout.add_child(vram.text.panel("Memory Usage"));
-            siv.add_global_callback('v', vram_usage::VRAM_INFO::cb);
+            siv.add_global_callback('v', stat::VRAM_INFO::cb);
         }
         if toggle_opt.gem {
             layout.add_child(gem_info.text.panel("GEM Info"));
-            siv.add_global_callback('e', gem_info::GemView::cb);
+            siv.add_global_callback('e', stat::GemView::cb);
         }
         {
             layout.add_child(sensor.text.panel("Sensors"));
-            siv.add_global_callback('n', sensors::Sensor::cb);
+            siv.add_global_callback('n', stat::Sensor::cb);
         }
         layout.add_child(TextView::new(TOGGLE_HELP));
 
