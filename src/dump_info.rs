@@ -68,6 +68,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
     println!();
     println!("VRAM Type     : {}", ext_info.get_vram_type());
     println!("VRAM Bit Width: {}-bit", ext_info.vram_bit_width);
+    println!("VRAM size     : {} MiB", memory_info.vram.total_heap_size >> 20);
     println!("Memory Clock  : {min_memory_clk}-{} MHz", ext_info.max_memory_clock() / 1000);
     println!("Peak Memory BW: {} GB/s", ext_info.peak_memory_bw_gb());
     println!(
