@@ -71,10 +71,15 @@ fn main() {
         Ok(name) => name,
         Err(_) => "".to_string(), // unreachable
     };
+    let gpu_type = if ext_info.is_apu() {
+        "APU"
+    } else {
+        "dGPU"
+    };
     let info_bar = format!(
         concat!(
             "{mark_name} ({did:#06X}:{rid:#04X})\n",
-            "{asic}, {chip_class}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
+            "{asic}, {gpu_type}, {chip_class}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
             "{vram_type} {vram_bus_width}-bit, {vram_size} MiB, ",
             "{min_memory_clk}-{max_memory_clk} MHz",
         ),
@@ -82,6 +87,7 @@ fn main() {
         did = ext_info.device_id(),
         rid = ext_info.pci_rev_id(),
         asic = ext_info.get_asic_name(),
+        gpu_type = gpu_type,
         chip_class = chip_class,
         num_cu = ext_info.cu_active_number(),
         min_gpu_clk = min_gpu_clk,
