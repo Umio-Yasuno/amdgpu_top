@@ -21,6 +21,7 @@ struct ToggleOptions {
     sensor: bool,
     high_freq: bool,
     gem: bool,
+    pm: bool,
 }
 
 impl Default for ToggleOptions {
@@ -36,6 +37,7 @@ impl Default for ToggleOptions {
             sensor: true,
             high_freq: false,
             gem: true,
+            pm: true,
         }
     }
 }
@@ -44,7 +46,7 @@ type Opt = Arc<Mutex<ToggleOptions>>;
 
 const TOGGLE_HELP: &str = concat!(
     " (g)rbm g(r)bm2 (u)vd (s)rbm (c)p_stat (p)ci\n",
-    " (v)ram g(e)m se(n)sor (h)igh_freq (q)uit",
+    " (v)ram g(e)m p(m) se(n)sor (h)igh_freq (q)uit",
 );
 
 fn main() {
@@ -107,6 +109,10 @@ fn main() {
         "/sys/kernel/debug/dri/{i}/amdgpu_gem_info",
         i = main_opt.instance,
     );
+    let pm_info_path = format!(
+        "/sys/kernel/debug/dri/{i}/amdgpu_pm_info",
+        i = main_opt.instance,
+    );
 
     let mut grbm = stat::GRBM::new(CHIP_CLASS::GFX10 <= chip_class);
     let mut grbm2 = stat::GRBM2::new();
@@ -115,6 +121,7 @@ fn main() {
     let mut cp_stat = stat::CP_STAT::new();
     let mut vram = stat::VRAM_INFO::new(&memory_info);
     let mut gem_info = stat::GemView::default();
+    let mut pm_info = stat::PmView::default();
     let mut sensor = stat::Sensor::default();
     let mut pci = stat::PCI_LINK_INFO::new(&pci_bus);
 
@@ -134,6 +141,15 @@ fn main() {
             gem_info.text.set();
         } else {
             toggle_opt.gem = false;
+        }
+
+        if let Ok(ref mut f) = std::fs::File::open(&pm_info_path) {
+            toggle_opt.pm = true;
+
+            pm_info.read_to_print(f);
+            pm_info.text.set();
+        } else {
+            toggle_opt.pm = false;
         }
 
         // fill
@@ -195,6 +211,10 @@ fn main() {
         if toggle_opt.gem {
             layout.add_child(gem_info.text.panel("GEM Info"));
             siv.add_global_callback('e', stat::GemView::cb);
+        }
+        if toggle_opt.pm {
+            layout.add_child(pm_info.text.panel("PM Info"));
+            siv.add_global_callback('m', stat::PmView::cb);
         }
         {
             layout.add_child(sensor.text.panel("Sensors"));
@@ -274,6 +294,14 @@ fn main() {
                 gem_info.clear();
             }
 
+            if flags.pm {
+                if let Ok(ref mut f) = std::fs::File::open(&pm_info_path) {
+                    pm_info.read_to_print(f);
+                }
+            } else {
+                pm_info.clear();
+            }
+
             sample = if flags.high_freq {
                 Sampling::high()
             } else {
@@ -289,6 +317,7 @@ fn main() {
             vram.text.set();
             pci.text.set();
             gem_info.text.set();
+            pm_info.text.set();
             sensor.text.set();
 
             cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
