@@ -34,6 +34,14 @@ OPTIONS:
 | h   | change update interval (high = 100ms, low = 1000ms) |
 | q   | Quit                                |
 
+## Installation
+### Build from source
+```
+git clone https://github.com/Umio-Yasuno/amdgpu_top
+cd amdgpu_top
+cargo install --locked --path .
+```
+
 ## Library
  * [Cursive](https://github.com/gyscos/cursive)
  * [libdrm-amdgpu-sys-rs](https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs)
