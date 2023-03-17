@@ -1,7 +1,4 @@
-use libdrm_amdgpu_sys::{
-    PCI,
-    AMDGPU::{DeviceHandle, CHIP_CLASS, GPU_INFO}
-};
+use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, CHIP_CLASS, GPU_INFO};
 use std::sync::{Arc, Mutex};
 use cursive::views::{TextView, LinearLayout, Panel};
 use cursive::view::Scrollable;
@@ -10,6 +7,7 @@ use cursive::align::HAlign;
 mod stat;
 mod args;
 mod misc;
+mod dump_info;
 
 #[derive(Debug, Clone)]
 struct ToggleOptions {
@@ -61,6 +59,12 @@ fn main() {
 
         DeviceHandle::init(f.into_raw_fd()).unwrap()
     };
+
+    if main_opt.dump {
+        dump_info::dump(&amdgpu_dev, major, minor);
+        return;
+    }
+
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
@@ -98,26 +102,6 @@ fn main() {
         min_memory_clk = min_memory_clk,
         max_memory_clk = ext_info.max_memory_clock().saturating_div(1000),
     );
-
-    if main_opt.dump {
-        let link = pci_bus.get_link_info(PCI::STATUS::Current);
-        /* may need margin */
-        /* ref: https://gitlab.freedesktop.org/mesa/mesa/blob/main/src/amd/common/ac_gpu_info.c */
-        let resizable_bar = if memory_info.vram.total_heap_size <= memory_info.cpu_accessible_vram.total_heap_size {
-            "Enabled"
-        } else {
-            "Disabled"
-        };
-
-        println!("--- AMDGPU info dump ---");
-        println!("drm: {major}.{minor}");
-        println!("{info_bar}");
-        println!("PCI (domain:bus:dev.func): {pci_bus}");
-        println!("PCI Link: Gen{}x{}", link.gen, link.width);
-        println!("ResizableBAR: {resizable_bar}");
-        misc::vbios_info(&amdgpu_dev);
-        return;
-    }
 
     let gem_info_path = format!(
         "/sys/kernel/debug/dri/{i}/amdgpu_gem_info",
