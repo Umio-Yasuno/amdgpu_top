@@ -95,12 +95,20 @@ fn main() {
 
     if main_opt.dump {
         let link = pci_bus.get_link_info(PCI::STATUS::Current);
+        /* may need margin */
+        /* ref: https://gitlab.freedesktop.org/mesa/mesa/blob/main/src/amd/common/ac_gpu_info.c */
+        let resizable_bar = if memory_info.vram.total_heap_size <= memory_info.cpu_accessible_vram.total_heap_size {
+            "Enabled"
+        } else {
+            "Disabled"
+        };
 
         println!("--- AMDGPU info dump ---");
         println!("drm: {major}.{minor}");
         println!("{info_bar}");
         println!("PCI (domain:bus:dev.func): {pci_bus}");
         println!("PCI Link: Gen{}x{}", link.gen, link.width);
+        println!("ResizableBAR: {resizable_bar}");
         misc::vbios_info(&amdgpu_dev);
         return;
     }
@@ -223,10 +231,6 @@ fn main() {
         let mut sample = Sampling::low();
 
         loop {
-            if let Ok(opt) = toggle_opt.try_lock() {
-                flags = opt.clone();
-            }
-
             for _ in 0..sample.count {
                 // high frequency accesses to registers can cause high GPU clocks
                 if flags.grbm {
@@ -246,6 +250,10 @@ fn main() {
                 }
 
                 std::thread::sleep(sample.delay);
+            }
+
+            if let Ok(opt) = toggle_opt.try_lock() {
+                flags = opt.clone();
             }
 
             if flags.pci {
