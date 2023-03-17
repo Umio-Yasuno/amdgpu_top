@@ -1,4 +1,4 @@
-# amdgpu\_top
+# AMDGPU\_TOP
 `amdgpu_top` is tool that show AMD GPU utilization, like [umr](https://gitlab.freedesktop.org/tomstdenis/umr/) or [clbr/radeontop](https://github.com/clbr/radeontop).  
 
 ![amdgpu_top screenshot](/docs/ss0.png)
@@ -63,3 +63,4 @@ OPTIONS:
 ## TODO
  * more commands
  * update theme
+ * packages
