@@ -2,12 +2,24 @@
 /* ref: https://github.com/freedesktop/mesa-r600_demo/blob/master/r600_lib.c */
 use super::{DeviceHandle, Opt};
 use super::{BITS, check_register_offset, GRBM_OFFSET, toggle_view, TopView, TopProgress};
-use cursive::utils::Counter;
 
 pub struct GRBM {
     pub bits: BITS,
     views: TopProgress,
 }
+
+const GFX10_GRBM_INDEX: &'static [(&str, usize)] = &[
+    ("Graphics Pipe", 31),
+    ("Texture Pipe", 14),
+    // ("Command Processor", 29),
+    // ("Global Data Share", 15),
+    ("Shader Export", 20),
+    ("Shader Processor Interpolator", 22),
+    ("Primitive Assembly", 25),
+    ("Depth Block", 26),
+    ("Color Block", 30),
+    ("Geometry Engine", 21),
+];
 
 const GRBM_INDEX: &'static [(&str, usize)] = &[
     ("Graphics Pipe", 31),
@@ -19,31 +31,21 @@ const GRBM_INDEX: &'static [(&str, usize)] = &[
     ("Primitive Assembly", 25),
     ("Depth Block", 26),
     ("Color Block", 30),
+    ("Vertext Grouper / Tessellator", 17),
+    ("Input Assembly", 19),
+    ("Work Distributor", 21),
 ];
 
 impl GRBM {
     pub fn new(is_gfx10_plus: bool) -> Self {
-        let mut index: Vec<(String, usize)> = Vec::with_capacity(32);
-
-        for (name, idx) in GRBM_INDEX.iter() {
-            index.push((name.to_string(), *idx));
-        }
-
-        if !is_gfx10_plus {
-            index.push(("Vertext Grouper / Tessellator".to_string(), 17));
-            index.push(("Input Assembly".to_string(), 19));
-            index.push(("Work Distributor".to_string(), 21));
+        let views = if is_gfx10_plus {
+            TopProgress::from(GFX10_GRBM_INDEX)
         } else {
-            index.push(("Geometry Engine".to_string(), 21));
-        }
-
-        let counters = (0..index.len()).map(|_| Counter::new(0)).collect();
+            TopProgress::from(GRBM_INDEX)
+        };
 
         Self {
-            views: TopProgress {
-                index,
-                counters,
-            },
+            views,
             bits: BITS::default(),
         }
     }
