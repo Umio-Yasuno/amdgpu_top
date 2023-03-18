@@ -1,6 +1,6 @@
 use libdrm_amdgpu_sys::{
     PCI,
-    AMDGPU::{GPU_INFO, DeviceHandle},
+    AMDGPU::{GPU_INFO, DeviceHandle, drm_amdgpu_info_device},
     AMDGPU::VIDEO_CAPS::{CAP_TYPE, CODEC},
     AMDGPU::HW_IP::HW_IP_TYPE,
     AMDGPU::FW_VERSION::FW_TYPE,
@@ -71,18 +71,33 @@ pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
     println!("VRAM size     : {} MiB", memory_info.vram.total_heap_size >> 20);
     println!("Memory Clock  : {min_memory_clk}-{} MHz", ext_info.max_memory_clock() / 1000);
     println!("Peak Memory BW: {} GB/s", ext_info.peak_memory_bw_gb());
-    println!(
-        "L2 Cache      : {} KiB ({} Banks)",
-        ext_info.calc_l2_cache_size() / 1024,
-        ext_info.num_tcc_blocks
-    );
     println!("ResizableBAR  : {resizable_bar}");
 
+    cache_info(&ext_info);
     pci_info(&pci_bus);
     hw_ip_info(&amdgpu_dev);
     fw_info(&amdgpu_dev);
     codec_info(&amdgpu_dev);
     vbios_info(&amdgpu_dev);
+}
+
+fn cache_info(ext_info: &drm_amdgpu_info_device) {
+    let gl1_cache_size = ext_info.get_gl1_cache_size();
+    let l3_cache_size = ext_info.calc_l3_cache_size_mb();
+
+    println!();
+    println!("L1cache (per CU)    : {:4} KiB", ext_info.get_l1_cache_size() / 1024);
+    if 0 < gl1_cache_size {
+        println!("GL1cache (per SA/SH): {gl1_cache_size:4} KiB");
+    }
+    println!(
+        "L2cache             : {:4} KiB ({} Banks)",
+        ext_info.calc_l2_cache_size() / 1024,
+        ext_info.num_tcc_blocks
+    );
+    if 0 < l3_cache_size {
+        println!("L3cache             : {l3_cache_size:4} MiB");
+    }
 }
 
 fn pci_info(pci_bus: &PCI::BUS_INFO) {
@@ -175,25 +190,13 @@ fn fw_info(amdgpu_dev: &DeviceHandle) {
 }
 
 fn vbios_info(amdgpu_dev: &DeviceHandle) {
-    if let Ok(vbios) = unsafe { amdgpu_dev.vbios_info() } {
-        let [name, pn, ver_str, date] = [
-            vbios.name.to_vec(),
-            vbios.vbios_pn.to_vec(),
-            vbios.vbios_ver_str.to_vec(),
-            vbios.date.to_vec(),
-        ]
-        .map(|v| {
-            let tmp = String::from_utf8(v).unwrap();
-
-            tmp.trim_end_matches(|c: char| c.is_control() || c.is_whitespace()).to_string()
-        });
-
+    if let Ok(vbios) = amdgpu_dev.get_vbios_info() {
         println!();
         println!("VBIOS info:");
-        println!("    name   : [{name}]");
-        println!("    pn     : [{pn}]");
-        println!("    ver_str: [{ver_str}]");
-        println!("    date   : [{date}]");
+        println!("    name   : [{}]", vbios.name);
+        println!("    pn     : [{}]", vbios.pn);
+        println!("    ver_str: [{}]", vbios.ver);
+        println!("    date   : [{}]", vbios.date);
     }
 }
 
