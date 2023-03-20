@@ -1,5 +1,7 @@
 # AMDGPU\_TOP
 `amdgpu_top` is tool that show AMD GPU utilization, like [umr](https://gitlab.freedesktop.org/tomstdenis/umr/) or [clbr/radeontop](https://github.com/clbr/radeontop).  
+Reads the AMDGPU Performance Counters (GRBM, GRBM2, SRBM, SRBM2, CP_STAT) and displays the internal unit utilization.  
+It also gets detailed information about AMDGPU from `libdrm_amdgpu` .  
 
 ![amdgpu_top screenshot](/docs/ss0.png)
 
