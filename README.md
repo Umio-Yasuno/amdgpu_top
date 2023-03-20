@@ -74,3 +74,6 @@ cargo install --locked --path .
  * more commands
  * update theme
  * packages
+ * fdinfo parser
+    * VRAM usage and usage time of each HW IP per process
+    * If you need them, I recommend [Syllo/nvtop](If you need them, we recommend nvtop)
