@@ -54,6 +54,8 @@ pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
     }
     println!("Total Compute Unit         : {:3}", ext_info.cu_active_number());
 
+    println!("RenderBackend (RB)         : {:3} ({} ROP)", ext_info.rb_pipes(), ext_info.calc_rop_count());
+
     println!();
     println!("GPU Clock: {min_gpu_clk}-{} MHz", ext_info.max_engine_clock() / 1000);
     println!("Peak FP32: {} GFLOPS", ext_info.peak_gflops());
@@ -224,7 +226,7 @@ fn codec_info(amdgpu_dev: &DeviceHandle) {
             let dec = format!("{}x{}", dec_cap.max_width, dec_cap.max_height);
             let enc = format!("{}x{}", enc_cap.max_width, enc_cap.max_height);
 
-            println!("{:=^50}", codec.to_string());
+            println!("{:-^50}", codec.to_string());
             println!(
                 concat!(
                     "    Decode: {dec:>10},",
