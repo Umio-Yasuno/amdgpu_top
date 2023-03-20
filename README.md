@@ -76,4 +76,4 @@ cargo install --locked --path .
  * packages
  * fdinfo parser
     * VRAM usage and usage time of each HW IP per process
-    * If you need them, I recommend [Syllo/nvtop](If you need them, we recommend nvtop)
+    * If you need them, I recommend [Syllo/nvtop](https://github.com/Syllo/nvtop)
