@@ -1,6 +1,6 @@
 use crate::Opt;
 mod utils;
-use utils::*;
+pub use utils::*;
 
 use libdrm_amdgpu_sys::AMDGPU::{
     DeviceHandle,
@@ -11,20 +11,67 @@ use libdrm_amdgpu_sys::AMDGPU::{
     CP_STAT_OFFSET
 };
 
-mod grbm;
-pub use grbm::*;
+pub const GFX10_GRBM_INDEX: &'static [(&str, usize)] = &[
+    ("Graphics Pipe", 31),
+    ("Texture Pipe", 14),
+    // ("Command Processor", 29),
+    // ("Global Data Share", 15),
+    ("Shader Export", 20),
+    ("Shader Processor Interpolator", 22),
+    ("Primitive Assembly", 25),
+    ("Depth Block", 26),
+    ("Color Block", 30),
+    ("Geometry Engine", 21),
+];
 
-mod grbm2;
-pub use grbm2::*;
+pub const GRBM_INDEX: &'static [(&str, usize)] = &[
+    ("Graphics Pipe", 31),
+    ("Texture Pipe", 14),
+    // ("Command Processor", 29),
+    // ("Global Data Share", 15),
+    ("Shader Export", 20),
+    ("Shader Processor Interpolator", 22),
+    ("Primitive Assembly", 25),
+    ("Depth Block", 26),
+    ("Color Block", 30),
+    ("Vertext Grouper / Tessellator", 17),
+    ("Input Assembly", 19),
+    ("Work Distributor", 21),
+];
 
-mod srbm;
-pub use srbm::*;
+pub const GRBM2_INDEX: &'static [(&str, usize)] = &[
+    ("Texture Cache", 25),
+    ("Command Processor -  Fetcher", 28),
+    ("Command Processor -  Compute", 29),
+    ("Command Processor - Graphics", 30),
+];
 
-mod srbm2;
-pub use srbm2::*;
+pub const SRBM_INDEX: &'static [(&str, usize)] = &[
+    ("UVD", 19),
+];
 
-mod cp_stat;
-pub use cp_stat::*;
+pub const SRBM2_INDEX: &'static [(&str, usize)] = &[
+    ("VCE0", 7),
+//    ("VCE1", 14),
+    ("SDMA0", 5),
+    ("SDMA1", 6),
+//    ("SDMA2", 10),
+//    ("SDMA3", 11),
+];
+
+pub const CP_STAT_INDEX: &'static [(&str, usize)] = &[
+    ("Prefetch Parser", 15),
+    ("Micro Engine", 17),
+    // ("Surface Sync", 21),
+    ("DMA", 22),
+    ("Scratch Memory", 24),
+];
+
+mod pc_type;
+pub use pc_type::*;
+
+mod perf_counter;
+pub use perf_counter::*;
 
 mod pci;
 pub use pci::*;
