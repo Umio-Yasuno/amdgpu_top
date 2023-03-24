@@ -1,13 +1,12 @@
-use super::DeviceHandle;
-use super::{
+use super::{DeviceHandle, Opt};
+use cursive::views::{HideableView, LinearLayout};
+use libdrm_amdgpu_sys::AMDGPU::{
     GRBM_OFFSET,
     GRBM2_OFFSET,
     SRBM_OFFSET,
     SRBM2_OFFSET,
     CP_STAT_OFFSET
 };
-use crate::Opt;
-use cursive::views::{HideableView, LinearLayout};
 
 #[derive(Debug)]
 #[allow(non_camel_case_types)]

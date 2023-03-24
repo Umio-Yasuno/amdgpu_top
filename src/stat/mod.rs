@@ -1,15 +1,7 @@
+use libdrm_amdgpu_sys::AMDGPU::DeviceHandle;
 use crate::Opt;
 mod utils;
-pub use utils::*;
-
-use libdrm_amdgpu_sys::AMDGPU::{
-    DeviceHandle,
-    GRBM_OFFSET,
-    GRBM2_OFFSET,
-    SRBM_OFFSET,
-    SRBM2_OFFSET,
-    CP_STAT_OFFSET
-};
+use utils::*;
 
 pub const GFX10_GRBM_INDEX: &'static [(&str, usize)] = &[
     ("Graphics Pipe", 31),
