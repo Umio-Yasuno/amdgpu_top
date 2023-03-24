@@ -13,12 +13,8 @@ pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
 
-    let (min_gpu_clk, min_memory_clk) = misc::get_min_clk(&amdgpu_dev, &pci_bus);
-    let gpu_type = if ext_info.is_apu() {
-        "APU"
-    } else {
-        "dGPU"
-    };
+    let (min_gpu_clk, min_memory_clk) = misc::get_min_clk(amdgpu_dev, &pci_bus);
+    let gpu_type = if ext_info.is_apu() { "APU" } else { "dGPU" };
 
     println!("--- AMDGPU info dump ---");
     println!("drm version: {major}.{minor}");
@@ -77,10 +73,10 @@ pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
 
     cache_info(&ext_info);
     pci_info(&pci_bus);
-    hw_ip_info(&amdgpu_dev);
-    fw_info(&amdgpu_dev);
-    codec_info(&amdgpu_dev);
-    vbios_info(&amdgpu_dev);
+    hw_ip_info(amdgpu_dev);
+    fw_info(amdgpu_dev);
+    codec_info(amdgpu_dev);
+    vbios_info(amdgpu_dev);
 }
 
 fn cache_info(ext_info: &drm_amdgpu_info_device) {

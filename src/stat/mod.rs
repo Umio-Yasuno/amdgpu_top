@@ -3,7 +3,7 @@ use crate::Opt;
 mod utils;
 use utils::*;
 
-pub const GFX10_GRBM_INDEX: &'static [(&str, usize)] = &[
+pub const GFX10_GRBM_INDEX: &[(&str, usize)] = &[
     ("Graphics Pipe", 31),
     ("Texture Pipe", 14),
     // ("Command Processor", 29),
@@ -16,7 +16,7 @@ pub const GFX10_GRBM_INDEX: &'static [(&str, usize)] = &[
     ("Geometry Engine", 21),
 ];
 
-pub const GRBM_INDEX: &'static [(&str, usize)] = &[
+pub const GRBM_INDEX: &[(&str, usize)] = &[
     ("Graphics Pipe", 31),
     ("Texture Pipe", 14),
     // ("Command Processor", 29),
@@ -31,18 +31,18 @@ pub const GRBM_INDEX: &'static [(&str, usize)] = &[
     ("Work Distributor", 21),
 ];
 
-pub const GRBM2_INDEX: &'static [(&str, usize)] = &[
+pub const GRBM2_INDEX: &[(&str, usize)] = &[
     ("Texture Cache", 25),
     ("Command Processor -  Fetcher", 28),
     ("Command Processor -  Compute", 29),
     ("Command Processor - Graphics", 30),
 ];
 
-pub const SRBM_INDEX: &'static [(&str, usize)] = &[
+pub const SRBM_INDEX: &[(&str, usize)] = &[
     ("UVD", 19),
 ];
 
-pub const SRBM2_INDEX: &'static [(&str, usize)] = &[
+pub const SRBM2_INDEX: &[(&str, usize)] = &[
     ("VCE0", 7),
 //    ("VCE1", 14),
     ("SDMA0", 5),
@@ -51,7 +51,7 @@ pub const SRBM2_INDEX: &'static [(&str, usize)] = &[
 //    ("SDMA3", 11),
 ];
 
-pub const CP_STAT_INDEX: &'static [(&str, usize)] = &[
+pub const CP_STAT_INDEX: &[(&str, usize)] = &[
     ("Prefetch Parser", 15),
     ("Micro Engine", 17),
     // ("Surface Sync", 21),

@@ -54,8 +54,8 @@ impl From<u32> for BITS {
     fn from(val: u32) -> Self {
         let mut out = [0u8; 32];
 
-        for i in 0usize..32 {
-            out[i] = ((val >> i) & 0b1) as u8;
+        for (i, o) in out.iter_mut().enumerate() {
+            *o = ((val >> i) & 0b1) as u8;
         }
 
         Self(out)
@@ -64,8 +64,8 @@ impl From<u32> for BITS {
 
 impl std::ops::AddAssign for BITS {
     fn add_assign(&mut self, other: Self) {
-        for i in 0usize..32 {
-            self.0[i] += other.0[i];
+        for (dst, src) in self.0.iter_mut().zip(other.0.iter()) {
+            *dst += src;
         }
     }
 }

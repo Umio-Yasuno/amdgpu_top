@@ -46,12 +46,10 @@ impl PCType {
             Self::CP_STAT => "mmCP_STAT_STATUS",
         };
 
-        if let Err(err) = amdgpu_dev.read_mm_registers(offset) {
+        amdgpu_dev.read_mm_registers(offset).map_or_else(|err| {
             println!("{reg_name} ({offset:#X}) register is not allowed. ({err})");
-            return false;
-        }
-
-        true
+            false
+        }, |_| true)
     }
 
     pub fn cb(&self) -> impl Fn(&mut cursive::Cursive) {

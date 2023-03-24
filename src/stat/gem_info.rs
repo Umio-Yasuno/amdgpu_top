@@ -78,7 +78,7 @@ impl GemView {
             }
 
             'calc_usage: loop {
-                let mem_line = *lines.peek().unwrap_or_else(|| &"pid");
+                let mem_line = *lines.peek().unwrap_or(&"pid");
 
                 if mem_line.starts_with("pid") {
                     if MIB * 10 < gem.vram_usage {

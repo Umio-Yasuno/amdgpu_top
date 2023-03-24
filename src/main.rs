@@ -178,7 +178,7 @@ fn main() {
         let mut layout = LinearLayout::vertical()
             .child(
                 Panel::new(
-                    TextView::new(&info_bar).center()
+                    TextView::new(info_bar).center()
                 )
                 .title("amdgpu_top")
                 .title_position(HAlign::Center)

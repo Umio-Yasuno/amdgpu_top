@@ -8,7 +8,7 @@ pub fn get_min_clk(
     pci_bus: &PCI::BUS_INFO
 ) -> (u64, u64) {
     (
-        amdgpu_dev.get_min_gpu_clock_from_sysfs(pci_bus).unwrap_or_else(|| 0),
-        amdgpu_dev.get_min_memory_clock_from_sysfs(pci_bus).unwrap_or_else(|| 0),
+        amdgpu_dev.get_min_gpu_clock_from_sysfs(pci_bus).unwrap_or(0),
+        amdgpu_dev.get_min_memory_clock_from_sysfs(pci_bus).unwrap_or(0),
     )
 }
