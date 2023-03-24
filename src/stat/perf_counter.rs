@@ -81,7 +81,7 @@ impl PerfCounter {
 
     pub fn set_value(&self) {
         for (c, (_, pos)) in self.counters.iter().zip(self.index.iter()) {
-            c.set(self.bits.0[*pos] as usize)
+            c.set(self.bits.get(*pos) as usize)
         }
     }
 

@@ -44,6 +44,10 @@ impl BITS {
     pub fn acc(&mut self, reg: u32) {
         *self += Self::from(reg)
     }
+
+    pub fn get(&self, index: usize) -> u8 {
+        unsafe { *self.0.get_unchecked(index) }
+    }
 }
 
 impl From<u32> for BITS {
