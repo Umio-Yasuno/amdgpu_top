@@ -73,15 +73,7 @@ fn main() {
     let chip_class = ext_info.get_chip_class();
 
     let (min_gpu_clk, min_memory_clk) = misc::get_min_clk(&amdgpu_dev, &pci_bus);
-    let mark_name = match amdgpu_dev.get_marketing_name() {
-        Ok(name) => name,
-        Err(_) => "".to_string(), // unreachable
-    };
-    let gpu_type = if ext_info.is_apu() {
-        "APU"
-    } else {
-        "dGPU"
-    };
+    let mark_name = amdgpu_dev.get_marketing_name().unwrap_or("".to_string());
     let info_bar = format!(
         concat!(
             "{mark_name} ({did:#06X}:{rid:#04X})\n",
@@ -93,7 +85,7 @@ fn main() {
         did = ext_info.device_id(),
         rid = ext_info.pci_rev_id(),
         asic = ext_info.get_asic_name(),
-        gpu_type = gpu_type,
+        gpu_type = if ext_info.is_apu() { "APU" } else { "dGPU" },
         chip_class = chip_class,
         num_cu = ext_info.cu_active_number(),
         min_gpu_clk = min_gpu_clk,
