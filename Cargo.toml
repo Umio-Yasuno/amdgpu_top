@@ -8,7 +8,7 @@ license = "MIT"
 
 [dependencies]
 libdrm_amdgpu_sys = { git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs" }
-cursive = "0.20"
+cursive = { version = "0.20", default-features = false, features = ["crossterm-backend"] }
 
 [profile.release]
 opt-level = 2
