@@ -47,6 +47,7 @@ impl PerfCounter {
         visible: bool,
     ) -> TopView {
         const LEFT_LEN: usize = 30;
+        const BAR_WIDTH: usize = 30;
         
         let title = self.pc_type.to_string();
         let mut sub_layout = LinearLayout::vertical();
@@ -62,7 +63,7 @@ impl PerfCounter {
                         TextView::new(format!("{name:>LEFT_LEN$}:")),
                     )
                     .child(
-                        Rect::from_size((LEFT_LEN+2,0), (30, 1)),
+                        Rect::from_size((LEFT_LEN+2,0), (BAR_WIDTH, 1)),
                         ProgressBar::new()
                             .with_value(c.clone())
                             .with_label(label)

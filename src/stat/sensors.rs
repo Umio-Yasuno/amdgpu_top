@@ -24,12 +24,16 @@ impl Sensor {
 
         self.text.clear();
 
+        let mut c = 0;
+
         for (sensor, unit, div) in &SENSORS_LIST {
             let sensor_name = sensor.to_string();
 
             if let Ok(val) = amdgpu_dev.sensor_info(*sensor) {
+                c += 1;
                 let val = val.saturating_div(*div);
-                writeln!(self.text.buf, " {sensor_name:<15} => {val:>6} {unit:3} ").unwrap();
+                let ln = if (c % 2) == 0 { "\n" } else { "" };
+                write!(self.text.buf, " {sensor_name:<15} => {val:>6} {unit:3} {ln}").unwrap();
             }
         }
     }
