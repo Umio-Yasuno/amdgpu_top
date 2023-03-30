@@ -5,11 +5,11 @@ pub struct MainOpt {
 }
 
 const HELP_MSG: &str = concat!(
-    "amdgpu_top ", env!("CARGO_PKG_VERSION"), "\n",
-    "https://github.com/Umio-Yasuno/amdgpu_top\n",
+    env!("CARGO_PKG_NAME"), " ", env!("CARGO_PKG_VERSION"), "\n",
+    env!("CARGO_PKG_HOMEPAGE"), "\n",
     "\n",
     "USAGE:\n",
-    "    cargo run -- [options ..] or <amdgpu_top> [options ..]\n",
+    "    cargo run -- [options ..] or <", env!("CARGO_PKG_NAME"), "> [options ..]\n",
     "\n",
     "FLAGS:\n",
     "   -d, --dump\n",

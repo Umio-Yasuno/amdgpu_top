@@ -172,7 +172,7 @@ fn main() {
                 Panel::new(
                     TextView::new(info_bar).center()
                 )
-                .title("amdgpu_top")
+                .title(env!("CARGO_PKG_NAME"))
                 .title_position(HAlign::Center)
             );
 

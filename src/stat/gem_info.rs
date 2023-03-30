@@ -70,7 +70,7 @@ impl GemView {
                 gem.pid = line[PID_RANGE].trim_start().parse().unwrap();
                 gem.command_name = line[COMMAND_NAME].to_string();
 
-                if gem.command_name == "amdgpu_top:" {
+                if gem.command_name == concat!(env!("CARGO_PKG_NAME"), ":") {
                     continue;
                 }
             } else {

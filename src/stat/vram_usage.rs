@@ -45,8 +45,8 @@ impl VRAM_INFO {
         write!(
             self.text.buf,
             concat!(
-                " {vram_label:<5} => {usage_vram:>5}/{total_vram:<5} MiB,",
-                " {gtt_label:>5 } => {usage_gtt:>5}/{total_gtt:<5} MiB ",
+                " {vram_label:>5} => {usage_vram:>5}/{total_vram:<5} MiB,",
+                " {gtt_label:>5 } => {usage_gtt:>5 }/{total_gtt:<5 } MiB ",
             ),
             vram_label = "VRAM",
             usage_vram = self.usage_vram >> 20,
