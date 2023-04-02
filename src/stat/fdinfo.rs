@@ -56,7 +56,7 @@ impl FdInfoView {
         }
     }
 
-    pub fn print(&mut self, vec_info: &[ProcInfo]) {
+    pub fn print(&mut self, slice_proc_info: &[ProcInfo]) {
         self.text.clear();
 
         writeln!(
@@ -65,37 +65,23 @@ impl FdInfoView {
             pad = "",
         ).unwrap();
 
-        for info in vec_info.iter() {
-            writeln!(
-                self.text.buf,
-                "{}",
-                info.print_stat(&mut self.pid_map, self.interval),
-            ).unwrap();
+        for proc_info in slice_proc_info {
+            self.print_stat(proc_info);
         }
     }
 
-    pub fn cb(siv: &mut cursive::Cursive) {
-        {
-            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
-            opt.fdinfo ^= true;
-        }
-    }
-}
-
-impl ProcInfo {
-    pub fn print_stat(
-        &self,
-        stats_map: &mut HashMap::<i32, FdStat>,
-        interval: std::time::Duration,
-    ) -> String {
-        let pid = self.pid;
-        let name = if PROC_NAME_LEN < self.name.len() { &self.name[..PROC_NAME_LEN] } else { &self.name };
+    pub fn print_stat(&mut self, proc_info: &ProcInfo) {
+        let pid = proc_info.pid;
+        let name = if PROC_NAME_LEN < proc_info.name.len() {
+            &proc_info.name[..PROC_NAME_LEN]
+        } else {
+            &proc_info.name
+        };
         let mut ids = HashSet::<usize>::new();
         let mut stat = FdStat::default();
-        let mut s = String::new();
         let mut buf = String::new();
 
-        'fds: for fd in &self.fds {
+        'fds: for fd in &proc_info.fds {
             let path = format!("/proc/{pid}/fdinfo/{fd}");
             let Ok(mut f) = fs::File::open(&path) else { continue; };
             if let Err(_) = f.read_to_string(&mut buf) { continue; }
@@ -134,62 +120,57 @@ impl ProcInfo {
                 }
             } // 'fdinfo
         } // 'fds
-        write!(s, " {name:PROC_NAME_LEN$} ({pid:>8}) |").unwrap();
-        write!(s, " {:>5} MiB|", stat.vram_usage >> 10).unwrap();
+        write!(self.text.buf, " {name:PROC_NAME_LEN$} ({pid:>8}) |").unwrap();
+        write!(self.text.buf, " {:>5} MiB|", stat.vram_usage >> 10).unwrap();
 
-        if let Some(pre_stat) = stats_map.get_mut(&self.pid) { // diff
-            let [gfx, compute, dma, dec, enc, uvd_enc, _vcn_jpeg] = {
-                [
-                    (pre_stat.gfx, stat.gfx),
-                    (pre_stat.compute, stat.compute),
-                    (pre_stat.dma, stat.dma),
-                    (pre_stat.dec, stat.dec),
-                    (pre_stat.enc, stat.enc),
-                    (pre_stat.uvd_enc, stat.uvd_enc),
-                    (pre_stat.vcn_jpeg, stat.vcn_jpeg),
-                ]
-                .map(|(pre, cur)| {
-                    let usage = if pre == 0 {
-                        0
-                    } else {
-                        let tmp = cur.saturating_sub(pre);
+        let diff = {
+            if let Some(pre_stat) = self.pid_map.get_mut(&pid) { // diff
+                let tmp = stat.calc_usage(pre_stat, &self.interval);
+                *pre_stat = stat;
 
-                        if tmp.is_negative() { 0 } else { tmp }
-                    };
+                tmp
+            } else {
+                let [vram_usage, gtt_usage, cpu_accessible_usage] = [
+                    stat.vram_usage,
+                    stat.gtt_usage,
+                    stat.cpu_accessible_usage,
+                ];
+                self.pid_map.insert(pid, stat);
 
-                    usage as u128 / (interval.as_nanos() / 100)
-                })
-            };
-
-            for (usage, name) in [
-                (gfx, GFX_LABEL),
-                (compute, COMPUTE_LABEL),
-                (dma, DMA_LABEL),
-                (dec, DEC_LABEL), // UVD/VCN
-                // (enc, ENC_LABEL), // VCE/VCN
-                // (uvd_enc, UVD_ENC_LABEL), // UVD
-                // (vcn_jpeg, JPEG_LABEL) // VCN
-            ] {
-                let len = name.len();
-
-                write!(s, " {usage:>len$}%|").unwrap();
+                FdStat {
+                    vram_usage,
+                    gtt_usage,
+                    cpu_accessible_usage,
+                    ..Default::default()
+                }
             }
-            {
-                const LEN: usize = ENC_LABEL.len();
-                let usage = enc + uvd_enc;
-                write!(s, " {usage:>LEN$}%|").unwrap();
-            }
+        };
 
-            std::mem::swap(pre_stat, &mut stat);
-        } else {
-            for label in [GFX_LABEL, COMPUTE_LABEL, DMA_LABEL, DEC_LABEL, ENC_LABEL] {
-                let len = label.len();
-                write!(s, " {:>len$}%|", 0).unwrap();
-            }
-            stats_map.insert(self.pid, stat);
+        for (usage, name) in [
+            (diff.gfx, GFX_LABEL),
+            (diff.compute, COMPUTE_LABEL),
+            (diff.dma, DMA_LABEL),
+            (diff.dec, DEC_LABEL), // UVD/VCN
+            // (enc, ENC_LABEL), // VCE/VCN
+            // (uvd_enc, UVD_ENC_LABEL), // UVD
+            // (vcn_jpeg, JPEG_LABEL) // VCN
+        ] {
+            let len = name.len();
+            write!(self.text.buf, " {usage:>len$}%|").unwrap();
         }
+        {
+            const LEN: usize = ENC_LABEL.len();
+            let usage = diff.enc.saturating_add(diff.uvd_enc);
+            write!(self.text.buf, " {usage:>LEN$}%|").unwrap();
+        }
+        writeln!(self.text.buf).unwrap();
+    }
 
-        s
+    pub fn cb(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.fdinfo ^= true;
+        }
     }
 }
 
@@ -227,7 +208,7 @@ impl FdStat {
 
         let ns: i64 = {
             let len = s.len();
-            s[pos+1..(len-NS)].parse().unwrap()
+            s[pos+1..(len-NS)].parse().unwrap_or(0)
         };
 
         match &s[PRE..pos] {
@@ -240,6 +221,44 @@ impl FdStat {
             "jpeg:" => self.vcn_jpeg += ns,
             _ => {},
         };
+    }
+
+    pub fn calc_usage(&self, pre_stat: &Self, interval: &Duration) -> Self {
+        let [gfx, compute, dma, dec, enc, uvd_enc, _vcn_jpeg] = {
+            [
+                (pre_stat.gfx, self.gfx),
+                (pre_stat.compute, self.compute),
+                (pre_stat.dma, self.dma),
+                (pre_stat.dec, self.dec),
+                (pre_stat.enc, self.enc),
+                (pre_stat.uvd_enc, self.uvd_enc),
+                (pre_stat.vcn_jpeg, self.vcn_jpeg),
+            ]
+            .map(|(pre, cur)| {
+                let usage = if pre == 0 {
+                    0
+                } else {
+                    let tmp = cur.saturating_sub(pre);
+
+                    if tmp.is_negative() { 0 } else { tmp }
+                };
+
+                (usage as u128 / (interval.as_nanos() / 100)) as i64
+            })
+        };
+
+        Self {
+            vram_usage: self.vram_usage,
+            gtt_usage: self.gtt_usage,
+            cpu_accessible_usage: self.cpu_accessible_usage,
+            gfx,
+            compute,
+            dma,
+            dec,
+            enc,
+            uvd_enc,
+            vcn_jpeg: _vcn_jpeg,
+        }
     }
 }
 
