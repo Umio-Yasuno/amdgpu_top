@@ -1,5 +1,6 @@
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, CHIP_CLASS, GPU_INFO};
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use cursive::views::{TextView, LinearLayout, Panel};
 use cursive::view::Scrollable;
 use cursive::align::HAlign;
@@ -187,7 +188,7 @@ fn main() {
 
         std::thread::spawn(move || {
             loop {
-                std::thread::sleep(std::time::Duration::from_secs(5));
+                std::thread::sleep(Duration::from_secs(1));
 
                 stat::update_index(&mut buf_index, &device_path);
 
@@ -225,6 +226,12 @@ fn main() {
                 }
             }
 
+            sample = if flags.high_freq {
+                Sampling::high()
+            } else {
+                Sampling::low()
+            };
+
             if flags.vram {
                 vram.update_usage(&amdgpu_dev);
                 vram.print();
@@ -238,23 +245,17 @@ fn main() {
                 sensor.text.clear();
             }
 
-            if flags.fdinfo { // fdinfo
+            if flags.fdinfo {
                 let lock = index.try_lock();
                 if let Ok(vec_info) = lock {
-                    fdinfo.interval = sample.to_duration();
                     fdinfo.print(&vec_info);
+                    fdinfo.interval = sample.to_duration();
                 } else {
-                    fdinfo.interval = sample.to_duration() * 2;
+                    fdinfo.interval += sample.to_duration();
                 }
             } else {
                 fdinfo.text.clear();
             }
-
-            sample = if flags.high_freq {
-                Sampling::high()
-            } else {
-                Sampling::low()
-            };
 
             grbm.dump();
             grbm2.dump();
@@ -270,8 +271,6 @@ fn main() {
 
     siv.run();
 }
-
-use std::time::Duration;
 
 struct Sampling {
     count: usize,
