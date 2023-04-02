@@ -238,7 +238,7 @@ impl FdStat {
             "enc:" => self.enc += ns,
             "enc_1:" => self.uvd_enc += ns,
             "jpeg:" => self.vcn_jpeg += ns,
-            _ => { panic!() },
+            _ => {},
         };
     }
 }
