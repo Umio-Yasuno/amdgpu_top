@@ -38,6 +38,7 @@ pub const GRBM2_INDEX: &[(&str, usize)] = &[
     ("Command Processor - Graphics", 30),
 ];
 
+/*
 pub const SRBM_INDEX: &[(&str, usize)] = &[
     ("UVD", 19),
 ];
@@ -50,6 +51,7 @@ pub const SRBM2_INDEX: &[(&str, usize)] = &[
 //    ("SDMA2", 10),
 //    ("SDMA3", 11),
 ];
+*/
 
 pub const CP_STAT_INDEX: &[(&str, usize)] = &[
     ("Prefetch Parser", 15),

@@ -3,8 +3,8 @@ use cursive::views::{HideableView, LinearLayout};
 use libdrm_amdgpu_sys::AMDGPU::{
     GRBM_OFFSET,
     GRBM2_OFFSET,
-    SRBM_OFFSET,
-    SRBM2_OFFSET,
+    // SRBM_OFFSET,
+    // SRBM2_OFFSET,
     CP_STAT_OFFSET
 };
 
@@ -13,8 +13,8 @@ use libdrm_amdgpu_sys::AMDGPU::{
 pub enum PCType {
     GRBM,
     GRBM2,
-    SRBM,
-    SRBM2,
+    // SRBM,
+    // SRBM2,
     CP_STAT,
 }
 
@@ -30,8 +30,8 @@ impl PCType {
         match self {
             Self::GRBM => GRBM_OFFSET,
             Self::GRBM2 => GRBM2_OFFSET,
-            Self::SRBM => SRBM_OFFSET,
-            Self::SRBM2 => SRBM2_OFFSET,
+            // Self::SRBM => SRBM_OFFSET,
+            // Self::SRBM2 => SRBM2_OFFSET,
             Self::CP_STAT => CP_STAT_OFFSET,
         }
     }
@@ -41,8 +41,8 @@ impl PCType {
         let reg_name = match self {
             Self::GRBM => "mmGRBM_STATUS",
             Self::GRBM2 => "mmGRBM2_STATUS2",
-            Self::SRBM => "mmSRBM_STATUS",
-            Self::SRBM2 => "mmSRBM2_STATUS2",
+            // Self::SRBM => "mmSRBM_STATUS",
+            // Self::SRBM2 => "mmSRBM2_STATUS2",
             Self::CP_STAT => "mmCP_STAT_STATUS",
         };
 
@@ -63,6 +63,7 @@ impl PCType {
                 let mut opt = opt.lock().unwrap();
                 opt.grbm2 ^= true;
             },
+            /*
             Self::SRBM => |opt: &mut Opt| {
                 let mut opt = opt.lock().unwrap();
                 opt.uvd ^= true;
@@ -71,6 +72,7 @@ impl PCType {
                 let mut opt = opt.lock().unwrap();
                 opt.srbm ^= true;
             },
+            */
             Self::CP_STAT => |opt: &mut Opt| {
                 let mut opt = opt.lock().unwrap();
                 opt.cp_stat ^= true;

@@ -13,8 +13,6 @@ mod dump_info;
 struct ToggleOptions {
     grbm: bool,
     grbm2: bool,
-    uvd: bool,
-    srbm: bool,
     cp_stat: bool,
     pci: bool,
     vram: bool,
@@ -28,8 +26,6 @@ impl Default for ToggleOptions {
         Self {
             grbm: true,
             grbm2: true,
-            uvd: true,
-            srbm: true,
             cp_stat: true,
             pci: true,
             vram: true,
@@ -43,7 +39,7 @@ impl Default for ToggleOptions {
 type Opt = Arc<Mutex<ToggleOptions>>;
 
 const TOGGLE_HELP: &str = concat!(
-    " (g)rbm g(r)bm2 (u)vd (s)rbm (c)p_stat (p)ci\n",
+    " (g)rbm g(r)bm2 (c)p_stat (p)ci\n",
     " (v)ram se(n)sor (h)igh_freq (q)uit",
 );
 
@@ -103,8 +99,6 @@ fn main() {
 
     let mut grbm = stat::PerfCounter::new(stat::PCType::GRBM, grbm_index);
     let mut grbm2 = stat::PerfCounter::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
-    let mut uvd = stat::PerfCounter::new(stat::PCType::SRBM, stat::SRBM_INDEX);
-    let mut srbm2 = stat::PerfCounter::new(stat::PCType::SRBM2, stat::SRBM2_INDEX);
     let mut cp_stat = stat::PerfCounter::new(stat::PCType::CP_STAT, stat::CP_STAT_INDEX);
     let mut vram = stat::VRAM_INFO::new(&memory_info);
 
@@ -121,8 +115,6 @@ fn main() {
     {   // check register offset
         toggle_opt.grbm = grbm.pc_type.check_reg_offset(&amdgpu_dev);
         toggle_opt.grbm2 = grbm2.pc_type.check_reg_offset(&amdgpu_dev);
-        toggle_opt.uvd = uvd.pc_type.check_reg_offset(&amdgpu_dev);
-        toggle_opt.srbm = srbm2.pc_type.check_reg_offset(&amdgpu_dev);
         [toggle_opt.cp_stat, _] = [false, cp_stat.pc_type.check_reg_offset(&amdgpu_dev)];
 
         // fill
@@ -163,17 +155,6 @@ fn main() {
             layout.add_child(grbm2.top_view(toggle_opt.grbm2));
             siv.add_global_callback('r', grbm2.pc_type.cb());
         }
-        /*
-        // mmSRBM_STATUS/mmSRBM_STATUS2 does not exist in GFX9 (soc15) or later.
-        if toggle_opt.uvd && (chip_class < CHIP_CLASS::GFX9) {
-            layout.add_child(uvd.top_view(toggle_opt.uvd));
-            siv.add_global_callback('u', uvd.pc_type.cb());
-        }
-        if toggle_opt.srbm && (chip_class < CHIP_CLASS::GFX9) {
-            layout.add_child(srbm2.top_view(toggle_opt.srbm));
-            siv.add_global_callback('s', srbm2.pc_type.cb());
-        }
-        */
         {
             layout.add_child(cp_stat.top_view(toggle_opt.cp_stat));
             siv.add_global_callback('c', cp_stat.pc_type.cb());
@@ -245,12 +226,6 @@ fn main() {
                 if flags.grbm2 {
                     grbm2.read_reg(&amdgpu_dev);
                 }
-                if flags.uvd {
-                    uvd.read_reg(&amdgpu_dev);
-                }
-                if flags.srbm {
-                    srbm2.read_reg(&amdgpu_dev);
-                }
                 if flags.cp_stat {
                     cp_stat.read_reg(&amdgpu_dev);
                 }
@@ -305,9 +280,7 @@ fn main() {
 
             grbm.dump();
             grbm2.dump();
-            uvd.dump();
             cp_stat.dump();
-            srbm2.dump();
 
             vram.text.set();
             pci.text.set();
