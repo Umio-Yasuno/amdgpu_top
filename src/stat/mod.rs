@@ -71,12 +71,6 @@ pub use pci::*;
 mod fdinfo;
 pub use fdinfo::*;
 
-mod gem_info;
-pub use gem_info::*;
-
-mod pm_info;
-pub use pm_info::*;
-
 mod vram_usage;
 pub use vram_usage::*;
 

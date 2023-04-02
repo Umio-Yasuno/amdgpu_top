@@ -21,8 +21,6 @@ struct ToggleOptions {
     sensor: bool,
     high_freq: bool,
     fdinfo: bool,
-    gem: bool,
-    pm: bool,
 }
 
 impl Default for ToggleOptions {
@@ -38,8 +36,6 @@ impl Default for ToggleOptions {
             sensor: true,
             high_freq: false,
             fdinfo: true,
-            gem: true,
-            pm: true,
         }
     }
 }
@@ -48,7 +44,7 @@ type Opt = Arc<Mutex<ToggleOptions>>;
 
 const TOGGLE_HELP: &str = concat!(
     " (g)rbm g(r)bm2 (u)vd (s)rbm (c)p_stat (p)ci\n",
-    " (v)ram g(e)m p(m) se(n)sor (h)igh_freq (q)uit",
+    " (v)ram se(n)sor (h)igh_freq (q)uit",
 );
 
 fn main() {
@@ -99,15 +95,6 @@ fn main() {
         max_memory_clk = ext_info.max_memory_clock().saturating_div(1000),
     );
 
-    let gem_info_path = format!(
-        "/sys/kernel/debug/dri/{i}/amdgpu_gem_info",
-        i = main_opt.instance,
-    );
-    let pm_info_path = format!(
-        "/sys/kernel/debug/dri/{i}/amdgpu_pm_info",
-        i = main_opt.instance,
-    );
-
     let grbm_index = if CHIP_CLASS::GFX10 <= chip_class {
         stat::GFX10_GRBM_INDEX
     } else {
@@ -126,8 +113,6 @@ fn main() {
     let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
     stat::update_index(&mut proc_index, &device_path);
 
-    let mut gem_info = stat::GemView::default();
-    let mut pm_info = stat::PmView::default();
     let mut sensor = stat::Sensor::default();
     let mut pci = stat::PCI_LINK_INFO::new(&pci_bus);
 
@@ -139,24 +124,6 @@ fn main() {
         toggle_opt.uvd = uvd.pc_type.check_reg_offset(&amdgpu_dev);
         toggle_opt.srbm = srbm2.pc_type.check_reg_offset(&amdgpu_dev);
         [toggle_opt.cp_stat, _] = [false, cp_stat.pc_type.check_reg_offset(&amdgpu_dev)];
-
-        if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
-            toggle_opt.gem = true;
-
-            gem_info.read_to_print(f);
-            gem_info.text.set();
-        } else {
-            toggle_opt.gem = false;
-        }
-
-        if let Ok(ref mut f) = std::fs::File::open(&pm_info_path) {
-            toggle_opt.pm = true;
-
-            pm_info.read_to_print(f);
-            pm_info.text.set();
-        } else {
-            toggle_opt.pm = false;
-        }
 
         // fill
         {
@@ -223,16 +190,6 @@ fn main() {
             layout.add_child(pci.text.panel("PCI"));
             siv.add_global_callback('p', stat::PCI_LINK_INFO::cb);
         }
-        /*
-        if toggle_opt.gem {
-            layout.add_child(gem_info.text.panel("GEM Info"));
-            siv.add_global_callback('e', stat::GemView::cb);
-        }
-        if toggle_opt.pm {
-            layout.add_child(pm_info.text.panel("PM Info"));
-            siv.add_global_callback('m', stat::PmView::cb);
-        }
-        */
         {
             layout.add_child(sensor.text.panel("Sensors"));
             siv.add_global_callback('n', stat::Sensor::cb);
@@ -340,22 +297,6 @@ fn main() {
                 fdinfo.text.clear();
             }
 
-            if flags.gem {
-                if let Ok(ref mut f) = std::fs::File::open(&gem_info_path) {
-                    gem_info.read_to_print(f);
-                }
-            } else {
-                gem_info.clear();
-            }
-
-            if flags.pm {
-                if let Ok(ref mut f) = std::fs::File::open(&pm_info_path) {
-                    pm_info.read_to_print(f);
-                }
-            } else {
-                pm_info.clear();
-            }
-
             sample = if flags.high_freq {
                 Sampling::high()
             } else {
@@ -372,9 +313,6 @@ fn main() {
             pci.text.set();
             
             fdinfo.text.set();
-
-            gem_info.text.set();
-            pm_info.text.set();
             sensor.text.set();
 
             cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
