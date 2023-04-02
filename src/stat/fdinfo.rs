@@ -49,9 +49,9 @@ pub struct FdInfoView {
 }
 
 impl FdInfoView {
-    pub fn new(_device_path: &str) -> Self {
+    pub fn new(interval: Duration) -> Self {
         Self {
-            // device_path: device_path.to_string(),
+            interval,
             ..Default::default()
         }
     }

@@ -38,7 +38,7 @@ type Opt = Arc<Mutex<ToggleOptions>>;
 
 const TOGGLE_HELP: &str = concat!(
     " (g)rbm g(r)bm2 (c)p_stat \n",
-    " (v)ram se(n)sor (h)igh_freq (q)uit",
+    " (v)ram (f)dinfo se(n)sor (h)igh_freq (q)uit",
 );
 
 fn main() {
@@ -100,11 +100,9 @@ fn main() {
     let mut cp_stat = stat::PerfCounter::new(stat::PCType::CP_STAT, stat::CP_STAT_INDEX);
     let mut vram = stat::VRAM_INFO::new(&memory_info);
 
-    let mut fdinfo = stat::FdInfoView::new(&device_path);
-    fdinfo.interval = Sampling::low().to_duration();
     let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
-    stat::update_index(&mut proc_index, &device_path);
-
+    let mut sample = Sampling::low();
+    let mut fdinfo = stat::FdInfoView::new(sample.to_duration());
     let mut sensor = stat::Sensor::new(&pci_bus);
 
     let mut toggle_opt = ToggleOptions::default();
@@ -116,6 +114,7 @@ fn main() {
 
         // fill
         {
+            stat::update_index(&mut proc_index, &device_path);
             fdinfo.print(&proc_index);
             fdinfo.text.set();
         }
@@ -185,7 +184,6 @@ fn main() {
     {
         let index = share_proc_index.clone();
         let mut buf_index: Vec<stat::ProcInfo> = Vec::new();
-        // let device_path = device_path.clone();
 
         std::thread::spawn(move || {
             loop {
@@ -195,8 +193,7 @@ fn main() {
 
                 let lock = index.lock();
                 if let Ok(mut index) = lock {
-                    // stat::update_index(&mut index, &device_path);
-                    std::mem::swap(&mut *index, &mut buf_index);
+                    *index = buf_index.clone();
                 }
             }
         });
@@ -204,7 +201,6 @@ fn main() {
 
     std::thread::spawn(move || {
         let index = share_proc_index.clone();
-        let mut sample = Sampling::low();
 
         loop {
             for _ in 0..sample.count {
@@ -265,7 +261,6 @@ fn main() {
             cp_stat.dump();
 
             vram.text.set();
-            
             fdinfo.text.set();
             sensor.text.set();
 
