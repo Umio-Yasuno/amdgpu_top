@@ -10,6 +10,7 @@ homepage = "https://github.com/Umio-Yasuno/amdgpu_top"
 [dependencies]
 libdrm_amdgpu_sys = { git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs" }
 cursive = { version = "0.20", default-features = false, features = ["crossterm-backend"] }
+procfs = { version = "0.15.1", default-features = false }
 
 [profile.release]
 opt-level = 2

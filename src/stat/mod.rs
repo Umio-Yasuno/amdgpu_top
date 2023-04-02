@@ -68,6 +68,9 @@ pub use perf_counter::*;
 mod pci;
 pub use pci::*;
 
+mod fdinfo;
+pub use fdinfo::*;
+
 mod gem_info;
 pub use gem_info::*;
 

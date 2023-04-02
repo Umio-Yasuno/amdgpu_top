@@ -20,6 +20,7 @@ struct ToggleOptions {
     vram: bool,
     sensor: bool,
     high_freq: bool,
+    fdinfo: bool,
     gem: bool,
     pm: bool,
 }
@@ -36,6 +37,7 @@ impl Default for ToggleOptions {
             vram: true,
             sensor: true,
             high_freq: false,
+            fdinfo: true,
             gem: true,
             pm: true,
         }
@@ -51,13 +53,13 @@ const TOGGLE_HELP: &str = concat!(
 
 fn main() {
     let main_opt = args::MainOpt::parse();
+    let device_path = format!("/dev/dri/renderD{}", 128 + main_opt.instance);
 
     let (amdgpu_dev, major, minor) = {
         use std::fs::File;
         use std::os::fd::IntoRawFd;
 
-        let path = format!("/dev/dri/renderD{}", 128 + main_opt.instance);
-        let f = File::open(path).unwrap();
+        let f = File::open(&device_path).unwrap();
 
         DeviceHandle::init(f.into_raw_fd()).unwrap()
     };
@@ -118,6 +120,12 @@ fn main() {
     let mut srbm2 = stat::PerfCounter::new(stat::PCType::SRBM2, stat::SRBM2_INDEX);
     let mut cp_stat = stat::PerfCounter::new(stat::PCType::CP_STAT, stat::CP_STAT_INDEX);
     let mut vram = stat::VRAM_INFO::new(&memory_info);
+
+    let mut fdinfo = stat::FdInfoView::new(&device_path);
+    fdinfo.interval = Sampling::low().to_duration();
+    let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
+    stat::update_index(&mut proc_index, &device_path);
+
     let mut gem_info = stat::GemView::default();
     let mut pm_info = stat::PmView::default();
     let mut sensor = stat::Sensor::default();
@@ -152,6 +160,10 @@ fn main() {
 
         // fill
         {
+            fdinfo.print(&proc_index);
+            fdinfo.text.set();
+        }
+        {
             vram.print();
             vram.text.set();
         }
@@ -184,6 +196,7 @@ fn main() {
             layout.add_child(grbm2.top_view(toggle_opt.grbm2));
             siv.add_global_callback('r', grbm2.pc_type.cb());
         }
+        /*
         // mmSRBM_STATUS/mmSRBM_STATUS2 does not exist in GFX9 (soc15) or later.
         if toggle_opt.uvd && (chip_class < CHIP_CLASS::GFX9) {
             layout.add_child(uvd.top_view(toggle_opt.uvd));
@@ -193,18 +206,24 @@ fn main() {
             layout.add_child(srbm2.top_view(toggle_opt.srbm));
             siv.add_global_callback('s', srbm2.pc_type.cb());
         }
+        */
         {
             layout.add_child(cp_stat.top_view(toggle_opt.cp_stat));
             siv.add_global_callback('c', cp_stat.pc_type.cb());
         }
         {
-            layout.add_child(pci.text.panel("PCI"));
-            siv.add_global_callback('p', stat::PCI_LINK_INFO::cb);
-        }
-        {
             layout.add_child(vram.text.panel("Memory Usage"));
             siv.add_global_callback('v', stat::VRAM_INFO::cb);
         }
+        {
+            layout.add_child(fdinfo.text.panel("fdinfo"));
+            siv.add_global_callback('f', stat::FdInfoView::cb);
+        }
+        {
+            layout.add_child(pci.text.panel("PCI"));
+            siv.add_global_callback('p', stat::PCI_LINK_INFO::cb);
+        }
+        /*
         if toggle_opt.gem {
             layout.add_child(gem_info.text.panel("GEM Info"));
             siv.add_global_callback('e', stat::GemView::cb);
@@ -213,6 +232,7 @@ fn main() {
             layout.add_child(pm_info.text.panel("PM Info"));
             siv.add_global_callback('m', stat::PmView::cb);
         }
+        */
         {
             layout.add_child(sensor.text.panel("Sensors"));
             siv.add_global_callback('n', stat::Sensor::cb);
@@ -232,9 +252,31 @@ fn main() {
     siv.add_global_callback('q', cursive::Cursive::quit);
     siv.add_global_callback('h', Sampling::cb);
 
+    let share_proc_index = Arc::new(Mutex::new(proc_index));
     let cb_sink = siv.cb_sink().clone();
 
+    {
+        let index = share_proc_index.clone();
+        let mut buf_index: Vec<stat::ProcInfo> = Vec::new();
+        // let device_path = device_path.clone();
+
+        std::thread::spawn(move || {
+            loop {
+                std::thread::sleep(std::time::Duration::from_secs(5));
+
+                stat::update_index(&mut buf_index, &device_path);
+
+                let lock = index.lock();
+                if let Ok(mut index) = lock {
+                    // stat::update_index(&mut index, &device_path);
+                    std::mem::swap(&mut *index, &mut buf_index);
+                }
+            }
+        });
+    }
+
     std::thread::spawn(move || {
+        let index = share_proc_index.clone();
         let mut sample = Sampling::low();
 
         loop {
@@ -259,8 +301,11 @@ fn main() {
                 std::thread::sleep(sample.delay);
             }
 
-            if let Ok(opt) = toggle_opt.try_lock() {
-                flags = opt.clone();
+            {
+                let lock = toggle_opt.try_lock();
+                if let Ok(opt) = lock {
+                    flags = opt.clone();
+                }
             }
 
             if flags.pci {
@@ -281,6 +326,18 @@ fn main() {
                 sensor.print(&amdgpu_dev);
             } else {
                 sensor.text.clear();
+            }
+
+            if flags.fdinfo { // fdinfo
+                let lock = index.try_lock();
+                if let Ok(vec_info) = lock {
+                    fdinfo.interval = sample.to_duration();
+                    fdinfo.print(&vec_info);
+                } else {
+                    fdinfo.interval = sample.to_duration() * 2;
+                }
+            } else {
+                fdinfo.text.clear();
             }
 
             if flags.gem {
@@ -313,6 +370,9 @@ fn main() {
 
             vram.text.set();
             pci.text.set();
+            
+            fdinfo.text.set();
+
             gem_info.text.set();
             pm_info.text.set();
             sensor.text.set();
@@ -344,6 +404,10 @@ impl Sampling {
             count: 100,
             delay: Duration::from_millis(1),
         }
+    }
+
+    fn to_duration(&self) -> Duration {
+        self.delay * self.count as u32
     }
 
     pub fn cb(siv: &mut cursive::Cursive) {
