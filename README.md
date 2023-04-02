@@ -71,9 +71,16 @@ cargo install --locked --path .
  * Only `amdgpu_read_mm_registers` function is used to read registers.
 
 ## TODO
- * more commands
  * update theme
  * packages
- * fdinfo parser
-    * VRAM usage and usage time of each HW IP per process
-    * If you need them, I recommend [Syllo/nvtop](https://github.com/Syllo/nvtop)
+ * config file?
+
+## Alternatives
+If `amdgpu_top` is not enough for you or you don't like it, try the following applications.
+
+ * [clbr/radeontop](https://github.com/clbr/radeontop)
+    * View your GPU utilization, both for the total activity percent and individual blocks.
+ * [Syllo/nvtop](https://github.com/Syllo/nvtop)
+    * GPUs process monitoring for AMD, Intel and NVIDIA
+ * [Tom St Denis / umr · GitLab](https://gitlab.freedesktop.org/tomstdenis/umr/)
+    * User Mode Register Debugger for AMDGPU Hardware
