@@ -14,7 +14,6 @@ struct ToggleOptions {
     grbm: bool,
     grbm2: bool,
     cp_stat: bool,
-    pci: bool,
     vram: bool,
     sensor: bool,
     high_freq: bool,
@@ -27,7 +26,6 @@ impl Default for ToggleOptions {
             grbm: true,
             grbm2: true,
             cp_stat: true,
-            pci: true,
             vram: true,
             sensor: true,
             high_freq: false,
@@ -39,7 +37,7 @@ impl Default for ToggleOptions {
 type Opt = Arc<Mutex<ToggleOptions>>;
 
 const TOGGLE_HELP: &str = concat!(
-    " (g)rbm g(r)bm2 (c)p_stat (p)ci\n",
+    " (g)rbm g(r)bm2 (c)p_stat \n",
     " (v)ram se(n)sor (h)igh_freq (q)uit",
 );
 
@@ -107,8 +105,7 @@ fn main() {
     let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
     stat::update_index(&mut proc_index, &device_path);
 
-    let mut sensor = stat::Sensor::default();
-    let mut pci = stat::PCI_LINK_INFO::new(&pci_bus);
+    let mut sensor = stat::Sensor::new(&pci_bus);
 
     let mut toggle_opt = ToggleOptions::default();
 
@@ -129,10 +126,6 @@ fn main() {
         {
             sensor.print(&amdgpu_dev);
             sensor.text.set();
-        }
-        {
-            pci.print();
-            pci.text.set();
         }
     }
 
@@ -166,10 +159,6 @@ fn main() {
         {
             layout.add_child(fdinfo.text.panel("fdinfo"));
             siv.add_global_callback('f', stat::FdInfoView::cb);
-        }
-        {
-            layout.add_child(pci.text.panel("PCI"));
-            siv.add_global_callback('p', stat::PCI_LINK_INFO::cb);
         }
         {
             layout.add_child(sensor.text.panel("Sensors"));
@@ -240,13 +229,6 @@ fn main() {
                 }
             }
 
-            if flags.pci {
-                pci.update_status();
-                pci.print();
-            } else {
-                pci.text.clear();
-            }
-
             if flags.vram {
                 vram.update_usage(&amdgpu_dev);
                 vram.print();
@@ -283,7 +265,6 @@ fn main() {
             cp_stat.dump();
 
             vram.text.set();
-            pci.text.set();
             
             fdinfo.text.set();
             sensor.text.set();

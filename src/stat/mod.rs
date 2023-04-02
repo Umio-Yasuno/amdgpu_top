@@ -67,9 +67,6 @@ pub use pc_type::*;
 mod perf_counter;
 pub use perf_counter::*;
 
-mod pci;
-pub use pci::*;
-
 mod fdinfo;
 pub use fdinfo::*;
 
