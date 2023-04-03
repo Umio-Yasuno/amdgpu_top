@@ -138,8 +138,8 @@ impl FdInfoView {
 
         'fds: for fd in &proc_info.fds {
             let path = format!("/proc/{pid}/fdinfo/{fd}");
-            let Ok(mut f) = fs::File::open(&path) else { continue; };
-            if let Err(_) = f.read_to_string(&mut buf) { continue; }
+            let Ok(mut f) = fs::File::open(&path) else { continue };
+            if f.read_to_string(&mut buf).is_err() { continue }
             let mut lines = buf.lines();
 
             'fdinfo: loop {
@@ -249,8 +249,8 @@ impl FdInfoUsage {
     }
 
     fn mem_usage_parse(&mut self, s: &str) {
-        const PREFIX: usize = "drm-memory-xxxx:\t".len(); // "vram" or "gtt " or "cpu "
-        const SUFFIX: usize = " KiB".len();
+        const PRE: usize = "drm-memory-xxxx:\t".len(); // "vram:" or "gtt: " or "cpu: "
+        const KIB: usize = " KiB".len();
         let len = s.len();
 
         const MEM_TYPE: std::ops::Range<usize> = {
@@ -259,7 +259,7 @@ impl FdInfoUsage {
             PRE_LEN..(PRE_LEN+5)
         };
 
-        let usage = s[PREFIX..len-SUFFIX].parse().unwrap_or(0);
+        let usage = s[PRE..(len-KIB)].parse().unwrap_or(0);
 
         match &s[MEM_TYPE] {
             "vram:" => self.vram_usage += usage,
@@ -272,7 +272,7 @@ impl FdInfoUsage {
     fn engine_parse(&mut self, s: &str) {
         const PRE: usize = "drm-engine-".len();
         const NS: usize = " ns".len();
-        let pos = s.find('\t').unwrap();
+        let Some(pos) = s.find('\t') else { return };
 
         let ns: i64 = {
             let len = s.len();
@@ -335,12 +335,12 @@ fn get_fds(pid: i32, target_device: &str) -> Vec<i32> {
 
     let fd_path = format!("/proc/{pid}/fd/");
 
-    let Ok(fd_list) = fs::read_dir(&fd_path) else { return fds; };
+    let Ok(fd_list) = fs::read_dir(&fd_path) else { return fds };
 
     for fd_link in fd_list {
-        let Ok(dir_entry) = fd_link else { continue; };
+        let Ok(dir_entry) = fd_link else { continue };
         let dir_entry = dir_entry.path();
-        let Ok(link) = fs::read_link(&dir_entry) else { continue; };
+        let Ok(link) = fs::read_link(&dir_entry) else { continue };
 
         if link.starts_with(target_device) {
             let fd_num: i32 = dir_entry.to_str().unwrap().trim_start_matches(&fd_path).parse().unwrap();
@@ -357,10 +357,10 @@ pub fn update_index(vec_info: &mut Vec<ProcInfo>, target_device: &str) {
     for p in procfs::process::all_processes().unwrap() {
         let prc = p.unwrap();
         let pid = prc.pid();
-        let mut name = fs::read_to_string(format!("/proc/{pid}/comm")).unwrap();
+        let Ok(mut name) = fs::read_to_string(format!("/proc/{pid}/comm")) else { continue };
         name.pop(); // trim '\n'
 
-        if name == env!("CARGO_PKG_NAME") { continue; }
+        if name == env!("CARGO_PKG_NAME") { continue }
 
         let fds = get_fds(pid, target_device);
 
