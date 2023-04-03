@@ -1,6 +1,6 @@
 # AMDGPU\_TOP
 `amdgpu_top` is tool that show AMD GPU utilization, like [umr](https://gitlab.freedesktop.org/tomstdenis/umr/) or [clbr/radeontop](https://github.com/clbr/radeontop).  
-Reads the AMDGPU Performance Counters (GRBM, GRBM2, SRBM, SRBM2, CP_STAT) and displays the internal unit utilization.  
+Reads the AMDGPU Performance Counters (GRBM, GRBM2, CP_STAT) and displays the internal unit utilization.  
 It also gets detailed information about AMDGPU from `libdrm_amdgpu` .  
 
 ![amdgpu_top screenshot](/docs/ss0.png)
@@ -26,12 +26,10 @@ OPTIONS:
 | :-- | :---------------------------------: |
 | g   | toggle GRBM                         |
 | r   | toggle GRBM2                        |
-| u   | toggle UVD                          |
-| s   | toggle SRBM (SDMA, VCE)             |
 | c   | toggle CP_STAT (Prefetch Parser, Micro Engine, Scratch Memory, ..) |
 | p   | toggle PCI                          |
 | v   | toggle VRAM/GTT Usage               |
-| e   | toggle GEM info (root privileges required) |
+| f   | toggle fdinfo                       |
 | n   | toggle Sensors                      |
 | h   | change update interval (high = 100ms, low = 1000ms) |
 | q   | Quit                                |
@@ -47,6 +45,7 @@ cargo install --locked --path .
 ## Library
  * [Cursive](https://github.com/gyscos/cursive)
  * [libdrm-amdgpu-sys-rs](https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs)
+ * [procfs](https://github.com/eminence/procfs)
 
 ## Reference
  * [Tom St Denis / umr · GitLab](https://gitlab.freedesktop.org/tomstdenis/umr/)
@@ -74,6 +73,7 @@ cargo install --locked --path .
  * update theme
  * packages
  * config file?
+ * logger?
 
 ## Alternatives
 If `amdgpu_top` is not enough for you or you don't like it, try the following applications.
