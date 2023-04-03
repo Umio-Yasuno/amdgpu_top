@@ -84,3 +84,6 @@ If `amdgpu_top` is not enough for you or you don't like it, try the following ap
     * GPUs process monitoring for AMD, Intel and NVIDIA
  * [Tom St Denis / umr · GitLab](https://gitlab.freedesktop.org/tomstdenis/umr/)
     * User Mode Register Debugger for AMDGPU Hardware
+ * [GPUOpen-Tools/radeon_gpu_profiler](https://github.com/GPUOpen-Tools/radeon_gpu_profiler)
+    * for developer
+    * Radeon GPU Profiler (RGP) is a tool from AMD that allows for deep inspection of GPU workloads. 
