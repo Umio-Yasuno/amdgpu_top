@@ -16,7 +16,7 @@ dependencies = [
 
 [[package]]
 name = "amdgpu_top"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "cursive",
  "libdrm_amdgpu_sys",
