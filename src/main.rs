@@ -10,6 +10,8 @@ mod args;
 mod misc;
 mod dump_info;
 
+use stat::FdInfoSortType;
+
 #[derive(Debug, Clone)]
 struct ToggleOptions {
     grbm: bool,
@@ -19,6 +21,8 @@ struct ToggleOptions {
     sensor: bool,
     high_freq: bool,
     fdinfo: bool,
+    fdinfo_sort: FdInfoSortType,
+    reverse_sort: bool,
 }
 
 impl Default for ToggleOptions {
@@ -31,6 +35,8 @@ impl Default for ToggleOptions {
             sensor: true,
             high_freq: false,
             fdinfo: true,
+            fdinfo_sort: FdInfoSortType::PID,
+            reverse_sort: false,
         }
     }
 }
@@ -39,7 +45,8 @@ type Opt = Arc<Mutex<ToggleOptions>>;
 
 const TOGGLE_HELP: &str = concat!(
     " (g)rbm g(r)bm2 (c)p_stat \n",
-    " (v)ram (f)dinfo se(n)sor (h)igh_freq (q)uit",
+    " (v)ram (f)dinfo se(n)sor (h)igh_freq (q)uit \n",
+    " (P): sort_by_pid (M): sort_by_vram (G): sort_by_gfx (R): reverse"
 );
 
 fn main() {
@@ -116,7 +123,7 @@ fn main() {
         // fill
         {
             stat::update_index(&mut proc_index, &device_path);
-            fdinfo.print(&proc_index);
+            fdinfo.print(&proc_index, &FdInfoSortType::PID, false);
             fdinfo.text.set();
         }
         {
@@ -159,6 +166,10 @@ fn main() {
         {
             layout.add_child(fdinfo.text.panel("fdinfo"));
             siv.add_global_callback('f', stat::FdInfoView::cb);
+            siv.add_global_callback('R', stat::FdInfoView::cb_reverse_sort);
+            siv.add_global_callback('P', stat::FdInfoView::cb_sort_by_pid);
+            siv.add_global_callback('M', stat::FdInfoView::cb_sort_by_vram);
+            siv.add_global_callback('G', stat::FdInfoView::cb_sort_by_gfx);
         }
         {
             layout.add_child(sensor.text.panel("Sensors"));
@@ -248,7 +259,7 @@ fn main() {
             if flags.fdinfo {
                 let lock = index.try_lock();
                 if let Ok(vec_info) = lock {
-                    fdinfo.print(&vec_info);
+                    fdinfo.print(&vec_info, &flags.fdinfo_sort, flags.reverse_sort);
                     fdinfo.interval = sample.to_duration();
                 } else {
                     fdinfo.interval += sample.to_duration();

@@ -33,6 +33,10 @@ OPTIONS:
 | n   | toggle Sensors                      |
 | h   | change update interval (high = 100ms, low = 1000ms) |
 | q   | Quit                                |
+| P   | sort fdinfo by pid                  |
+| M   | sort fdinfo by VRAM usage           |
+| G   | sort fdinfo by GFX usage            |
+| R   | reverse sort                        |
 
 ## Installation
 ### Build from source

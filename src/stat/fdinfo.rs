@@ -26,8 +26,8 @@ pub struct ProcInfo {
     fds: Vec<i32>,
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct FdStat {
+#[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd)]
+pub struct FdInfoUsage {
     // client_id: usize,
     vram_usage: u64, // KiB
     gtt_usage: u64, // KiB
@@ -41,11 +41,26 @@ pub struct FdStat {
     vcn_jpeg: i64,
 }
 
+#[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd)]
+pub struct ProcUsage {
+    pid: i32,
+    name: String,
+    usage: FdInfoUsage,
+}
+
 #[derive(Default)]
 pub struct FdInfoView {
-    pid_map: HashMap<i32, FdStat>,
+    pid_map: HashMap<i32, FdInfoUsage>,
+    proc_usage: Vec<ProcUsage>,
     pub interval: Duration,
     pub text: Text,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum FdInfoSortType {
+    PID,
+    VRAM,
+    GFX,
 }
 
 impl FdInfoView {
@@ -56,8 +71,9 @@ impl FdInfoView {
         }
     }
 
-    pub fn print(&mut self, slice_proc_info: &[ProcInfo]) {
+    pub fn print(&mut self, slice_proc_info: &[ProcInfo], sort: &FdInfoSortType, reverse: bool) {
         self.text.clear();
+        self.proc_usage.clear();
 
         writeln!(
             self.text.buf,
@@ -66,11 +82,50 @@ impl FdInfoView {
         ).unwrap();
 
         for proc_info in slice_proc_info {
-            self.print_stat(proc_info);
+            self.get_proc_usage(proc_info);
+        }
+
+        self.proc_usage.sort_by(|a, b|
+            match (sort, reverse) {
+                (FdInfoSortType::PID, false) => b.pid.cmp(&a.pid),
+                (FdInfoSortType::PID, true) => a.pid.cmp(&b.pid),
+                (FdInfoSortType::VRAM, false) => b.usage.vram_usage.cmp(&a.usage.vram_usage),
+                (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
+                (FdInfoSortType::GFX, false) => b.usage.gfx.cmp(&a.usage.gfx),
+                (FdInfoSortType::GFX, true) => a.usage.gfx.cmp(&b.usage.gfx),
+            }
+        );
+
+        self.print_usage();
+    }
+
+    pub fn print_usage(&mut self) {
+        for pu in &self.proc_usage {
+            write!(
+                self.text.buf,
+                " {name:PROC_NAME_LEN$} ({pid:>8}) | {vram:>5} MiB|",
+                name = pu.name,
+                pid = pu.pid,
+                vram = pu.usage.vram_usage >> 10,
+            ).unwrap();
+            let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
+            for (usage, label_len) in [
+                (pu.usage.gfx, GFX_LABEL.len()),
+                (pu.usage.compute, COMPUTE_LABEL.len()),
+                (pu.usage.dma, DMA_LABEL.len()),
+                (pu.usage.dec, DEC_LABEL.len()), // UVD/VCN
+                (enc_usage, ENC_LABEL.len()),
+                // (enc, ENC_LABEL), // VCE/VCN
+                // (uvd_enc, UVD_ENC_LABEL), // UVD
+                // (vcn_jpeg, JPEG_LABEL) // VCN
+            ] {
+                write!(self.text.buf, " {usage:>label_len$}%|").unwrap();
+            }
+            writeln!(self.text.buf).unwrap();
         }
     }
 
-    pub fn print_stat(&mut self, proc_info: &ProcInfo) {
+    pub fn get_proc_usage(&mut self, proc_info: &ProcInfo) {
         let pid = proc_info.pid;
         let name = if PROC_NAME_LEN < proc_info.name.len() {
             &proc_info.name[..PROC_NAME_LEN]
@@ -78,7 +133,7 @@ impl FdInfoView {
             &proc_info.name
         };
         let mut ids = HashSet::<usize>::new();
-        let mut stat = FdStat::default();
+        let mut stat = FdInfoUsage::default();
         let mut buf = String::new();
 
         'fds: for fd in &proc_info.fds {
@@ -91,22 +146,21 @@ impl FdInfoView {
                 let Some(l) = lines.next() else { break 'fdinfo; };
 
                 /* // perf
-                stat.client_id = id;
-                let id = id_parse(l);
-                if !ids.insert(id) { continue 'fds; }
-                if !l.starts_with("drm-client-id") { continue 'fdinfo; }
-                stat.vram_usage += mem_parse(lines.next().unwrap_or(""));
-                stat.gtt_usage += mem_parse(lines.next().unwrap_or(""));
-                stat.cpu_accessible_usage += mem_parse(lines.next().unwrap_or(""));
+                    let id = id_parse(l);
+                    if !ids.insert(id) { continue 'fds; }
+                    if !l.starts_with("drm-client-id") { continue 'fdinfo; }
+                    stat.vram_usage += mem_parse(lines.next().unwrap_or(""));
+                    stat.gtt_usage += mem_parse(lines.next().unwrap_or(""));
+                    stat.cpu_accessible_usage += mem_parse(lines.next().unwrap_or(""));
 
-                'engines: loop {
-                    let Some(e) = lines.next() else { break 'engines; };
-                    if !e.starts_with("drm-engine") { continue 'engines; }
-                    stat.engine_parse(e);
-                }
+                    'engines: loop {
+                        let Some(e) = lines.next() else { break 'engines; };
+                        if !e.starts_with("drm-engine") { continue 'engines; }
+                        stat.engine_parse(e);
+                    }
                 */
                 if l.starts_with("drm-client-id") {
-                    let id = FdStat::id_parse(l);
+                    let id = FdInfoUsage::id_parse(l);
                     if !ids.insert(id) { continue 'fds; }
                     continue 'fdinfo;
                 }
@@ -120,11 +174,9 @@ impl FdInfoView {
                 }
             } // 'fdinfo
         } // 'fds
-        write!(self.text.buf, " {name:PROC_NAME_LEN$} ({pid:>8}) |").unwrap();
-        write!(self.text.buf, " {:>5} MiB|", stat.vram_usage >> 10).unwrap();
 
         let diff = {
-            if let Some(pre_stat) = self.pid_map.get_mut(&pid) { // diff
+            if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
                 let tmp = stat.calc_usage(pre_stat, &self.interval);
                 *pre_stat = stat;
 
@@ -135,9 +187,10 @@ impl FdInfoView {
                     stat.gtt_usage,
                     stat.cpu_accessible_usage,
                 ];
+
                 self.pid_map.insert(pid, stat);
 
-                FdStat {
+                FdInfoUsage {
                     vram_usage,
                     gtt_usage,
                     cpu_accessible_usage,
@@ -146,24 +199,11 @@ impl FdInfoView {
             }
         };
 
-        for (usage, name) in [
-            (diff.gfx, GFX_LABEL),
-            (diff.compute, COMPUTE_LABEL),
-            (diff.dma, DMA_LABEL),
-            (diff.dec, DEC_LABEL), // UVD/VCN
-            // (enc, ENC_LABEL), // VCE/VCN
-            // (uvd_enc, UVD_ENC_LABEL), // UVD
-            // (vcn_jpeg, JPEG_LABEL) // VCN
-        ] {
-            let len = name.len();
-            write!(self.text.buf, " {usage:>len$}%|").unwrap();
-        }
-        {
-            const LEN: usize = ENC_LABEL.len();
-            let usage = diff.enc.saturating_add(diff.uvd_enc);
-            write!(self.text.buf, " {usage:>LEN$}%|").unwrap();
-        }
-        writeln!(self.text.buf).unwrap();
+        self.proc_usage.push(ProcUsage {
+            pid,
+            name: name.to_string(),
+            usage: diff
+        });
     }
 
     pub fn cb(siv: &mut cursive::Cursive) {
@@ -172,9 +212,37 @@ impl FdInfoView {
             opt.fdinfo ^= true;
         }
     }
+
+    pub fn cb_reverse_sort(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.reverse_sort ^= true;
+        }
+    }
+
+    pub fn cb_sort_by_pid(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.fdinfo_sort = FdInfoSortType::PID;
+        }
+    }
+
+    pub fn cb_sort_by_vram(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.fdinfo_sort = FdInfoSortType::VRAM;
+        }
+    }
+
+    pub fn cb_sort_by_gfx(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.fdinfo_sort = FdInfoSortType::GFX;
+        }
+    }
 }
 
-impl FdStat {
+impl FdInfoUsage {
     fn id_parse(s: &str) -> usize {
         const LEN: usize = "drm-client-id:\t".len();
         s[LEN..].parse().unwrap()
