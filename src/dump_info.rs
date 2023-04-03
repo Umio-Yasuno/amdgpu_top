@@ -214,22 +214,17 @@ fn codec_info(amdgpu_dev: &DeviceHandle) {
             CODEC::AV1,
         ];
 
-        println!();
-        println!("Video caps (WIDTHxHEIGHT):");
+        println!("\nVideo caps (WIDTHxHEIGHT):");
 
         for codec in &codec_list {
             let [dec_cap, enc_cap] = [dec, enc].map(|type_| type_.get_codec_info(*codec));
             let dec = format!("{}x{}", dec_cap.max_width, dec_cap.max_height);
             let enc = format!("{}x{}", enc_cap.max_width, enc_cap.max_height);
-
-            println!("{:-^50}", codec.to_string());
             println!(
-                concat!(
-                    "    Decode: {dec:>10},",
-                    "    Encode: {enc:>10}",
-                ),
-                dec = dec,
-                enc = enc,
+                "    {codec:10}: {dec:>12} (Decode), {enc:>12} (Encode)",
+                codec = codec.to_string(),
+                dec = if dec_cap.is_supported() { &dec } else { "N/A" },
+                enc = if enc_cap.is_supported() { &enc } else { "N/A" },
             );
         }
     }
