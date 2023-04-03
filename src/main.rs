@@ -188,7 +188,7 @@ fn main() {
 
         std::thread::spawn(move || {
             loop {
-                std::thread::sleep(Duration::from_secs(1));
+                std::thread::sleep(Duration::from_secs(5));
 
                 stat::update_index(&mut buf_index, &device_path);
 
