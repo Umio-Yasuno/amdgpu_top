@@ -1,9 +1,10 @@
 use super::{DeviceHandle, Text, Opt};
-use libdrm_amdgpu_sys::AMDGPU::{
-    SENSOR_INFO::*,
+use libdrm_amdgpu_sys::{
+    PCI,
+    AMDGPU::SENSOR_INFO::*,
 };
-use libdrm_amdgpu_sys::PCI;
 use std::path::PathBuf;
+use std::fmt::{self, Write};
 
 const SENSORS_LIST: [(SENSOR_TYPE, &str, u32); 7] = [
     (SENSOR_TYPE::GFX_SCLK, "MHz", 1),
@@ -38,8 +39,6 @@ impl Sensor {
     }
 
     pub fn print(&mut self, amdgpu_dev: &DeviceHandle) {
-        use std::fmt::Write;
-
         self.text.clear();
         self.update_status();
 
@@ -84,6 +83,60 @@ impl Sensor {
         } else {
             None
         }
+    }
+
+    pub fn json(&self, amdgpu_dev: &DeviceHandle) -> Result<String, fmt::Error> {
+        let mut out = format!("\t\"Sensors\": {{\n");
+
+        writeln!(
+            out,
+            concat!(
+                "\t\t\"PCIe Link Speed\": {{\n",
+                "\t\t\t\"gen\": {gen},\n",
+                "\t\t\t\"width\": {width}\n",
+                "\t\t}},",
+            ),
+            gen = self.cur.gen,
+            width = self.cur.width,
+        )?;
+
+        for (sensor, unit, div) in &SENSORS_LIST {
+            if let Ok(val) = amdgpu_dev.sensor_info(*sensor) {
+                let val = val.saturating_div(*div);
+                writeln!(
+                    out,
+                    concat!(
+                        "\t\t\"{sensor}\": {{\n",
+                        "\t\t\t\"val\": {val},\n",
+                        "\t\t\t\"unit\": \"{unit}\"\n",
+                        "\t\t}},",
+                    ),
+                    sensor = sensor,
+                    val = val,
+                    unit = unit,
+                )?;
+            }
+        }
+        if let Some(fan_rpm) = self.get_fan_rpm() {
+            writeln!(
+                out,
+                concat!(
+                    "\t\t\"FAN1\": {{\n",
+                    "\t\t\t\"val\": {fan_rpm},\n",
+                    "\t\t\t\"unit\": \"RPM\"\n",
+                    "\t\t}},",
+                ),
+                fan_rpm = fan_rpm,
+            )?;
+        }
+
+        out.pop(); // remove '\n'
+        out.pop(); // remove ','
+        out.push('\n');
+
+        write!(out, "\t}}")?;
+
+        Ok(out)
     }
 
     pub fn cb(siv: &mut cursive::Cursive) {

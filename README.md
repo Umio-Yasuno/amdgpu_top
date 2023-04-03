@@ -1,5 +1,5 @@
 # AMDGPU\_TOP
-`amdgpu_top` is tool that display AMD GPU utilization, like [umr](https://gitlab.freedesktop.org/tomstdenis/umr/) or [clbr/radeontop](https://github.com/clbr/radeontop).  
+`amdgpu_top` is tool that display AMD GPU utilization, like [umr](https://gitlab.freedesktop.org/tomstdenis/umr/) or [clbr/radeontop](https://github.com/clbr/radeontop) or [intel_gpu_top](https://gitlab.freedesktop.org/drm/igt-gpu-tools/-/blob/master/man/intel_gpu_top.rst).  
 The tool displays information gathered from performance counters (GRBM, GRBM2, CP_STAT), sensors, fdinfo, and AMDGPU driver.  
 
 ![amdgpu_top screenshot](/docs/ss0.png)
@@ -11,9 +11,18 @@ cargo run -- [options ..]
 
 ### Option
 ```
+USAGE:
+    cargo run -- [options ..] or <amdgpu_top> [options ..]
+
 FLAGS:
    -d, --dump
        Dump AMDGPU info (name, clock, chip_class, VRAM, PCI, VBIOS)
+   -J
+       Output JSON formatted data
+   -s <i64>, --ms <i64>
+       Refresh period in milliseconds
+   -p <i32>, --pid <i32>
+       Specification of PID, used for `-J` option
 
 OPTIONS:
    -i <u32>

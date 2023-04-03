@@ -9,6 +9,7 @@ mod stat;
 mod args;
 mod misc;
 mod dump_info;
+mod json_output;
 
 use stat::FdInfoSortType;
 
@@ -64,6 +65,19 @@ fn main() {
 
     if main_opt.dump {
         dump_info::dump(&amdgpu_dev, major, minor);
+        return;
+    }
+
+    if main_opt.json_output {
+        let self_pid: i32 = main_opt.pid.unwrap_or(procfs::process::Process::myself().unwrap().pid());
+        if let Err(err) = json_output::print(
+            &amdgpu_dev,
+            &device_path,
+            main_opt.refresh_period,
+            self_pid
+        ) {
+            eprintln!("Error: {err}");
+        }
         return;
     }
 

@@ -11,11 +11,13 @@ use cursive::view::Nameable;
 use cursive::utils::Counter;
 use cursive::Rect;
 use cursive::align::HAlign;
+use std::fmt::{self, Write};
 
 pub type TopView = Panel<NamedView<HideableView<LinearLayout>>>;
 
 use super::{DeviceHandle, PCType, BITS};
 
+#[derive(Debug)]
 pub struct PerfCounter {
     pub pc_type: PCType,
     pub bits: BITS,
@@ -95,5 +97,30 @@ impl PerfCounter {
         if let Ok(out) = amdgpu_dev.read_mm_registers(self.pc_type.offset()) {
             self.bits.acc(out);
         }
+    }
+
+    pub fn json(&mut self) -> Result<String, fmt::Error> {
+        let mut out = format!("\t\"{}\": {{\n", self.pc_type);
+
+        for (name, pos) in &self.index {
+            writeln!(
+                out,
+                concat!(
+                    "\t\t\"{name}\": {{\n",
+                    "\t\t\t\"val\": {val},\n",
+                    "\t\t\t\"unit\": \"%\"\n",
+                    "\t\t}},",
+                ),
+                name = name,
+                val = self.bits.get(*pos),
+            )?;
+        }
+        out.pop(); // remove '\n'
+        out.pop(); // remove ','
+        out.push('\n');
+
+        write!(out, "\t}}")?;
+
+        Ok(out)
     }
 }

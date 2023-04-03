@@ -1,6 +1,6 @@
 use std::fs;
 use std::io::Read;
-use std::fmt::Write;
+use std::fmt::{self, Write};
 use super::{Text, Opt};
 // use std::sync::{Arc, Mutex};
 use std::collections::{HashMap, HashSet};
@@ -24,6 +24,19 @@ pub struct ProcInfo {
     pid: i32,
     name: String,
     fds: Vec<i32>,
+}
+
+impl ProcInfo {
+    pub fn from_pid(pid: i32, target_device: &str) -> Self {
+        let mut name = fs::read_to_string(format!("/proc/{pid}/comm")).unwrap();
+        name.pop(); // trim '\n'
+
+        Self {
+            pid,
+            name,
+            fds: get_fds(pid, target_device),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd)]
@@ -51,7 +64,7 @@ pub struct ProcUsage {
 #[derive(Default)]
 pub struct FdInfoView {
     pid_map: HashMap<i32, FdInfoUsage>,
-    proc_usage: Vec<ProcUsage>,
+    pub proc_usage: Vec<ProcUsage>,
     pub interval: Duration,
     pub text: Text,
 }
@@ -97,6 +110,64 @@ impl FdInfoView {
         );
 
         self.print_usage();
+    }
+
+    pub fn json(&self) -> Result<String, fmt::Error> {
+        let mut out = String::new();
+
+        for pu in &self.proc_usage {
+            writeln!(
+                out,
+                "\t\"{} fdinfo\": {{",
+                pu.name,
+            )?;
+            for (usage, label) in [
+                (pu.usage.vram_usage >> 10, "VRAM"),
+                (pu.usage.gtt_usage >> 10, "GTT"),
+            ] {
+                writeln!(
+                    out,
+                    concat!(
+                        "\t\t\"{label} Usage\": {{\n",
+                        "\t\t\t\"val\": {usage},\n",
+                        "\t\t\t\"unit\": \"MiB\"\n",
+                        "\t\t}},",
+                    ),
+                    usage = usage,
+                    label = label,
+                )?;
+            }
+
+            let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
+            for (usage, label) in [
+                (pu.usage.gfx, GFX_LABEL),
+                (pu.usage.compute, COMPUTE_LABEL),
+                (pu.usage.dma, DMA_LABEL),
+                (pu.usage.dec, DEC_LABEL), // UVD/VCN
+                (enc_usage, ENC_LABEL),
+                // (enc, ENC_LABEL), // VCE/VCN
+                // (uvd_enc, UVD_ENC_LABEL), // UVD
+                // (vcn_jpeg, JPEG_LABEL) // VCN
+            ] {
+                writeln!(
+                    out,
+                    concat!(
+                        "\t\t\"{label}\": {{\n",
+                        "\t\t\t\"val\": {usage},\n",
+                        "\t\t\t\"unit\": \"%\"\n",
+                        "\t\t}},",
+                    ),
+                    label = label,
+                    usage = usage,
+                )?;
+            }
+            out.pop(); // remove '\n'
+            out.pop(); // remove ','
+            out.push('\n');
+        }
+        write!(out, "\t}}")?;
+
+        Ok(out)
     }
 
     pub fn print_usage(&mut self) {

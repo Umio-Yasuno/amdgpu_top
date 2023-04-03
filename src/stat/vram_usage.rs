@@ -1,5 +1,6 @@
 use super::{Text, Opt};
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, drm_amdgpu_memory_info};
+use std::fmt::{self, Write};
 
 #[allow(non_camel_case_types)]
 pub struct VRAM_INFO {
@@ -38,8 +39,6 @@ impl VRAM_INFO {
     }
 
     pub fn print(&mut self) {
-        use std::fmt::Write;
-
         self.text.clear();
 
         write!(
@@ -56,6 +55,39 @@ impl VRAM_INFO {
             total_gtt = self.total_gtt >> 20,
         )
         .unwrap();
+    }
+
+    pub fn json(&self) -> Result<String, fmt::Error> {
+        let mut out = String::new();
+
+        writeln!(
+            out,
+            "\t\"VRAM\": {{"
+        )?;
+        for (label, usage) in [
+            ("Total VRAM", self.total_vram >> 20),
+            ("Total VRAM Usage", self.usage_vram >> 20),
+            ("Total GTT", self.total_gtt >> 20),
+            ("Total GTT Usage", self.usage_gtt >> 20),
+        ] {
+            writeln!(
+                out,
+                concat!(
+                    "\t\t\"{label}\": {{\n",
+                    "\t\t\t\"val\": {usage},\n",
+                    "\t\t\t\"unit\": \"MiB\"\n",
+                    "\t\t}},",
+                ),
+                label = label,
+                usage = usage,
+            )?;
+        }
+        out.pop(); // remove '\n'
+        out.pop(); // remove ','
+        out.push('\n');
+        write!(out, "\t}}")?;
+
+        Ok(out)
     }
 
     pub fn cb(siv: &mut cursive::Cursive) {
