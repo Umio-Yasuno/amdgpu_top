@@ -56,7 +56,7 @@ pub struct FdInfoView {
     pub text: Text,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
 pub enum FdInfoSortType {
     PID,
     VRAM,
@@ -330,7 +330,7 @@ impl FdInfoUsage {
     }
 }
 
-pub fn get_fds(pid: i32, target_device: &str) -> Vec<i32> {
+fn get_fds(pid: i32, target_device: &str) -> Vec<i32> {
     let mut fds: Vec<i32> = Vec::new();
 
     let fd_path = format!("/proc/{pid}/fd/");
@@ -357,7 +357,8 @@ pub fn update_index(vec_info: &mut Vec<ProcInfo>, target_device: &str) {
     for p in procfs::process::all_processes().unwrap() {
         let prc = p.unwrap();
         let pid = prc.pid();
-        let name = prc.status().unwrap().name;
+        let mut name = fs::read_to_string(format!("/proc/{pid}/comm")).unwrap();
+        name.pop(); // trim '\n'
 
         if name == env!("CARGO_PKG_NAME") { continue; }
 
