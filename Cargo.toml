@@ -4,6 +4,11 @@ version = "0.1.2"
 edition = "2021"
 license = "MIT"
 homepage = "https://github.com/Umio-Yasuno/amdgpu_top"
+authors = ["Umio Yasuno <coelacanth_dream@proton.me>"]
+description = """
+Tool to displays AMDGPU usage.
+The tool displays information gathered from performance counters (GRBM, GRBM2, CP_STAT), sensors, fdinfo, and AMDGPU driver.
+"""
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -17,3 +22,7 @@ opt-level = 2
 strip = true
 lto = true
 codegen-units = 1
+
+[package.metadata.deb]
+depends = "libdrm2, libdrm-amdgpu1"
+section = "utils"
