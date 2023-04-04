@@ -3,6 +3,7 @@ use libdrm_amdgpu_sys::AMDGPU::{
     SENSOR_INFO::*,
 };
 use libdrm_amdgpu_sys::PCI;
+use std::path::PathBuf;
 
 const SENSORS_LIST: [(SENSOR_TYPE, &str, u32); 7] = [
     (SENSOR_TYPE::GFX_SCLK, "MHz", 1),
@@ -63,6 +64,25 @@ impl Sensor {
                 let ln = if (c % 2) == 0 { "\n" } else { "" };
                 write!(self.text.buf, " {sensor_name:<15} => {val:>6} {unit:3} {ln}").unwrap();
             }
+        }
+
+        if let Some(fan_rpm) = self.get_fan_rpm() {
+            writeln!(self.text.buf, " {:<15} => {fan_rpm:>6} RPM", "FAN1").unwrap();
+        }
+    }
+
+    pub fn get_fan_rpm(&self) -> Option<u32> {
+        let path = format!("/sys/bus/pci/devices/{}/hwmon/", self.bus_info);
+        let Ok(mut dir) = std::fs::read_dir(&path) else { return None };
+        let Some(hwmon_dir) = dir.next() else { return None };
+        let Ok(hwmon_dir) = hwmon_dir else { return None };
+
+        let fan_path: PathBuf = [hwmon_dir.path(), PathBuf::from("fan1_input")].iter().collect();
+
+        if let Ok(rpm) = std::fs::read_to_string(&fan_path) {
+            rpm.trim_end().parse().ok()
+        } else {
+            None
         }
     }
 
