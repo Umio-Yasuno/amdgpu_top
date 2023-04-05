@@ -24,6 +24,7 @@ strip = true
 lto = true
 codegen-units = 1
 
+# cargo-deb
 [package.metadata.deb]
-depends = "libdrm2, libdrm-amdgpu1"
+depends = "libc6, libgcc-s1, libdrm2, libdrm-amdgpu1"
 section = "utils"
