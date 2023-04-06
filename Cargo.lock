@@ -310,7 +310,7 @@ checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
 [[package]]
 name = "libdrm_amdgpu_sys"
 version = "0.1.0"
-source = "git+https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs#75617ba7477109dd3c72a2019e296dc04d2af335"
+source = "git+https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs#864f4e2c36cc46e5268b5abb25bdaa23dbd0a533"
 
 [[package]]
 name = "linux-raw-sys"
