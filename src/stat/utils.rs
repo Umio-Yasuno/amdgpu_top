@@ -1,4 +1,11 @@
-use cursive::views::{TextContent, TextView, Panel};
+use cursive::views::{
+    HideableView,
+    LinearLayout,
+    NamedView,
+    TextContent,
+    TextView,
+    Panel
+};
 use cursive::align::HAlign;
 
 pub struct Text {
@@ -68,4 +75,10 @@ impl std::ops::AddAssign for BITS {
             *dst += src;
         }
     }
+}
+
+pub type TopView = Panel<NamedView<HideableView<LinearLayout>>>;
+
+pub fn toggle_view(view: &mut HideableView<LinearLayout>) {
+    view.set_visible(!view.is_visible());
 }

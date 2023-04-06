@@ -1,30 +1,56 @@
-use super::{Text, Opt};
+use super::{Opt, TopView, toggle_view};
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, drm_amdgpu_memory_info};
 use std::fmt::{self, Write};
+use cursive::views::{
+    FixedLayout,
+    HideableView,
+    LinearLayout,
+    Panel,
+    ProgressBar,
+    TextView,
+};
+use cursive::view::Nameable;
+use cursive::utils::Counter;
+use cursive::Rect;
+use cursive::align::HAlign;
 
-#[allow(non_camel_case_types)]
-pub struct VRAM_INFO {
-    total_vram: u64,
-    _usable_vram: u64,
-    usage_vram: u64,
-    total_gtt: u64,
-    _usable_gtt: u64,
-    usage_gtt: u64,
-    pub text: Text,
+#[derive(Clone, Debug)]
+pub struct VramUsage {
+    pub total: u64,
+    pub _usable: u64,
+    pub usage: u64,
+    pub counter: Counter,
 }
 
-impl VRAM_INFO {
+pub struct VramUsageView {
+    pub vram: VramUsage,
+    pub gtt: VramUsage,
+}
+
+impl VramUsageView {
+    const TITLE: &str = "Memory Usage";
+
     pub fn new(info: &drm_amdgpu_memory_info) -> Self {
-        // usable_heap_size is not fixed.
-        // usable_heap_size = real_vram_size - pin_size - reserved_size
+        let vram = VramUsage {
+            total: info.vram.total_heap_size,
+            _usable: info.vram.usable_heap_size,
+            usage: info.vram.heap_usage,
+            counter: Counter::new(
+                50
+            ),
+        };
+        let gtt = VramUsage {
+            total: info.gtt.total_heap_size,
+            _usable: info.gtt.usable_heap_size,
+            usage: info.gtt.heap_usage,
+            counter: Counter::new(
+                55
+            ),
+        };
+
         Self {
-            total_vram: info.vram.total_heap_size,
-            _usable_vram: info.vram.usable_heap_size,
-            usage_vram: info.vram.heap_usage,
-            total_gtt: info.gtt.total_heap_size,
-            _usable_gtt: info.gtt.usable_heap_size,
-            usage_gtt: info.gtt.heap_usage,
-            text: Text::default(),
+            vram,
+            gtt,
         }
     }
 
@@ -33,28 +59,52 @@ impl VRAM_INFO {
             amdgpu_dev.vram_usage_info(),
             amdgpu_dev.gtt_usage_info(),
         ] {
-            self.usage_vram = usage_vram;
-            self.usage_gtt = usage_gtt;
+            self.vram.usage = usage_vram;
+            self.gtt.usage = usage_gtt;
         }
     }
 
-    pub fn print(&mut self) {
-        self.text.clear();
+    pub fn view(
+        &self,
+    ) -> TopView {
+        const LEFT_LEN: usize = 6;
+        const BAR_WIDTH: usize = 30;
 
-        write!(
-            self.text.buf,
-            concat!(
-                " {vram_label:>5} => {usage_vram:>5}/{total_vram:<5} MiB,",
-                " {gtt_label:>5 } => {usage_gtt:>5 }/{total_gtt:<5 } MiB ",
-            ),
-            vram_label = "VRAM",
-            usage_vram = self.usage_vram >> 20,
-            total_vram = self.total_vram >> 20,
-            gtt_label = "GTT",
-            usage_gtt = self.usage_gtt >> 20,
-            total_gtt = self.total_gtt >> 20,
+        let title = Self::TITLE.to_string();
+        let label = |value: usize, (_min, max): (usize, usize)| -> String {
+            format!("{:5} / {:5} MiB", value >> 20, max >> 20)
+        };
+        let mut sub_layout = LinearLayout::horizontal();
+
+        for (usage, name) in [(&self.vram, "VRAM"), (&self.gtt, "GTT")] {
+            sub_layout.add_child(
+                FixedLayout::new()
+                    .child(
+                        Rect::from_size((0, 0), (LEFT_LEN, 1)),
+                        TextView::new(format!(" {name}:")),
+                    )
+                    .child(
+                        Rect::from_size((LEFT_LEN+1, 0), (BAR_WIDTH, 1)),
+                        ProgressBar::new()
+                            .with_value(usage.counter.clone())
+                            .min(0)
+                            .max(usage.total as usize)
+                            .with_label(label)
+                    )
+            );
+        }
+
+        Panel::new(
+            HideableView::new(sub_layout)
+                .with_name(&title)
         )
-        .unwrap();
+        .title(&title)
+        .title_position(HAlign::Left)
+    }
+
+    pub fn set_value(&self) {
+        self.vram.counter.set(self.vram.usage as usize);
+        self.gtt.counter.set(self.gtt.usage as usize);
     }
 
     pub fn json(&self) -> Result<String, fmt::Error> {
@@ -65,10 +115,10 @@ impl VRAM_INFO {
             "\t\"VRAM\": {{"
         )?;
         for (label, usage) in [
-            ("Total VRAM", self.total_vram >> 20),
-            ("Total VRAM Usage", self.usage_vram >> 20),
-            ("Total GTT", self.total_gtt >> 20),
-            ("Total GTT Usage", self.usage_gtt >> 20),
+            ("Total VRAM", self.vram.total >> 20),
+            ("Total VRAM Usage", self.vram.usage >> 20),
+            ("Total GTT", self.gtt.total >> 20),
+            ("Total GTT Usage", self.gtt.usage >> 20),
         ] {
             writeln!(
                 out,
@@ -95,5 +145,7 @@ impl VRAM_INFO {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.vram ^= true;
         }
+
+        siv.call_on_name(Self::TITLE, toggle_view);
     }
 }

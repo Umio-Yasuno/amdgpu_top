@@ -2,7 +2,6 @@ use cursive::views::{
     FixedLayout,
     HideableView,
     LinearLayout,
-    NamedView,
     Panel,
     ProgressBar,
     TextView,
@@ -13,9 +12,7 @@ use cursive::Rect;
 use cursive::align::HAlign;
 use std::fmt::{self, Write};
 
-pub type TopView = Panel<NamedView<HideableView<LinearLayout>>>;
-
-use super::{DeviceHandle, PCType, BITS};
+use super::{DeviceHandle, PCType, BITS, TopView};
 
 #[derive(Debug)]
 pub struct PerfCounter {

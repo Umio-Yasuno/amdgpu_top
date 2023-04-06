@@ -31,7 +31,7 @@ pub fn print(
     let mut grbm = stat::PerfCounter::new(stat::PCType::GRBM, grbm_index);
     let mut grbm2 = stat::PerfCounter::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
     let mut cp_stat = stat::PerfCounter::new(stat::PCType::CP_STAT, stat::CP_STAT_INDEX);
-    let mut vram = stat::VRAM_INFO::new(&memory_info);
+    let mut vram = stat::VramUsageView::new(&memory_info);
 
     let mut period = Duration::from_millis(refresh_period);
     let delay = period / 100;

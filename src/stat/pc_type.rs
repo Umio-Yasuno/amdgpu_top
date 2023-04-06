@@ -1,5 +1,4 @@
-use super::{DeviceHandle, Opt};
-use cursive::views::{HideableView, LinearLayout};
+use super::{DeviceHandle, toggle_view, Opt};
 use libdrm_amdgpu_sys::AMDGPU::{
     GRBM_OFFSET,
     GRBM2_OFFSET,
@@ -89,8 +88,4 @@ impl PCType {
         }
     }
 
-}
-
-fn toggle_view(view: &mut HideableView<LinearLayout>) {
-    view.set_visible(!view.is_visible());
 }

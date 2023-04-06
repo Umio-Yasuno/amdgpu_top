@@ -122,7 +122,7 @@ fn main() {
     let mut grbm = stat::PerfCounter::new(stat::PCType::GRBM, grbm_index);
     let mut grbm2 = stat::PerfCounter::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
     let mut cp_stat = stat::PerfCounter::new(stat::PCType::CP_STAT, stat::CP_STAT_INDEX);
-    let mut vram = stat::VRAM_INFO::new(&memory_info);
+    let mut vram_usage = stat::VramUsageView::new(&memory_info);
 
     let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
     let mut sample = Sampling::low();
@@ -143,15 +143,13 @@ fn main() {
             metrics.text.set();
         }
 
+        vram_usage.set_value();
+
         // fill
         {
             stat::update_index(&mut proc_index, &device_path);
             fdinfo.print(&proc_index, &FdInfoSortType::PID, false);
             fdinfo.text.set();
-        }
-        {
-            vram.print();
-            vram.text.set();
         }
         {
             sensor.print(&amdgpu_dev);
@@ -183,8 +181,8 @@ fn main() {
             siv.add_global_callback('c', cp_stat.pc_type.cb());
         }
         {
-            layout.add_child(vram.text.panel("Memory Usage"));
-            siv.add_global_callback('v', stat::VRAM_INFO::cb);
+            layout.add_child(vram_usage.view());
+            siv.add_global_callback('v', stat::VramUsageView::cb);
         }
         {
             layout.add_child(fdinfo.text.panel("fdinfo"));
@@ -272,10 +270,7 @@ fn main() {
             };
 
             if flags.vram {
-                vram.update_usage(&amdgpu_dev);
-                vram.print();
-            } else {
-                vram.text.clear();
+                vram_usage.update_usage(&amdgpu_dev);
             }
 
             if flags.sensor {
@@ -308,7 +303,7 @@ fn main() {
             grbm2.dump();
             cp_stat.dump();
 
-            vram.text.set();
+            vram_usage.set_value();
             fdinfo.text.set();
             sensor.text.set();
             metrics.text.set();
