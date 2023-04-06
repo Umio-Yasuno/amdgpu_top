@@ -108,6 +108,9 @@ impl GpuMetricsView {
             writeln!(self.text.buf, " {name:6} Avg. {avg:4} MHz, Cur. {cur:4} MHz")?;
         }
 
+        if let Some(socket_power) = self.metrics.get_average_socket_power() {
+            writeln!(self.text.buf, " Socket Power: {socket_power:3} W")?;
+        }
 
         Ok(())
     }
