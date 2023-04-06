@@ -50,6 +50,10 @@ impl GpuMetricsView {
     }
 
     fn for_v1(&mut self) -> Result<(), fmt::Error> {
+        if let Some(socket_power) = self.metrics.get_average_socket_power() {
+            writeln!(self.text.buf, " Socket Power: {socket_power:3} W")?;
+        }
+
         for (val, name) in [
             (self.metrics.get_temperature_edge(), "Edge"),
             (self.metrics.get_temperature_hotspot(), "Hotspot"),
@@ -108,8 +112,23 @@ impl GpuMetricsView {
             writeln!(self.text.buf, " {name:6} Avg. {avg:4} MHz, Cur. {cur:4} MHz")?;
         }
 
-        if let Some(socket_power) = self.metrics.get_average_socket_power() {
-            writeln!(self.text.buf, " Socket Power: {socket_power:3} W")?;
+        for (voltage, name) in [
+            (self.metrics.get_voltage_soc(), "SoC"),
+            (self.metrics.get_voltage_gfx(), "GFX"),
+            (self.metrics.get_voltage_mem(), "Mem"),
+        ] {
+            let Some(voltage) = voltage else { continue };
+            write!(self.text.buf, " {name}: {voltage:4} mV, ")?;
+        }
+        writeln!(self.text.buf)?;
+
+        if let Some(hbm_temp) = self.metrics.get_temperature_hbm() {
+            write!(self.text.buf, "HBM Temp (C) [")?;
+            for v in &hbm_temp {
+                let v = v.saturating_div(100);
+                write!(self.text.buf, "{v:5},")?;
+            }
+            writeln!(self.text.buf, "]")?;
         }
 
         Ok(())
