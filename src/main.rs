@@ -49,7 +49,7 @@ type Opt = Arc<Mutex<ToggleOptions>>;
 const TOGGLE_HELP: &str = concat!(
     " (g)rbm g(r)bm2 (c)p_stat (vram) (f)dinfo \n",
     " se(n)sor (m)etrics (h)igh_freq (q)uit \n",
-    " (P): sort_by_pid (M): sort_by_vram (G): sort_by_gfx (R): reverse"
+    " (P): sort_by_pid (M): sort_by_vram (G): sort_by_gfx\n (M): sort_by_media (R): reverse"
 );
 
 fn main() {
@@ -193,6 +193,7 @@ fn main() {
             siv.add_global_callback('P', stat::FdInfoView::cb_sort_by_pid);
             siv.add_global_callback('M', stat::FdInfoView::cb_sort_by_vram);
             siv.add_global_callback('G', stat::FdInfoView::cb_sort_by_gfx);
+            siv.add_global_callback('M', stat::FdInfoView::cb_sort_by_media);
         }
         {
             layout.add_child(sensor.text.panel("Sensors"));

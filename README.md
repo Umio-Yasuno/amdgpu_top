@@ -20,7 +20,7 @@ FLAGS:
    -J
        Output JSON formatted data
    -s <i64>, --ms <i64>
-       Refresh period in milliseconds
+       Refresh period in milliseconds, used for `-J` option
    -p <i32>, --pid <i32>
        Specification of PID, used for `-J` option
 
@@ -39,11 +39,13 @@ OPTIONS:
 | v   | toggle VRAM/GTT Usage               |
 | f   | toggle fdinfo                       |
 | n   | toggle Sensors                      |
+| m   | toggle GPU Metrics                  |
 | h   | change update interval (high = 100ms, low = 1000ms) |
 | q   | Quit                                |
 | P   | sort fdinfo by pid                  |
 | M   | sort fdinfo by VRAM usage           |
 | G   | sort fdinfo by GFX usage            |
+| M   | sort fdinfo by MediaEngine usage    |
 | R   | reverse sort                        |
 
 ## Installation

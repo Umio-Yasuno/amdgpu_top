@@ -74,6 +74,7 @@ pub enum FdInfoSortType {
     PID,
     VRAM,
     GFX,
+    MediaEngine,
 }
 
 impl FdInfoView {
@@ -106,68 +107,16 @@ impl FdInfoView {
                 (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
                 (FdInfoSortType::GFX, false) => b.usage.gfx.cmp(&a.usage.gfx),
                 (FdInfoSortType::GFX, true) => a.usage.gfx.cmp(&b.usage.gfx),
+                (FdInfoSortType::MediaEngine, false) =>
+                    (b.usage.dec + b.usage.enc + b.usage.uvd_enc)
+                        .cmp(&(a.usage.dec + a.usage.enc + a.usage.uvd_enc)),
+                (FdInfoSortType::MediaEngine, true) =>
+                    (a.usage.dec + a.usage.enc + a.usage.uvd_enc)
+                        .cmp(&(b.usage.dec + b.usage.enc + b.usage.uvd_enc)),
             }
         );
 
         self.print_usage();
-    }
-
-    pub fn json(&self) -> Result<String, fmt::Error> {
-        let mut out = String::new();
-
-        for pu in &self.proc_usage {
-            writeln!(
-                out,
-                "\t\"{} fdinfo\": {{",
-                pu.name,
-            )?;
-            for (usage, label) in [
-                (pu.usage.vram_usage >> 10, "VRAM"),
-                (pu.usage.gtt_usage >> 10, "GTT"),
-            ] {
-                writeln!(
-                    out,
-                    concat!(
-                        "\t\t\"{label} Usage\": {{\n",
-                        "\t\t\t\"val\": {usage},\n",
-                        "\t\t\t\"unit\": \"MiB\"\n",
-                        "\t\t}},",
-                    ),
-                    usage = usage,
-                    label = label,
-                )?;
-            }
-
-            let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
-            for (usage, label) in [
-                (pu.usage.gfx, GFX_LABEL),
-                (pu.usage.compute, COMPUTE_LABEL),
-                (pu.usage.dma, DMA_LABEL),
-                (pu.usage.dec, DEC_LABEL), // UVD/VCN
-                (enc_usage, ENC_LABEL),
-                // (enc, ENC_LABEL), // VCE/VCN
-                // (uvd_enc, UVD_ENC_LABEL), // UVD
-                // (vcn_jpeg, JPEG_LABEL) // VCN
-            ] {
-                writeln!(
-                    out,
-                    concat!(
-                        "\t\t\"{label}\": {{\n",
-                        "\t\t\t\"val\": {usage},\n",
-                        "\t\t\t\"unit\": \"%\"\n",
-                        "\t\t}},",
-                    ),
-                    label = label,
-                    usage = usage,
-                )?;
-            }
-            out.pop(); // remove '\n'
-            out.pop(); // remove ','
-            out.push('\n');
-        }
-        write!(out, "\t}}")?;
-
-        Ok(out)
     }
 
     pub fn print_usage(&mut self) {
@@ -277,6 +226,64 @@ impl FdInfoView {
         });
     }
 
+    pub fn json(&self) -> Result<String, fmt::Error> {
+        let mut out = String::new();
+
+        for pu in &self.proc_usage {
+            writeln!(
+                out,
+                "\t\"{} fdinfo\": {{",
+                pu.name,
+            )?;
+            for (usage, label) in [
+                (pu.usage.vram_usage >> 10, "VRAM"),
+                (pu.usage.gtt_usage >> 10, "GTT"),
+            ] {
+                writeln!(
+                    out,
+                    concat!(
+                        "\t\t\"{label} Usage\": {{\n",
+                        "\t\t\t\"val\": {usage},\n",
+                        "\t\t\t\"unit\": \"MiB\"\n",
+                        "\t\t}},",
+                    ),
+                    usage = usage,
+                    label = label,
+                )?;
+            }
+
+            let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
+            for (usage, label) in [
+                (pu.usage.gfx, GFX_LABEL),
+                (pu.usage.compute, COMPUTE_LABEL),
+                (pu.usage.dma, DMA_LABEL),
+                (pu.usage.dec, DEC_LABEL), // UVD/VCN
+                (enc_usage, ENC_LABEL),
+                // (enc, ENC_LABEL), // VCE/VCN
+                // (uvd_enc, UVD_ENC_LABEL), // UVD
+                // (vcn_jpeg, JPEG_LABEL) // VCN
+            ] {
+                writeln!(
+                    out,
+                    concat!(
+                        "\t\t\"{label}\": {{\n",
+                        "\t\t\t\"val\": {usage},\n",
+                        "\t\t\t\"unit\": \"%\"\n",
+                        "\t\t}},",
+                    ),
+                    label = label,
+                    usage = usage,
+                )?;
+            }
+            out.pop(); // remove '\n'
+            out.pop(); // remove ','
+            out.push('\n');
+        }
+        write!(out, "\t}}")?;
+
+        Ok(out)
+    }
+
     pub fn cb(siv: &mut cursive::Cursive) {
         {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
@@ -309,6 +316,13 @@ impl FdInfoView {
         {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.fdinfo_sort = FdInfoSortType::GFX;
+        }
+    }
+
+    pub fn cb_sort_by_media(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.fdinfo_sort = FdInfoSortType::MediaEngine;
         }
     }
 }
