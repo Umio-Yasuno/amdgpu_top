@@ -59,7 +59,6 @@ cargo install --locked --path .
 ## Library
  * [Cursive](https://github.com/gyscos/cursive)
  * [libdrm-amdgpu-sys-rs](https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs)
- * [procfs](https://github.com/eminence/procfs)
 
 ## Reference
  * [Tom St Denis / umr · GitLab](https://gitlab.freedesktop.org/tomstdenis/umr/)

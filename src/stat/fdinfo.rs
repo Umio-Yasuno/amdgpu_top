@@ -409,8 +409,8 @@ fn get_fds(pid: i32, target_device: &str) -> Vec<i32> {
     let Ok(fd_list) = fs::read_dir(&fd_path) else { return fds };
 
     for fd_link in fd_list {
-        let Ok(dir_entry) = fd_link else { continue };
-        let dir_entry = dir_entry.path();
+        let Ok(dir_entry) = fd_link
+            .and_then(|fd_link| Ok(fd_link.path())) else { continue };
         let Ok(link) = fs::read_link(&dir_entry) else { continue };
 
         if link.starts_with(target_device) {
@@ -424,12 +424,27 @@ fn get_fds(pid: i32, target_device: &str) -> Vec<i32> {
     fds
 }
 
+fn get_all_processes() -> Vec<i32> {
+    let mut pids: Vec<i32> = Vec::new();
+    let Ok(proc_dir) = fs::read_dir("/proc") else { return pids };
+
+    for dir_entry in proc_dir.into_iter().flatten() {
+        let Ok(metadata) = dir_entry.metadata() else { continue };
+        if !metadata.is_dir() { continue }
+
+        let Some(pid) = dir_entry.file_name().to_str()
+            .and_then(|name| name.parse::<i32>().ok()) else { continue };
+        pids.push(pid);
+    }
+
+    pids
+}
+
 pub fn update_index(vec_info: &mut Vec<ProcInfo>, target_device: &str) {
     vec_info.clear();
 
-    for p in procfs::process::all_processes().unwrap() {
-        let prc = p.unwrap();
-        let pid = prc.pid();
+    for p in &get_all_processes() {
+        let pid = *p;
         let Ok(mut name) = fs::read_to_string(format!("/proc/{pid}/comm")) else { continue };
         name.pop(); // trim '\n'
 

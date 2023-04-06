@@ -71,7 +71,11 @@ fn main() {
     }
 
     if main_opt.json_output {
-        let self_pid: i32 = main_opt.pid.unwrap_or(procfs::process::Process::myself().unwrap().pid());
+        let Some(self_pid) = main_opt.pid else {
+            eprintln!("PID is not specified.");
+            return;
+        };
+
         if let Err(err) = json_output::print(
             &amdgpu_dev,
             &device_path,
