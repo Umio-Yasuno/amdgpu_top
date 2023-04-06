@@ -165,20 +165,6 @@ impl FdInfoView {
             'fdinfo: loop {
                 let Some(l) = lines.next() else { break 'fdinfo; };
 
-                /* // perf
-                    let id = id_parse(l);
-                    if !ids.insert(id) { continue 'fds; }
-                    if !l.starts_with("drm-client-id") { continue 'fdinfo; }
-                    stat.vram_usage += mem_parse(lines.next().unwrap_or(""));
-                    stat.gtt_usage += mem_parse(lines.next().unwrap_or(""));
-                    stat.cpu_accessible_usage += mem_parse(lines.next().unwrap_or(""));
-
-                    'engines: loop {
-                        let Some(e) = lines.next() else { break 'engines; };
-                        if !e.starts_with("drm-engine") { continue 'engines; }
-                        stat.engine_parse(e);
-                    }
-                */
                 if l.starts_with("drm-client-id") {
                     let id = FdInfoUsage::id_parse(l);
                     if !ids.insert(id) { continue 'fds; }
@@ -428,7 +414,9 @@ fn get_fds(pid: i32, target_device: &str) -> Vec<i32> {
         let Ok(link) = fs::read_link(&dir_entry) else { continue };
 
         if link.starts_with(target_device) {
-            let fd_num: i32 = dir_entry.to_str().unwrap().trim_start_matches(&fd_path).parse().unwrap();
+            let Some(fd_num) = dir_entry.file_name()
+                .and_then(|name| name.to_str())
+                .and_then(|name| name.parse::<i32>().ok()) else { continue };
             fds.push(fd_num);
         }
     }
