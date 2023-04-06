@@ -24,6 +24,7 @@ struct ToggleOptions {
     fdinfo: bool,
     fdinfo_sort: FdInfoSortType,
     reverse_sort: bool,
+    gpu_metrics: bool,
 }
 
 impl Default for ToggleOptions {
@@ -38,6 +39,7 @@ impl Default for ToggleOptions {
             fdinfo: true,
             fdinfo_sort: FdInfoSortType::PID,
             reverse_sort: false,
+            gpu_metrics: false,
         }
     }
 }
@@ -45,8 +47,8 @@ impl Default for ToggleOptions {
 type Opt = Arc<Mutex<ToggleOptions>>;
 
 const TOGGLE_HELP: &str = concat!(
-    " (g)rbm g(r)bm2 (c)p_stat \n",
-    " (v)ram (f)dinfo se(n)sor (h)igh_freq (q)uit \n",
+    " (g)rbm g(r)bm2 (c)p_stat (vram) (f)dinfo \n",
+    " se(n)sor (m)etrics (h)igh_freq (q)uit \n",
     " (P): sort_by_pid (M): sort_by_vram (G): sort_by_gfx (R): reverse"
 );
 
@@ -126,6 +128,7 @@ fn main() {
     let mut sample = Sampling::low();
     let mut fdinfo = stat::FdInfoView::new(sample.to_duration());
     let mut sensor = stat::Sensor::new(&pci_bus);
+    let mut metrics = stat::GpuMetricsView::new(&amdgpu_dev);
 
     let mut toggle_opt = ToggleOptions::default();
 
@@ -133,6 +136,12 @@ fn main() {
         toggle_opt.grbm = grbm.pc_type.check_reg_offset(&amdgpu_dev);
         toggle_opt.grbm2 = grbm2.pc_type.check_reg_offset(&amdgpu_dev);
         [toggle_opt.cp_stat, _] = [false, cp_stat.pc_type.check_reg_offset(&amdgpu_dev)];
+
+        if metrics.update_metrics(&amdgpu_dev).is_ok() {
+            toggle_opt.gpu_metrics = true;
+            metrics.print();
+            metrics.text.set();
+        }
 
         // fill
         {
@@ -188,6 +197,10 @@ fn main() {
         {
             layout.add_child(sensor.text.panel("Sensors"));
             siv.add_global_callback('n', stat::Sensor::cb);
+        }
+        if toggle_opt.gpu_metrics {
+            layout.add_child(metrics.text.panel("GPU Metrics"));
+            siv.add_global_callback('m', stat::GpuMetricsView::cb);
         }
         layout.add_child(TextView::new(TOGGLE_HELP));
 
@@ -282,6 +295,14 @@ fn main() {
                 fdinfo.text.clear();
             }
 
+            if flags.gpu_metrics {
+                if metrics.update_metrics(&amdgpu_dev).is_ok() {
+                    metrics.print();
+                }
+            } else {
+                metrics.text.clear();
+            }
+
             grbm.dump();
             grbm2.dump();
             cp_stat.dump();
@@ -289,6 +310,7 @@ fn main() {
             vram.text.set();
             fdinfo.text.set();
             sensor.text.set();
+            metrics.text.set();
 
             cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
         }

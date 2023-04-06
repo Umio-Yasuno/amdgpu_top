@@ -75,3 +75,6 @@ pub use vram_usage::*;
 
 mod sensors;
 pub use sensors::*;
+
+mod gpu_metrics;
+pub use gpu_metrics::*;
