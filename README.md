@@ -78,16 +78,6 @@ cargo install --locked --path .
     * `amdgpu_allowed_register_entry`
         * `/drivers/gpu/drm/amd/amdgpu/{cik,nv,vi,si,soc15,soc21}.c`
 
-## Note
- * Currently tested only on AMD Polaris11 GPU (Radeon RX 560)
- * Only `amdgpu_read_mm_registers` function is used to read registers.
-
-## TODO
- * update theme
- * packages
- * config file?
- * logger?
-
 ## Alternatives
 If `amdgpu_top` is not enough for you or you don't like it, try the following applications.
 
