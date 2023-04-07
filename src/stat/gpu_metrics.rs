@@ -1,6 +1,7 @@
 use std::fmt::{self, Write};
 use super::{Text, Opt};
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, GpuMetrics, MetricsInfo};
+use std::path::PathBuf;
 
 const CORE_TEMP_LABEL: &str = "Core Temp (C)";
 const CORE_POWER_LABEL: &str = "Core Power (mW)";
@@ -9,7 +10,7 @@ const L3_TEMP_LABEL: &str = "L3 Cache Temp (C)";
 const L3_CLOCK_LABEL: &str = "L3 Cache Clock (MHz)";
 
 pub struct GpuMetricsView {
-    sysfs_path: String,
+    sysfs_path: PathBuf,
     metrics: GpuMetrics,
     pub text: Text,
 }
