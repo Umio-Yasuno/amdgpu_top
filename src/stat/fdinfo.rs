@@ -409,8 +409,7 @@ fn get_fds(pid: i32, target_device: &str) -> Vec<i32> {
     let Ok(fd_list) = fs::read_dir(&fd_path) else { return fds };
 
     for fd_link in fd_list {
-        let Ok(dir_entry) = fd_link
-            .and_then(|fd_link| Ok(fd_link.path())) else { continue };
+        let Ok(dir_entry) = fd_link.and_then(|fd_link| Ok(fd_link.path())) else { continue };
         let Ok(link) = fs::read_link(&dir_entry) else { continue };
 
         if link.starts_with(target_device) {
