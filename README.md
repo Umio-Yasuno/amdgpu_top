@@ -49,7 +49,14 @@ OPTIONS:
 | R   | reverse sort                        |
 
 ## Installation
+### Packages
+    * [Releases](https://github.com/Umio-Yasuno/amdgpu_top/releases)
+        * .deb
 ### Build from source
+Dependencies:
+    * libdrm2
+    * libdrm-amdgpu1
+
 ```
 git clone https://github.com/Umio-Yasuno/amdgpu_top
 cd amdgpu_top
