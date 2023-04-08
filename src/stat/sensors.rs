@@ -3,7 +3,6 @@ use libdrm_amdgpu_sys::{
     PCI,
     AMDGPU::SENSOR_INFO::*,
 };
-use std::path::PathBuf;
 use std::fmt::{self, Write};
 
 const SENSORS_LIST: [(SENSOR_TYPE, &str, u32); 7] = [
@@ -71,14 +70,7 @@ impl Sensor {
     }
 
     pub fn get_fan_rpm(&self) -> Option<u32> {
-        let fan_path: PathBuf = {
-            let path = format!("/sys/bus/pci/devices/{}/hwmon/", self.bus_info);
-            let Some(hwmon_dir) = std::fs::read_dir(&path).ok()
-                .and_then(|mut read_dir| read_dir.next())
-                .and_then(|dir| dir.ok()) else { return None };
-
-            hwmon_dir.path().join("fan1_input")
-        };
+        let fan_path = self.bus_info.get_hwmon_path()?.join("fan1_input");
 
         if let Ok(rpm) = std::fs::read_to_string(&fan_path) {
             rpm.trim_end().parse().ok()
