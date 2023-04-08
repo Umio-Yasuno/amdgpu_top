@@ -54,13 +54,13 @@ impl Sensor {
             }
         }
 
-        if let Some(fan_rpm) = self.get_fan_rpm() {
-            writeln!(self.text.buf, " {:<15} => {fan_rpm:>6} RPM", "FAN1")?;
-        }
-
         if let Some(power_cap) = self.get_power_cap() {
             let power_cap = power_cap.saturating_div(1_000_000); // microWatts -> Watts
             writeln!(self.text.buf, " {:<15} => {power_cap:>6} W", "PowerCap")?;
+        }
+
+        if let Some(fan_rpm) = self.get_fan_rpm() {
+            writeln!(self.text.buf, " {:<15} => {fan_rpm:>6} RPM", "FAN1")?;
         }
 
         writeln!(
