@@ -37,19 +37,9 @@ impl Sensor {
         self.cur = self.bus_info.get_link_info(PCI::STATUS::Current);
     }
 
-    pub fn print(&mut self, amdgpu_dev: &DeviceHandle) {
+    pub fn print(&mut self, amdgpu_dev: &DeviceHandle) -> Result<(), fmt::Error> {
         self.text.clear();
         self.update_status();
-
-        writeln!(
-            self.text.buf,
-            " PCI ({pci_bus}) => Gen{cur_gen}x{cur_width:<2} @ Gen{max_gen}x{max_width:<2} (Max) ",
-            pci_bus = self.bus_info,
-            cur_gen = self.cur.gen,
-            cur_width = self.cur.width,
-            max_gen = self.max.gen,
-            max_width = self.max.width,
-        ).unwrap();
 
         let mut c = 0;
 
@@ -60,13 +50,30 @@ impl Sensor {
                 c += 1;
                 let val = val.saturating_div(*div);
                 let ln = if (c % 2) == 0 { "\n" } else { "" };
-                write!(self.text.buf, " {sensor_name:<15} => {val:>6} {unit:3} {ln}").unwrap();
+                write!(self.text.buf, " {sensor_name:<15} => {val:>6} {unit:3} {ln}")?;
             }
         }
 
         if let Some(fan_rpm) = self.get_fan_rpm() {
-            writeln!(self.text.buf, " {:<15} => {fan_rpm:>6} RPM", "FAN1").unwrap();
+            writeln!(self.text.buf, " {:<15} => {fan_rpm:>6} RPM", "FAN1")?;
         }
+
+        if let Some(power_cap) = self.get_power_cap() {
+            let power_cap = power_cap.saturating_div(1_000_000); // microWatts -> Watts
+            writeln!(self.text.buf, " {:<15} => {power_cap:>6} W", "PowerCap")?;
+        }
+
+        writeln!(
+            self.text.buf,
+            " PCI ({pci_bus}) => Gen{cur_gen}x{cur_width:<2} @ Gen{max_gen}x{max_width:<2} (Max) ",
+            pci_bus = self.bus_info,
+            cur_gen = self.cur.gen,
+            cur_width = self.cur.width,
+            max_gen = self.max.gen,
+            max_width = self.max.width,
+        )?;
+
+        Ok(())
     }
 
     pub fn get_fan_rpm(&self) -> Option<u32> {
@@ -74,6 +81,16 @@ impl Sensor {
 
         if let Ok(rpm) = std::fs::read_to_string(&fan_path) {
             rpm.trim_end().parse().ok()
+        } else {
+            None
+        }
+    }
+
+    pub fn get_power_cap(&self) -> Option<u32> {
+        let power_cap_path = self.bus_info.get_hwmon_path()?.join("power1_cap");
+
+        if let Ok(power_cap) = std::fs::read_to_string(&power_cap_path) {
+            power_cap.trim_end().parse().ok()
         } else {
             None
         }

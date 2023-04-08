@@ -85,7 +85,12 @@ impl FdInfoView {
         }
     }
 
-    pub fn print(&mut self, slice_proc_info: &[ProcInfo], sort: &FdInfoSortType, reverse: bool) {
+    pub fn print(
+        &mut self,
+        slice_proc_info: &[ProcInfo],
+        sort: &FdInfoSortType,
+        reverse: bool
+    ) -> Result<(), fmt::Error> {
         self.text.clear();
         self.proc_usage.clear();
 
@@ -93,7 +98,7 @@ impl FdInfoView {
             self.text.buf,
             " {pad:26} | {VRAM_LABEL:^8} | {GFX_LABEL} | {COMPUTE_LABEL} | {DMA_LABEL} | {DEC_LABEL} | {ENC_LABEL} |",
             pad = "",
-        ).unwrap();
+        )?;
 
         for proc_info in slice_proc_info {
             self.get_proc_usage(proc_info);
@@ -116,10 +121,12 @@ impl FdInfoView {
             }
         );
 
-        self.print_usage();
+        self.print_usage()?;
+
+        Ok(())
     }
 
-    pub fn print_usage(&mut self) {
+    pub fn print_usage(&mut self) -> Result<(), fmt::Error> {
         for pu in &self.proc_usage {
             write!(
                 self.text.buf,
@@ -127,7 +134,7 @@ impl FdInfoView {
                 name = pu.name,
                 pid = pu.pid,
                 vram = pu.usage.vram_usage >> 10,
-            ).unwrap();
+            )?;
             let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
             for (usage, label_len) in [
                 (pu.usage.gfx, GFX_LABEL.len()),
@@ -139,10 +146,12 @@ impl FdInfoView {
                 // (uvd_enc, UVD_ENC_LABEL), // UVD
                 // (vcn_jpeg, JPEG_LABEL) // VCN
             ] {
-                write!(self.text.buf, " {usage:>label_len$}%|").unwrap();
+                write!(self.text.buf, " {usage:>label_len$}%|")?;
             }
-            writeln!(self.text.buf).unwrap();
+            writeln!(self.text.buf)?;
         }
+
+        Ok(())
     }
 
     pub fn get_proc_usage(&mut self, proc_info: &ProcInfo) {

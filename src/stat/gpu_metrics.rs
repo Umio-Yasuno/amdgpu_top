@@ -34,20 +34,22 @@ impl GpuMetricsView {
         }
     }
 
-    pub fn print(&mut self) {
+    pub fn print(&mut self) -> Result<(), fmt::Error> {
         self.text.clear();
 
         match self.metrics {
             GpuMetrics::V1_0(_) |
             GpuMetrics::V1_1(_) |
             GpuMetrics::V1_2(_) |
-            GpuMetrics::V1_3(_) => self.for_v1().unwrap(),
+            GpuMetrics::V1_3(_) => self.for_v1()?,
             GpuMetrics::V2_0(_) |
             GpuMetrics::V2_1(_) |
             GpuMetrics::V2_2(_) |
-            GpuMetrics::V2_3(_) => self.for_v2().unwrap(),
+            GpuMetrics::V2_3(_) => self.for_v2()?,
             GpuMetrics::Unknown => {},
         };
+
+        Ok(())
     }
 
     fn for_v1(&mut self) -> Result<(), fmt::Error> {

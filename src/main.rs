@@ -143,7 +143,7 @@ fn main() {
 
         if metrics.update_metrics(&amdgpu_dev).is_ok() {
             toggle_opt.gpu_metrics = true;
-            metrics.print();
+            metrics.print().unwrap();
             metrics.text.set();
         }
 
@@ -152,11 +152,11 @@ fn main() {
         // fill
         {
             stat::update_index(&mut proc_index, &device_path);
-            fdinfo.print(&proc_index, &FdInfoSortType::PID, false);
+            fdinfo.print(&proc_index, &FdInfoSortType::PID, false).unwrap();
             fdinfo.text.set();
         }
         {
-            sensor.print(&amdgpu_dev);
+            sensor.print(&amdgpu_dev).unwrap();
             sensor.text.set();
         }
     }
@@ -278,7 +278,7 @@ fn main() {
             }
 
             if flags.sensor {
-                sensor.print(&amdgpu_dev);
+                sensor.print(&amdgpu_dev).unwrap();
             } else {
                 sensor.text.clear();
             }
@@ -286,7 +286,7 @@ fn main() {
             if flags.fdinfo {
                 let lock = index.try_lock();
                 if let Ok(vec_info) = lock {
-                    fdinfo.print(&vec_info, &flags.fdinfo_sort, flags.reverse_sort);
+                    fdinfo.print(&vec_info, &flags.fdinfo_sort, flags.reverse_sort).unwrap();
                     fdinfo.interval = sample.to_duration();
                 } else {
                     fdinfo.interval += sample.to_duration();
@@ -297,7 +297,7 @@ fn main() {
 
             if flags.gpu_metrics {
                 if metrics.update_metrics(&amdgpu_dev).is_ok() {
-                    metrics.print();
+                    metrics.print().unwrap();
                 }
             } else {
                 metrics.text.clear();
