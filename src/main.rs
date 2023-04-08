@@ -56,6 +56,8 @@ fn main() {
     let main_opt = args::MainOpt::parse();
     let device_path = format!("/dev/dri/renderD{}", 128 + main_opt.instance);
 
+    let self_pid = stat::get_self_pid().unwrap_or(0);
+
     let (amdgpu_dev, major, minor) = {
         use std::fs::File;
         use std::os::fd::IntoRawFd;
@@ -151,7 +153,7 @@ fn main() {
 
         // fill
         {
-            stat::update_index(&mut proc_index, &device_path);
+            stat::update_index(&mut proc_index, &device_path, self_pid);
             fdinfo.print(&proc_index, &FdInfoSortType::PID, false).unwrap();
             fdinfo.text.set();
         }
@@ -231,7 +233,7 @@ fn main() {
             loop {
                 std::thread::sleep(Duration::from_secs(5));
 
-                stat::update_index(&mut buf_index, &device_path);
+                stat::update_index(&mut buf_index, &device_path, self_pid);
 
                 let lock = index.lock();
                 if let Ok(mut index) = lock {

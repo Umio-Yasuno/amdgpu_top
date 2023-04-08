@@ -410,6 +410,13 @@ impl FdInfoUsage {
     }
 }
 
+pub fn get_self_pid() -> Option<i32> {
+    let link = std::fs::read_link("/proc/self").ok()?;
+    let path_str = link.to_str()?;
+
+    path_str.parse::<i32>().ok()
+}
+
 fn get_fds(pid: i32, target_device: &str) -> Vec<i32> {
     let mut fds: Vec<i32> = Vec::new();
 
@@ -448,7 +455,7 @@ fn get_all_processes() -> Vec<i32> {
     pids
 }
 
-pub fn update_index(vec_info: &mut Vec<ProcInfo>, target_device: &str) {
+pub fn update_index(vec_info: &mut Vec<ProcInfo>, target_device: &str, self_pid: i32) {
     vec_info.clear();
 
     for p in &get_all_processes() {
@@ -456,7 +463,7 @@ pub fn update_index(vec_info: &mut Vec<ProcInfo>, target_device: &str) {
         let Ok(mut name) = fs::read_to_string(format!("/proc/{pid}/comm")) else { continue };
         name.pop(); // trim '\n'
 
-        if name == env!("CARGO_PKG_NAME") { continue }
+        if pid == self_pid { continue }
 
         let fds = get_fds(pid, target_device);
 
