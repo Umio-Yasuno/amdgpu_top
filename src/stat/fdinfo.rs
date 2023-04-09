@@ -460,14 +460,16 @@ pub fn update_index(vec_info: &mut Vec<ProcInfo>, target_device: &str, self_pid:
 
     for p in &get_all_processes() {
         let pid = *p;
-        let Ok(mut name) = fs::read_to_string(format!("/proc/{pid}/comm")) else { continue };
-        name.pop(); // trim '\n'
-
         if pid == self_pid { continue }
 
         let fds = get_fds(pid, target_device);
 
         if !fds.is_empty() {
+            let Ok(mut name) = fs::read_to_string(format!("/proc/{pid}/comm")) else {
+                continue
+            };
+            name.pop(); // trim '\n'
+
             vec_info.push(ProcInfo {
                 pid,
                 name,
