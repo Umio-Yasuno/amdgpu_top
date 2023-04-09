@@ -67,6 +67,13 @@ impl GpuMetricsView {
             (self.metrics.get_temperature_edge(), "Edge"),
             (self.metrics.get_temperature_hotspot(), "Hotspot"),
             (self.metrics.get_temperature_mem(), "Memory"),
+        ] {
+            let Some(v) = val else { continue };
+            write!(self.text.buf, " {name}: {v:3} C,")?;
+        }
+        writeln!(self.text.buf)?;
+
+        for (val, name) in [
             (self.metrics.get_temperature_vrgfx(), "VRGFX"),
             (self.metrics.get_temperature_vrsoc(), "VRSOC"),
             (self.metrics.get_temperature_vrmem(), "VRMEM"),

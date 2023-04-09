@@ -54,6 +54,7 @@ impl Sensor {
                 write!(self.text.buf, " {sensor_name:<15} => {val:>6} {unit:3} {ln}")?;
             }
         }
+        if (c % 2) == 1 { writeln!(self.text.buf)?; }
 
         if let Some(power_cap) = self.get_power_cap() {
             let power_cap = power_cap.saturating_div(1_000_000); // microWatts -> Watts
