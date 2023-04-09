@@ -170,7 +170,7 @@ fn main() {
                 Panel::new(
                     TextView::new(info_bar).center()
                 )
-                .title(env!("CARGO_PKG_NAME"))
+                .title(concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION")))
                 .title_position(HAlign::Center)
             );
 
