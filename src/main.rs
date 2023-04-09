@@ -204,7 +204,12 @@ fn main() {
             siv.add_global_callback('n', stat::Sensor::cb);
         }
         if toggle_opt.gpu_metrics {
-            layout.add_child(metrics.text.panel("GPU Metrics"));
+            let title = match metrics.version() {
+                Some(v) => format!("GPU Metrics v{}.{}", v.0, v.1),
+                None => "GPU Metrics".to_string(),
+            };
+
+            layout.add_child(metrics.text.panel(&title));
             siv.add_global_callback('m', stat::GpuMetricsView::cb);
         }
         layout.add_child(TextView::new(TOGGLE_HELP));

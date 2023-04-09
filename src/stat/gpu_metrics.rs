@@ -25,6 +25,12 @@ impl GpuMetricsView {
         }
     }
 
+    pub fn version(&self) -> Option<(u8, u8)> {
+        let header = self.metrics.get_header()?;
+
+        Some((header.format_revision, header.content_revision))
+    }
+
     pub fn update_metrics(&mut self, amdgpu_dev: &DeviceHandle) -> Result<(), ()> {
         if let Ok(metrics) = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&self.sysfs_path) {
             self.metrics = metrics;
