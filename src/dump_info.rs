@@ -1,6 +1,6 @@
 use libdrm_amdgpu_sys::{
     PCI,
-    AMDGPU::{GPU_INFO, DeviceHandle, drm_amdgpu_info_device},
+    AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, drm_amdgpu_info_device},
     AMDGPU::VIDEO_CAPS::{CAP_TYPE, CODEC},
     AMDGPU::HW_IP::HW_IP_TYPE,
     AMDGPU::FW_VERSION::FW_TYPE,
@@ -77,6 +77,10 @@ pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
     fw_info(amdgpu_dev);
     codec_info(amdgpu_dev);
     vbios_info(amdgpu_dev);
+
+    if let Ok(metrics) = amdgpu_dev.get_gpu_metrics() {
+        println!("\nGPU Metrics {metrics:#?}");
+    }
 }
 
 fn cache_info(ext_info: &drm_amdgpu_info_device) {
