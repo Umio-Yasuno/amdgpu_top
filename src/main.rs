@@ -54,7 +54,7 @@ const TOGGLE_HELP: &str = concat!(
 
 fn main() {
     let main_opt = args::MainOpt::parse();
-    let device_path = format!("/dev/dri/renderD{}", 128 + main_opt.instance);
+    let device_path = main_opt.device_path();
 
     let self_pid = stat::get_self_pid().unwrap_or(0);
 

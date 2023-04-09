@@ -7,6 +7,12 @@ pub struct MainOpt {
     pub pid: Option<i32>,
 }
 
+impl MainOpt {
+    pub fn device_path(&self) -> String {
+        format!("/dev/dri/renderD{}", 128 + self.instance)
+    }
+}
+
 const HELP_MSG: &str = concat!(
     env!("CARGO_PKG_NAME"), " ", env!("CARGO_PKG_VERSION"), "\n",
     env!("CARGO_PKG_HOMEPAGE"), "\n",
@@ -18,9 +24,9 @@ const HELP_MSG: &str = concat!(
     "   -d, --dump\n",
     "       Dump AMDGPU info (name, clock, chip_class, VRAM, PCI, VBIOS)\n",
     "   -J\n",
-    "       Output JSON formatted data\n",
+    "       Output JSON formatted data for simple process trace\n",
     "   -s <i64>, --ms <i64>\n",
-    "       Refresh period in milliseconds\n",
+    "       Refresh period in milliseconds for simple process trace\n",
     "   -p <i32>, --pid <i32>\n",
     "       Specification of PID, used for `-J` option\n",
     "\n",
