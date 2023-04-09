@@ -47,7 +47,7 @@ impl Default for ToggleOptions {
 type Opt = Arc<Mutex<ToggleOptions>>;
 
 const TOGGLE_HELP: &str = concat!(
-    " (g)rbm g(r)bm2 (c)p_stat (vram) (f)dinfo \n",
+    " (g)rbm g(r)bm2 (c)p_stat (v)ram_usage (f)dinfo \n",
     " se(n)sor (m)etrics (h)igh_freq (q)uit \n",
     " (P): sort_by_pid (V): sort_by_vram (G): sort_by_gfx\n (M): sort_by_media (R): reverse"
 );
