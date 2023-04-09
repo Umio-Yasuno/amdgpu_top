@@ -53,7 +53,6 @@ OPTIONS:
  * [Releases](https://github.com/Umio-Yasuno/amdgpu_top/releases)
     * .deb, .AppImage
  * [AUR](https://aur.archlinux.org/packages/amdgpu_top)
-    * made by Teddy-Kun
 ### Build from source
 Dependencies:
  * libdrm2
