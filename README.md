@@ -51,7 +51,7 @@ OPTIONS:
 ## Installation
 ### Packages
  * [Releases](https://github.com/Umio-Yasuno/amdgpu_top/releases)
-    * .deb
+    * .deb, .AppImage
 ### Build from source
 Dependencies:
  * libdrm2
