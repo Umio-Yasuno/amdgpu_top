@@ -1,6 +1,6 @@
 use libdrm_amdgpu_sys::{
     PCI,
-    AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, drm_amdgpu_info_device},
+    AMDGPU::{DeviceHandle, GPU_INFO, drm_amdgpu_info_device},
     AMDGPU::VIDEO_CAPS::{CAP_TYPE, CODEC},
     AMDGPU::HW_IP::HW_IP_TYPE,
     AMDGPU::FW_VERSION::FW_TYPE,

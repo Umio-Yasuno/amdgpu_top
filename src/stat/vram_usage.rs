@@ -1,6 +1,5 @@
 use super::{Opt, TopView, toggle_view};
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, drm_amdgpu_memory_info};
-use std::fmt::{self, Write};
 use cursive::views::{
     FixedLayout,
     HideableView,
@@ -13,6 +12,7 @@ use cursive::view::Nameable;
 use cursive::utils::Counter;
 use cursive::Rect;
 use cursive::align::HAlign;
+use serde_json::{json, Map, Value};
 
 #[derive(Clone, Debug)]
 pub struct VramUsage {
@@ -107,37 +107,25 @@ impl VramUsageView {
         self.gtt.counter.set(self.gtt.usage as usize);
     }
 
-    pub fn json(&self) -> Result<String, fmt::Error> {
-        let mut out = String::new();
+    pub fn json_value(&self) -> Value {
+        let mut m = Map::new();
 
-        writeln!(
-            out,
-            "\t\"VRAM\": {{"
-        )?;
         for (label, usage) in [
             ("Total VRAM", self.vram.total >> 20),
             ("Total VRAM Usage", self.vram.usage >> 20),
             ("Total GTT", self.gtt.total >> 20),
             ("Total GTT Usage", self.gtt.usage >> 20),
         ] {
-            writeln!(
-                out,
-                concat!(
-                    "\t\t\"{label}\": {{\n",
-                    "\t\t\t\"val\": {usage},\n",
-                    "\t\t\t\"unit\": \"MiB\"\n",
-                    "\t\t}},",
-                ),
-                label = label,
-                usage = usage,
-            )?;
+            m.insert(
+                label.to_string(),
+                json!({
+                    "value": usage,
+                    "unit": "MiB",
+                }),
+            );
         }
-        out.pop(); // remove '\n'
-        out.pop(); // remove ','
-        out.push('\n');
-        write!(out, "\t}}")?;
 
-        Ok(out)
+        m.into()
     }
 
     pub fn cb(siv: &mut cursive::Cursive) {

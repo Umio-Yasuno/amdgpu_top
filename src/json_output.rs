@@ -1,10 +1,11 @@
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, CHIP_CLASS, GPU_INFO};
 use crate::stat;
 use std::time::{Duration, Instant};
-use std::io::{self, stdin, stdout, Read, Write, BufReader, BufWriter};
+use std::io::{self, stdin, Read, BufReader};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use ctrlc;
+use serde_json::{json, Value};
 
 pub fn print(
     amdgpu_dev: &DeviceHandle,
@@ -42,8 +43,6 @@ pub fn print(
 
     let mut sensor = stat::Sensor::new(&pci_bus);
 
-    let out = stdout();
-    let mut out = BufWriter::new(out.lock());
     let quit_flag = Arc::new(AtomicBool::new(false));
 
     {
@@ -71,9 +70,7 @@ pub fn print(
             .expect("Error setting Ctrl-C handler");
     }
 
-    out.write_all(b"[\n")?;
-
-    let pad = "\"\": {}".to_string();
+    let mut vec_value: Vec<Value> = Vec::new();
     let base = Instant::now();
 
     loop {
@@ -93,58 +90,31 @@ pub fn print(
         let now = Instant::now();
         period = now.duration_since(base);
 
-        out.write_all(b"{\n")?;
-
-        write!(
-            out,
-            concat!(
-                "\t\"Device Name\": \"{name}\",\n",
-                "\t\"CU Count\": {cu_count},\n",
-                "\t\"ResizableBAR\": {rebar},\n",
-            ),
-            name = mark_name,
-            cu_count = cu_count,
-            rebar = resizable_bar,
-        )?;
-        write!(
-            out,
-            concat!(
-                "\t\"period\": {{\n",
-                "\t\t\"duration\": {duration},\n",
-                "\t\t\"unit\": \"ms\"\n",
-                "\t}},\n",
-            ),
-            duration = period.as_millis(),
-        )?;
-        write!(
-            out,
-            concat!(
-                "{grbm},\n",
-                "{grbm2},\n",
-                "{cp_stat},\n",
-                "{vram},\n",
-                "{fdinfo},\n",
-                "{sensor}\n",
-            ),
-            grbm = grbm.json().unwrap_or(pad.clone()),
-            grbm2 = grbm2.json().unwrap_or(pad.clone()),
-            cp_stat = cp_stat.json().unwrap_or(pad.clone()),
-            vram = vram.json().unwrap_or(pad.clone()),
-            fdinfo = fdinfo.json().unwrap_or(pad.clone()),
-            sensor = sensor.json(amdgpu_dev).unwrap_or(pad.clone()),
-        )?;
+        let json = json!({
+            "DeviceName": mark_name,
+            "ResizableBar": resizable_bar,
+            "CU Count": cu_count,
+            "period": {
+                "duration": period.as_millis(),
+                "unit": "ms",
+            },
+            "GRBM": grbm.json_value(),
+            "GRBM2": grbm2.json_value(),
+            "CP_STAT": cp_stat.json_value(),
+            "VRAM": vram.json_value(),
+            "fdinfo": fdinfo.json_value(),
+            "Sensors": sensor.json_value(amdgpu_dev),
+        });
 
         grbm.bits.clear();
         grbm2.bits.clear();
         cp_stat.bits.clear();
 
-        if quit_flag.load(Ordering::Relaxed) {
-            out.write_all(b"}\n]\n")?;
-            return Ok(());
-        } else {
-            out.write_all(b"},\n")?;
-        }
+        vec_value.push(json);
 
-        out.flush()?;
+        if quit_flag.load(Ordering::Relaxed) {
+            println!("{}", vec_value.into_iter().collect::<Value>());
+            return Ok(());
+        }
     }
 }

@@ -4,6 +4,7 @@ use libdrm_amdgpu_sys::{
     AMDGPU::SENSOR_INFO::*,
 };
 use std::fmt::{self, Write};
+use serde_json::{json, Map, Value};
 
 const SENSORS_LIST: [(SENSOR_TYPE, &str, u32); 7] = [
     (SENSOR_TYPE::GFX_SCLK, "MHz", 1),
@@ -96,58 +97,41 @@ impl Sensor {
         }
     }
 
-    pub fn json(&self, amdgpu_dev: &DeviceHandle) -> Result<String, fmt::Error> {
-        let mut out = format!("\t\"Sensors\": {{\n");
+    pub fn json_value(&self, amdgpu_dev: &DeviceHandle) -> Value {
+        let mut m = Map::new();
 
-        writeln!(
-            out,
-            concat!(
-                "\t\t\"PCIe Link Speed\": {{\n",
-                "\t\t\t\"gen\": {gen},\n",
-                "\t\t\t\"width\": {width}\n",
-                "\t\t}},",
-            ),
-            gen = self.cur.gen,
-            width = self.cur.width,
-        )?;
+        m.insert(
+            "PCIe Link Speed".to_string(),
+            json!({
+                "gen": self.cur.gen,
+                "width": self.cur.width,
+            }),
+        );
 
         for (sensor, unit, div) in &SENSORS_LIST {
             if let Ok(val) = amdgpu_dev.sensor_info(*sensor) {
                 let val = val.saturating_div(*div);
-                writeln!(
-                    out,
-                    concat!(
-                        "\t\t\"{sensor}\": {{\n",
-                        "\t\t\t\"val\": {val},\n",
-                        "\t\t\t\"unit\": \"{unit}\"\n",
-                        "\t\t}},",
-                    ),
-                    sensor = sensor,
-                    val = val,
-                    unit = unit,
-                )?;
+                m.insert(
+                    sensor.to_string(),
+                    json!({
+                        "value": val,
+                        "unit": unit,
+                    }),
+                );
             }
         }
+
         if let Some(fan_rpm) = self.get_fan_rpm() {
-            writeln!(
-                out,
-                concat!(
-                    "\t\t\"FAN1\": {{\n",
-                    "\t\t\t\"val\": {fan_rpm},\n",
-                    "\t\t\t\"unit\": \"RPM\"\n",
-                    "\t\t}},",
-                ),
-                fan_rpm = fan_rpm,
-            )?;
+            m.insert(
+                "Fan".to_string(),
+                json!({
+                    "value": fan_rpm,
+                    "unit": "RPM",
+                }),
+            );
         }
 
-        out.pop(); // remove '\n'
-        out.pop(); // remove ','
-        out.push('\n');
-
-        write!(out, "\t}}")?;
-
-        Ok(out)
+        m.into()
     }
 
     pub fn cb(siv: &mut cursive::Cursive) {

@@ -10,7 +10,7 @@ use cursive::view::Nameable;
 use cursive::utils::Counter;
 use cursive::Rect;
 use cursive::align::HAlign;
-use std::fmt::{self, Write};
+use serde_json::{json, Map, Value};
 
 use super::{DeviceHandle, PCType, BITS, TopView};
 
@@ -96,28 +96,19 @@ impl PerfCounter {
         }
     }
 
-    pub fn json(&mut self) -> Result<String, fmt::Error> {
-        let mut out = format!("\t\"{}\": {{\n", self.pc_type);
+    pub fn json_value(&mut self) -> Value {
+        let mut m = Map::new();
 
         for (name, pos) in &self.index {
-            writeln!(
-                out,
-                concat!(
-                    "\t\t\"{name}\": {{\n",
-                    "\t\t\t\"val\": {val},\n",
-                    "\t\t\t\"unit\": \"%\"\n",
-                    "\t\t}},",
-                ),
-                name = name,
-                val = self.bits.get(*pos),
-            )?;
+            m.insert(
+                name.to_string(),
+                json!({
+                    "usage": self.bits.get(*pos),
+                    "unit": "%",
+                }),
+            );
         }
-        out.pop(); // remove '\n'
-        out.pop(); // remove ','
-        out.push('\n');
 
-        write!(out, "\t}}")?;
-
-        Ok(out)
+        m.into()
     }
 }
