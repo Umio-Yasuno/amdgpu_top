@@ -428,6 +428,7 @@ fn get_fds(pid: i32, target_device: &str) -> Vec<i32> {
         let Ok(dir_entry) = fd_link.and_then(|fd_link| Ok(fd_link.path())) else { continue };
         let Ok(link) = fs::read_link(&dir_entry) else { continue };
 
+        // e.g. "/dev/dri/renderD128"
         if link.starts_with(target_device) {
             let Some(fd_num) = dir_entry.file_name()
                 .and_then(|name| name.to_str())
