@@ -3,6 +3,8 @@ use crate::Opt;
 mod utils;
 use utils::*;
 
+const PANEL_WIDTH: usize = 70;
+
 pub const GFX10_GRBM_INDEX: &[(&str, usize)] = &[
     ("Graphics Pipe", 31),
     ("Texture Pipe", 14),

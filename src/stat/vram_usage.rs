@@ -1,4 +1,4 @@
-use super::{Opt, TopView, toggle_view};
+use super::{Opt, PANEL_WIDTH, TopView, toggle_view};
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, drm_amdgpu_memory_info};
 use cursive::views::{
     FixedLayout,
@@ -35,17 +35,13 @@ impl VramUsageView {
             total: info.vram.total_heap_size,
             _usable: info.vram.usable_heap_size,
             usage: info.vram.heap_usage,
-            counter: Counter::new(
-                50
-            ),
+            counter: Counter::new(0),
         };
         let gtt = VramUsage {
             total: info.gtt.total_heap_size,
             _usable: info.gtt.usable_heap_size,
             usage: info.gtt.heap_usage,
-            counter: Counter::new(
-                55
-            ),
+            counter: Counter::new(0),
         };
 
         Self {
@@ -68,11 +64,12 @@ impl VramUsageView {
         &self,
     ) -> TopView {
         const LEFT_LEN: usize = 6;
-        const BAR_WIDTH: usize = 30;
+        const BAR_WIDTH: usize = PANEL_WIDTH / 2 - LEFT_LEN;
 
         let title = Self::TITLE.to_string();
         let label = |value: usize, (_min, max): (usize, usize)| -> String {
-            format!("{:5} / {:5} MiB", value >> 20, max >> 20)
+            let val = format!("{:5} / {:5} MiB", value >> 20, max >> 20);
+            format!("[{val:^width$}]", width = BAR_WIDTH - 2)
         };
         let mut sub_layout = LinearLayout::horizontal();
 
@@ -81,7 +78,7 @@ impl VramUsageView {
                 FixedLayout::new()
                     .child(
                         Rect::from_size((0, 0), (LEFT_LEN, 1)),
-                        TextView::new(format!(" {name}:")),
+                        TextView::new(format!(" {name:>4}:")),
                     )
                     .child(
                         Rect::from_size((LEFT_LEN+1, 0), (BAR_WIDTH, 1)),

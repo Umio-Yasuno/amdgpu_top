@@ -12,7 +12,7 @@ use cursive::Rect;
 use cursive::align::HAlign;
 use serde_json::{json, Map, Value};
 
-use super::{DeviceHandle, PCType, BITS, TopView};
+use super::{DeviceHandle, PANEL_WIDTH, PCType, BITS, TopView};
 
 #[derive(Debug)]
 pub struct PerfCounter {
@@ -45,13 +45,13 @@ impl PerfCounter {
         &self,
         visible: bool,
     ) -> TopView {
-        const LEFT_LEN: usize = 30;
-        const BAR_WIDTH: usize = 30;
+        const BAR_WIDTH: usize = 40;
+        const LEFT_LEN: usize = PANEL_WIDTH - BAR_WIDTH;
         
         let title = self.pc_type.to_string();
         let mut sub_layout = LinearLayout::vertical();
         let label = |value: usize, (_, _): (usize, usize)| -> String {
-            format!("{value:3} %")
+            format!("[{val:^width$}]", width = BAR_WIDTH - 2, val = format!("{value:3} %"))
         };
 
         for (c, (name, _)) in self.counters.iter().zip(self.index.iter()) {
