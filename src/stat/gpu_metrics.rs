@@ -138,7 +138,9 @@ impl GpuMetricsView {
         }
         writeln!(self.text.buf)?;
 
-        if let Some(hbm_temp) = self.metrics.get_temperature_hbm() {
+        if let Some(hbm_temp) = self.metrics.get_temperature_hbm().and_then(|hbm_temp|
+            (!hbm_temp.contains(&u16::MAX)).then_some(hbm_temp)
+        ) {
             write!(self.text.buf, "HBM Temp (C) [")?;
             for v in &hbm_temp {
                 let v = v.saturating_div(100);
