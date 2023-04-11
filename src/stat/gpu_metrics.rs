@@ -100,7 +100,7 @@ impl GpuMetricsView {
             (
                 self.metrics.get_average_uclk_frequency(),
                 self.metrics.get_current_uclk(),
-                "UCLK",
+                "UMCCLK",
             ),
             (
                 self.metrics.get_average_vclk_frequency(),
@@ -137,6 +137,7 @@ impl GpuMetricsView {
         }
         writeln!(self.text.buf)?;
 
+        /// Only Aldebaran (MI200) supports it.
         if let Some(hbm_temp) = self.metrics.get_temperature_hbm().and_then(|hbm_temp|
             (!hbm_temp.contains(&u16::MAX)).then_some(hbm_temp)
         ) {
@@ -191,7 +192,7 @@ impl GpuMetricsView {
             (
                 self.metrics.get_average_uclk_frequency(),
                 self.metrics.get_current_uclk(),
-                "UCLK",
+                "UMCCLK",
             ),
             (
                 self.metrics.get_average_fclk_frequency(),
