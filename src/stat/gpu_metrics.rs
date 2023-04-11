@@ -58,11 +58,11 @@ impl GpuMetricsView {
         Ok(())
     }
 
-    /// AMDGPU always returns `u16::MAX` for some values it doesn't actually support.
+    // AMDGPU always returns `u16::MAX` for some values it doesn't actually support.
     fn for_v1(&mut self) -> Result<(), fmt::Error> {
         if let Some(socket_power) = self.metrics.get_average_socket_power() {
             if socket_power != u16::MAX {
-                writeln!(self.text.buf, " Socket Power: {socket_power:3} W")?;
+                writeln!(self.text.buf, " Socket Power => {socket_power:3} W")?;
             }
         }
 
@@ -72,7 +72,7 @@ impl GpuMetricsView {
             (self.metrics.get_temperature_mem(), "Memory"),
         ] {
             let Some(v) = val.and_then(|v| v.ne(&u16::MAX).then_some(v)) else { continue };
-            write!(self.text.buf, " {name}: {v:3} C,")?;
+            write!(self.text.buf, " {name} => {v:3} C,")?;
         }
         writeln!(self.text.buf)?;
 
@@ -82,7 +82,7 @@ impl GpuMetricsView {
             (self.metrics.get_temperature_vrmem(), "VRMEM"),
         ] {
             let Some(v) = val.and_then(|v| v.ne(&u16::MAX).then_some(v)) else { continue };
-            write!(self.text.buf, " {name}: {v:3} C,")?;
+            write!(self.text.buf, " {name} => {v:3} C,")?;
         }
         writeln!(self.text.buf)?;
 
@@ -124,7 +124,7 @@ impl GpuMetricsView {
             ),
         ] {
             let [avg, cur] = [avg, cur].map(none_or_max_to_zero);
-            writeln!(self.text.buf, " {name:6} Avg. {avg:4} MHz, Cur. {cur:4} MHz")?;
+            writeln!(self.text.buf, " {name:<6} => Avg. {avg:4} MHz, Cur. {cur:4} MHz")?;
         }
 
         for (val, name) in [
@@ -133,15 +133,15 @@ impl GpuMetricsView {
             (self.metrics.get_voltage_mem(), "Mem"),
         ] {
             let Some(v) = val.and_then(|v| v.ne(&u16::MAX).then_some(v)) else { continue };
-            write!(self.text.buf, " {name}: {v:4} mV, ")?;
+            write!(self.text.buf, " {name} => {v:4} mV, ")?;
         }
         writeln!(self.text.buf)?;
 
-        /// Only Aldebaran (MI200) supports it.
+        // Only Aldebaran (MI200) supports it.
         if let Some(hbm_temp) = self.metrics.get_temperature_hbm().and_then(|hbm_temp|
             (!hbm_temp.contains(&u16::MAX)).then_some(hbm_temp)
         ) {
-            write!(self.text.buf, "HBM Temp (C) [")?;
+            write!(self.text.buf, "HBM Temp (C) => [")?;
             for v in &hbm_temp {
                 let v = v.saturating_div(100);
                 write!(self.text.buf, "{v:5},")?;
@@ -153,7 +153,7 @@ impl GpuMetricsView {
     }
 
     fn for_v2(&mut self) -> Result<(), fmt::Error> {
-        write!(self.text.buf, " GFX: ")?;
+        write!(self.text.buf, " GFX => ")?;
         for (val, unit, div) in [
             (self.metrics.get_temperature_gfx(), "C", 100),
             (self.metrics.get_average_gfx_power(), "mW", 1),
@@ -164,7 +164,7 @@ impl GpuMetricsView {
         }
         writeln!(self.text.buf)?;
 
-        write!(self.text.buf, " SoC: ")?;
+        write!(self.text.buf, " SoC => ")?;
         for (val, unit, div) in [
             (self.metrics.get_temperature_soc(), "C", 100),
             (self.metrics.get_average_soc_power(), "mW", 1),
@@ -177,7 +177,7 @@ impl GpuMetricsView {
 
         if let Some(socket_power) = self.metrics.get_average_socket_power() {
             if socket_power != u16::MAX {
-                writeln!(self.text.buf, " Socket Power: {socket_power:3} W")?;
+                writeln!(self.text.buf, " Socket Power => {socket_power:3} W")?;
             }
         }
 /*
@@ -211,7 +211,7 @@ impl GpuMetricsView {
             ),
         ] {
             let [avg, cur] = [avg, cur].map(none_or_max_to_zero);
-            writeln!(self.text.buf, " {name} Avg. {avg:4} MHz, Cur. {cur:4} MHz")?;
+            writeln!(self.text.buf, " {name:<6} => Avg. {avg:4} MHz, Cur. {cur:4} MHz")?;
         }
 
         for (val, label, div) in [
@@ -220,7 +220,7 @@ impl GpuMetricsView {
             (self.metrics.get_current_coreclk(), CORE_CLOCK_LABEL, 1),
         ] {
             let Some(val) = val else { continue };
-            write!(self.text.buf, " {label:<16}: [")?;
+            write!(self.text.buf, " {label:<16} => [")?;
             for v in &val {
                 let v = if v == &u16::MAX {
                     0
@@ -238,7 +238,7 @@ impl GpuMetricsView {
             (self.metrics.get_current_l3clk(), L3_CLOCK_LABEL, 1),
         ] {
             let Some(val) = val else { continue };
-            write!(self.text.buf, " {label:<20}: [")?;
+            write!(self.text.buf, " {label:<20} => [")?;
             for v in &val {
                 let v = if v == &u16::MAX {
                     0
