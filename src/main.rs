@@ -154,7 +154,7 @@ fn main() {
         // fill
         {
             stat::update_index(&mut proc_index, &device_path, self_pid);
-            fdinfo.print(&proc_index, &FdInfoSortType::PID, false).unwrap();
+            fdinfo.print(&proc_index, &toggle_opt.fdinfo_sort, false).unwrap();
             fdinfo.text.set();
         }
         {
