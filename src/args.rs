@@ -49,6 +49,7 @@ impl MainOpt {
             }
 
             if !arg.starts_with('-') {
+                eprintln!("Unknown option: {arg}");
                 continue;
             }
 

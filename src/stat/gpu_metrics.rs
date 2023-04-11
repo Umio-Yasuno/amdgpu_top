@@ -58,9 +58,12 @@ impl GpuMetricsView {
         Ok(())
     }
 
+    /// AMDGPU always returns `u16::MAX` for some values it doesn't actually support.
     fn for_v1(&mut self) -> Result<(), fmt::Error> {
         if let Some(socket_power) = self.metrics.get_average_socket_power() {
-            writeln!(self.text.buf, " Socket Power: {socket_power:3} W")?;
+            if socket_power != u16::MAX {
+                writeln!(self.text.buf, " Socket Power: {socket_power:3} W")?;
+            }
         }
 
         for (val, name) in [
@@ -68,7 +71,7 @@ impl GpuMetricsView {
             (self.metrics.get_temperature_hotspot(), "Hotspot"),
             (self.metrics.get_temperature_mem(), "Memory"),
         ] {
-            let Some(v) = val else { continue };
+            let Some(v) = val.and_then(|v| v.ne(&u16::MAX).then_some(v)) else { continue };
             write!(self.text.buf, " {name}: {v:3} C,")?;
         }
         writeln!(self.text.buf)?;
@@ -78,7 +81,7 @@ impl GpuMetricsView {
             (self.metrics.get_temperature_vrsoc(), "VRSOC"),
             (self.metrics.get_temperature_vrmem(), "VRMEM"),
         ] {
-            let Some(v) = val else { continue };
+            let Some(v) = val.and_then(|v| v.ne(&u16::MAX).then_some(v)) else { continue };
             write!(self.text.buf, " {name}: {v:3} C,")?;
         }
         writeln!(self.text.buf)?;
@@ -120,21 +123,17 @@ impl GpuMetricsView {
                 "DCLK1",
             ),
         ] {
-            let [avg, cur] = [avg, cur].map(|val| {
-                let v = val.unwrap_or(0);
-
-                if v == u16::MAX { 0 } else { v }
-            });
+            let [avg, cur] = [avg, cur].map(none_or_max_to_zero);
             writeln!(self.text.buf, " {name:6} Avg. {avg:4} MHz, Cur. {cur:4} MHz")?;
         }
 
-        for (voltage, name) in [
+        for (val, name) in [
             (self.metrics.get_voltage_soc(), "SoC"),
             (self.metrics.get_voltage_gfx(), "GFX"),
             (self.metrics.get_voltage_mem(), "Mem"),
         ] {
-            let Some(voltage) = voltage else { continue };
-            write!(self.text.buf, " {name}: {voltage:4} mV, ")?;
+            let Some(v) = val.and_then(|v| v.ne(&u16::MAX).then_some(v)) else { continue };
+            write!(self.text.buf, " {name}: {v:4} mV, ")?;
         }
         writeln!(self.text.buf)?;
 
@@ -159,13 +158,8 @@ impl GpuMetricsView {
             (self.metrics.get_average_gfx_power(), "mW", 1),
             (self.metrics.get_current_gfxclk(), "MHz", 1),
         ] {
-            let v = val.unwrap_or(0);
-            if v == u16::MAX {
-                write!(self.text.buf, "{:5} {unit}, ", "")?;
-            } else {
-                let v = v.saturating_div(div);
-                write!(self.text.buf, "{v:5} {unit}, ")?;
-            }
+            let v = none_or_max_to_zero(val).saturating_div(div);
+            write!(self.text.buf, "{v:5} {unit}, ")?;
         }
         writeln!(self.text.buf)?;
 
@@ -175,18 +169,15 @@ impl GpuMetricsView {
             (self.metrics.get_average_soc_power(), "mW", 1),
             (self.metrics.get_current_socclk(), "MHz", 1),
         ] {
-            let v = val.unwrap_or(0);
-            if v == u16::MAX {
-                write!(self.text.buf, "{:5} {unit}, ", "")?;
-            } else {
-                let v = v.saturating_div(div);
-                write!(self.text.buf, "{v:5} {unit}, ")?;
-            }
+            let v = none_or_max_to_zero(val).saturating_div(div);
+            write!(self.text.buf, "{v:5} {unit}, ")?;
         }
         writeln!(self.text.buf)?;
 
         if let Some(socket_power) = self.metrics.get_average_socket_power() {
-            writeln!(self.text.buf, " Socket Power: {socket_power:3} W")?;
+            if socket_power != u16::MAX {
+                writeln!(self.text.buf, " Socket Power: {socket_power:3} W")?;
+            }
         }
 /*
         if let [Some(gfx), Some(mm)] = [
@@ -218,11 +209,7 @@ impl GpuMetricsView {
                 "DCLK",
             ),
         ] {
-            let [avg, cur] = [avg, cur].map(|val| {
-                let v = val.unwrap_or(0);
-
-                if v == u16::MAX { 0 } else { v }
-            });
+            let [avg, cur] = [avg, cur].map(none_or_max_to_zero);
             writeln!(self.text.buf, " {name} Avg. {avg:4} MHz, Cur. {cur:4} MHz")?;
         }
 
@@ -234,7 +221,12 @@ impl GpuMetricsView {
             let Some(val) = val else { continue };
             write!(self.text.buf, " {label:<16}: [")?;
             for v in &val {
-                let v = v.saturating_div(div);
+                let v = if v == &u16::MAX {
+                    0
+                } else {
+                    v.saturating_div(div)
+                };
+
                 write!(self.text.buf, "{v:5},")?;
             }
             writeln!(self.text.buf, "]")?;
@@ -247,7 +239,12 @@ impl GpuMetricsView {
             let Some(val) = val else { continue };
             write!(self.text.buf, " {label:<20}: [")?;
             for v in &val {
-                let v = v.saturating_div(div);
+                let v = if v == &u16::MAX {
+                    0
+                } else {
+                    v.saturating_div(div)
+                };
+
                 write!(self.text.buf, "{v:5},")?;
             }
             writeln!(self.text.buf, "]")?;
@@ -261,5 +258,15 @@ impl GpuMetricsView {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.gpu_metrics ^= true;
         }
+    }
+}
+
+fn none_or_max_to_zero(val: Option<u16>) -> u16 {
+    let v = val.unwrap_or(0);
+
+    if v == u16::MAX {
+        0
+    } else {
+        v
     }
 }
