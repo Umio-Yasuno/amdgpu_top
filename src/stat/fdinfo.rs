@@ -408,20 +408,12 @@ fn get_fds(pid: i32, device_paths: &[String]) -> Vec<i32> {
     let fd_path = format!("/proc/{pid}/fd/");
     let Ok(fd_list) = fs::read_dir(&fd_path) else { return fds };
 
-    let check_symlink = |path: &PathBuf, devices: &[String]| -> bool {
-        for target in devices {
-            if path.starts_with(target) { return true }
-        }
-
-        false
-    };
-
     for fd_link in fd_list {
         let Ok(dir_entry) = fd_link.map(|fd_link| fd_link.path()) else { continue };
         let Ok(link) = fs::read_link(&dir_entry) else { continue };
 
         // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
-        if check_symlink(&link, device_paths) {
+        if device_paths.into_iter().any(|path| link.starts_with(path)) {
             let Some(fd_num) = dir_entry.file_name()
                 .and_then(|name| name.to_str())
                 .and_then(|name| name.parse::<i32>().ok()) else { continue };
@@ -449,16 +441,28 @@ fn get_all_processes() -> Vec<i32> {
 }
 
 pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_paths: &[String], self_pid: i32) {
+    const SYSTEMD_CMDLINE: &[&str] = &[ "/lib/systemd", "/usr/lib/systemd" ];
+
     vec_info.clear();
 
     for p in &get_all_processes() {
         let pid = *p;
         if pid == self_pid { continue }
+        if pid == 1 { continue } // init process, systemd
 
         let fds = get_fds(pid, device_paths);
 
         if !fds.is_empty() {
-            let Ok(mut name) = fs::read_to_string(format!("/proc/{pid}/comm")) else {
+            let base = PathBuf::from(format!("/proc/{pid}/"));
+            {
+                // filter systemd processes from fdinfo target
+                // gnome-shell share the AMDGPU driver context with systemd processes
+                let Ok(cmdline) = fs::read_to_string(base.join("cmdline")) else { continue };
+                if SYSTEMD_CMDLINE.into_iter().any(|path| cmdline.starts_with(path)) {
+                    continue
+                }
+            }
+            let Ok(mut name) = fs::read_to_string(base.join("comm")) else {
                 continue
             };
             name.pop(); // trim '\n'
