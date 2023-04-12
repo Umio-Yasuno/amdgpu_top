@@ -4,7 +4,6 @@ use std::time::{Duration, Instant};
 use std::io::{self, stdin, Read, BufReader};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use ctrlc;
 use serde_json::{json, Value};
 
 pub fn print(
@@ -52,7 +51,7 @@ pub fn print(
 
         std::thread::spawn(move || {
             loop {
-                if let Err(_) = stdin.read(&mut buf[..]) {
+                if stdin.read(&mut buf[..]).is_err() {
                     eprintln!("Read error");
                     quit_flag.store(true, Ordering::Relaxed);
                     return;

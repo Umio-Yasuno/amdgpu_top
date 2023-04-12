@@ -35,7 +35,7 @@ impl ProcInfo {
         Self {
             pid,
             name,
-            fds: get_fds(pid, target_device),
+            fds: get_fds(pid, &[target_device.to_string()]),
         }
     }
 }
@@ -65,6 +65,7 @@ pub struct ProcUsage {
 #[derive(Default)]
 pub struct FdInfoView {
     pid_map: HashMap<i32, FdInfoUsage>,
+    drm_client_ids: HashSet<usize>,
     pub proc_usage: Vec<ProcUsage>,
     pub interval: Duration,
     pub text: Text,
@@ -94,6 +95,7 @@ impl FdInfoView {
     ) -> Result<(), fmt::Error> {
         self.text.clear();
         self.proc_usage.clear();
+        self.drm_client_ids.clear();
 
         writeln!(
             self.text.buf,
@@ -162,7 +164,6 @@ impl FdInfoView {
         } else {
             &proc_info.name
         };
-        let mut ids = HashSet::<usize>::new();
         let mut stat = FdInfoUsage::default();
         let mut buf = String::new();
 
@@ -177,7 +178,7 @@ impl FdInfoView {
 
                 if l.starts_with("drm-client-id") {
                     let id = FdInfoUsage::id_parse(l);
-                    if !ids.insert(id) { continue 'fds; }
+                    if !self.drm_client_ids.insert(id) { continue 'fds; }
                     continue 'fdinfo;
                 }
                 if l.starts_with("drm-memory") {
@@ -400,19 +401,27 @@ pub fn get_self_pid() -> Option<i32> {
     path_str.parse::<i32>().ok()
 }
 
-fn get_fds(pid: i32, target_device: &str) -> Vec<i32> {
+use std::path::PathBuf;
+
+fn get_fds(pid: i32, device_paths: &[String]) -> Vec<i32> {
     let mut fds: Vec<i32> = Vec::new();
-
     let fd_path = format!("/proc/{pid}/fd/");
-
     let Ok(fd_list) = fs::read_dir(&fd_path) else { return fds };
 
+    let check_symlink = |path: &PathBuf, devices: &[String]| -> bool {
+        for target in devices {
+            if path.starts_with(target) { return true }
+        }
+
+        false
+    };
+
     for fd_link in fd_list {
-        let Ok(dir_entry) = fd_link.and_then(|fd_link| Ok(fd_link.path())) else { continue };
+        let Ok(dir_entry) = fd_link.map(|fd_link| fd_link.path()) else { continue };
         let Ok(link) = fs::read_link(&dir_entry) else { continue };
 
-        // e.g. "/dev/dri/renderD128"
-        if link.starts_with(target_device) {
+        // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
+        if check_symlink(&link, device_paths) {
             let Some(fd_num) = dir_entry.file_name()
                 .and_then(|name| name.to_str())
                 .and_then(|name| name.parse::<i32>().ok()) else { continue };
@@ -439,14 +448,14 @@ fn get_all_processes() -> Vec<i32> {
     pids
 }
 
-pub fn update_index(vec_info: &mut Vec<ProcInfo>, target_device: &str, self_pid: i32) {
+pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_paths: &[String], self_pid: i32) {
     vec_info.clear();
 
     for p in &get_all_processes() {
         let pid = *p;
         if pid == self_pid { continue }
 
-        let fds = get_fds(pid, target_device);
+        let fds = get_fds(pid, device_paths);
 
         if !fds.is_empty() {
             let Ok(mut name) = fs::read_to_string(format!("/proc/{pid}/comm")) else {

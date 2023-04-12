@@ -8,8 +8,12 @@ pub struct MainOpt {
 }
 
 impl MainOpt {
-    pub fn device_path(&self) -> String {
+    pub fn render_path(&self) -> String {
         format!("/dev/dri/renderD{}", 128 + self.instance)
+    }
+
+    pub fn card_path(&self) -> String {
+        format!("/dev/dri/card{}", self.instance)
     }
 }
 

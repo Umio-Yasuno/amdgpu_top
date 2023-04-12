@@ -1,4 +1,5 @@
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, CHIP_CLASS, GPU_INFO};
+use std::fs::File;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use cursive::views::{TextView, LinearLayout, Panel};
@@ -54,15 +55,15 @@ const TOGGLE_HELP: &str = concat!(
 
 fn main() {
     let main_opt = args::MainOpt::parse();
-    let device_path = main_opt.device_path();
+    let render_path = main_opt.render_path();
+    let card_path = main_opt.card_path();
 
     let self_pid = stat::get_self_pid().unwrap_or(0);
 
     let (amdgpu_dev, major, minor) = {
-        use std::fs::File;
         use std::os::fd::IntoRawFd;
 
-        let f = File::open(&device_path).unwrap();
+        let f = File::open(&render_path).unwrap();
 
         DeviceHandle::init(f.into_raw_fd()).unwrap()
     };
@@ -80,7 +81,7 @@ fn main() {
 
         if let Err(err) = json_output::print(
             &amdgpu_dev,
-            &device_path,
+            &render_path,
             main_opt.refresh_period,
             self_pid
         ) {
@@ -88,6 +89,12 @@ fn main() {
         }
         return;
     }
+
+    let device_paths = if File::open(&card_path).is_ok() {
+        vec![render_path, card_path]
+    } else {
+        vec![render_path]
+    };
 
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
@@ -153,7 +160,7 @@ fn main() {
 
         // fill
         {
-            stat::update_index(&mut proc_index, &device_path, self_pid);
+            stat::update_index(&mut proc_index, &device_paths, self_pid);
             fdinfo.print(&proc_index, &toggle_opt.fdinfo_sort, false).unwrap();
             fdinfo.text.set();
         }
@@ -238,7 +245,7 @@ fn main() {
             loop {
                 std::thread::sleep(Duration::from_secs(5));
 
-                stat::update_index(&mut buf_index, &device_path, self_pid);
+                stat::update_index(&mut buf_index, &device_paths, self_pid);
 
                 let lock = index.lock();
                 if let Ok(mut index) = lock {

@@ -7,7 +7,7 @@ use std::fmt::{self, Write};
 use serde_json::{json, Map, Value};
 
 const WIDTH: usize = PANEL_WIDTH / 2;
-const SENSORS_LIST: &'static [(SENSOR_TYPE, &str, u32)] = &[
+const SENSORS_LIST: &[(SENSOR_TYPE, &str, u32)] = &[
     (SENSOR_TYPE::GFX_SCLK, "MHz", 1),
     (SENSOR_TYPE::GFX_MCLK, "MHz", 1),
     // (SENSOR_TYPE::GPU_TEMP, "C", 1000),
@@ -37,7 +37,7 @@ impl Sensor {
         Self {
             cur: pci_bus.get_link_info(PCI::STATUS::Current),
             max: pci_bus.get_link_info(PCI::STATUS::Max),
-            bus_info: pci_bus.clone(),
+            bus_info: *pci_bus,
             power_cap_w,
             critical_temp,
             fan_max_rpm,
@@ -125,7 +125,7 @@ impl Sensor {
     pub fn get_fan_rpm(&self) -> Option<u32> {
         let fan_path = self.bus_info.get_hwmon_path()?.join("fan1_input");
 
-        if let Ok(rpm) = std::fs::read_to_string(&fan_path) {
+        if let Ok(rpm) = std::fs::read_to_string(fan_path) {
             rpm.trim_end().parse().ok()
         } else {
             None
