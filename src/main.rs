@@ -140,6 +140,10 @@ fn main() {
     let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
     let mut sample = Sampling::low();
     let mut fdinfo = stat::FdInfoView::new(sample.to_duration());
+
+    let pcie_bw = stat::PcieBw::new(pci_bus.get_sysfs_path());
+    let share_pcie_bw = Arc::new(Mutex::new(pcie_bw.clone()));
+
     let mut sensor = stat::Sensor::new(&pci_bus);
     let mut metrics = stat::GpuMetricsView::new(&amdgpu_dev);
 
@@ -166,6 +170,9 @@ fn main() {
         }
         {
             sensor.print(&amdgpu_dev).unwrap();
+            if pcie_bw.exists {
+                sensor.print_pcie_bw(&pcie_bw).unwrap();
+            }
             sensor.text.set();
         }
     }
@@ -237,6 +244,22 @@ fn main() {
     let share_proc_index = Arc::new(Mutex::new(proc_index));
     let cb_sink = siv.cb_sink().clone();
 
+    if pcie_bw.exists {
+        let share_pcie_bw = share_pcie_bw.clone();
+        let mut buf_pcie_bw = pcie_bw.clone();
+
+        std::thread::spawn(move || {
+            loop {
+                buf_pcie_bw.update(); // msleep(1000)
+
+                let lock = share_pcie_bw.lock();
+                if let Ok(mut share_pcie_bw) = lock {
+                    *share_pcie_bw = buf_pcie_bw.clone();
+                }
+            }
+        });
+    }
+
     {
         let index = share_proc_index.clone();
         let mut buf_index: Vec<stat::ProcInfo> = Vec::new();
@@ -293,6 +316,13 @@ fn main() {
 
             if flags.sensor {
                 sensor.print(&amdgpu_dev).unwrap();
+
+                if pcie_bw.exists {
+                    let lock = share_pcie_bw.try_lock();
+                    if let Ok(p) = lock {
+                        sensor.print_pcie_bw(&p).unwrap();
+                    }
+                }
             } else {
                 sensor.text.clear();
             }

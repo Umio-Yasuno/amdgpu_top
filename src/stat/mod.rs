@@ -80,3 +80,6 @@ pub use sensors::*;
 
 mod gpu_metrics;
 pub use gpu_metrics::*;
+
+mod pcie_bw;
+pub use pcie_bw::*;

@@ -1,4 +1,4 @@
-use super::{DeviceHandle, Text, Opt, PANEL_WIDTH};
+use super::{DeviceHandle, Text, Opt, PcieBw, PANEL_WIDTH};
 use libdrm_amdgpu_sys::{
     PCI,
     AMDGPU::SENSOR_INFO::*,
@@ -117,6 +117,18 @@ impl Sensor {
             cur_width = self.cur.width,
             max_gen = self.max.gen,
             max_width = self.max.width,
+        )?;
+
+        Ok(())
+    }
+
+    pub fn print_pcie_bw(&mut self, pcie_bw: &PcieBw) -> Result<(), fmt::Error> {
+        let sent = (pcie_bw.sent * pcie_bw.max_payload_size as u64) >> 20; // MiB
+        let rec = (pcie_bw.received * pcie_bw.max_payload_size as u64) >> 20; // MiB
+
+        writeln!(
+            self.text.buf,
+            " PCIe Throughput => Sent: {sent:6} MiB, Received: {rec:6} MiB",
         )?;
 
         Ok(())
