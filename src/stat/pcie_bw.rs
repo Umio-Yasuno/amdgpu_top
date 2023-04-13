@@ -4,7 +4,7 @@ use std::path::PathBuf;
 // PCIe bandwidth (throughput) available from `pcie_bw` sysfs
 // `pcie_bw` is supported on dGPUs only
 // The AMDGPU driver waits 1s (`msleep(1000)`) for pcie performance counters.
-// So we should get the file in a separate thread.
+// So we should read the file in a separate thread.
 
 // ## Reference
 //  * <https://www.kernel.org/doc/html/latest/gpu/amdgpu/driver-misc.html#pcie-bw>

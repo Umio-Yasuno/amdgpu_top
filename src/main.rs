@@ -250,6 +250,7 @@ fn main() {
 
         std::thread::spawn(move || {
             loop {
+                std::thread::sleep(Duration::from_secs(1)); // wait for user input
                 buf_pcie_bw.update(); // msleep(1000)
 
                 let lock = share_pcie_bw.lock();
