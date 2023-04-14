@@ -61,7 +61,12 @@ fn main() {
     let (amdgpu_dev, major, minor) = {
         use std::os::fd::IntoRawFd;
 
-        let f = File::open(&render_path).unwrap();
+        let f = File::open(&render_path).unwrap_or_else(|err| {
+            eprintln!("{err}");
+            eprintln!("render_path = {render_path}");
+            eprintln!("card_path = {card_path}");
+            panic!();
+        });
 
         DeviceHandle::init(f.into_raw_fd()).unwrap()
     };
