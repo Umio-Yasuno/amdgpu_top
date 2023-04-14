@@ -40,29 +40,6 @@ pub const GRBM2_INDEX: &[(&str, usize)] = &[
     ("Command Processor - Graphics", 30),
 ];
 
-/*
-pub const SRBM_INDEX: &[(&str, usize)] = &[
-    ("UVD", 19),
-];
-
-pub const SRBM2_INDEX: &[(&str, usize)] = &[
-    ("VCE0", 7),
-//    ("VCE1", 14),
-    ("SDMA0", 5),
-    ("SDMA1", 6),
-//    ("SDMA2", 10),
-//    ("SDMA3", 11),
-];
-*/
-
-pub const CP_STAT_INDEX: &[(&str, usize)] = &[
-    ("Prefetch Parser", 15),
-    ("Micro Engine", 17),
-    // ("Surface Sync", 21),
-    ("DMA", 22),
-    ("Scratch Memory", 24),
-];
-
 mod pc_type;
 pub use pc_type::*;
 

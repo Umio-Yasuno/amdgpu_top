@@ -18,7 +18,6 @@ use stat::FdInfoSortType;
 struct ToggleOptions {
     grbm: bool,
     grbm2: bool,
-    cp_stat: bool,
     vram: bool,
     sensor: bool,
     high_freq: bool,
@@ -33,7 +32,6 @@ impl Default for ToggleOptions {
         Self {
             grbm: true,
             grbm2: true,
-            cp_stat: true,
             vram: true,
             sensor: true,
             high_freq: false,
@@ -48,7 +46,7 @@ impl Default for ToggleOptions {
 type Opt = Arc<Mutex<ToggleOptions>>;
 
 const TOGGLE_HELP: &str = concat!(
-    " (g)rbm g(r)bm2 (c)p_stat (v)ram_usage (f)dinfo \n",
+    " (g)rbm g(r)bm2 (v)ram_usage (f)dinfo \n",
     " se(n)sor (m)etrics (h)igh_freq (q)uit \n",
     " (P): sort_by_pid (V): sort_by_vram (G): sort_by_gfx\n (M): sort_by_media (R): reverse"
 );
@@ -134,7 +132,6 @@ fn main() {
 
     let mut grbm = stat::PerfCounter::new(stat::PCType::GRBM, grbm_index);
     let mut grbm2 = stat::PerfCounter::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
-    let mut cp_stat = stat::PerfCounter::new(stat::PCType::CP_STAT, stat::CP_STAT_INDEX);
     let mut vram_usage = stat::VramUsageView::new(&memory_info);
 
     let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
@@ -152,7 +149,6 @@ fn main() {
     {   // check register offset
         toggle_opt.grbm = grbm.pc_type.check_reg_offset(&amdgpu_dev);
         toggle_opt.grbm2 = grbm2.pc_type.check_reg_offset(&amdgpu_dev);
-        [toggle_opt.cp_stat, _] = [false, cp_stat.pc_type.check_reg_offset(&amdgpu_dev)];
 
         if metrics.update_metrics(&amdgpu_dev).is_ok() {
             toggle_opt.gpu_metrics = true;
@@ -195,10 +191,6 @@ fn main() {
         if toggle_opt.grbm2 {
             layout.add_child(grbm2.top_view(toggle_opt.grbm2));
             siv.add_global_callback('r', grbm2.pc_type.cb());
-        }
-        {
-            layout.add_child(cp_stat.top_view(toggle_opt.cp_stat));
-            siv.add_global_callback('c', cp_stat.pc_type.cb());
         }
         {
             layout.add_child(vram_usage.view());
@@ -291,9 +283,6 @@ fn main() {
                 if flags.grbm2 {
                     grbm2.read_reg(&amdgpu_dev);
                 }
-                if flags.cp_stat {
-                    cp_stat.read_reg(&amdgpu_dev);
-                }
 
                 std::thread::sleep(sample.delay);
             }
@@ -350,7 +339,6 @@ fn main() {
 
             grbm.dump();
             grbm2.dump();
-            cp_stat.dump();
 
             vram_usage.set_value();
             fdinfo.text.set();

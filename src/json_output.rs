@@ -30,7 +30,6 @@ pub fn print(
 
     let mut grbm = stat::PerfCounter::new(stat::PCType::GRBM, grbm_index);
     let mut grbm2 = stat::PerfCounter::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
-    let mut cp_stat = stat::PerfCounter::new(stat::PCType::CP_STAT, stat::CP_STAT_INDEX);
     let mut vram = stat::VramUsageView::new(&memory_info);
 
     let mut period = Duration::from_millis(refresh_period);
@@ -76,7 +75,6 @@ pub fn print(
         for _ in 0..100 {
             grbm.read_reg(amdgpu_dev);
             grbm2.read_reg(amdgpu_dev);
-            cp_stat.read_reg(amdgpu_dev);
 
             std::thread::sleep(delay);
         }
@@ -99,7 +97,6 @@ pub fn print(
             },
             "GRBM": grbm.json_value(),
             "GRBM2": grbm2.json_value(),
-            "CP_STAT": cp_stat.json_value(),
             "VRAM": vram.json_value(),
             "fdinfo": fdinfo.json_value(),
             "Sensors": sensor.json_value(amdgpu_dev),
@@ -107,7 +104,6 @@ pub fn print(
 
         grbm.bits.clear();
         grbm2.bits.clear();
-        cp_stat.bits.clear();
 
         vec_value.push(json);
 

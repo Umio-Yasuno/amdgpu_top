@@ -7,7 +7,7 @@ homepage = "https://github.com/Umio-Yasuno/amdgpu_top"
 authors = ["Umio Yasuno <coelacanth_dream@proton.me>"]
 description = """
 Tool to displays AMDGPU usage.
-The tool displays information gathered from performance counters (GRBM, GRBM2, CP_STAT), sensors, fdinfo, and AMDGPU driver.
+The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, gpu_metrics and AMDGPU driver.
 """
 
 [[bin]]
