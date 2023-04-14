@@ -138,16 +138,14 @@ impl FdInfoView {
                 pid = pu.pid,
                 vram = pu.usage.vram_usage >> 10,
             )?;
+            let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
             let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
             for (usage, label_len) in [
                 (pu.usage.gfx, GFX_LABEL.len()),
                 (pu.usage.compute, COMPUTE_LABEL.len()),
                 (pu.usage.dma, DMA_LABEL.len()),
-                (pu.usage.dec, DEC_LABEL.len()), // UVD/VCN
-                (enc_usage, ENC_LABEL.len()),
-                // (enc, ENC_LABEL), // VCE/VCN
-                // (uvd_enc, UVD_ENC_LABEL), // UVD
-                // (vcn_jpeg, JPEG_LABEL) // VCN
+                (dec_usage, DEC_LABEL.len()), // UVD/VCN/VCN_JPEG
+                (enc_usage, ENC_LABEL.len()), // UVD/VCN
             ] {
                 write!(self.text.buf, " {usage:>label_len$}%|")?;
             }
@@ -240,16 +238,14 @@ impl FdInfoView {
             );
         }
 
+        let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
         let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
         for (usage, label) in [
             (pu.usage.gfx, GFX_LABEL),
             (pu.usage.compute, COMPUTE_LABEL),
             (pu.usage.dma, DMA_LABEL),
-            (pu.usage.dec, DEC_LABEL), // UVD/VCN
+            (dec_usage, DEC_LABEL), // UVD/VCN
             (enc_usage, ENC_LABEL),
-            // (enc, ENC_LABEL), // VCE/VCN
-            // (uvd_enc, UVD_ENC_LABEL), // UVD
-            // (vcn_jpeg, JPEG_LABEL) // VCN
         ] {
             m.insert(
                 label.to_string(),
@@ -356,7 +352,7 @@ impl FdInfoUsage {
     }
 
     pub fn calc_usage(&self, pre_stat: &Self, interval: &Duration) -> Self {
-        let [gfx, compute, dma, dec, enc, uvd_enc, _vcn_jpeg] = {
+        let [gfx, compute, dma, dec, enc, uvd_enc, vcn_jpeg] = {
             [
                 (pre_stat.gfx, self.gfx),
                 (pre_stat.compute, self.compute),
@@ -389,7 +385,7 @@ impl FdInfoUsage {
             dec,
             enc,
             uvd_enc,
-            vcn_jpeg: _vcn_jpeg,
+            vcn_jpeg,
         }
     }
 }
