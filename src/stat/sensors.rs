@@ -4,6 +4,7 @@ use libdrm_amdgpu_sys::{
     AMDGPU::SENSOR_INFO::*,
 };
 use std::fmt::{self, Write};
+use std::path::PathBuf;
 use serde_json::{json, Map, Value};
 
 const WIDTH: usize = PANEL_WIDTH / 2;
@@ -22,6 +23,7 @@ pub struct Sensor {
     cur: PCI::LINK,
     max: PCI::LINK,
     bus_info: PCI::BUS_INFO,
+    hwmon_path: PathBuf,
     power_cap_w: u32,
     critical_temp: u32,
     fan_max_rpm: u32,
@@ -30,14 +32,16 @@ pub struct Sensor {
 
 impl Sensor {
     pub fn new(pci_bus: &PCI::BUS_INFO) -> Self {
-        let power_cap_w = Self::parse_hwmon(pci_bus, "power1_cap").saturating_div(1_000_000);
-        let critical_temp = Self::parse_hwmon(pci_bus, "temp1_crit").saturating_div(1_000);
-        let fan_max_rpm = Self::parse_hwmon(pci_bus, "fan1_max");
+        let hwmon_path = pci_bus.get_hwmon_path().unwrap();
+        let power_cap_w = Self::parse_hwmon(&hwmon_path, "power1_cap").saturating_div(1_000_000);
+        let critical_temp = Self::parse_hwmon(&hwmon_path, "temp1_crit").saturating_div(1_000);
+        let fan_max_rpm = Self::parse_hwmon(&hwmon_path, "fan1_max");
 
         Self {
             cur: pci_bus.get_link_info(PCI::STATUS::Current),
             max: pci_bus.get_link_info(PCI::STATUS::Max),
             bus_info: *pci_bus,
+            hwmon_path,
             power_cap_w,
             critical_temp,
             fan_max_rpm,
@@ -45,9 +49,8 @@ impl Sensor {
         }
     }
 
-    fn parse_hwmon(pci_bus: &PCI::BUS_INFO, file_name: &str) -> u32 {
-        pci_bus.get_hwmon_path()
-            .and_then(|hwmon_path| std::fs::read_to_string(hwmon_path.join(file_name)).ok())
+    fn parse_hwmon<P: Into<PathBuf>>(hwmon_path: P, file_name: &str) -> u32 {
+        std::fs::read_to_string(hwmon_path.into().join(file_name)).ok()
             .and_then(|file| file.trim_end().parse::<u32>().ok()).unwrap_or(0)
     }
 
@@ -128,20 +131,15 @@ impl Sensor {
 
         writeln!(
             self.text.buf,
-            " PCIe Throughput => Sent: {sent:6} MiB, Received: {rec:6} MiB",
+            " PCIe Bandwidth Usage => Sent: {sent:6} MiB/s, Received: {rec:6} MiB/s",
         )?;
 
         Ok(())
     }
 
     pub fn get_fan_rpm(&self) -> Option<u32> {
-        let fan_path = self.bus_info.get_hwmon_path()?.join("fan1_input");
-
-        if let Ok(rpm) = std::fs::read_to_string(fan_path) {
-            rpm.trim_end().parse().ok()
-        } else {
-            None
-        }
+        std::fs::read_to_string(self.hwmon_path.join("fan1_input")).ok()
+            .and_then(|rpm| rpm.trim_end().parse().ok())
     }
 
     pub fn json_value(&self, amdgpu_dev: &DeviceHandle) -> Value {
