@@ -39,17 +39,17 @@ impl PcieBw {
 
     pub fn update(&mut self) {
         let Ok(s) = fs::read_to_string(&self.path) else { return };
-        let split: Vec<&str> = s.trim_end().split(' ').collect();
+        let mut split = s.trim_end().split(' ');
 
-        if let Some(sent) = split.get(0).and_then(|v| v.parse().ok()) {
+        if let Some(sent) = split.next().and_then(|v| v.parse().ok()) {
             self.sent = sent;
         }
 
-        if let Some(rec) = split.get(1).and_then(|v| v.parse().ok()) {
+        if let Some(rec) = split.next().and_then(|v| v.parse().ok()) {
             self.received = rec;
         }
 
-        if let Some(mps) = split.get(2).and_then(|v| v.parse().ok()) {
+        if let Some(mps) = split.next().and_then(|v| v.parse().ok()) {
             self.max_payload_size = mps;
         }
     }
