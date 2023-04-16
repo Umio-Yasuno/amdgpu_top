@@ -5,7 +5,6 @@ use libdrm_amdgpu_sys::{
     AMDGPU::HW_IP::HW_IP_TYPE,
     AMDGPU::FW_VERSION::FW_TYPE,
 };
-use crate::misc;
 
 pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
     let ext_info = amdgpu_dev.device_info().unwrap();
@@ -13,7 +12,8 @@ pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
 
-    let (min_gpu_clk, min_memory_clk) = misc::get_min_clk(amdgpu_dev, &pci_bus);
+    let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock().unwrap_or((0, 0));
+    let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock().unwrap_or((0, 0));
     let gpu_type = if ext_info.is_apu() { "APU" } else { "dGPU" };
 
     println!("--- AMDGPU info dump ---");
@@ -53,7 +53,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
     println!("RenderBackend (RB)         : {:3} ({} ROP)", ext_info.rb_pipes(), ext_info.calc_rop_count());
 
     println!();
-    println!("GPU Clock: {min_gpu_clk}-{} MHz", ext_info.max_engine_clock() / 1000);
+    println!("GPU Clock: {min_gpu_clk}-{max_gpu_clk} MHz");
     println!("Peak FP32: {} GFLOPS", ext_info.peak_gflops());
 
     /* ref: https://gitlab.freedesktop.org/mesa/mesa/blob/main/src/amd/common/ac_gpu_info.c */
@@ -67,7 +67,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
     println!("VRAM Type     : {}", ext_info.get_vram_type());
     println!("VRAM Bit Width: {}-bit", ext_info.vram_bit_width);
     println!("VRAM size     : {} MiB", memory_info.vram.total_heap_size >> 20);
-    println!("Memory Clock  : {min_memory_clk}-{} MHz", ext_info.max_memory_clock() / 1000);
+    println!("Memory Clock  : {min_mem_clk}-{max_mem_clk} MHz");
     println!("Peak Memory BW: {} GB/s", ext_info.peak_memory_bw_gb());
     println!("ResizableBAR  : {resizable_bar}");
 

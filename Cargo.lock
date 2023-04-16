@@ -254,7 +254,7 @@ checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
 [[package]]
 name = "libdrm_amdgpu_sys"
 version = "0.1.1"
-source = "git+https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs#4f546cbc7452f0a80041579ccefc1f16651dc5f7"
+source = "git+https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs#c6ccfcbf27c86dc38228b70628103431c49cc033"
 
 [[package]]
 name = "lock_api"

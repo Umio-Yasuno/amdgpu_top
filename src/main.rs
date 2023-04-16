@@ -104,31 +104,6 @@ fn main() {
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
     let chip_class = ext_info.get_chip_class();
 
-    let (min_gpu_clk, min_memory_clk) = misc::get_min_clk(&amdgpu_dev, &pci_bus);
-    let mark_name = amdgpu_dev.get_marketing_name().unwrap_or("".to_string());
-    let info_bar = format!(
-        concat!(
-            "{mark_name} ({did:#06X}:{rid:#04X})\n",
-            "{asic}, {gpu_type}, {chip_class}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
-            "{vram_type} {vram_bus_width}-bit, {vram_size} MiB, ",
-            "{min_memory_clk}-{max_memory_clk} MHz",
-        ),
-        mark_name = mark_name,
-        did = ext_info.device_id(),
-        rid = ext_info.pci_rev_id(),
-        asic = ext_info.get_asic_name(),
-        gpu_type = if ext_info.is_apu() { "APU" } else { "dGPU" },
-        chip_class = chip_class,
-        num_cu = ext_info.cu_active_number(),
-        min_gpu_clk = min_gpu_clk,
-        max_gpu_clk = ext_info.max_engine_clock().saturating_div(1000),
-        vram_type = ext_info.get_vram_type(),
-        vram_bus_width = ext_info.vram_bit_width,
-        vram_size = memory_info.vram.total_heap_size >> 20,
-        min_memory_clk = min_memory_clk,
-        max_memory_clk = ext_info.max_memory_clock().saturating_div(1000),
-    );
-
     let grbm_index = if CHIP_CLASS::GFX10 <= chip_class {
         stat::GFX10_GRBM_INDEX
     } else {
@@ -183,7 +158,7 @@ fn main() {
         let mut layout = LinearLayout::vertical()
             .child(
                 Panel::new(
-                    TextView::new(info_bar).center()
+                    TextView::new(misc::info_bar(&amdgpu_dev, &ext_info)).center()
                 )
                 .title(concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION")))
                 .title_position(HAlign::Center)
