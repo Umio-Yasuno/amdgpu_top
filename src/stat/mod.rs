@@ -28,7 +28,7 @@ pub const GRBM_INDEX: &[(&str, usize)] = &[
     ("Primitive Assembly", 25),
     ("Depth Block", 26),
     ("Color Block", 30),
-    ("Vertext Grouper / Tessellator", 17),
+    ("Vertex Grouper / Tessellator", 17),
     ("Input Assembly", 19),
     ("Work Distributor", 21),
 ];
