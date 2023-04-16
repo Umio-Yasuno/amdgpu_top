@@ -8,13 +8,11 @@ use libdrm_amdgpu_sys::{
 
 pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
     let ext_info = amdgpu_dev.device_info().unwrap();
-    // let chip_class = ext_info.get_chip_class();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
 
     let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock().unwrap_or((0, 0));
     let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock().unwrap_or((0, 0));
-    let gpu_type = if ext_info.is_apu() { "APU" } else { "dGPU" };
 
     println!("--- AMDGPU info dump ---");
     println!("drm version: {major}.{minor}");
@@ -30,8 +28,10 @@ pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
         ext_info.pci_rev_id()
     );
 
+    let asic = ext_info.get_asic_name();
+
     println!();
-    println!("GPU Type  : {gpu_type}");
+    println!("GPU Type  : {}", if ext_info.is_apu() { "APU" } else { "dGPU" });
     println!("Family    : {}", ext_info.get_family_name());
     println!("ASIC Name : {}", ext_info.get_asic_name());
     println!("Chip class: {}", ext_info.get_chip_class());
@@ -50,7 +50,16 @@ pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
     }
     println!("Total Compute Unit         : {:3}", ext_info.cu_active_number());
 
-    println!("RenderBackend (RB)         : {:3} ({} ROP)", ext_info.rb_pipes(), ext_info.calc_rop_count());
+    let rb_pipes = ext_info.rb_pipes();
+    let rop_count = ext_info.calc_rop_count();
+
+    if asic.rbplus_allowed() {
+        println!("RenderBackendPlus (RB+)    : {rb_pipes:3} ({rop_count} ROPs)");
+    } else {
+        println!("RenderBackend (RB)         : {rb_pipes:3} ({rop_count} ROPs)");
+    }
+
+    println!("Peak Pixel Fill-Rate       : {:3} GP/s", rop_count * max_gpu_clk / 1000);
 
     println!();
     println!("GPU Clock: {min_gpu_clk}-{max_gpu_clk} MHz");
@@ -88,12 +97,12 @@ fn cache_info(ext_info: &drm_amdgpu_info_device) {
     let l3_cache_size = ext_info.calc_l3_cache_size_mb();
 
     println!();
-    println!("L1cache (per CU)    : {:4} KiB", ext_info.get_l1_cache_size() / 1024);
+    println!("L1cache (per CU): {:4} KiB", ext_info.get_l1_cache_size() / 1024);
     if 0 < gl1_cache_size {
         println!("GL1cache (per SA/SH): {gl1_cache_size:4} KiB");
     }
     println!(
-        "L2cache             : {:4} KiB ({} Banks)",
+        "L2cache         : {:4} KiB ({} Banks)",
         ext_info.calc_l2_cache_size() / 1024,
         ext_info.num_tcc_blocks
     );
@@ -106,7 +115,7 @@ fn pci_info(pci_bus: &PCI::BUS_INFO) {
     let link = pci_bus.get_link_info(PCI::STATUS::Max);
     println!();
     println!("PCI (domain:bus:dev.func): {pci_bus}");
-    println!("PCI Link                 : Gen{}x{}", link.gen, link.width);
+    println!("PCI Link Speed (Max)     : Gen{}x{}", link.gen, link.width);
 }
 
 fn hw_ip_info(amdgpu_dev: &DeviceHandle) {
