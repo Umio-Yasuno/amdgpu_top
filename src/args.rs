@@ -26,7 +26,7 @@ const HELP_MSG: &str = concat!(
     "\n",
     "FLAGS:\n",
     "   -d, --dump\n",
-    "       Dump AMDGPU info (name, clock, chip_class, VRAM, PCI, VBIOS)\n",
+    "       Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)\n",
     "   -J\n",
     "       Output JSON formatted data for simple process trace\n",
     "   -s <i64>, --ms <i64>\n",
@@ -37,6 +37,8 @@ const HELP_MSG: &str = concat!(
     "OPTIONS:\n",
     "   -i <u32>\n",
     "       Select GPU instance\n",
+    "   -h, --help\n",
+    "       Print help information\n",
 );
 
 impl MainOpt {
