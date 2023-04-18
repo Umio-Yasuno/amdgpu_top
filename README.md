@@ -19,16 +19,18 @@ FLAGS:
        Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)
    -J
        Output JSON formatted data for simple process trace
-   -s <i64>, --ms <i64>
-       Refresh period in milliseconds for simple process trace
-   -p <i32>, --pid <i32>
-       Specification of PID, used for `-J` option
+   -h, --help
+       Print help information
 
 OPTIONS:
    -i <u32>
        Select GPU instance
-   -h, --help
-       Print help information
+   -u <u64>, --update-process-index <u64>
+       Update interval in seconds of the process index for fdinfo (default: 5s)
+   -s <i64>, --ms <i64>
+       Refresh period in milliseconds for simple process trace
+   -p <i32>, --pid <i32>
+       Specification of PID, used for `-J` option
 ```
 
 ### Command

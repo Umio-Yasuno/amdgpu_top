@@ -1,10 +1,23 @@
-#[derive(Default)]
 pub struct MainOpt {
     pub instance: u32,
     pub dump: bool,
     pub json_output: bool,
     pub refresh_period: u64, // ms
     pub pid: Option<i32>,
+    pub update_process_index: u64, // sec
+}
+
+impl Default for MainOpt {
+    fn default() -> Self {
+        Self {
+            instance: 0,
+            dump: false,
+            json_output: false,
+            refresh_period: 500, // ms
+            pid: None,
+            update_process_index: 5, // sec
+        }
+    }
 }
 
 impl MainOpt {
@@ -29,16 +42,18 @@ const HELP_MSG: &str = concat!(
     "       Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)\n",
     "   -J\n",
     "       Output JSON formatted data for simple process trace\n",
-    "   -s <i64>, --ms <i64>\n",
-    "       Refresh period in milliseconds for simple process trace\n",
-    "   -p <i32>, --pid <i32>\n",
-    "       Specification of PID, used for `-J` option\n",
+    "   -h, --help\n",
+    "       Print help information\n",
     "\n",
     "OPTIONS:\n",
     "   -i <u32>\n",
     "       Select GPU instance\n",
-    "   -h, --help\n",
-    "       Print help information\n",
+    "   -u <u64>, --update-process-index <u64>\n",
+    "       Update interval in seconds of the process index for fdinfo (default: 5s)\n",
+    "   -s <i64>, --ms <i64>\n",
+    "       Refresh period in milliseconds for simple process trace\n",
+    "   -p <i32>, --pid <i32>\n",
+    "       Specification of PID, used for `-J` option\n",
 );
 
 impl MainOpt {
@@ -86,10 +101,20 @@ impl MainOpt {
                 },
                 "-p" | "--pid" => {
                     if let Some(val_str) = args.get(idx+1) {
-                        opt.pid = Some(val_str.parse::<i32>().unwrap());
+                        opt.pid = val_str.parse::<i32>().ok();
                         skip = true;
                     } else {
                         eprintln!("missing argument: \"-p <i32>\"");
+                        std::process::exit(1);
+                    }
+                },
+                "-u" | "--update-process-index" => {
+                    if let Some(val_str) = args.get(idx+1) {
+                        let tmp = val_str.parse::<u64>().unwrap();
+                        opt.update_process_index = if tmp == 0 { 1 } else { tmp };
+                        skip = true;
+                    } else {
+                        eprintln!("missing argument: \"-u <u64>\"");
                         std::process::exit(1);
                     }
                 },

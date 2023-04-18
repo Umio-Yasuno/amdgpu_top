@@ -234,12 +234,13 @@ fn main() {
     }
 
     {
+        let interval = main_opt.update_process_index;
         let index = share_proc_index.clone();
         let mut buf_index: Vec<stat::ProcInfo> = Vec::new();
 
         std::thread::spawn(move || {
             loop {
-                std::thread::sleep(Duration::from_secs(5));
+                std::thread::sleep(Duration::from_secs(interval));
 
                 stat::update_index(&mut buf_index, &device_paths, self_pid);
 
