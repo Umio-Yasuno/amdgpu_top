@@ -1,10 +1,12 @@
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, CHIP_CLASS, GPU_INFO};
-use std::fs::File;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use cursive::views::{TextView, LinearLayout, Panel};
 use cursive::view::Scrollable;
 use cursive::align::HAlign;
+
+#[cfg(feature = "egui")]
+mod gui;
 
 mod stat;
 mod args;
@@ -13,6 +15,40 @@ mod dump_info;
 mod json_output;
 
 use stat::FdInfoSortType;
+
+#[derive(Debug, Clone)]
+pub struct DevicePath {
+    pub render: String,
+    pub card: String,
+}
+
+impl DevicePath {
+    pub fn new(instance: u32) -> Self {
+        Self {
+            render: format!("/dev/dri/renderD{}", 128 + instance),
+            card: format!("/dev/dri/card{}", instance),
+        }
+    }
+
+    pub fn init_device_handle(&self) -> DeviceHandle {
+        let (amdgpu_dev, _major, _minor) = {
+            use std::os::fd::IntoRawFd;
+            use std::fs::OpenOptions;
+
+            let f = OpenOptions::new().read(true).write(true).open(&self.render)
+                .unwrap_or_else(|err| {
+                    eprintln!("{err}");
+                    eprintln!("render_path = {}", self.render);
+                    eprintln!("card_path = {}", self.card);
+                    panic!();
+                }
+            );
+            DeviceHandle::init(f.into_raw_fd()).unwrap()
+        };
+
+        amdgpu_dev
+    }
+}
 
 #[derive(Debug, Clone)]
 struct ToggleOptions {
@@ -53,26 +89,19 @@ const TOGGLE_HELP: &str = concat!(
 
 fn main() {
     let main_opt = args::MainOpt::parse();
-    let render_path = main_opt.render_path();
-    let card_path = main_opt.card_path();
-
     let self_pid = stat::get_self_pid().unwrap_or(0);
 
-    let (amdgpu_dev, major, minor) = {
-        use std::os::fd::IntoRawFd;
+    #[cfg(feature = "egui")]
+    if main_opt.gui {
+        gui::egui_run(main_opt.instance, main_opt.update_process_index, self_pid);
+        return;
+    }
 
-        let f = File::open(&render_path).unwrap_or_else(|err| {
-            eprintln!("{err}");
-            eprintln!("render_path = {render_path}");
-            eprintln!("card_path = {card_path}");
-            panic!();
-        });
-
-        DeviceHandle::init(f.into_raw_fd()).unwrap()
-    };
+    let device_path = DevicePath::new(main_opt.instance);
+    let amdgpu_dev = device_path.init_device_handle();
 
     if main_opt.dump {
-        dump_info::dump(&amdgpu_dev, major, minor);
+        dump_info::dump(&amdgpu_dev);
         return;
     }
 
@@ -84,7 +113,7 @@ fn main() {
 
         if let Err(err) = json_output::print(
             &amdgpu_dev,
-            &render_path,
+            &device_path,
             main_opt.refresh_period,
             self_pid
         ) {
@@ -92,12 +121,6 @@ fn main() {
         }
         return;
     }
-
-    let device_paths = if File::open(&card_path).is_ok() {
-        vec![render_path, card_path]
-    } else {
-        vec![render_path]
-    };
 
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
@@ -140,7 +163,7 @@ fn main() {
 
         // fill
         {
-            stat::update_index(&mut proc_index, &device_paths, self_pid);
+            stat::update_index(&mut proc_index, &device_path, self_pid);
             fdinfo.print(&proc_index, &toggle_opt.fdinfo_sort, false).unwrap();
             fdinfo.text.set();
         }
@@ -242,7 +265,7 @@ fn main() {
             loop {
                 std::thread::sleep(Duration::from_secs(interval));
 
-                stat::update_index(&mut buf_index, &device_paths, self_pid);
+                stat::update_index(&mut buf_index, &device_path, self_pid);
 
                 let lock = index.lock();
                 if let Ok(mut index) = lock {

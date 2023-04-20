@@ -5,6 +5,7 @@ pub struct MainOpt {
     pub refresh_period: u64, // ms
     pub pid: Option<i32>,
     pub update_process_index: u64, // sec
+    pub gui: bool,
 }
 
 impl Default for MainOpt {
@@ -16,17 +17,8 @@ impl Default for MainOpt {
             refresh_period: 500, // ms
             pid: None,
             update_process_index: 5, // sec
+            gui: false,
         }
-    }
-}
-
-impl MainOpt {
-    pub fn render_path(&self) -> String {
-        format!("/dev/dri/renderD{}", 128 + self.instance)
-    }
-
-    pub fn card_path(&self) -> String {
-        format!("/dev/dri/card{}", self.instance)
     }
 }
 
@@ -42,6 +34,8 @@ const HELP_MSG: &str = concat!(
     "       Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)\n",
     "   -J\n",
     "       Output JSON formatted data for simple process trace\n",
+    "   --gui\n",
+    "       Launch GUI mode\n",
     "   -h, --help\n",
     "       Print help information\n",
     "\n",
@@ -117,6 +111,9 @@ impl MainOpt {
                         eprintln!("missing argument: \"-u <u64>\"");
                         std::process::exit(1);
                     }
+                },
+                "--gui" => {
+                    opt.gui = true;
                 },
                 "-h" | "--help" => {
                     println!("{HELP_MSG}");

@@ -19,6 +19,8 @@ FLAGS:
        Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)
    -J
        Output JSON formatted data for simple process trace
+   --gui
+       Launch GUI mode
    -h, --help
        Print help information
 

@@ -8,6 +8,7 @@ use cursive::views::{
 };
 use cursive::align::HAlign;
 
+#[derive(Clone)]
 pub struct Text {
     pub buf: String,
     pub content: TextContent,
@@ -40,7 +41,7 @@ impl Default for Text {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct BITS(pub [u8; 32]);
 
 impl BITS {

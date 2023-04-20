@@ -10,6 +10,10 @@ Tool to displays AMDGPU usage.
 The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, gpu_metrics and AMDGPU driver.
 """
 
+[features]
+default = []
+egui = ["eframe"]
+
 [[bin]]
 name = "amdgpu_top"
 path = "src/main.rs"
@@ -21,6 +25,7 @@ libdrm_amdgpu_sys = { git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs
 cursive = { version = "0.20", default-features = false, features = ["crossterm-backend"] }
 ctrlc = { version = "3.2.5" }
 serde_json = { version = "1.0.*" }
+eframe = { version = "^0.21.3", optional = true, default-features = false, features = [ "default_fonts", "glow"] }
 
 [profile.release]
 opt-level = 2

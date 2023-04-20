@@ -6,7 +6,8 @@ use libdrm_amdgpu_sys::{
     AMDGPU::FW_VERSION::FW_TYPE,
 };
 
-pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
+pub fn dump(amdgpu_dev: &DeviceHandle) {
+    let (major, minor, patch) = amdgpu_dev.get_drm_version().unwrap();
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
@@ -15,7 +16,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle, major: u32, minor: u32) {
     let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock().unwrap_or((0, 0));
 
     println!("--- AMDGPU info dump ---");
-    println!("drm version: {major}.{minor}");
+    println!("drm version: {major}.{minor}.{patch}");
     println!();
 
     if let Ok(mark_name) = amdgpu_dev.get_marketing_name() {

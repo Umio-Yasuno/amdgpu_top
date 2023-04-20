@@ -1,5 +1,5 @@
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, CHIP_CLASS, GPU_INFO};
-use crate::stat;
+use crate::{DevicePath, stat};
 use std::time::{Duration, Instant};
 use std::io::{self, stdin, Read, BufReader};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 
 pub fn print(
     amdgpu_dev: &DeviceHandle,
-    device_path: &str,
+    device_path: &DevicePath,
     refresh_period: u64,
     pid: i32
 ) -> io::Result<()> {

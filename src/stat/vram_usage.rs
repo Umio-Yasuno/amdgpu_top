@@ -22,6 +22,7 @@ pub struct VramUsage {
     pub counter: Counter,
 }
 
+#[derive(Clone, Debug)]
 pub struct VramUsageView {
     pub vram: VramUsage,
     pub gtt: VramUsage,

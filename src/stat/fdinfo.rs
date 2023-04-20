@@ -6,6 +6,7 @@ use super::{Text, Opt};
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 use serde_json::{json, Map, Value};
+use crate::DevicePath;
 
 /// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
 
@@ -28,14 +29,14 @@ pub struct ProcInfo {
 }
 
 impl ProcInfo {
-    pub fn from_pid(pid: i32, target_device: &str) -> Self {
+    pub fn from_pid(pid: i32, device_path: &DevicePath) -> Self {
         let mut name = fs::read_to_string(format!("/proc/{pid}/comm")).unwrap();
         name.pop(); // trim '\n'
 
         Self {
             pid,
             name,
-            fds: get_fds(pid, &[target_device.to_string()]),
+            fds: get_fds(pid, device_path),
         }
     }
 }
@@ -43,32 +44,59 @@ impl ProcInfo {
 #[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd)]
 pub struct FdInfoUsage {
     // client_id: usize,
-    vram_usage: u64, // KiB
-    gtt_usage: u64, // KiB
-    cpu_accessible_usage: u64, // KiB
-    gfx: i64,
-    compute: i64,
-    dma: i64,
-    dec: i64,
-    enc: i64,
-    uvd_enc: i64,
-    vcn_jpeg: i64,
+    pub vram_usage: u64, // KiB
+    pub gtt_usage: u64, // KiB
+    pub cpu_accessible_usage: u64, // KiB
+    pub gfx: i64,
+    pub compute: i64,
+    pub dma: i64,
+    pub dec: i64,
+    pub enc: i64,
+    pub uvd_enc: i64,
+    pub vcn_jpeg: i64,
 }
 
 #[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd)]
 pub struct ProcUsage {
-    pid: i32,
-    name: String,
-    usage: FdInfoUsage,
+    pub pid: i32,
+    pub name: String,
+    pub usage: FdInfoUsage,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct FdInfoView {
     pid_map: HashMap<i32, FdInfoUsage>,
-    drm_client_ids: HashSet<usize>,
+    pub drm_client_ids: HashSet<usize>,
     pub proc_usage: Vec<ProcUsage>,
     pub interval: Duration,
     pub text: Text,
+}
+
+pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reverse: bool) {
+    proc_usage.sort_by(|a, b|
+        match (sort, reverse) {
+            (FdInfoSortType::PID, false) => b.pid.cmp(&a.pid),
+            (FdInfoSortType::PID, true) => a.pid.cmp(&b.pid),
+            (FdInfoSortType::VRAM, false) => b.usage.vram_usage.cmp(&a.usage.vram_usage),
+            (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
+            (FdInfoSortType::GFX, false) => b.usage.gfx.cmp(&a.usage.gfx),
+            (FdInfoSortType::GFX, true) => a.usage.gfx.cmp(&b.usage.gfx),
+            (FdInfoSortType::Decode, false) =>
+                (b.usage.dec + b.usage.vcn_jpeg).cmp(&(a.usage.dec + a.usage.vcn_jpeg)),
+            (FdInfoSortType::Decode, true) =>
+                (a.usage.dec + a.usage.vcn_jpeg).cmp(&(b.usage.dec + b.usage.vcn_jpeg)),
+            (FdInfoSortType::Encode, false) =>
+                (b.usage.enc + b.usage.uvd_enc).cmp(&(a.usage.enc + a.usage.uvd_enc)),
+            (FdInfoSortType::Encode, true) =>
+                (a.usage.enc + a.usage.uvd_enc).cmp(&(b.usage.enc + b.usage.uvd_enc)),
+            (FdInfoSortType::MediaEngine, false) =>
+                (b.usage.dec + b.usage.vcn_jpeg + b.usage.enc + b.usage.uvd_enc)
+                    .cmp(&(a.usage.dec + a.usage.vcn_jpeg + a.usage.enc + a.usage.uvd_enc)),
+            (FdInfoSortType::MediaEngine, true) =>
+                (a.usage.dec + a.usage.vcn_jpeg + a.usage.enc + a.usage.uvd_enc)
+                    .cmp(&(b.usage.dec + b.usage.vcn_jpeg + b.usage.enc + b.usage.uvd_enc)),
+        }
+    );
 }
 
 #[derive(Clone, Debug)]
@@ -76,6 +104,8 @@ pub enum FdInfoSortType {
     PID,
     VRAM,
     GFX,
+    Decode,
+    Encode,
     MediaEngine,
 }
 
@@ -107,22 +137,7 @@ impl FdInfoView {
             self.get_proc_usage(proc_info);
         }
 
-        self.proc_usage.sort_by(|a, b|
-            match (sort, reverse) {
-                (FdInfoSortType::PID, false) => b.pid.cmp(&a.pid),
-                (FdInfoSortType::PID, true) => a.pid.cmp(&b.pid),
-                (FdInfoSortType::VRAM, false) => b.usage.vram_usage.cmp(&a.usage.vram_usage),
-                (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
-                (FdInfoSortType::GFX, false) => b.usage.gfx.cmp(&a.usage.gfx),
-                (FdInfoSortType::GFX, true) => a.usage.gfx.cmp(&b.usage.gfx),
-                (FdInfoSortType::MediaEngine, false) =>
-                    (b.usage.dec + b.usage.enc + b.usage.uvd_enc)
-                        .cmp(&(a.usage.dec + a.usage.enc + a.usage.uvd_enc)),
-                (FdInfoSortType::MediaEngine, true) =>
-                    (a.usage.dec + a.usage.enc + a.usage.uvd_enc)
-                        .cmp(&(b.usage.dec + b.usage.enc + b.usage.uvd_enc)),
-            }
-        );
+        sort_proc_usage(&mut self.proc_usage, sort, reverse);
 
         self.print_usage()?;
 
@@ -401,7 +416,7 @@ pub fn get_self_pid() -> Option<i32> {
 
 use std::path::PathBuf;
 
-fn get_fds(pid: i32, device_paths: &[String]) -> Vec<i32> {
+fn get_fds(pid: i32, device_path: &DevicePath) -> Vec<i32> {
     let mut fds: Vec<i32> = Vec::new();
     let fd_path = format!("/proc/{pid}/fd/");
     let Ok(fd_list) = fs::read_dir(&fd_path) else { return fds };
@@ -411,7 +426,7 @@ fn get_fds(pid: i32, device_paths: &[String]) -> Vec<i32> {
         let Ok(link) = fs::read_link(&dir_entry) else { continue };
 
         // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
-        if device_paths.into_iter().any(|path| link.starts_with(path)) {
+        if [&device_path.render, &device_path.card].into_iter().any(|path| link.starts_with(path)) {
             let Some(fd_num) = dir_entry.file_name()
                 .and_then(|name| name.to_str())
                 .and_then(|name| name.parse::<i32>().ok()) else { continue };
@@ -438,7 +453,7 @@ fn get_all_processes() -> Vec<i32> {
     pids
 }
 
-pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_paths: &[String], self_pid: i32) {
+pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath, self_pid: i32) {
     const SYSTEMD_CMDLINE: &[&str] = &[ "/lib/systemd", "/usr/lib/systemd" ];
 
     vec_info.clear();
@@ -448,7 +463,7 @@ pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_paths: &[String], self_
         if pid == self_pid { continue }
         if pid == 1 { continue } // init process, systemd
 
-        let fds = get_fds(pid, device_paths);
+        let fds = get_fds(pid, device_path);
 
         if !fds.is_empty() {
             let base = PathBuf::from(format!("/proc/{pid}/"));

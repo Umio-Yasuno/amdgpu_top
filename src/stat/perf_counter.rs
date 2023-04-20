@@ -14,7 +14,7 @@ use serde_json::{json, Map, Value};
 
 use super::{DeviceHandle, PANEL_WIDTH, PCType, BITS, TopView};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct PerfCounter {
     pub pc_type: PCType,
     pub bits: BITS,
