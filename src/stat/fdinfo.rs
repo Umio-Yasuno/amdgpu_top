@@ -9,7 +9,7 @@ use serde_json::{json, Map, Value};
 
 /// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
 
-const PROC_NAME_LEN: usize = 15;
+const PROC_NAME_LEN: usize = 16;
 
 const VRAM_LABEL: &str = "VRAM";
 const GFX_LABEL: &str = "GFX";
@@ -99,7 +99,7 @@ impl FdInfoView {
 
         writeln!(
             self.text.buf,
-            " {pad:26} | {VRAM_LABEL:^8} | {GFX_LABEL} | {COMPUTE_LABEL} | {DMA_LABEL} | {DEC_LABEL} | {ENC_LABEL} |",
+            " {pad:27} | {VRAM_LABEL:^8} | {GFX_LABEL} | {COMPUTE_LABEL} | {DMA_LABEL} | {DEC_LABEL} | {ENC_LABEL} |",
             pad = "",
         )?;
 
@@ -131,9 +131,15 @@ impl FdInfoView {
 
     pub fn print_usage(&mut self) -> Result<(), fmt::Error> {
         for pu in &self.proc_usage {
+            let utf16_count = pu.name.encode_utf16().count();
+            let name_len = if pu.name.len() != utf16_count {
+                PROC_NAME_LEN - utf16_count
+            } else {
+                PROC_NAME_LEN
+            };
             write!(
                 self.text.buf,
-                " {name:PROC_NAME_LEN$} ({pid:>8}) | {vram:>5} MiB|",
+                " {name:name_len$} ({pid:>8}) | {vram:>5} MiB|",
                 name = pu.name,
                 pid = pu.pid,
                 vram = pu.usage.vram_usage >> 10,
@@ -157,11 +163,7 @@ impl FdInfoView {
 
     pub fn get_proc_usage(&mut self, proc_info: &ProcInfo) {
         let pid = proc_info.pid;
-        let name = if PROC_NAME_LEN < proc_info.name.len() {
-            &proc_info.name[..PROC_NAME_LEN]
-        } else {
-            &proc_info.name
-        };
+        let name = &proc_info.name;
         let mut stat = FdInfoUsage::default();
         let mut buf = String::new();
 
@@ -458,6 +460,8 @@ pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_paths: &[String], self_
                     continue
                 }
             }
+            // Maximum 16 characters
+            // https://www.kernel.org/doc/html/latest/filesystems/proc.html#proc-pid-comm-proc-pid-task-tid-comm
             let Ok(mut name) = fs::read_to_string(base.join("comm")) else {
                 continue
             };
