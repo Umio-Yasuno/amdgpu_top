@@ -19,6 +19,8 @@ use libdrm_amdgpu_sys::PCI;
 use crate::{stat, DevicePath, Sampling};
 use stat::{FdInfoSortType, FdInfoView, PerfCounter, VramUsageView};
 
+const SPACE: f32 = 8.0;
+
 pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
     let device_path = DevicePath::new(instance);
     let amdgpu_dev = device_path.init_device_handle();
@@ -72,7 +74,7 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
     };
 
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(840.0, 840.0)),
+        initial_window_size: Some(egui::vec2(1080.0, 840.0)),
         ..Default::default()
     };
 
@@ -174,38 +176,40 @@ impl eframe::App for MyApp {
                 ).default_open(true).show(ui, |ui| self.egui_device_info(ui));
 
                 if self.decode.is_some() && self.encode.is_some() {
+                    ui.add_space(SPACE);
                     egui::CollapsingHeader::new(
                         RichText::new("Video Caps Info").font(heading.clone())
                     ).default_open(false).show(ui, |ui| self.egui_video_caps_info(ui));
                 }
 
                 if self.vbios.is_some() {
+                    ui.add_space(SPACE);
                     egui::CollapsingHeader::new(
                         RichText::new("VBIOS Info").font(heading.clone())
                     ).default_open(false).show(ui, |ui| self.egui_vbios_info(ui));
                 }
             });
         });
-        let space = 8.0;
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.set_min_width(540.0);
             egui::ScrollArea::both().show(ui, |ui| {
                 egui::CollapsingHeader::new(RichText::new("GRBM").font(font.clone()))
                     .default_open(true)
                     .show(ui, |ui| self.egui_perf_counter(ui, "GRBM", &self.buf_data.grbm));
-                ui.add_space(space);
+                ui.add_space(SPACE);
                 egui::CollapsingHeader::new(RichText::new("GRBM2").font(font.clone()))
                     .default_open(true)
                     .show(ui, |ui| self.egui_perf_counter(ui, "GRBM2", &self.buf_data.grbm2));
-                ui.add_space(space);
+                ui.add_space(SPACE);
                 egui::CollapsingHeader::new(RichText::new("VRAM").font(font.clone()))
                     .default_open(true)
                     .show(ui, |ui| self.egui_vram(ui, &self.buf_data.vram_usage));
-                ui.add_space(space);
+                ui.add_space(SPACE);
                 egui::CollapsingHeader::new(RichText::new("fdinfo").font(font.clone()))
                     .default_open(true)
                     .show(ui, |ui| self.egui_grid_fdinfo(ui));
-                ui.add_space(space);
+                ui.add_space(SPACE);
                 egui::CollapsingHeader::new(RichText::new("Sensors").font(font.clone()))
                     .default_open(true)
                     .show(ui, |ui| self.egui_sensors(ui, &self.buf_data.sensors));
@@ -225,7 +229,7 @@ impl eframe::App for MyApp {
                     GpuMetrics::V1_1(_) |
                     GpuMetrics::V1_2(_) |
                     GpuMetrics::V1_3(_) => {
-                        ui.add_space(space);
+                        ui.add_space(SPACE);
                         egui::CollapsingHeader::new(
                             RichText::new(&header).font(font.clone())
                         )
@@ -236,7 +240,7 @@ impl eframe::App for MyApp {
                     GpuMetrics::V2_1(_) |
                     GpuMetrics::V2_2(_) |
                     GpuMetrics::V2_3(_) => {
-                        ui.add_space(space);
+                        ui.add_space(SPACE);
                         egui::CollapsingHeader::new(
                             RichText::new(&header).font(font.clone())
                         )
