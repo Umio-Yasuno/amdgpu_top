@@ -3,6 +3,7 @@
 The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, and AMDGPU driver.  
 
 ![amdgpu_top screenshot](/docs/ss0.png)
+![amdgpu_top GUI mode screenshot](/docs/ss1-gui.png)
 
 ## Usage
 ```
