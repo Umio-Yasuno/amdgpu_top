@@ -37,3 +37,7 @@ codegen-units = 1
 [package.metadata.deb]
 depends = "libc6, libgcc-s1, libdrm2, libdrm-amdgpu1"
 section = "utils"
+assets = [
+    ["target/release/amdgpu_top", "usr/bin/", "755"],
+    ["assets/amdgpu_top.desktop", "usr/share/applications/", "644"],
+]

@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=AMDGPU TOP
+GenericName=AMDGPU TOP GUI mode
+Exec=amdgpu_top --gui
+Categories=System;
