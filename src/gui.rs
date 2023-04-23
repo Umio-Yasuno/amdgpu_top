@@ -12,6 +12,7 @@ use libdrm_amdgpu_sys::AMDGPU::{
     CHIP_CLASS,
     GPU_INFO,
     SENSOR_INFO::*,
+    VBIOS::VbiosInfo,
     VIDEO_CAPS::{VideoCapsInfo, CAP_TYPE},
 };
 use libdrm_amdgpu_sys::PCI;
@@ -61,8 +62,9 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
 
     let app = MyApp {
         info: MyApp::get_gpu_info(&amdgpu_dev, &ext_info, &memory_info),
-        decode: amdgpu_dev.get_video_caps_info(CAP_TYPE::DECODE).unwrap(),
-        encode: amdgpu_dev.get_video_caps_info(CAP_TYPE::ENCODE).unwrap(),
+        decode: amdgpu_dev.get_video_caps_info(CAP_TYPE::DECODE).ok(),
+        encode: amdgpu_dev.get_video_caps_info(CAP_TYPE::ENCODE).ok(),
+        vbios: amdgpu_dev.get_vbios_info().ok(),
         fdinfo_sort: FdInfoSortType::VRAM,
         reverse_sort: false,
         buf_data: data.clone(),
@@ -170,10 +172,18 @@ impl eframe::App for MyApp {
                 egui::CollapsingHeader::new(
                     RichText::new("Device Info").font(heading.clone())
                 ).default_open(true).show(ui, |ui| self.egui_device_info(ui));
-                ui.add_space(16.0);
-                egui::CollapsingHeader::new(
-                    RichText::new("Video Caps Info").font(heading.clone())
-                ).default_open(true).show(ui, |ui| self.egui_video_caps_info(ui));
+
+                if self.decode.is_some() && self.encode.is_some() {
+                    egui::CollapsingHeader::new(
+                        RichText::new("Video Caps Info").font(heading.clone())
+                    ).default_open(false).show(ui, |ui| self.egui_video_caps_info(ui));
+                }
+
+                if self.vbios.is_some() {
+                    egui::CollapsingHeader::new(
+                        RichText::new("VBIOS Info").font(heading.clone())
+                    ).default_open(false).show(ui, |ui| self.egui_vbios_info(ui));
+                }
             });
         });
         let space = 8.0;
@@ -318,8 +328,9 @@ struct CentralData {
 
 struct MyApp {
     info: Vec<(String, String)>,
-    decode: VideoCapsInfo,
-    encode: VideoCapsInfo,
+    decode: Option<VideoCapsInfo>,
+    encode: Option<VideoCapsInfo>,
+    vbios: Option<VbiosInfo>,
     fdinfo_sort: FdInfoSortType,
     reverse_sort: bool,
     buf_data: CentralData,
@@ -478,6 +489,9 @@ impl MyApp {
     }
 
     fn egui_video_caps_info(&self, ui: &mut egui::Ui) {
+        let Some(ref decode_caps) = self.decode else { return };
+        let Some(ref encode_caps) = self.encode else { return };
+
         egui::Grid::new("codec_info").show(ui, |ui| {
             ui.label("Codec").highlight();
             ui.label("Decode").highlight();
@@ -485,16 +499,16 @@ impl MyApp {
             ui.end_row();
             
             for (name, decode, encode) in [
-                ("MPEG2", self.decode.mpeg2, self.encode.mpeg2),
-                ("MPEG4", self.decode.mpeg4, self.encode.mpeg4),
-                ("VC1", self.decode.vc1, self.encode.vc1),
-                ("MPEG4_AVC", self.decode.mpeg4_avc, self.encode.mpeg4_avc),
-                ("HEVC", self.decode.hevc, self.encode.hevc),
-                ("JPEG", self.decode.jpeg, self.encode.jpeg),
-                ("VP9", self.decode.vp9, self.encode.vp9),
-                ("AV1", self.decode.av1, self.encode.av1),
+                ("MPEG2", decode_caps.mpeg2, encode_caps.mpeg2),
+                ("MPEG4", decode_caps.mpeg4, encode_caps.mpeg4),
+                ("VC1", decode_caps.vc1, encode_caps.vc1),
+                ("MPEG4_AVC", decode_caps.mpeg4_avc, encode_caps.mpeg4_avc),
+                ("HEVC", decode_caps.hevc, encode_caps.hevc),
+                ("JPEG", decode_caps.jpeg, encode_caps.jpeg),
+                ("VP9", decode_caps.vp9, encode_caps.vp9),
+                ("AV1", decode_caps.av1, encode_caps.av1),
             ] {
-                ui.label(name);
+                ui.label(name).highlight();
                 if let Some(dec) = decode {
                     ui.label(&format!("{}x{}", dec.max_width, dec.max_height));
                 } else {
@@ -505,6 +519,22 @@ impl MyApp {
                 } else {
                     ui.label("N/A");
                 }
+                ui.end_row();
+            }
+        });
+    }
+
+    fn egui_vbios_info(&self, ui: &mut egui::Ui) {
+        let Some(ref vbios) = self.vbios else { return };
+        egui::Grid::new("vbios_info").show(ui, |ui| {
+            for (name, val) in [
+                ("Name", &vbios.name),
+                ("PN", &vbios.pn),
+                ("Version", &vbios.ver),
+                ("Date", &vbios.date),
+            ] {
+                ui.label(name).highlight();
+                ui.label(val);
                 ui.end_row();
             }
         });
