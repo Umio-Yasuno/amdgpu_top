@@ -1,6 +1,6 @@
 [package]
 name = "amdgpu_top"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 license = "MIT"
 homepage = "https://github.com/Umio-Yasuno/amdgpu_top"
@@ -11,7 +11,7 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 """
 
 [features]
-default = []
+default = ["egui"]
 egui = ["eframe"]
 
 [[bin]]
