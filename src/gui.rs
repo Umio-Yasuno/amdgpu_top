@@ -588,7 +588,7 @@ impl MyApp {
                     self.reverse_sort = false;
                 }
                 self.fdinfo_sort = FdInfoSortType::VRAM;
-            };
+            }
             if ui.button(rt_base(format!("{:^5}", "GFX"))).clicked() {
                 if let FdInfoSortType::GFX = self.fdinfo_sort {
                     self.reverse_sort ^= true;
@@ -596,9 +596,23 @@ impl MyApp {
                     self.reverse_sort = false;
                 }
                 self.fdinfo_sort = FdInfoSortType::GFX;
-            };
-            ui.label(rt_base("Compute")).highlight();
-            ui.label(rt_base(format!("{:^5}", "DMA"))).highlight();
+            }
+            if ui.button(rt_base("Compute")).clicked() {
+                if let FdInfoSortType::Compute = self.fdinfo_sort {
+                    self.reverse_sort ^= true;
+                } else {
+                    self.reverse_sort = false;
+                }
+                self.fdinfo_sort = FdInfoSortType::Compute;
+            }
+            if ui.button(rt_base(format!("{:^5}", "DMA"))).clicked() {
+                if let FdInfoSortType::DMA = self.fdinfo_sort {
+                    self.reverse_sort ^= true;
+                } else {
+                    self.reverse_sort = false;
+                }
+                self.fdinfo_sort = FdInfoSortType::DMA;
+            }
             if ui.button(rt_base("Decode")).clicked() {
                 if let FdInfoSortType::Decode = self.fdinfo_sort {
                     self.reverse_sort ^= true;
@@ -606,7 +620,7 @@ impl MyApp {
                     self.reverse_sort = false;
                 }
                 self.fdinfo_sort = FdInfoSortType::Decode;
-            };
+            }
             if ui.button(rt_base("Encode")).clicked() {
                 if let FdInfoSortType::Encode = self.fdinfo_sort {
                     self.reverse_sort ^= true;
@@ -614,7 +628,7 @@ impl MyApp {
                     self.reverse_sort = false;
                 }
                 self.fdinfo_sort = FdInfoSortType::Encode;
-            };
+            }
             ui.end_row();
 
             stat::sort_proc_usage(

@@ -81,6 +81,10 @@ pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reve
             (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
             (FdInfoSortType::GFX, false) => b.usage.gfx.cmp(&a.usage.gfx),
             (FdInfoSortType::GFX, true) => a.usage.gfx.cmp(&b.usage.gfx),
+            (FdInfoSortType::Compute, false) => b.usage.gfx.cmp(&a.usage.compute),
+            (FdInfoSortType::Compute, true) => a.usage.gfx.cmp(&b.usage.compute),
+            (FdInfoSortType::DMA, false) => b.usage.gfx.cmp(&a.usage.dma),
+            (FdInfoSortType::DMA, true) => a.usage.gfx.cmp(&b.usage.dma),
             (FdInfoSortType::Decode, false) =>
                 (b.usage.dec + b.usage.vcn_jpeg).cmp(&(a.usage.dec + a.usage.vcn_jpeg)),
             (FdInfoSortType::Decode, true) =>
@@ -104,6 +108,8 @@ pub enum FdInfoSortType {
     PID,
     VRAM,
     GFX,
+    Compute,
+    DMA,
     Decode,
     Encode,
     MediaEngine,
