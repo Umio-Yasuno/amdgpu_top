@@ -416,7 +416,7 @@ impl MyApp {
             );
 
             let dev_id = format!("{:#0X}.{:#0X}", ext_info.device_id(), ext_info.pci_rev_id());
-            let gpu_type = if ext_info.is_apu() { "APU" } else { "dGPU" }.to_string();
+            let gpu_type = if ext_info.is_apu() { "APU" } else { "dGPU" };
             let family = ext_info.get_family_name();
             let asic = ext_info.get_asic_name();
             let chip_class = ext_info.get_chip_class();
@@ -432,7 +432,7 @@ impl MyApp {
             grid(ui, &[
                 ("Device Name", &self.app_device_info.marketing_name),
                 ("DeviceID.RevID", &dev_id),
-                ("GPU Type", &gpu_type),
+                ("GPU Type", gpu_type),
                 ("Family", &family.to_string()),
                 ("ASIC Name", &asic.to_string()),
                 ("Chip Class", &chip_class.to_string()),

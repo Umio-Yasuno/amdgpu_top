@@ -42,9 +42,9 @@ impl Default for Text {
 }
 
 #[derive(Clone, Default, Debug)]
-pub struct BITS(pub [u8; 32]);
+pub struct PCAcc(pub [u8; 32]);
 
-impl BITS {
+impl PCAcc {
     pub fn clear(&mut self) {
         *self = Self([0u8; 32])
     }
@@ -58,7 +58,7 @@ impl BITS {
     }
 }
 
-impl From<u32> for BITS {
+impl From<u32> for PCAcc {
     fn from(val: u32) -> Self {
         let mut out = [0u8; 32];
 
@@ -70,7 +70,7 @@ impl From<u32> for BITS {
     }
 }
 
-impl std::ops::AddAssign for BITS {
+impl std::ops::AddAssign for PCAcc {
     fn add_assign(&mut self, other: Self) {
         for (dst, src) in self.0.iter_mut().zip(other.0.iter()) {
             *dst += src;

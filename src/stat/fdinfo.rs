@@ -104,6 +104,7 @@ pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reve
 }
 
 #[derive(Clone, Debug)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum FdInfoSortType {
     PID,
     VRAM,
@@ -477,7 +478,7 @@ pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath, self
                 // filter systemd processes from fdinfo target
                 // gnome-shell share the AMDGPU driver context with systemd processes
                 let Ok(cmdline) = fs::read_to_string(base.join("cmdline")) else { continue };
-                if SYSTEMD_CMDLINE.into_iter().any(|path| cmdline.starts_with(path)) {
+                if SYSTEMD_CMDLINE.iter().any(|path| cmdline.starts_with(path)) {
                     continue
                 }
             }

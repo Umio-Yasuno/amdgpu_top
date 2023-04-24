@@ -6,6 +6,7 @@ use libdrm_amdgpu_sys::AMDGPU::{
 
 #[derive(Clone, Debug)]
 #[allow(non_camel_case_types)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum PCType {
     GRBM,
     GRBM2,

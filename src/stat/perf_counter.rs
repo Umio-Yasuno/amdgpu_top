@@ -12,12 +12,12 @@ use cursive::Rect;
 use cursive::align::HAlign;
 use serde_json::{json, Map, Value};
 
-use super::{DeviceHandle, PANEL_WIDTH, PCType, BITS, TopView};
+use super::{DeviceHandle, PANEL_WIDTH, PCType, PCAcc, TopView};
 
 #[derive(Clone, Debug)]
 pub struct PerfCounter {
     pub pc_type: PCType,
-    pub bits: BITS,
+    pub bits: PCAcc,
     pub counters: Vec<Counter>,
     pub index: Vec<(String, usize)>,
 }
@@ -35,7 +35,7 @@ impl PerfCounter {
 
         Self {
             pc_type,
-            bits: BITS::default(),
+            bits: PCAcc::default(),
             counters,
             index,
         }
