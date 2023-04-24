@@ -35,6 +35,8 @@ impl DevicePath {
             use std::os::fd::IntoRawFd;
             use std::fs::OpenOptions;
 
+            // need write option for GUI context
+            // https://gitlab.freedesktop.org/mesa/mesa/-/issues/2424
             let f = OpenOptions::new().read(true).write(true).open(&self.render)
                 .unwrap_or_else(|err| {
                     eprintln!("{err}");
