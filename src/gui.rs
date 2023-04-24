@@ -269,11 +269,11 @@ struct Sensors {
     vddnb: Option<u32>,
     vddgfx: Option<u32>,
     temp: Option<u32>,
-    critical_temp: u32,
+    critical_temp: Option<u32>,
     power: Option<u32>,
-    power_cap: u32,
-    fan_rpm: u32,
-    fan_max_rpm: u32,
+    power_cap: Option<u32>,
+    fan_rpm: Option<u32>,
+    fan_max_rpm: Option<u32>,
 }
 
 impl Sensors {
@@ -290,9 +290,10 @@ impl Sensors {
             amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok(),
         ];
         let critical_temp = Self::parse_hwmon(hwmon_path.join("temp1_crit"))
-            .saturating_div(1_000);
+            .map(|temp| temp.saturating_div(1_000));
         let power_cap = Self::parse_hwmon(hwmon_path.join("power1_cap"))
-            .saturating_div(1_000_000);
+            .map(|cap| cap.saturating_div(1_000_000));
+
         let fan_rpm = Self::parse_hwmon(hwmon_path.join("fan1_input"));
         let fan_max_rpm = Self::parse_hwmon(hwmon_path.join("fan1_max"));
 
@@ -314,9 +315,9 @@ impl Sensors {
         }
     }
 
-    fn parse_hwmon<P: Into<PathBuf>>(path: P) -> u32 {
+    fn parse_hwmon<P: Into<PathBuf>>(path: P) -> Option<u32> {
         std::fs::read_to_string(path.into()).ok()
-            .and_then(|file| file.trim_end().parse::<u32>().ok()).unwrap_or(0)
+            .and_then(|file| file.trim_end().parse::<u32>().ok())
     }
 
     pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
@@ -660,46 +661,48 @@ impl MyApp {
 
     fn egui_sensors(&self, ui: &mut egui::Ui) {
         let sensors = &self.buf_data.sensors;
+        {
+            ui.style_mut().override_font_id = Some(MEDIUM);
+        }
         egui::Grid::new("Sensors").show(ui, |ui| {
-            {
-                ui.style_mut().override_font_id = Some(MEDIUM);
-            }
             let mut c = 0;
             for (name, val, unit) in [
-                ("GFX_SCLK", &sensors.sclk, "MHz"),
-                ("GFX_MCLK", &sensors.mclk, "MHz"),
-                ("VDDNB", &sensors.vddnb, "mV"),
-                ("VDDGFX", &sensors.vddgfx, "mV"),
+                ("GFX_SCLK", sensors.sclk, "MHz"),
+                ("GFX_MCLK", sensors.mclk, "MHz"),
+                ("VDDNB", sensors.vddnb, "mV"),
+                ("VDDGFX", sensors.vddgfx, "mV"),
             ] {
                 let Some(val) = val else { continue };
                 ui.label(name);
                 ui.label("=>");
-                ui.label(&format!("{val:5} {unit}"));
+                ui.label(format!("{val:5} {unit}"));
                 c += 1;
                 if c % 2 == 0 { ui.end_row(); }
             }
         });
-        if let Some(temp) = &sensors.temp {
-            ui.label(&format!(
-                "GPU Temp. => {temp:3} C (Crit. {critical} C)",
-                temp = temp.saturating_div(1_000),
-                critical = sensors.critical_temp,
-            ));
+        if let Some(temp) = sensors.temp {
+            let temp = temp.saturating_div(1_000);
+            if let Some(crit) = sensors.critical_temp {
+                ui.label(format!("GPU Temp. => {temp:3} C (Crit. {crit} C)"));
+            } else {
+                ui.label(format!("GPU Temp. => {temp:3} C"));
+            }
         }
-        if let Some(power) = &sensors.power {
-            ui.label(&format!(
-                "GPU Power => {power:3} C (Cap. {cap} W)",
-                cap = sensors.power_cap,
-            ));
+        if let Some(power) = sensors.power {
+            if let Some(cap) = sensors.power_cap {
+                ui.label(format!("GPU Power => {power:3} W (Cap. {cap} W)"));
+            } else {
+                ui.label(format!("GPU Power => {power:3} W"));
+            }
         }
-        {
-            ui.label(&format!(
-                "Fan => {fan:4} RPM (Max. {max} RPM)",
-                fan = sensors.fan_rpm,
-                max = sensors.fan_max_rpm,
-            ));
+        if let Some(fan_rpm) = sensors.fan_rpm {
+            if let Some(max_rpm) = sensors.fan_max_rpm {
+                ui.label(format!("Fan => {fan_rpm:4} RPM (Max. {max_rpm} RPM)"));
+            } else {
+                ui.label(format!("Fan => {fan_rpm:4} RPM"));
+            }
         }
-        ui.label(&format!(
+        ui.label(format!(
             "PCI Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
             cur_gen = sensors.cur.gen,
             cur_width = sensors.cur.width,
