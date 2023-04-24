@@ -65,8 +65,10 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
         sensors: sensors.clone(),
     };
 
+    let app_device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &pci_bus);
+
     let app = MyApp {
-        info: MyApp::get_gpu_info(&amdgpu_dev, &ext_info, &memory_info),
+        app_device_info,
         decode: amdgpu_dev.get_video_caps_info(CAP_TYPE::DECODE).ok(),
         encode: amdgpu_dev.get_video_caps_info(CAP_TYPE::ENCODE).ok(),
         vbios: amdgpu_dev.get_vbios_info().ok(),
@@ -174,8 +176,8 @@ impl eframe::App for MyApp {
             egui::ScrollArea::both().show(ui, |ui| {
                 ui.add_space(SPACE);
                 egui::CollapsingHeader::new(
-                    RichText::new("Device Info").font(HEADING)
-                ).default_open(true).show(ui, |ui| self.egui_device_info(ui));
+                    RichText::new("App Device Info").font(HEADING)
+                ).default_open(true).show(ui, |ui| self.egui_app_device_info(ui));
 
                 if self.decode.is_some() && self.encode.is_some() {
                     ui.add_space(SPACE);
@@ -343,7 +345,7 @@ struct CentralData {
 }
 
 struct MyApp {
-    info: Vec<(String, String)>,
+    app_device_info: AppDeviceInfo,
     decode: Option<VideoCapsInfo>,
     encode: Option<VideoCapsInfo>,
     vbios: Option<VbiosInfo>,
@@ -353,154 +355,140 @@ struct MyApp {
     arc_data: Arc<Mutex<CentralData>>,
 }
 
-impl MyApp {
-    pub fn get_gpu_info(
+#[derive(Clone)]
+struct AppDeviceInfo {
+    ext_info: drm_amdgpu_info_device,
+    memory_info: drm_amdgpu_memory_info,
+    resizable_bar: bool,
+    min_gpu_clk: u32,
+    max_gpu_clk: u32,
+    min_mem_clk: u32,
+    max_mem_clk: u32,
+    marketing_name: String,
+    pci_bus: PCI::BUS_INFO,
+}
+
+impl AppDeviceInfo {
+    fn new(
         amdgpu_dev: &DeviceHandle,
         ext_info: &drm_amdgpu_info_device,
         memory_info: &drm_amdgpu_memory_info,
-    ) -> Vec<(String, String)> {
-        let mut info: Vec<(String, String)> = Vec::new();
-
+        pci_bus: &PCI::BUS_INFO,
+    ) -> Self {
         let (min_gpu_clk, max_gpu_clk) =
             amdgpu_dev.get_min_max_gpu_clock().unwrap_or((0, 0));
         let (min_mem_clk, max_mem_clk) =
             amdgpu_dev.get_min_max_memory_clock().unwrap_or((0, 0));
-        let re_bar = {
+        let resizable_bar = {
             let vram = memory_info.vram.total_heap_size;
             let cpu_accessible = memory_info.cpu_accessible_vram.total_heap_size;
-            if (vram * 9 / 10) <= cpu_accessible {
+            (vram * 9 / 10) <= cpu_accessible
+        };
+        let marketing_name = amdgpu_dev.get_marketing_name().unwrap_or_default();
+
+        Self {
+            ext_info: ext_info.clone(),
+            memory_info: memory_info.clone(),
+            resizable_bar,
+            min_gpu_clk,
+            max_gpu_clk,
+            min_mem_clk,
+            max_mem_clk,
+            marketing_name,
+            pci_bus: *pci_bus,
+        }
+    }
+}
+
+impl MyApp {
+    pub fn egui_app_device_info(&self, ui: &mut egui::Ui) {
+        egui::Grid::new("app_device_info").show(ui, |ui| {
+            let ext_info = &self.app_device_info.ext_info;
+            let memory_info = &self.app_device_info.memory_info;
+            let pci_bus = &self.app_device_info.pci_bus;
+            let (min_gpu_clk, max_gpu_clk) = (
+                &self.app_device_info.min_gpu_clk,
+                &self.app_device_info.max_gpu_clk,
+            );
+            let (min_mem_clk, max_mem_clk) = (
+                &self.app_device_info.min_mem_clk,
+                &self.app_device_info.max_mem_clk,
+            );
+
+            let dev_id = format!("{:#0X}.{:#0X}", ext_info.device_id(), ext_info.pci_rev_id());
+            let gpu_type = if ext_info.is_apu() { "APU" } else { "dGPU" }.to_string();
+            let family = ext_info.get_family_name();
+            let asic = ext_info.get_asic_name();
+            let chip_class = ext_info.get_chip_class();
+
+            let grid = |ui: &mut egui::Ui, v: &[(&str, &str)]| {
+                for (name, val) in v {
+                    ui.label(*name);
+                    ui.label(*val);
+                    ui.end_row();
+                }
+            };
+
+            grid(ui, &[
+                ("Device Name", &self.app_device_info.marketing_name),
+                ("DeviceID.RevID", &dev_id),
+                ("GPU Type", &gpu_type),
+                ("Family", &family.to_string()),
+                ("ASIC Name", &asic.to_string()),
+                ("Chip Class", &chip_class.to_string()),
+            ]);
+            ui.end_row();
+
+            let max_good_cu_per_sa = ext_info.get_max_good_cu_per_sa();
+            let min_good_cu_per_sa = ext_info.get_min_good_cu_per_sa();
+            let cu_per_sa = if max_good_cu_per_sa != min_good_cu_per_sa {
+                format!("[{min_good_cu_per_sa}, {max_good_cu_per_sa}]")
+            } else {
+                max_good_cu_per_sa.to_string()
+            };
+            let rb_pipes = ext_info.rb_pipes();
+            let rop_count = ext_info.calc_rop_count();
+            let rb_type = if asic.rbplus_allowed() {
+                "RenderBackendPlus (RB+)"
+            } else {
+                "RenderBackend (RB)"
+            };
+            let peak_gp = format!("{} GP/s", rop_count * max_gpu_clk / 1000);
+            let peak_fp32 = format!("{} GFLOPS", ext_info.peak_gflops());
+
+            grid(ui, &[
+                ("Shader Engine (SE)", &ext_info.max_se().to_string()),
+                ("Shader Array (SA/SH) per SE", &ext_info.max_sa_per_se().to_string()),
+                ("CU per SA", &cu_per_sa),
+                ("Total CU", &ext_info.cu_active_number().to_string()),
+                (rb_type, &format!("{rb_pipes} ({rop_count} ROPs)")),
+                ("Peak Pixel Fill-Rate", &peak_gp),
+                ("GPU Clock", &format!("{min_gpu_clk}-{max_gpu_clk} MHz")),
+                ("Peak FP32", &peak_fp32),
+            ]);
+            ui.end_row();
+
+            let re_bar = if self.app_device_info.resizable_bar {
                 "Enabled"
             } else {
                 "Disabled"
-            }
-        };
-        let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
-        let pad = ("".to_string(), "".to_string());
-        if let Ok(mark_name) = amdgpu_dev.get_marketing_name() {
-            info.push(("Device Name".to_string(), mark_name));
-        }
-        info.push((
-            "DeviceID.RevID".to_string(),
-            format!("{:#0X}.{:#0X}", ext_info.device_id(), ext_info.pci_rev_id()),
-        ));
-        info.push(pad.clone());
-        info.push((
-            "GPU Type".to_string(),
-            if ext_info.is_apu() { "APU" } else { "dGPU" }.to_string(),
-        ));
-        info.push((
-            "Family".to_string(),
-            ext_info.get_family_name().to_string(),
-        ));
-        info.push((
-            "ASIC Name".to_string(),
-            ext_info.get_asic_name().to_string(),
-        ));
-        info.push((
-            "Chip Class".to_string(),
-            ext_info.get_chip_class().to_string(),
-        ));
-        info.push(pad.clone());
+            };
 
-        let max_good_cu_per_sa = ext_info.get_max_good_cu_per_sa();
-        let min_good_cu_per_sa = ext_info.get_min_good_cu_per_sa();
+            grid(ui, &[
+                ("VRAM Type", &ext_info.get_vram_type().to_string()),
+                ("VRAM Bit Width", &format!("{}-bit", ext_info.vram_bit_width)),
+                ("VRAM Size", &format!("{} MiB", memory_info.vram.total_heap_size >> 20)),
+                ("Memory Clock", &format!("{min_mem_clk}-{max_mem_clk} MHz")),
+                ("ResizableBAR", re_bar),
+            ]);
+            ui.end_row();
 
-        info.push((
-            "Shader Engine (SE)".to_string(),
-            ext_info.max_se().to_string(),
-        ));
-        info.push((
-            "Shader Array (SA/SH) per SE".to_string(),
-            ext_info.max_sa_per_se().to_string(),
-        ));
-        if max_good_cu_per_sa != min_good_cu_per_sa {
-            info.push((
-                "CU per SA".to_string(),
-                format!("[{min_good_cu_per_sa}, {max_good_cu_per_sa}]"),
-            ));
-        } else {
-            info.push((
-                "CU per SA".to_string(),
-                max_good_cu_per_sa.to_string(),
-            ));
-        }
-        info.push((
-            "Total CU".to_string(),
-            ext_info.cu_active_number().to_string(),
-        ));
+            let link = pci_bus.get_link_info(PCI::STATUS::Max);
 
-        let rb_pipes = ext_info.rb_pipes();
-        let rop_count = ext_info.calc_rop_count();
-
-        if ext_info.get_asic_name().rbplus_allowed() {
-            info.push((
-                "RenderBackendPlus (RB+)".to_string(),
-                format!("{rb_pipes} ({rop_count} ROPs)"),
-            ));
-        } else {
-            info.push((
-                "RenderBackend (RB)".to_string(),
-                format!("{rb_pipes} ({rop_count} ROPs)"),
-            ));
-        }
-
-        info.push((
-            "Peak Pixel Fill-Rate".to_string(),
-            format!("{} GP/s", rop_count * max_gpu_clk / 1000),
-        ));
-
-        info.push((
-            "GPU Clock".to_string(),
-            format!("{min_gpu_clk}-{max_gpu_clk} MHz"),
-        ));
-        info.push((
-            "Peak FP32".to_string(),
-            format!("{} GFLOPS", ext_info.peak_gflops()),
-        ));
-
-        info.push(pad.clone());
-        info.push((
-            "VRAM Type".to_string(),
-            ext_info.get_vram_type().to_string(),
-        ));
-        info.push((
-            "VRAM Bit Width".to_string(),
-            format!("{}-bit", ext_info.vram_bit_width),
-        ));
-        info.push((
-            "VRAM Size".to_string(),
-            format!("{} MiB", memory_info.vram.total_heap_size >> 20),
-        ));
-        info.push((
-            "Memory Clock".to_string(),
-            format!("{min_mem_clk}-{max_mem_clk} MHz"),
-        ));
-        info.push((
-            "ResizableBAR".to_string(),
-            re_bar.to_string(),
-        ));
-        info.push(pad.clone());
-
-        let link = pci_bus.get_link_info(PCI::STATUS::Max);
-        info.push((
-            "PCI (domain:bus:dev.func)".to_string(),
-            pci_bus.to_string(),
-        ));
-        info.push((
-            "PCI Link Speed (Max)".to_string(),
-            format!("Gen{}x{}", link.gen, link.width),
-        ));
-
-        info
-    }
-
-    fn egui_device_info(&self, ui: &mut egui::Ui) {
-        egui::Grid::new("device_info").show(ui, |ui| {
-            for (label, val) in &self.info {
-                ui.label(label);
-                ui.label(val);
-                ui.end_row();
-            }
+            grid(ui, &[
+                ("PCI (domain:bus:dev.func)", &pci_bus.to_string()),
+                ("PCI Link Speed (Max)", &format!("Gen{}x{}", link.gen, link.width)),
+            ]);
         });
     }
 
@@ -576,14 +564,10 @@ impl MyApp {
                 (&self.buf_data.vram_usage.gtt, "GTT"),
             ] {
                 let progress = (v.usage >> 20) as f32 / (v.total >> 20) as f32;
-                let text = format!(
-                    "{:5} / {:5} MiB",
-                    v.usage >> 20,
-                    v.total >> 20,
-                );
+                let text = format!("{:5} / {:5} MiB", v.usage >> 20, v.total >> 20);
                 let bar = egui::ProgressBar::new(progress)
                     .text(RichText::new(&text).font(BASE));
-                ui.label(name);
+                ui.label(RichText::new(name).font(MEDIUM));
                 ui.add_sized([360.0, 16.0], bar);
                 ui.end_row();
             }
