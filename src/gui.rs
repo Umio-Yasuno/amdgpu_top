@@ -20,6 +20,9 @@ use crate::{stat, DevicePath, Sampling};
 use stat::{FdInfoSortType, FdInfoView, PerfCounter, VramUsageView};
 
 const SPACE: f32 = 8.0;
+const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
+const MEDIUM: FontId = FontId::new(15.0, FontFamily::Monospace);
+const HEADING: FontId = FontId::new(16.0, FontFamily::Monospace);
 
 pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
     let device_path = DevicePath::new(instance);
@@ -70,7 +73,7 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
         fdinfo_sort: FdInfoSortType::VRAM,
         reverse_sort: false,
         buf_data: data.clone(),
-        arc_data: Arc::new(Mutex::new(data.clone())),
+        arc_data: Arc::new(Mutex::new(data)),
     };
 
     let options = eframe::NativeOptions {
@@ -160,32 +163,31 @@ impl eframe::App for MyApp {
                 self.buf_data = data.clone();
             }
         }
-        let font = FontId::new(14.0, FontFamily::Monospace);
-        let mut style = (*ctx.style()).clone();
-        style.override_font_id = Some(font.clone());
-        ctx.set_style(style);
-
-        let font = FontId::new(16.0, FontFamily::Monospace);
+        {
+            let mut style = (*ctx.style()).clone();
+            style.override_font_id = Some(BASE);
+            ctx.set_style(style);
+        }
 
         egui::SidePanel::left(egui::Id::new(3)).show(ctx, |ui| {
             ui.set_min_width(320.0);
             egui::ScrollArea::both().show(ui, |ui| {
-                let heading = FontId::new(16.0, FontFamily::Monospace);
+                ui.add_space(SPACE);
                 egui::CollapsingHeader::new(
-                    RichText::new("Device Info").font(heading.clone())
+                    RichText::new("Device Info").font(HEADING)
                 ).default_open(true).show(ui, |ui| self.egui_device_info(ui));
 
                 if self.decode.is_some() && self.encode.is_some() {
                     ui.add_space(SPACE);
                     egui::CollapsingHeader::new(
-                        RichText::new("Video Caps Info").font(heading.clone())
+                        RichText::new("Video Caps Info").font(HEADING)
                     ).default_open(false).show(ui, |ui| self.egui_video_caps_info(ui));
                 }
 
                 if self.vbios.is_some() {
                     ui.add_space(SPACE);
                     egui::CollapsingHeader::new(
-                        RichText::new("VBIOS Info").font(heading.clone())
+                        RichText::new("VBIOS Info").font(HEADING)
                     ).default_open(false).show(ui, |ui| self.egui_vbios_info(ui));
                 }
             });
@@ -194,25 +196,25 @@ impl eframe::App for MyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.set_min_width(540.0);
             egui::ScrollArea::both().show(ui, |ui| {
-                egui::CollapsingHeader::new(RichText::new("GRBM").font(font.clone()))
+                egui::CollapsingHeader::new(RichText::new("GRBM").font(HEADING))
                     .default_open(true)
                     .show(ui, |ui| self.egui_perf_counter(ui, "GRBM", &self.buf_data.grbm));
                 ui.add_space(SPACE);
-                egui::CollapsingHeader::new(RichText::new("GRBM2").font(font.clone()))
+                egui::CollapsingHeader::new(RichText::new("GRBM2").font(HEADING))
                     .default_open(true)
                     .show(ui, |ui| self.egui_perf_counter(ui, "GRBM2", &self.buf_data.grbm2));
                 ui.add_space(SPACE);
-                egui::CollapsingHeader::new(RichText::new("VRAM").font(font.clone()))
+                egui::CollapsingHeader::new(RichText::new("VRAM").font(HEADING))
                     .default_open(true)
-                    .show(ui, |ui| self.egui_vram(ui, &self.buf_data.vram_usage));
+                    .show(ui, |ui| self.egui_vram(ui));
                 ui.add_space(SPACE);
-                egui::CollapsingHeader::new(RichText::new("fdinfo").font(font.clone()))
+                egui::CollapsingHeader::new(RichText::new("fdinfo").font(HEADING))
                     .default_open(true)
                     .show(ui, |ui| self.egui_grid_fdinfo(ui));
                 ui.add_space(SPACE);
-                egui::CollapsingHeader::new(RichText::new("Sensors").font(font.clone()))
+                egui::CollapsingHeader::new(RichText::new("Sensors").font(HEADING))
                     .default_open(true)
-                    .show(ui, |ui| self.egui_sensors(ui, &self.buf_data.sensors));
+                    .show(ui, |ui| self.egui_sensors(ui));
 
                 let header = if let Some(h) = self.buf_data.gpu_metrics.get_header() {
                     format!(
@@ -231,7 +233,7 @@ impl eframe::App for MyApp {
                     GpuMetrics::V1_3(_) => {
                         ui.add_space(SPACE);
                         egui::CollapsingHeader::new(
-                            RichText::new(&header).font(font.clone())
+                            RichText::new(&header).font(HEADING)
                         )
                         .default_open(true)
                         .show(ui, |ui| self.egui_gpu_metrics_v1(ui, &self.buf_data.gpu_metrics));
@@ -242,7 +244,7 @@ impl eframe::App for MyApp {
                     GpuMetrics::V2_3(_) => {
                         ui.add_space(SPACE);
                         egui::CollapsingHeader::new(
-                            RichText::new(&header).font(font.clone())
+                            RichText::new(&header).font(HEADING)
                         )
                         .default_open(true)
                         .show(ui, |ui| self.egui_gpu_metrics_v2(ui, &self.buf_data.gpu_metrics));
@@ -258,6 +260,7 @@ impl eframe::App for MyApp {
 
 #[derive(Clone)]
 struct Sensors {
+    hwmon_path: PathBuf,
     cur: PCI::LINK,
     max: PCI::LINK,
     bus_info: PCI::BUS_INFO,
@@ -269,6 +272,8 @@ struct Sensors {
     critical_temp: u32,
     power: Option<u32>,
     power_cap: u32,
+    fan_rpm: u32,
+    fan_max_rpm: u32,
 }
 
 impl Sensors {
@@ -284,12 +289,15 @@ impl Sensors {
             amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_TEMP).ok(),
             amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok(),
         ];
-        let critical_temp = Self::parse_hwmon(&hwmon_path.join("temp1_crit"))
+        let critical_temp = Self::parse_hwmon(hwmon_path.join("temp1_crit"))
             .saturating_div(1_000);
-        let power_cap = Self::parse_hwmon(&hwmon_path.join("power1_cap"))
+        let power_cap = Self::parse_hwmon(hwmon_path.join("power1_cap"))
             .saturating_div(1_000_000);
+        let fan_rpm = Self::parse_hwmon(hwmon_path.join("fan1_input"));
+        let fan_max_rpm = Self::parse_hwmon(hwmon_path.join("fan1_max"));
 
         Self {
+            hwmon_path,
             cur,
             max,
             bus_info: *pci_bus,
@@ -301,6 +309,8 @@ impl Sensors {
             critical_temp,
             power,
             power_cap,
+            fan_rpm,
+            fan_max_rpm,
         }
     }
 
@@ -317,6 +327,7 @@ impl Sensors {
         self.vddgfx = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDGFX).ok();
         self.temp = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_TEMP).ok();
         self.power = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok();
+        self.fan_rpm = Self::parse_hwmon(self.hwmon_path.join("fan1_input"));
     }
 }
 
@@ -547,21 +558,21 @@ impl MyApp {
     fn egui_perf_counter(&self, ui: &mut egui::Ui, name: &str, pc: &PerfCounter) {
         egui::Grid::new(name).show(ui, |ui| {
             for (name, pos) in &pc.index {
+                let usage = pc.bits.get(*pos);
                 ui.label(name);
                 ui.add_sized([240.0, 0.0], egui::ProgressBar::new(
-                    (pc.bits.get(*pos) as f32) / 100.0
-                ).show_percentage());
+                    (usage as f32) / 100.0
+                ).text(RichText::new(format!("{usage:3} %")).font(BASE)));
                 ui.end_row();
             }
         });
     }
 
-    fn egui_vram(&self, ui: &mut egui::Ui, vram_usage: &VramUsageView) {
-        let font = FontId::new(14.0, FontFamily::Monospace);
+    fn egui_vram(&self, ui: &mut egui::Ui) {
         egui::Grid::new("VRAM").show(ui, |ui| {
             for (v, name) in [
-                (&vram_usage.vram, "VRAM"),
-                (&vram_usage.gtt, "GTT"),
+                (&self.buf_data.vram_usage.vram, "VRAM"),
+                (&self.buf_data.vram_usage.gtt, "GTT"),
             ] {
                 let progress = (v.usage >> 20) as f32 / (v.total >> 20) as f32;
                 let text = format!(
@@ -570,7 +581,7 @@ impl MyApp {
                     v.total >> 20,
                 );
                 let bar = egui::ProgressBar::new(progress)
-                    .text(RichText::new(&text).font(font.clone()));
+                    .text(RichText::new(&text).font(BASE));
                 ui.label(name);
                 ui.add_sized([360.0, 16.0], bar);
                 ui.end_row();
@@ -580,9 +591,12 @@ impl MyApp {
 
     fn egui_grid_fdinfo(&mut self, ui: &mut egui::Ui) {
         egui::Grid::new("fdinfo").show(ui, |ui| {
-            ui.label("Name").highlight();
-            ui.label("PID").highlight();
-            if ui.button("VRAM").clicked() {
+            {
+                ui.style_mut().override_font_id = Some(MEDIUM);
+            }
+            ui.label(rt_base(format!("{:^15}", "Name"))).highlight();
+            ui.label(rt_base(format!("{:^8}", "PID"))).highlight();
+            if ui.button(rt_base(format!("{:^10}", "VRAM"))).clicked() {
                 if let FdInfoSortType::VRAM = self.fdinfo_sort {
                     self.reverse_sort ^= true;
                 } else {
@@ -590,7 +604,7 @@ impl MyApp {
                 }
                 self.fdinfo_sort = FdInfoSortType::VRAM;
             };
-            if ui.button("GFX").clicked() {
+            if ui.button(rt_base(format!("{:^5}", "GFX"))).clicked() {
                 if let FdInfoSortType::GFX = self.fdinfo_sort {
                     self.reverse_sort ^= true;
                 } else {
@@ -598,9 +612,9 @@ impl MyApp {
                 }
                 self.fdinfo_sort = FdInfoSortType::GFX;
             };
-            ui.label("Compute").highlight();
-            ui.label("DMA").highlight();
-            if ui.button("Decode").clicked() {
+            ui.label(rt_base("Compute")).highlight();
+            ui.label(rt_base(format!("{:^5}", "DMA"))).highlight();
+            if ui.button(rt_base("Decode")).clicked() {
                 if let FdInfoSortType::Decode = self.fdinfo_sort {
                     self.reverse_sort ^= true;
                 } else {
@@ -608,7 +622,7 @@ impl MyApp {
                 }
                 self.fdinfo_sort = FdInfoSortType::Decode;
             };
-            if ui.button("Encode").clicked() {
+            if ui.button(rt_base("Encode")).clicked() {
                 if let FdInfoSortType::Encode = self.fdinfo_sort {
                     self.reverse_sort ^= true;
                 } else {
@@ -626,8 +640,8 @@ impl MyApp {
 
             for pu in &self.buf_data.fdinfo.proc_usage {
                 ui.label(pu.name.to_string());
-                ui.label(pu.pid.to_string());
-                ui.label(&format!("{} MiB", pu.usage.vram_usage >> 10));
+                ui.label(format!("{:>8}", pu.pid));
+                ui.label(&format!("{:5} MiB", pu.usage.vram_usage >> 10));
                 let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
                 let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
                 for usage in [
@@ -637,15 +651,19 @@ impl MyApp {
                     dec_usage,
                     enc_usage,
                 ] {
-                    ui.label(&format!("{:3} %", usage));
+                    ui.label(&format!("{usage:3} %"));
                 }
                 ui.end_row();
             } // proc_usage
         });
     }
 
-    fn egui_sensors(&self, ui: &mut egui::Ui, sensors: &Sensors) {
+    fn egui_sensors(&self, ui: &mut egui::Ui) {
+        let sensors = &self.buf_data.sensors;
         egui::Grid::new("Sensors").show(ui, |ui| {
+            {
+                ui.style_mut().override_font_id = Some(MEDIUM);
+            }
             let mut c = 0;
             for (name, val, unit) in [
                 ("GFX_SCLK", &sensors.sclk, "MHz"),
@@ -654,7 +672,7 @@ impl MyApp {
                 ("VDDGFX", &sensors.vddgfx, "mV"),
             ] {
                 let Some(val) = val else { continue };
-                ui.label(&format!("{name}"));
+                ui.label(name);
                 ui.label("=>");
                 ui.label(&format!("{val:5} {unit}"));
                 c += 1;
@@ -670,8 +688,15 @@ impl MyApp {
         }
         if let Some(power) = &sensors.power {
             ui.label(&format!(
-                "GPU Power. => {power:3} C (Cap. {cap} W)",
+                "GPU Power => {power:3} C (Cap. {cap} W)",
                 cap = sensors.power_cap,
+            ));
+        }
+        {
+            ui.label(&format!(
+                "Fan => {fan:4} RPM (Max. {max} RPM)",
+                fan = sensors.fan_rpm,
+                max = sensors.fan_max_rpm,
             ));
         }
         ui.label(&format!(
@@ -811,4 +836,8 @@ impl MyApp {
             }
         });
     }
+}
+
+fn rt_base<T: Into<String>>(s: T) -> RichText {
+    RichText::new(s.into()).font(BASE)
 }
