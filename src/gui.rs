@@ -170,6 +170,7 @@ impl eframe::App for MyApp {
             style.override_font_id = Some(BASE);
             ctx.set_style(style);
         }
+        ctx.clear_animations();
 
         egui::SidePanel::left(egui::Id::new(3)).show(ctx, |ui| {
             ui.set_min_width(320.0);
@@ -178,7 +179,6 @@ impl eframe::App for MyApp {
                 egui::CollapsingHeader::new(
                     RichText::new("App Device Info").font(HEADING)
                 ).default_open(true).show(ui, |ui| self.egui_app_device_info(ui));
-
                 if self.decode.is_some() && self.encode.is_some() {
                     ui.add_space(SPACE);
                     egui::CollapsingHeader::new(
@@ -663,7 +663,6 @@ impl MyApp {
             ui.style_mut().override_font_id = Some(MEDIUM);
         }
         egui::Grid::new("Sensors").show(ui, |ui| {
-            let mut c = 0;
             for (name, val, unit) in [
                 ("GFX_SCLK", sensors.sclk, "MHz"),
                 ("GFX_MCLK", sensors.mclk, "MHz"),
@@ -674,8 +673,7 @@ impl MyApp {
                 ui.label(name);
                 ui.label("=>");
                 ui.label(format!("{val:5} {unit}"));
-                c += 1;
-                if c % 2 == 0 { ui.end_row(); }
+                ui.end_row();
             }
         });
         if let Some(temp) = sensors.temp {
