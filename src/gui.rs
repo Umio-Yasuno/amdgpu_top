@@ -19,6 +19,7 @@ use libdrm_amdgpu_sys::PCI;
 use crate::{stat, DevicePath, Sampling};
 use stat::{FdInfoSortType, FdInfoView, PerfCounter, VramUsageView};
 
+const AGE: f32 = 1.0;
 const SPACE: f32 = 8.0;
 const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
 const MEDIUM: FontId = FontId::new(15.0, FontFamily::Monospace);
@@ -55,10 +56,15 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
 
     let mut gpu_metrics = amdgpu_dev.get_gpu_metrics().unwrap_or(GpuMetrics::Unknown);
     let mut sensors = Sensors::new(&amdgpu_dev, &pci_bus);
+    // TODO: Adjusting `History::new`
+    let mut grbm_history = vec![History::new(0..30, AGE * 30.0); grbm.index.len()];
+    let mut grbm2_history = vec![History::new(0..30, AGE * 30.0); grbm2.index.len()];
 
     let data = CentralData {
         grbm: grbm.clone(),
         grbm2: grbm2.clone(),
+        grbm_history: grbm_history.clone(),
+        grbm2_history: grbm2_history.clone(),
         vram_usage: vram_usage.clone(),
         fdinfo: fdinfo.clone(),
         gpu_metrics: gpu_metrics.clone(),
@@ -101,17 +107,25 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
     }
 
     {
+        let mut now: f64 = 0.0;
         let share_data = app.arc_data.clone();
 
         std::thread::spawn(move || loop {
             grbm.bits.clear();
             grbm2.bits.clear();
+            now += AGE as f64;
 
             for _ in 0..sample.count {
                 grbm.read_reg(&amdgpu_dev);
                 grbm2.read_reg(&amdgpu_dev);
 
                 std::thread::sleep(sample.delay);
+            }
+            for ((_name, pos), history) in grbm.index.iter().zip(grbm_history.iter_mut()) {
+                history.add(now, grbm.bits.get(*pos));
+            }
+            for ((_name, pos), history) in grbm2.index.iter().zip(grbm2_history.iter_mut()) {
+                history.add(now, grbm2.bits.get(*pos));
             }
 
             vram_usage.update_usage(&amdgpu_dev);
@@ -141,6 +155,8 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
                     *share_data = CentralData {
                         grbm: grbm.clone(),
                         grbm2: grbm2.clone(),
+                        grbm_history: grbm_history.clone(),
+                        grbm2_history: grbm2_history.clone(),
                         vram_usage: vram_usage.clone(),
                         fdinfo: fdinfo.clone(),
                         gpu_metrics: gpu_metrics.clone(),
@@ -200,11 +216,11 @@ impl eframe::App for MyApp {
             egui::ScrollArea::both().show(ui, |ui| {
                 egui::CollapsingHeader::new(RichText::new("GRBM").font(HEADING))
                     .default_open(true)
-                    .show(ui, |ui| self.egui_perf_counter(ui, "GRBM", &self.buf_data.grbm));
+                    .show(ui, |ui| self.egui_perf_counter(ui, "GRBM", &self.buf_data.grbm, &self.buf_data.grbm_history));
                 ui.add_space(SPACE);
                 egui::CollapsingHeader::new(RichText::new("GRBM2").font(HEADING))
                     .default_open(true)
-                    .show(ui, |ui| self.egui_perf_counter(ui, "GRBM2", &self.buf_data.grbm2));
+                    .show(ui, |ui| self.egui_perf_counter(ui, "GRBM2", &self.buf_data.grbm2, &self.buf_data.grbm2_history));
                 ui.add_space(SPACE);
                 egui::CollapsingHeader::new(RichText::new("VRAM").font(HEADING))
                     .default_open(true)
@@ -338,11 +354,15 @@ impl Sensors {
 struct CentralData {
     grbm: PerfCounter,
     grbm2: PerfCounter,
+    grbm_history: Vec<History<u8>>,
+    grbm2_history: Vec<History<u8>>,
     vram_usage: VramUsageView,
     fdinfo: FdInfoView,
     gpu_metrics: GpuMetrics,
     sensors: Sensors,
 }
+
+use egui::util::History;
 
 struct MyApp {
     app_device_info: AppDeviceInfo,
@@ -544,14 +564,40 @@ impl MyApp {
         });
     }
 
-    fn egui_perf_counter(&self, ui: &mut egui::Ui, name: &str, pc: &PerfCounter) {
+    fn egui_perf_counter(&self, ui: &mut egui::Ui, name: &str, pc: &PerfCounter, history: &[History<u8>]) {
+        use egui::plot::{Line, Plot, PlotPoint, PlotPoints};
+        use std::ops::RangeInclusive;
+
+        let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
+            String::new()
+        };
+        let label_fmt = |_s: &str, val: &PlotPoint| {
+            format!("{:.0}%", val.y)
+        };
+
         egui::Grid::new(name).show(ui, |ui| {
-            for (name, pos) in &pc.index {
+            for ((name, pos), history) in pc.index.iter().zip(history.iter()) {
                 let usage = pc.bits.get(*pos);
                 ui.label(name);
-                ui.add_sized([240.0, 0.0], egui::ProgressBar::new(
-                    (usage as f32) / 100.0
-                ).text(RichText::new(format!("{usage:3} %")).font(BASE)));
+                ui.label(format!("{usage:3}%"));
+
+                let points: PlotPoints = history.iter()
+                    .map(|(i, val)| [i, val as f64]).collect();
+                let line = Line::new(points);
+                Plot::new(name)
+                    .allow_drag(false)
+                    .allow_zoom(false)
+                    .allow_scroll(false)
+                    .show_axes([false, true])
+                    .show_x(false)
+                    .include_y(0.0)
+                    .include_y(100.0)
+                    .y_axis_formatter(y_fmt)
+                    .label_formatter(label_fmt)
+                    .auto_bounds_x()
+                    .width(240.0)
+                    .height(32.0)
+                    .show(ui, |plot_ui| plot_ui.line(line));
                 ui.end_row();
             }
         });
