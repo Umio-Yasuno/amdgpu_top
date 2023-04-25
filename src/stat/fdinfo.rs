@@ -103,10 +103,11 @@ pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reve
     );
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum FdInfoSortType {
     PID,
+    #[default]
     VRAM,
     GFX,
     Compute,

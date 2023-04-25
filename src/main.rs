@@ -74,7 +74,7 @@ impl Default for ToggleOptions {
             sensor: true,
             high_freq: false,
             fdinfo: true,
-            fdinfo_sort: FdInfoSortType::VRAM,
+            fdinfo_sort: Default::default(),
             reverse_sort: false,
             gpu_metrics: false,
         }

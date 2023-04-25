@@ -72,7 +72,7 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
         decode: amdgpu_dev.get_video_caps_info(CAP_TYPE::DECODE).ok(),
         encode: amdgpu_dev.get_video_caps_info(CAP_TYPE::ENCODE).ok(),
         vbios: amdgpu_dev.get_vbios_info().ok(),
-        fdinfo_sort: FdInfoSortType::VRAM,
+        fdinfo_sort: Default::default(),
         reverse_sort: false,
         buf_data: data.clone(),
         arc_data: Arc::new(Mutex::new(data)),
