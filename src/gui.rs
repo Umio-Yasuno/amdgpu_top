@@ -121,12 +121,16 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
 
                 std::thread::sleep(sample.delay);
             }
+
             let sec = now.elapsed().as_secs_f64();
-            for ((_name, pos), history) in grbm.index.iter().zip(grbm_history.iter_mut()) {
-                history.add(sec, grbm.bits.get(*pos));
-            }
-            for ((_name, pos), history) in grbm2.index.iter().zip(grbm2_history.iter_mut()) {
-                history.add(sec, grbm2.bits.get(*pos));
+
+            for (pc, history) in [
+                (&grbm, &mut grbm_history),
+                (&grbm2, &mut grbm2_history),
+            ] {
+                for ((_name, pos), h) in pc.index.iter().zip(history.iter_mut()) {
+                    h.add(sec, pc.bits.get(*pos));
+                }
             }
 
             vram_usage.update_usage(&amdgpu_dev);
