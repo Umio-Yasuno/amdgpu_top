@@ -20,11 +20,12 @@ use libdrm_amdgpu_sys::PCI;
 use crate::{stat, DevicePath, Sampling};
 use stat::{FdInfoSortType, FdInfoView, PerfCounter, VramUsageView};
 
-const AGE: f32 = 1.0;
 const SPACE: f32 = 8.0;
 const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
 const MEDIUM: FontId = FontId::new(15.0, FontFamily::Monospace);
 const HEADING: FontId = FontId::new(16.0, FontFamily::Monospace);
+const PLOT_HEIGHT: f32 = 32.0;
+const PLOT_WIDTH: f32 = 240.0;
 
 pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
     let device_path = DevicePath::new(instance);
@@ -57,9 +58,8 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
 
     let mut gpu_metrics = amdgpu_dev.get_gpu_metrics().unwrap_or(GpuMetrics::Unknown);
     let mut sensors = Sensors::new(&amdgpu_dev, &pci_bus);
-    // TODO: Adjusting `History::new`
-    let mut grbm_history = vec![History::new(0..30, AGE * 30.0); grbm.index.len()];
-    let mut grbm2_history = vec![History::new(0..30, AGE * 30.0); grbm2.index.len()];
+    let mut grbm_history = vec![History::new(0..30, f32::INFINITY); grbm.index.len()];
+    let mut grbm2_history = vec![History::new(0..30, f32::INFINITY); grbm2.index.len()];
 
     let data = CentralData {
         grbm: grbm.clone(),
@@ -108,13 +108,12 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
     }
 
     {
-        let mut now: f64 = 0.0;
+        let now = std::time::Instant::now();
         let share_data = app.arc_data.clone();
 
         std::thread::spawn(move || loop {
             grbm.bits.clear();
             grbm2.bits.clear();
-            now += AGE as f64;
 
             for _ in 0..sample.count {
                 grbm.read_reg(&amdgpu_dev);
@@ -122,11 +121,12 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
 
                 std::thread::sleep(sample.delay);
             }
+            let sec = now.elapsed().as_secs_f64();
             for ((_name, pos), history) in grbm.index.iter().zip(grbm_history.iter_mut()) {
-                history.add(now, grbm.bits.get(*pos));
+                history.add(sec, grbm.bits.get(*pos));
             }
             for ((_name, pos), history) in grbm2.index.iter().zip(grbm2_history.iter_mut()) {
-                history.add(now, grbm2.bits.get(*pos));
+                history.add(sec, grbm2.bits.get(*pos));
             }
 
             vram_usage.update_usage(&amdgpu_dev);
@@ -573,7 +573,7 @@ impl MyApp {
             String::new()
         };
         let label_fmt = |_s: &str, val: &PlotPoint| {
-            format!("{:.0}%", val.y)
+            format!("{:.1}s : {:.0}%", val.x, val.y)
         };
 
         egui::Grid::new(name).show(ui, |ui| {
@@ -590,14 +590,13 @@ impl MyApp {
                     .allow_zoom(false)
                     .allow_scroll(false)
                     .show_axes([false, true])
-                    .show_x(false)
                     .include_y(0.0)
                     .include_y(100.0)
                     .y_axis_formatter(y_fmt)
                     .label_formatter(label_fmt)
                     .auto_bounds_x()
-                    .width(240.0)
-                    .height(32.0)
+                    .height(PLOT_HEIGHT)
+                    .width(PLOT_WIDTH)
                     .show(ui, |plot_ui| plot_ui.line(line));
                 ui.end_row();
             }
