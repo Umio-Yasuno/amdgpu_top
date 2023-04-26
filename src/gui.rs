@@ -179,6 +179,35 @@ pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
     ).unwrap();
 }
 
+fn collapsing(
+    ui: &mut egui::Ui,
+    text: &str,
+    default_open: bool,
+    body: impl FnOnce(&mut egui::Ui),
+) {
+    let mut state = egui::collapsing_header::CollapsingState::load_with_default_open(
+        ui.ctx(),
+        egui::Id::new(text),
+        default_open,
+    );
+    let label = |text: &str| -> egui::Label {
+        egui::Label::new(RichText::new(text).font(HEADING)).sense(egui::Sense::click())
+    };
+    let header = label(text);
+
+    let header_res = ui.horizontal(|ui| {
+        let icon = {
+            let text = if state.is_open() { "\u{25be}" } else { "\u{25b8}" };
+            label(text)
+        };
+        if ui.add(icon).clicked() || ui.add(header).clicked() {
+            state.toggle(ui);
+        }
+    });
+
+    state.show_body_indented(&header_res.response, ui, |ui| body(ui));
+}
+
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         {
@@ -197,21 +226,16 @@ impl eframe::App for MyApp {
             ui.set_min_width(320.0);
             egui::ScrollArea::both().show(ui, |ui| {
                 ui.add_space(SPACE);
-                egui::CollapsingHeader::new(
-                    RichText::new("App Device Info").font(HEADING)
-                ).default_open(true).show(ui, |ui| self.egui_app_device_info(ui));
+                collapsing(ui, "App Device Info", true, |ui| self.egui_app_device_info(ui));
+
                 if self.decode.is_some() && self.encode.is_some() {
                     ui.add_space(SPACE);
-                    egui::CollapsingHeader::new(
-                        RichText::new("Video Caps Info").font(HEADING)
-                    ).default_open(false).show(ui, |ui| self.egui_video_caps_info(ui));
+                    collapsing(ui, "Video Caps Info", false, |ui| self.egui_video_caps_info(ui));
                 }
 
                 if self.vbios.is_some() {
                     ui.add_space(SPACE);
-                    egui::CollapsingHeader::new(
-                        RichText::new("VBIOS Info").font(HEADING)
-                    ).default_open(false).show(ui, |ui| self.egui_vbios_info(ui));
+                    collapsing(ui, "VBIOS Info", false, |ui| self.egui_vbios_info(ui));
                 }
             });
         });
@@ -219,25 +243,25 @@ impl eframe::App for MyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.set_min_width(540.0);
             egui::ScrollArea::both().show(ui, |ui| {
-                egui::CollapsingHeader::new(RichText::new("GRBM").font(HEADING))
-                    .default_open(true)
-                    .show(ui, |ui| self.egui_perf_counter(ui, "GRBM", &self.buf_data.grbm, &self.buf_data.grbm_history));
+                collapsing(ui, "GRBM", true, |ui| self.egui_perf_counter(
+                    ui,
+                    "GRBM",
+                    &self.buf_data.grbm,
+                    &self.buf_data.grbm_history,
+                ));
                 ui.add_space(SPACE);
-                egui::CollapsingHeader::new(RichText::new("GRBM2").font(HEADING))
-                    .default_open(true)
-                    .show(ui, |ui| self.egui_perf_counter(ui, "GRBM2", &self.buf_data.grbm2, &self.buf_data.grbm2_history));
+                collapsing(ui, "GRBM2", true, |ui| self.egui_perf_counter(
+                    ui,
+                    "GRBM",
+                    &self.buf_data.grbm2,
+                    &self.buf_data.grbm2_history,
+                ));
                 ui.add_space(SPACE);
-                egui::CollapsingHeader::new(RichText::new("VRAM").font(HEADING))
-                    .default_open(true)
-                    .show(ui, |ui| self.egui_vram(ui));
+                collapsing(ui, "VRAM", true, |ui| self.egui_vram(ui));
                 ui.add_space(SPACE);
-                egui::CollapsingHeader::new(RichText::new("fdinfo").font(HEADING))
-                    .default_open(true)
-                    .show(ui, |ui| self.egui_grid_fdinfo(ui));
+                collapsing(ui, "fdinfo", true, |ui| self.egui_grid_fdinfo(ui));
                 ui.add_space(SPACE);
-                egui::CollapsingHeader::new(RichText::new("Sensors").font(HEADING))
-                    .default_open(true)
-                    .show(ui, |ui| self.egui_sensors(ui));
+                collapsing(ui, "Sensors", true, |ui| self.egui_sensors(ui));
 
                 let header = if let Some(h) = self.buf_data.gpu_metrics.get_header() {
                     format!(
@@ -246,7 +270,7 @@ impl eframe::App for MyApp {
                         h.content_revision
                     )
                 } else {
-                    "".to_string()
+                    String::new()
                 };
 
                 match self.buf_data.gpu_metrics {
@@ -255,22 +279,14 @@ impl eframe::App for MyApp {
                     GpuMetrics::V1_2(_) |
                     GpuMetrics::V1_3(_) => {
                         ui.add_space(SPACE);
-                        egui::CollapsingHeader::new(
-                            RichText::new(&header).font(HEADING)
-                        )
-                        .default_open(true)
-                        .show(ui, |ui| self.egui_gpu_metrics_v1(ui, &self.buf_data.gpu_metrics));
+                        collapsing(ui, &header, true, |ui| self.egui_gpu_metrics_v1(ui));
                     },
                     GpuMetrics::V2_0(_) |
                     GpuMetrics::V2_1(_) |
                     GpuMetrics::V2_2(_) |
                     GpuMetrics::V2_3(_) => {
                         ui.add_space(SPACE);
-                        egui::CollapsingHeader::new(
-                            RichText::new(&header).font(HEADING)
-                        )
-                        .default_open(true)
-                        .show(ui, |ui| self.egui_gpu_metrics_v2(ui, &self.buf_data.gpu_metrics));
+                        collapsing(ui, &header, true, |ui| self.egui_gpu_metrics_v2(ui));
                     },
                     GpuMetrics::Unknown => {},
                 }
@@ -757,7 +773,8 @@ impl MyApp {
         ));
     }
 
-    fn egui_gpu_metrics_v1(&self, ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
+    fn egui_gpu_metrics_v1(&self, ui: &mut egui::Ui) {
+        let gpu_metrics = &self.buf_data.gpu_metrics;
         if let Some(socket_power) = gpu_metrics.get_average_socket_power() {
             if socket_power != u16::MAX {
                 ui.label(&format!("Socket Power => {socket_power:3} W"));
@@ -798,12 +815,14 @@ impl MyApp {
         });
     }
 
-    fn egui_gpu_metrics_v2(&self, ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
+    fn egui_gpu_metrics_v2(&self, ui: &mut egui::Ui) {
         const CORE_TEMP_LABEL: &str = "Core Temp (C)";
         const CORE_POWER_LABEL: &str = "Core Power (mW)";
         const CORE_CLOCK_LABEL: &str = "Core Clock (MHz)";
         const L3_TEMP_LABEL: &str = "L3 Cache Temp (C)";
         const L3_CLOCK_LABEL: &str = "L3 Cache Clock (MHz)";
+
+        let gpu_metrics = &self.buf_data.gpu_metrics;
 
         ui.horizontal(|ui| {
             ui.label("GFX =>");
