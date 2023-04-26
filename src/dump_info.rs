@@ -66,8 +66,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     println!("GPU Clock: {min_gpu_clk}-{max_gpu_clk} MHz");
     println!("Peak FP32: {} GFLOPS", ext_info.peak_gflops());
 
-    /* ref: https://gitlab.freedesktop.org/mesa/mesa/blob/main/src/amd/common/ac_gpu_info.c */
-    let resizable_bar = if (memory_info.vram.total_heap_size * 9 / 10) <= memory_info.cpu_accessible_vram.total_heap_size {
+    let resizable_bar = if memory_info.check_resizable_bar() {
         "Enabled"
     } else {
         "Disabled"

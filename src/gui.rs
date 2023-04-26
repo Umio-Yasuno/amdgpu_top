@@ -398,11 +398,7 @@ impl AppDeviceInfo {
             amdgpu_dev.get_min_max_gpu_clock().unwrap_or((0, 0));
         let (min_mem_clk, max_mem_clk) =
             amdgpu_dev.get_min_max_memory_clock().unwrap_or((0, 0));
-        let resizable_bar = {
-            let vram = memory_info.vram.total_heap_size;
-            let cpu_accessible = memory_info.cpu_accessible_vram.total_heap_size;
-            (vram * 9 / 10) <= cpu_accessible
-        };
+        let resizable_bar = memory_info.check_resizable_bar();
         let marketing_name = amdgpu_dev.get_marketing_name().unwrap_or_default();
 
         Self {
