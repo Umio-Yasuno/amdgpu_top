@@ -2,7 +2,8 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::path::PathBuf;
 use eframe::egui;
-use egui::{FontFamily, FontId, RichText};
+use egui::{FontFamily, FontId, RichText, util::History};
+
 use libdrm_amdgpu_sys::AMDGPU::{
     drm_amdgpu_info_device,
     drm_amdgpu_memory_info,
@@ -362,8 +363,6 @@ struct CentralData {
     sensors: Sensors,
 }
 
-use egui::util::History;
-
 struct MyApp {
     app_device_info: AppDeviceInfo,
     decode: Option<VideoCapsInfo>,
@@ -564,7 +563,13 @@ impl MyApp {
         });
     }
 
-    fn egui_perf_counter(&self, ui: &mut egui::Ui, name: &str, pc: &PerfCounter, history: &[History<u8>]) {
+    fn egui_perf_counter(
+        &self,
+        ui: &mut egui::Ui,
+        name: &str,
+        pc: &PerfCounter,
+        history: &[History<u8>],
+    ) {
         use egui::plot::{Line, Plot, PlotPoint, PlotPoints};
         use std::ops::RangeInclusive;
 
@@ -583,7 +588,7 @@ impl MyApp {
 
                 let points: PlotPoints = history.iter()
                     .map(|(i, val)| [i, val as f64]).collect();
-                let line = Line::new(points);
+                let line = Line::new(points).fill(1.0);
                 Plot::new(name)
                     .allow_drag(false)
                     .allow_zoom(false)
