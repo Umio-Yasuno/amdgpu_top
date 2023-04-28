@@ -12,6 +12,7 @@ use libdrm_amdgpu_sys::AMDGPU::{
     MetricsInfo,
     CHIP_CLASS,
     GPU_INFO,
+    HW_IP::{HwIpInfo, HW_IP_TYPE},
     SENSOR_INFO::*,
     VBIOS::VbiosInfo,
     VIDEO_CAPS::{VideoCapsInfo, CAP_TYPE},
@@ -26,6 +27,18 @@ const MEDIUM: FontId = FontId::new(15.0, FontFamily::Monospace);
 const HEADING: FontId = FontId::new(16.0, FontFamily::Monospace);
 const PLOT_HEIGHT: f32 = 32.0;
 const PLOT_WIDTH: f32 = 240.0;
+
+const HW_IP_LIST: &[HW_IP_TYPE] = &[
+    HW_IP_TYPE::GFX,
+    HW_IP_TYPE::COMPUTE,
+    HW_IP_TYPE::DMA,
+    HW_IP_TYPE::UVD,
+    HW_IP_TYPE::VCE,
+    HW_IP_TYPE::UVD_ENC,
+    HW_IP_TYPE::VCN_DEC,
+    HW_IP_TYPE::VCN_ENC,
+    HW_IP_TYPE::VCN_JPEG,
+];
 
 pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
     let device_path = DevicePath::new(instance);
@@ -228,6 +241,9 @@ impl eframe::App for MyApp {
                 ui.add_space(SPACE);
                 collapsing(ui, "App Device Info", true, |ui| self.egui_app_device_info(ui));
 
+                ui.add_space(SPACE);
+                collapsing(ui, "Hardware IP Info", false, |ui| self.egui_hw_ip_info(ui));
+
                 if self.decode.is_some() && self.encode.is_some() {
                     ui.add_space(SPACE);
                     collapsing(ui, "Video Caps Info", false, |ui| self.egui_video_caps_info(ui));
@@ -398,6 +414,7 @@ struct MyApp {
 struct AppDeviceInfo {
     ext_info: drm_amdgpu_info_device,
     memory_info: drm_amdgpu_memory_info,
+    hw_ip_info: Vec<HwIpInfo>,
     resizable_bar: bool,
     min_gpu_clk: u32,
     max_gpu_clk: u32,
@@ -420,10 +437,14 @@ impl AppDeviceInfo {
             amdgpu_dev.get_min_max_memory_clock().unwrap_or((0, 0));
         let resizable_bar = memory_info.check_resizable_bar();
         let marketing_name = amdgpu_dev.get_marketing_name().unwrap_or_default();
+        let hw_ip_info = HW_IP_LIST.iter().filter_map(|ip_type|
+            amdgpu_dev.get_hw_ip_info(*ip_type).ok()
+        ).filter(|hw_ip_info| hw_ip_info.count != 0).collect();
 
         Self {
             ext_info: ext_info.clone(),
             memory_info: memory_info.clone(),
+            hw_ip_info,
             resizable_bar,
             min_gpu_clk,
             max_gpu_clk,
@@ -527,6 +548,24 @@ impl MyApp {
         });
     }
 
+    pub fn egui_hw_ip_info(&self, ui: &mut egui::Ui) {
+        egui::Grid::new("hw_ip_info").show(ui, |ui| {
+            ui.label("IP").highlight();
+            ui.label("version").highlight();
+            ui.label("queues").highlight();
+            ui.end_row();
+
+            for hw_ip in &self.app_device_info.hw_ip_info {
+                let (major, minor) = hw_ip.info.version();
+
+                ui.label(hw_ip.ip_type.to_string());
+                ui.label(format!("{major}.{minor}"));
+                ui.label(hw_ip.info.num_queues().to_string());
+                ui.end_row();
+            }
+        });
+    }
+
     fn egui_video_caps_info(&self, ui: &mut egui::Ui) {
         let Some(ref decode_caps) = self.decode else { return };
         let Some(ref encode_caps) = self.encode else { return };
@@ -547,7 +586,7 @@ impl MyApp {
                 ("VP9", decode_caps.vp9, encode_caps.vp9),
                 ("AV1", decode_caps.av1, encode_caps.av1),
             ] {
-                ui.label(name).highlight();
+                ui.label(name);
                 if let Some(dec) = decode {
                     ui.label(&format!("{}x{}", dec.max_width, dec.max_height));
                 } else {

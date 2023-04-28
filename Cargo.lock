@@ -884,7 +884,7 @@ checksum = "3304a64d199bb964be99741b7a14d26972741915b3649639149b2479bb46f4b5"
 [[package]]
 name = "libdrm_amdgpu_sys"
 version = "0.1.1"
-source = "git+https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs#267449377c848fcda0cb819df3aa8839fdc31b8b"
+source = "git+https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs#d55fd30f073be7c8353d27f3563253342c5c61ae"
 
 [[package]]
 name = "libloading"
