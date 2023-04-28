@@ -5,6 +5,7 @@ use super::{Text, Opt};
 // use std::sync::{Arc, Mutex};
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
+#[cfg(feature = "proc_trace")]
 use serde_json::{json, Map, Value};
 use crate::DevicePath;
 
@@ -29,6 +30,7 @@ pub struct ProcInfo {
 }
 
 impl ProcInfo {
+    #[cfg(feature = "proc_trace")]
     pub fn from_pid(pid: i32, device_path: &DevicePath) -> Self {
         let mut name = fs::read_to_string(format!("/proc/{pid}/comm")).unwrap();
         name.pop(); // trim '\n'
@@ -246,6 +248,7 @@ impl FdInfoView {
         });
     }
 
+    #[cfg(feature = "proc_trace")]
     pub fn json_value(&self) -> Value {
         let Some(pu) = self.proc_usage.get(0) else { return Value::Null };
         let mut m = Map::new();

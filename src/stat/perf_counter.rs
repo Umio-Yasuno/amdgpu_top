@@ -10,6 +10,7 @@ use cursive::view::Nameable;
 use cursive::utils::Counter;
 use cursive::Rect;
 use cursive::align::HAlign;
+#[cfg(feature = "proc_trace")]
 use serde_json::{json, Map, Value};
 
 use super::{DeviceHandle, PANEL_WIDTH, PCType, PCAcc, TopView};
@@ -96,6 +97,7 @@ impl PerfCounter {
         }
     }
 
+    #[cfg(feature = "proc_trace")]
     pub fn json_value(&mut self) -> Value {
         let mut m = Map::new();
 

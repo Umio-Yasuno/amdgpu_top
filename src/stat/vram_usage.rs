@@ -12,6 +12,7 @@ use cursive::view::Nameable;
 use cursive::utils::Counter;
 use cursive::Rect;
 use cursive::align::HAlign;
+#[cfg(feature = "proc_trace")]
 use serde_json::{json, Map, Value};
 
 #[derive(Clone, Debug)]
@@ -105,6 +106,7 @@ impl VramUsageView {
         self.gtt.counter.set(self.gtt.usage as usize);
     }
 
+    #[cfg(feature = "proc_trace")]
     pub fn json_value(&self) -> Value {
         let mut m = Map::new();
 

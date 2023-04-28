@@ -33,9 +33,9 @@ const HELP_MSG: &str = concat!(
     "   -d, --dump\n",
     "       Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)\n",
     "   -J\n",
-    "       Output JSON formatted data for simple process trace\n",
+    "       Output JSON formatted data for simple process trace (require \"proc_trace\" feature)\n",
     "   --gui\n",
-    "       Launch GUI mode\n",
+    "       Launch GUI mode (require \"egui\" feature)\n",
     "   -h, --help\n",
     "       Print help information\n",
     "\n",
@@ -45,12 +45,13 @@ const HELP_MSG: &str = concat!(
     "   -u <u64>, --update-process-index <u64>\n",
     "       Update interval in seconds of the process index for fdinfo (default: 5s)\n",
     "   -s <i64>, --ms <i64>\n",
-    "       Refresh period in milliseconds for simple process trace\n",
+    "       Refresh period in milliseconds for simple process trace (require \"proc_trace\" feature)\n",
     "   -p <i32>, --pid <i32>\n",
-    "       Specification of PID, used for `-J` option\n",
+    "       Specification of PID, used for `-J` option (require \"proc_trace\" feature)\n",
 );
 
 impl MainOpt {
+    #[allow(unused_assignments)]
     pub fn parse() -> Self {
         let mut opt = Self::default();
         let mut skip = false;
@@ -83,6 +84,11 @@ impl MainOpt {
                 },
                 "-J" => {
                     opt.json_output = true;
+                    #[cfg(not(feature = "proc_trace"))]
+                    {
+                        eprintln!("\"proc_trace\" feature is not enabled for this build.");
+                        std::process::exit(1);
+                    }
                 },
                 "-s" | "--ms" => {
                     if let Some(val_str) = args.get(idx+1) {
@@ -92,6 +98,11 @@ impl MainOpt {
                         eprintln!("missing argument: \"-s <u64>\"");
                         std::process::exit(1);
                     }
+                    #[cfg(not(feature = "proc_trace"))]
+                    {
+                        eprintln!("\"proc_trace\" feature is not enabled for this build.");
+                        std::process::exit(1);
+                    }
                 },
                 "-p" | "--pid" => {
                     if let Some(val_str) = args.get(idx+1) {
@@ -99,6 +110,11 @@ impl MainOpt {
                         skip = true;
                     } else {
                         eprintln!("missing argument: \"-p <i32>\"");
+                        std::process::exit(1);
+                    }
+                    #[cfg(not(feature = "proc_trace"))]
+                    {
+                        eprintln!("\"proc_trace\" feature is not enabled for this build.");
                         std::process::exit(1);
                     }
                 },
@@ -114,6 +130,11 @@ impl MainOpt {
                 },
                 "--gui" => {
                     opt.gui = true;
+                    #[cfg(not(feature = "egui"))]
+                    {
+                        eprintln!("\"egui\" feature is not enabled for this build.");
+                        std::process::exit(1);
+                    }
                 },
                 "-h" | "--help" => {
                     println!("{HELP_MSG}");

@@ -12,6 +12,7 @@ mod stat;
 mod args;
 mod misc;
 mod dump_info;
+#[cfg(feature = "proc_trace")]
 mod json_output;
 
 use stat::FdInfoSortType;
@@ -113,6 +114,7 @@ fn main() {
         return;
     }
 
+    #[cfg(feature = "proc_trace")]
     if main_opt.json_output {
         let Some(self_pid) = main_opt.pid else {
             eprintln!("PID is not specified.");

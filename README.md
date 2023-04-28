@@ -20,9 +20,9 @@ FLAGS:
    -d, --dump
        Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)
    -J
-       Output JSON formatted data for simple process trace
+       Output JSON formatted data for simple process trace (require "proc_trace" feature)
    --gui
-       Launch GUI mode
+       Launch GUI mode (require "egui" feature)
    -h, --help
        Print help information
 
@@ -32,9 +32,9 @@ OPTIONS:
    -u <u64>, --update-process-index <u64>
        Update interval in seconds of the process index for fdinfo (default: 5s)
    -s <i64>, --ms <i64>
-       Refresh period in milliseconds for simple process trace
+       Refresh period in milliseconds for simple process trace (require "proc_trace" feature)
    -p <i32>, --pid <i32>
-       Specification of PID, used for `-J` option
+       Specification of PID, used for `-J` option (require "proc_trace" feature)
 ```
 
 ### Command
