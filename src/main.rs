@@ -102,7 +102,7 @@ fn main() {
 
     #[cfg(feature = "egui")]
     if main_opt.gui {
-        gui::egui_run(main_opt.instance, main_opt.update_process_index, self_pid);
+        gui::egui_run(main_opt.instance, main_opt.update_process_index);
         return;
     }
 

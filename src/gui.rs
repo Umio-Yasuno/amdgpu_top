@@ -38,7 +38,8 @@ const HW_IP_LIST: &[HW_IP_TYPE] = &[
     HW_IP_TYPE::VCN_JPEG,
 ];
 
-pub fn egui_run(instance: u32, update_process_index: u64, self_pid: i32) {
+pub fn egui_run(instance: u32, update_process_index: u64) {
+    let self_pid = 0; // no filtering in GUI
     let device_path = DevicePath::new(instance);
     let amdgpu_dev = device_path.init_device_handle();
 
