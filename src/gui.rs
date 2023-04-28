@@ -236,7 +236,7 @@ impl eframe::App for MyApp {
         ctx.clear_animations();
 
         egui::SidePanel::left(egui::Id::new(3)).show(ctx, |ui| {
-            ui.set_min_width(320.0);
+            ui.set_min_width(360.0);
             egui::ScrollArea::both().show(ui, |ui| {
                 ui.add_space(SPACE);
                 collapsing(ui, "App Device Info", true, |ui| self.egui_app_device_info(ui));
@@ -253,6 +253,7 @@ impl eframe::App for MyApp {
                     ui.add_space(SPACE);
                     collapsing(ui, "VBIOS Info", false, |ui| self.egui_vbios_info(ui));
                 }
+                ui.add_space(SPACE);
             });
         });
 
@@ -306,6 +307,7 @@ impl eframe::App for MyApp {
                     },
                     GpuMetrics::Unknown => {},
                 }
+                ui.add_space(SPACE);
             });
         });
 
