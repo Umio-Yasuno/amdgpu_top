@@ -45,7 +45,13 @@ impl DevicePath {
                     panic!();
                 }
             );
-            DeviceHandle::init(f.into_raw_fd()).unwrap()
+
+            DeviceHandle::init(f.into_raw_fd()).unwrap_or_else(|err| {
+                eprintln!("DeviceHandle::init faild ({err})");
+                eprintln!("render_path = {}", self.render);
+                eprintln!("card_path = {}", self.card);
+                panic!();
+            })
         };
 
         amdgpu_dev
