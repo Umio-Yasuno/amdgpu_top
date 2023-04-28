@@ -539,6 +539,31 @@ impl MyApp {
             ]);
             ui.end_row();
 
+            let gl1_cache_size = ext_info.get_gl1_cache_size();
+            let l3_cache_size = ext_info.calc_l3_cache_size_mb();
+
+            ui.label("L1 Cache (per CU)");
+            ui.label(format!("{:4} KiB", ext_info.get_l1_cache_size() / 1024));
+            ui.end_row();
+            if 0 < gl1_cache_size {
+                ui.label(format!("GL1 Cache (per SA/SH)"));
+                ui.label(format!("{gl1_cache_size:4} KiB"));
+                ui.end_row();
+            }
+            ui.label("L2 Cache");
+            ui.label(format!(
+                "{:4} KiB ({} Banks)",
+                ext_info.calc_l2_cache_size() / 1024,
+                ext_info.num_tcc_blocks
+            ));
+            ui.end_row();
+            if 0 < l3_cache_size {
+                ui.label("L3 Cache");
+                ui.label(format!("{l3_cache_size:4} MiB"));
+                ui.end_row();
+            }
+            ui.end_row();
+
             let link = pci_bus.get_link_info(PCI::STATUS::Max);
 
             grid(ui, &[
