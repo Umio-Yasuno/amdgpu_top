@@ -1,125 +1,160 @@
 use super::{DeviceHandle, Text, Opt, PcieBw, PANEL_WIDTH};
 use libdrm_amdgpu_sys::{
     PCI,
-    AMDGPU::SENSOR_INFO::*,
+    AMDGPU::SENSOR_INFO::SENSOR_TYPE,
 };
 use std::fmt::{self, Write};
 use std::path::PathBuf;
-use serde_json::{json, Map, Value};
+
+#[derive(Clone, Debug)]
+pub struct Sensors {
+    pub hwmon_path: PathBuf,
+    pub cur: PCI::LINK,
+    pub max: PCI::LINK,
+    pub bus_info: PCI::BUS_INFO,
+    pub sclk: Option<u32>,
+    pub mclk: Option<u32>,
+    pub vddnb: Option<u32>,
+    pub vddgfx: Option<u32>,
+    pub temp: Option<u32>,
+    pub critical_temp: Option<u32>,
+    pub power: Option<u32>,
+    pub power_cap: Option<u32>,
+    pub fan_rpm: Option<u32>,
+    pub fan_max_rpm: Option<u32>,
+}
+
+impl Sensors {
+    pub fn new(amdgpu_dev: &DeviceHandle, pci_bus: &PCI::BUS_INFO) -> Self {
+        let hwmon_path = pci_bus.get_hwmon_path().unwrap();
+        let cur = pci_bus.get_link_info(PCI::STATUS::Current);
+        let max = pci_bus.get_link_info(PCI::STATUS::Max);
+        let [sclk, mclk, vddnb, vddgfx, temp, power] = [
+            amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_SCLK).ok(),
+            amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_MCLK).ok(),
+            amdgpu_dev.sensor_info(SENSOR_TYPE::VDDNB).ok(),
+            amdgpu_dev.sensor_info(SENSOR_TYPE::VDDGFX).ok(),
+            amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_TEMP).ok(),
+            amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok(),
+        ];
+        let critical_temp = Self::parse_hwmon(hwmon_path.join("temp1_crit"))
+            .map(|temp| temp.saturating_div(1_000));
+        let power_cap = Self::parse_hwmon(hwmon_path.join("power1_cap"))
+            .map(|cap| cap.saturating_div(1_000_000));
+
+        let fan_rpm = Self::parse_hwmon(hwmon_path.join("fan1_input"));
+        let fan_max_rpm = Self::parse_hwmon(hwmon_path.join("fan1_max"));
+
+        Self {
+            hwmon_path,
+            cur,
+            max,
+            bus_info: *pci_bus,
+            sclk,
+            mclk,
+            vddnb,
+            vddgfx,
+            temp,
+            critical_temp,
+            power,
+            power_cap,
+            fan_rpm,
+            fan_max_rpm,
+        }
+    }
+
+    fn parse_hwmon<P: Into<PathBuf>>(path: P) -> Option<u32> {
+        std::fs::read_to_string(path.into()).ok()
+            .and_then(|file| file.trim_end().parse::<u32>().ok())
+    }
+
+    pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
+        self.cur = self.bus_info.get_link_info(PCI::STATUS::Current);
+        self.sclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_SCLK).ok();
+        self.mclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_MCLK).ok();
+        self.vddnb = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDNB).ok();
+        self.vddgfx = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDGFX).ok();
+        self.temp = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_TEMP).ok();
+        self.power = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok();
+        self.fan_rpm = Self::parse_hwmon(self.hwmon_path.join("fan1_input"));
+    }
+}
 
 const WIDTH: usize = PANEL_WIDTH / 2;
-const SENSORS_LIST: &[(SENSOR_TYPE, &str, u32)] = &[
-    (SENSOR_TYPE::GFX_SCLK, "MHz", 1),
-    (SENSOR_TYPE::GFX_MCLK, "MHz", 1),
-    // (SENSOR_TYPE::GPU_TEMP, "C", 1000),
-    // (SENSOR_TYPE::GPU_LOAD, "%", 1),
-    // (SENSOR_TYPE::GPU_AVG_POWER, "W", 1),
-    (SENSOR_TYPE::VDDNB, "mV", 1),
-    (SENSOR_TYPE::VDDGFX, "mV", 1),
-];
 
-// #[derive(Default)]
-pub struct Sensor {
-    cur: PCI::LINK,
-    max: PCI::LINK,
-    bus_info: PCI::BUS_INFO,
-    hwmon_path: PathBuf,
-    power_cap_w: u32,
-    critical_temp: u32,
-    fan_max_rpm: u32,
+pub struct SensorsView {
+    sensors: Sensors,
     pub text: Text,
 }
 
-impl Sensor {
-    pub fn new(pci_bus: &PCI::BUS_INFO) -> Self {
-        let hwmon_path = pci_bus.get_hwmon_path().unwrap();
-        let power_cap_w = Self::parse_hwmon(&hwmon_path, "power1_cap").saturating_div(1_000_000);
-        let critical_temp = Self::parse_hwmon(&hwmon_path, "temp1_crit").saturating_div(1_000);
-        let fan_max_rpm = Self::parse_hwmon(&hwmon_path, "fan1_max");
-
+impl SensorsView {
+    pub fn new(amdgpu_dev: &DeviceHandle, pci_bus: &PCI::BUS_INFO) -> Self {
         Self {
-            cur: pci_bus.get_link_info(PCI::STATUS::Current),
-            max: pci_bus.get_link_info(PCI::STATUS::Max),
-            bus_info: *pci_bus,
-            hwmon_path,
-            power_cap_w,
-            critical_temp,
-            fan_max_rpm,
+            sensors: Sensors::new(amdgpu_dev, pci_bus),
             text: Text::default(),
         }
     }
 
-    fn parse_hwmon<P: Into<PathBuf>>(hwmon_path: P, file_name: &str) -> u32 {
-        std::fs::read_to_string(hwmon_path.into().join(file_name)).ok()
-            .and_then(|file| file.trim_end().parse::<u32>().ok()).unwrap_or(0)
+    pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
+        self.sensors.update(amdgpu_dev);
     }
 
-    pub fn update_status(&mut self) {
-        self.cur = self.bus_info.get_link_info(PCI::STATUS::Current);
-    }
-
-    pub fn print(&mut self, amdgpu_dev: &DeviceHandle) -> Result<(), fmt::Error> {
+    pub fn print(&mut self) -> Result<(), fmt::Error> {
+        let sensors = &self.sensors;
         const NAME_LEN: usize = 10;
         const VAL_LEN: usize = 5;
         self.text.clear();
-        self.update_status();
 
         let mut c = 0;
 
-        for (sensor, unit, div) in SENSORS_LIST {
-            let sensor_name = sensor.to_string();
-
-            if let Ok(val) = amdgpu_dev.sensor_info(*sensor) {
-                c += 1;
-                let val = val.saturating_div(*div);
-                write!(
-                    self.text.buf,
-                    " {:<WIDTH$} ",
-                    format!("{sensor_name:<NAME_LEN$} => {val:>VAL_LEN$} {unit:3}")
-                )?;
-                if (c % 2) == 0 { writeln!(self.text.buf)? };
-            }
+        for (name, val, unit) in [
+            ("GFX_SCLK", sensors.sclk, "MHz"),
+            ("GFX_MCLK", sensors.mclk, "MHz"),
+            ("VDDNB", sensors.vddnb, "mV"),
+            ("VDDGFX", sensors.vddgfx, "mV"),
+        ] {
+            let Some(val) = val else { continue };
+            c += 1;
+            write!(
+                self.text.buf,
+                " {:<WIDTH$} ",
+                format!("{name:<NAME_LEN$} => {val:>VAL_LEN$} {unit:3}")
+            )?;
+            if (c % 2) == 0 { writeln!(self.text.buf)? };
         }
         if (c % 2) == 1 { writeln!(self.text.buf)?; }
 
-        if let Ok(temp) = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_TEMP) {
-            writeln!(
-                self.text.buf,
-                " {name:<NAME_LEN$} => {temp:>VAL_LEN$} C (Crit. {crit} C)",
-                name = "GPU Temp",
-                temp = temp.saturating_div(1_000),
-                crit = self.critical_temp,
-            )?;
+        if let Some(temp) = sensors.temp {
+            let temp = temp.saturating_div(1_000);
+            if let Some(crit) = sensors.critical_temp {
+                writeln!(self.text.buf, " GPU Temp. => {temp:3} C (Crit. {crit} C)")?;
+            } else {
+                writeln!(self.text.buf, " GPU Temp. => {temp:3} C")?;
+            }
         }
-
-        if let Ok(power) = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER) {
-            writeln!(
-                self.text.buf,
-                " {name:<NAME_LEN$} => {power:>VAL_LEN$} W (Cap. {cap} W)",
-                name = "GPU Power",
-                power = power,
-                cap = self.power_cap_w,
-            )?;
+        if let Some(power) = sensors.power {
+            if let Some(cap) = sensors.power_cap {
+                writeln!(self.text.buf, " GPU Power => {power:3} W (Cap. {cap} W)")?;
+            } else {
+                writeln!(self.text.buf, " GPU Power => {power:3} W")?;
+            }
         }
-
-        if let Some(fan_rpm) = self.get_fan_rpm() {
-            writeln!(
-                self.text.buf,
-                " {name:<NAME_LEN$} => {fan_rpm:>VAL_LEN$} RPM (Max. {max} RPM)",
-                name = "Fan",
-                fan_rpm = fan_rpm,
-                max = self.fan_max_rpm,
-            )?;
+        if let Some(fan_rpm) = sensors.fan_rpm {
+            if let Some(max_rpm) = sensors.fan_max_rpm {
+                writeln!(self.text.buf, " Fan => {fan_rpm:4} RPM (Max. {max_rpm} RPM)")?;
+            } else {
+                writeln!(self.text.buf, " Fan => {fan_rpm:4} RPM")?;
+            }
         }
 
         writeln!(
             self.text.buf,
             " PCI ({pci_bus}) => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
-            pci_bus = self.bus_info,
-            cur_gen = self.cur.gen,
-            cur_width = self.cur.width,
-            max_gen = self.max.gen,
-            max_width = self.max.width,
+            pci_bus = sensors.bus_info,
+            cur_gen = sensors.cur.gen,
+            cur_width = sensors.cur.width,
+            max_gen = sensors.max.gen,
+            max_width = sensors.max.width,
         )?;
 
         Ok(())
@@ -135,48 +170,6 @@ impl Sensor {
         )?;
 
         Ok(())
-    }
-
-    pub fn get_fan_rpm(&self) -> Option<u32> {
-        std::fs::read_to_string(self.hwmon_path.join("fan1_input")).ok()
-            .and_then(|rpm| rpm.trim_end().parse().ok())
-    }
-
-    pub fn json_value(&self, amdgpu_dev: &DeviceHandle) -> Value {
-        let mut m = Map::new();
-
-        m.insert(
-            "PCIe Link Speed".to_string(),
-            json!({
-                "gen": self.cur.gen,
-                "width": self.cur.width,
-            }),
-        );
-
-        for (sensor, unit, div) in SENSORS_LIST {
-            if let Ok(val) = amdgpu_dev.sensor_info(*sensor) {
-                let val = val.saturating_div(*div);
-                m.insert(
-                    sensor.to_string(),
-                    json!({
-                        "value": val,
-                        "unit": unit,
-                    }),
-                );
-            }
-        }
-
-        if let Some(fan_rpm) = self.get_fan_rpm() {
-            m.insert(
-                "Fan".to_string(),
-                json!({
-                    "value": fan_rpm,
-                    "unit": "RPM",
-                }),
-            );
-        }
-
-        m.into()
     }
 
     pub fn cb(siv: &mut cursive::Cursive) {

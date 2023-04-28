@@ -1,6 +1,5 @@
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use std::path::PathBuf;
 use eframe::egui;
 use egui::{FontFamily, FontId, RichText, util::History};
 
@@ -13,12 +12,11 @@ use libdrm_amdgpu_sys::AMDGPU::{
     CHIP_CLASS,
     GPU_INFO,
     HW_IP::{HwIpInfo, HW_IP_TYPE},
-    SENSOR_INFO::*,
     VBIOS::VbiosInfo,
     VIDEO_CAPS::{VideoCapsInfo, CAP_TYPE},
 };
 use libdrm_amdgpu_sys::PCI;
-use crate::{stat, DevicePath, Sampling};
+use crate::{stat, stat::Sensors, DevicePath, Sampling};
 use stat::{FdInfoSortType, FdInfoView, PerfCounter, VramUsageView};
 
 const SPACE: f32 = 8.0;
@@ -312,80 +310,6 @@ impl eframe::App for MyApp {
         });
 
         ctx.request_repaint_after(Duration::from_millis(500));
-    }
-}
-
-#[derive(Clone)]
-struct Sensors {
-    hwmon_path: PathBuf,
-    cur: PCI::LINK,
-    max: PCI::LINK,
-    bus_info: PCI::BUS_INFO,
-    sclk: Option<u32>,
-    mclk: Option<u32>,
-    vddnb: Option<u32>,
-    vddgfx: Option<u32>,
-    temp: Option<u32>,
-    critical_temp: Option<u32>,
-    power: Option<u32>,
-    power_cap: Option<u32>,
-    fan_rpm: Option<u32>,
-    fan_max_rpm: Option<u32>,
-}
-
-impl Sensors {
-    pub fn new(amdgpu_dev: &DeviceHandle, pci_bus: &PCI::BUS_INFO) -> Self {
-        let hwmon_path = pci_bus.get_hwmon_path().unwrap();
-        let cur = pci_bus.get_link_info(PCI::STATUS::Current);
-        let max = pci_bus.get_link_info(PCI::STATUS::Max);
-        let [sclk, mclk, vddnb, vddgfx, temp, power] = [
-            amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_SCLK).ok(),
-            amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_MCLK).ok(),
-            amdgpu_dev.sensor_info(SENSOR_TYPE::VDDNB).ok(),
-            amdgpu_dev.sensor_info(SENSOR_TYPE::VDDGFX).ok(),
-            amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_TEMP).ok(),
-            amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok(),
-        ];
-        let critical_temp = Self::parse_hwmon(hwmon_path.join("temp1_crit"))
-            .map(|temp| temp.saturating_div(1_000));
-        let power_cap = Self::parse_hwmon(hwmon_path.join("power1_cap"))
-            .map(|cap| cap.saturating_div(1_000_000));
-
-        let fan_rpm = Self::parse_hwmon(hwmon_path.join("fan1_input"));
-        let fan_max_rpm = Self::parse_hwmon(hwmon_path.join("fan1_max"));
-
-        Self {
-            hwmon_path,
-            cur,
-            max,
-            bus_info: *pci_bus,
-            sclk,
-            mclk,
-            vddnb,
-            vddgfx,
-            temp,
-            critical_temp,
-            power,
-            power_cap,
-            fan_rpm,
-            fan_max_rpm,
-        }
-    }
-
-    fn parse_hwmon<P: Into<PathBuf>>(path: P) -> Option<u32> {
-        std::fs::read_to_string(path.into()).ok()
-            .and_then(|file| file.trim_end().parse::<u32>().ok())
-    }
-
-    pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
-        self.cur = self.bus_info.get_link_info(PCI::STATUS::Current);
-        self.sclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_SCLK).ok();
-        self.mclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_MCLK).ok();
-        self.vddnb = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDNB).ok();
-        self.vddgfx = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDGFX).ok();
-        self.temp = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_TEMP).ok();
-        self.power = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok();
-        self.fan_rpm = Self::parse_hwmon(self.hwmon_path.join("fan1_input"));
     }
 }
 

@@ -15,7 +15,6 @@ pub fn print(
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let chip_class = ext_info.get_chip_class();
-    let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
     let mark_name = amdgpu_dev.get_marketing_name().unwrap_or("".to_string());
     let cu_count = ext_info.cu_active_number();
 
@@ -38,8 +37,6 @@ pub fn print(
     let proc_info = stat::ProcInfo::from_pid(pid, device_path);
     let mut fdinfo = stat::FdInfoView::new(period);
     fdinfo.get_proc_usage(&proc_info);
-
-    let mut sensor = stat::Sensor::new(&pci_bus);
 
     let quit_flag = Arc::new(AtomicBool::new(false));
 
@@ -80,7 +77,6 @@ pub fn print(
         }
 
         vram.update_usage(amdgpu_dev);
-        sensor.update_status();
         fdinfo.proc_usage.clear();
         fdinfo.get_proc_usage(&proc_info);
 
@@ -99,7 +95,6 @@ pub fn print(
             "GRBM2": grbm2.json_value(),
             "VRAM": vram.json_value(),
             "fdinfo": fdinfo.json_value(),
-            "Sensors": sensor.json_value(amdgpu_dev),
         });
 
         grbm.bits.clear();

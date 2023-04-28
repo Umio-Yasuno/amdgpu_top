@@ -152,7 +152,7 @@ fn main() {
     let pcie_bw = stat::PcieBw::new(pci_bus.get_sysfs_path());
     let share_pcie_bw = Arc::new(Mutex::new(pcie_bw.clone()));
 
-    let mut sensor = stat::Sensor::new(&pci_bus);
+    let mut sensors_view = stat::SensorsView::new(&amdgpu_dev, &pci_bus);
     let mut metrics = stat::GpuMetricsView::new(&amdgpu_dev);
 
     let mut toggle_opt = ToggleOptions::default();
@@ -176,11 +176,12 @@ fn main() {
             fdinfo.text.set();
         }
         {
-            sensor.print(&amdgpu_dev).unwrap();
+            sensors_view.update(&amdgpu_dev);
+            sensors_view.print().unwrap();
             if pcie_bw.exists {
-                sensor.print_pcie_bw(&pcie_bw).unwrap();
+                sensors_view.print_pcie_bw(&pcie_bw).unwrap();
             }
-            sensor.text.set();
+            sensors_view.text.set();
         }
     }
 
@@ -217,8 +218,8 @@ fn main() {
             siv.add_global_callback('M', stat::FdInfoView::cb_sort_by_media);
         }
         {
-            layout.add_child(sensor.text.panel("Sensors"));
-            siv.add_global_callback('n', stat::Sensor::cb);
+            layout.add_child(sensors_view.text.panel("Sensors"));
+            siv.add_global_callback('n', stat::SensorsView::cb);
         }
         if toggle_opt.gpu_metrics {
             let title = match metrics.version() {
@@ -317,16 +318,17 @@ fn main() {
             }
 
             if flags.sensor {
-                sensor.print(&amdgpu_dev).unwrap();
+                sensors_view.update(&amdgpu_dev);
+                sensors_view.print().unwrap();
 
                 if pcie_bw.exists {
                     let lock = share_pcie_bw.try_lock();
                     if let Ok(p) = lock {
-                        sensor.print_pcie_bw(&p).unwrap();
+                        sensors_view.print_pcie_bw(&p).unwrap();
                     }
                 }
             } else {
-                sensor.text.clear();
+                sensors_view.text.clear();
             }
 
             if flags.fdinfo {
@@ -354,7 +356,7 @@ fn main() {
 
             vram_usage.set_value();
             fdinfo.text.set();
-            sensor.text.set();
+            sensors_view.text.set();
             metrics.text.set();
 
             cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
