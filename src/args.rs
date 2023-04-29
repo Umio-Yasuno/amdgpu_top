@@ -6,6 +6,7 @@ pub struct MainOpt {
     pub pid: Option<i32>,
     pub update_process_index: u64, // sec
     pub gui: bool,
+    pub pci_path: Option<String>,
 }
 
 impl Default for MainOpt {
@@ -18,6 +19,7 @@ impl Default for MainOpt {
             pid: None,
             update_process_index: 5, // sec
             gui: false,
+            pci_path: None,
         }
     }
 }
@@ -42,6 +44,8 @@ const HELP_MSG: &str = concat!(
     "OPTIONS:\n",
     "   -i <u32>\n",
     "       Select GPU instance\n",
+    "   --pci <String>\n",
+    "       Specifying PCI path (domain:bus:dev.func)\n",
     "   -u <u64>, --update-process-index <u64>\n",
     "       Update interval in seconds of the process index for fdinfo (default: 5s)\n",
     "   -s <i64>, --ms <i64>\n",
@@ -135,6 +139,10 @@ impl MainOpt {
                         eprintln!("\"egui\" feature is not enabled for this build.");
                         std::process::exit(1);
                     }
+                },
+                "--pci" => {
+                    opt.pci_path = args.get(idx+1).map(|v| v.to_string());
+                    skip = true;
                 },
                 "-h" | "--help" => {
                     println!("{HELP_MSG}");

@@ -13,9 +13,6 @@ cargo run -- [options ..]
 
 ### Option
 ```
-USAGE:
-    cargo run -- [options ..] or <amdgpu_top> [options ..]
-
 FLAGS:
    -d, --dump
        Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)
@@ -29,6 +26,8 @@ FLAGS:
 OPTIONS:
    -i <u32>
        Select GPU instance
+   --pci <String>
+       Specifying PCI path (domain:bus:dev.func)
    -u <u64>, --update-process-index <u64>
        Update interval in seconds of the process index for fdinfo (default: 5s)
    -s <i64>, --ms <i64>

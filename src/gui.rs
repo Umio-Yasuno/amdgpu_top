@@ -16,7 +16,7 @@ use libdrm_amdgpu_sys::AMDGPU::{
     VIDEO_CAPS::{VideoCapsInfo, CAP_TYPE},
 };
 use libdrm_amdgpu_sys::PCI;
-use crate::{stat, stat::Sensors, DevicePath, Sampling};
+use crate::{args::MainOpt, stat, stat::Sensors, DevicePath, Sampling};
 use stat::{FdInfoSortType, FdInfoView, PerfCounter, VramUsageView};
 
 const SPACE: f32 = 8.0;
@@ -38,9 +38,9 @@ const HW_IP_LIST: &[HW_IP_TYPE] = &[
     HW_IP_TYPE::VCN_JPEG,
 ];
 
-pub fn egui_run(instance: u32, update_process_index: u64) {
+pub fn egui_run(main_opt: MainOpt) {
     let self_pid = 0; // no filtering in GUI
-    let device_path = DevicePath::new(instance);
+    let device_path = DevicePath::from_main_opt(&main_opt);
     let amdgpu_dev = device_path.init_device_handle();
 
     let ext_info = amdgpu_dev.device_info().unwrap();
@@ -108,7 +108,7 @@ pub fn egui_run(instance: u32, update_process_index: u64) {
         let mut buf_index: Vec<stat::ProcInfo> = Vec::new();
 
         std::thread::spawn(move || loop {
-            std::thread::sleep(Duration::from_secs(update_process_index));
+            std::thread::sleep(Duration::from_secs(main_opt.update_process_index));
 
             stat::update_index(&mut buf_index, &device_path, self_pid);
 

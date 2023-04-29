@@ -1,12 +1,10 @@
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, CHIP_CLASS, GPU_INFO};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use std::path::PathBuf;
 use cursive::views::{TextView, LinearLayout, Panel};
 use cursive::view::Scrollable;
 use cursive::align::HAlign;
-
-#[cfg(feature = "egui")]
-mod gui;
 
 mod stat;
 mod args;
@@ -14,20 +12,46 @@ mod misc;
 mod dump_info;
 #[cfg(feature = "proc_trace")]
 mod json_output;
+#[cfg(feature = "egui")]
+mod gui;
 
+use crate::args::MainOpt;
 use stat::FdInfoSortType;
 
 #[derive(Debug, Clone)]
 pub struct DevicePath {
-    pub render: String,
-    pub card: String,
+    pub render: PathBuf,
+    pub card: PathBuf,
 }
 
 impl DevicePath {
     pub fn new(instance: u32) -> Self {
         Self {
-            render: format!("/dev/dri/renderD{}", 128 + instance),
-            card: format!("/dev/dri/card{}", instance),
+            render: PathBuf::from(format!("/dev/dri/renderD{}", 128 + instance)),
+            card: PathBuf::from(format!("/dev/dri/card{}", instance)),
+        }
+    }
+
+    pub fn from_main_opt(main_opt: &MainOpt) -> Self {
+        use std::fs;
+
+        let Some(ref pci_path) = main_opt.pci_path else { return Self::new(main_opt.instance) };
+        let base = PathBuf::from("/dev/dri/by-path");
+
+        let [render, card] = ["render", "card"].map(|v| {
+            let name = format!("pci-{pci_path}-{v}");
+            let link = fs::read_link(base.join(name))?;
+
+            fs::canonicalize(base.join(link))
+        }).map(|path| path.unwrap_or_else(|err| {
+            eprintln!("{err}");
+            eprintln!("pci_path = {pci_path}");
+            panic!();
+        }));
+
+        Self {
+            render,
+            card,
         }
     }
 
@@ -41,16 +65,16 @@ impl DevicePath {
             let f = OpenOptions::new().read(true).write(true).open(&self.render)
                 .unwrap_or_else(|err| {
                     eprintln!("{err}");
-                    eprintln!("render_path = {}", self.render);
-                    eprintln!("card_path = {}", self.card);
+                    eprintln!("render_path = {:?}", self.render);
+                    eprintln!("card_path = {:?}", self.card);
                     panic!();
                 }
             );
 
             DeviceHandle::init(f.into_raw_fd()).unwrap_or_else(|err| {
                 eprintln!("DeviceHandle::init faild ({err})");
-                eprintln!("render_path = {}", self.render);
-                eprintln!("card_path = {}", self.card);
+                eprintln!("render_path = {:?}", self.render);
+                eprintln!("card_path = {:?}", self.card);
                 panic!();
             })
         };
@@ -97,16 +121,16 @@ const TOGGLE_HELP: &str = concat!(
 );
 
 fn main() {
-    let main_opt = args::MainOpt::parse();
+    let main_opt = MainOpt::parse();
     let self_pid = stat::get_self_pid().unwrap_or(0);
 
     #[cfg(feature = "egui")]
     if main_opt.gui {
-        gui::egui_run(main_opt.instance, main_opt.update_process_index);
+        gui::egui_run(main_opt);
         return;
     }
 
-    let device_path = DevicePath::new(main_opt.instance);
+    let device_path = DevicePath::from_main_opt(&main_opt);
     let amdgpu_dev = device_path.init_device_handle();
 
     if main_opt.dump {
