@@ -32,10 +32,9 @@ impl DevicePath {
         }
     }
 
-    pub fn from_main_opt(main_opt: &MainOpt) -> Self {
+    pub fn from_pci(pci_path: &str) -> Self {
         use std::fs;
 
-        let Some(ref pci_path) = main_opt.pci_path else { return Self::new(main_opt.instance) };
         let base = PathBuf::from("/dev/dri/by-path");
 
         let [render, card] = ["render", "card"].map(|v| {
@@ -52,6 +51,14 @@ impl DevicePath {
         Self {
             render,
             card,
+        }
+    }
+
+    pub fn from_main_opt(main_opt: &MainOpt) -> Self {
+        if let Some(ref pci_path) = main_opt.pci_path {
+            Self::from_pci(pci_path)
+        } else {
+            Self::new(main_opt.instance)
         }
     }
 
@@ -80,6 +87,13 @@ impl DevicePath {
         };
 
         amdgpu_dev
+    }
+
+    pub fn get_instance_number(&self) -> Option<u32> {
+        let render = self.render.to_str()?;
+
+        render.trim_start_matches("/dev/dri/renderD").parse::<u32>().ok()
+            .map(|v| v.saturating_sub(128) )
     }
 }
 

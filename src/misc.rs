@@ -1,3 +1,4 @@
+use crate::DevicePath;
 use libdrm_amdgpu_sys::{
     AMDGPU::{drm_amdgpu_info_device, DeviceHandle, GPU_INFO},
 };
@@ -32,4 +33,57 @@ pub fn info_bar(amdgpu_dev: &DeviceHandle, ext_info: &drm_amdgpu_info_device) ->
         min_memory_clk = min_mem_clk,
         max_memory_clk = max_mem_clk,
     )
+}
+
+fn get_device_path_list() -> Vec<(DevicePath, String)> {
+    use std::fs;
+    use std::path::PathBuf;
+
+    let mut dev_paths = Vec::new();
+
+    const PRE: usize = "pci-".len();
+    const PCI: usize = "0000:00:00.0".len();
+    const SYS_BUS: &str = "/sys/bus/pci/devices/";
+
+    let by_path = fs::read_dir("/dev/dri/by-path").unwrap();
+
+    for path in by_path.flatten() {
+        let Ok(path) = path.file_name().into_string() else { continue };
+        if !path.ends_with("render") { continue }
+
+        let pci = {
+            if path.len() < PRE+PCI { continue }
+            &path[PRE..PRE+PCI]
+        };
+
+        let Ok(uevent) = fs::read_to_string(
+            PathBuf::from(SYS_BUS).join(pci).join("uevent")
+        ) else { continue };
+
+        if uevent.starts_with("DRIVER=amdgpu") {
+            dev_paths.push((
+                DevicePath::from_pci(&pci),
+                pci.to_string()
+            ));
+        }
+    }
+
+    dev_paths
+}
+
+pub fn device_list() {
+    let list = get_device_path_list();
+
+    for (device_path, pci) in list {
+        let amdgpu_dev = device_path.init_device_handle();
+        let Ok(mark_name) = amdgpu_dev.get_marketing_name() else { continue };
+        let Some(instance) = device_path.get_instance_number() else { continue };
+
+        println!("#{instance}");
+        println!("Marketing Name = {mark_name:?}");
+        println!("render_path = {:?}", device_path.render);
+        println!("card_path = {:?}", device_path.card);
+        println!("pci = {pci:?}");
+        println!();
+    }
 }

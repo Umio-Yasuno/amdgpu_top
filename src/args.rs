@@ -34,6 +34,8 @@ const HELP_MSG: &str = concat!(
     "FLAGS:\n",
     "   -d, --dump\n",
     "       Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)\n",
+    "   --list\n",
+    "       Display a list of AMDGPU devices\n",
     "   -J\n",
     "       Output JSON formatted data for simple process trace (require \"proc_trace\" feature)\n",
     "   --gui\n",
@@ -143,6 +145,10 @@ impl MainOpt {
                 "--pci" => {
                     opt.pci_path = args.get(idx+1).map(|v| v.to_string());
                     skip = true;
+                },
+                "--list" => {
+                    crate::misc::device_list();
+                    std::process::exit(0);
                 },
                 "-h" | "--help" => {
                     println!("{HELP_MSG}");
