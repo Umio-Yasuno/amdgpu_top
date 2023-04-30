@@ -16,7 +16,7 @@ use libdrm_amdgpu_sys::AMDGPU::{
     VIDEO_CAPS::{VideoCapsInfo, CAP_TYPE},
 };
 use libdrm_amdgpu_sys::PCI;
-use crate::{args::MainOpt, stat, stat::Sensors, DevicePath, Sampling};
+use crate::{args::MainOpt, stat, stat::FdInfoUsage, stat::Sensors, DevicePath, Sampling};
 use stat::{FdInfoSortType, FdInfoView, PerfCounter, VramUsageView};
 
 const SPACE: f32 = 8.0;
@@ -72,6 +72,7 @@ pub fn egui_run(main_opt: MainOpt) {
     let mut sensors = Sensors::new(&amdgpu_dev, &pci_bus);
     let mut grbm_history = vec![History::new(0..30, f32::INFINITY); grbm.index.len()];
     let mut grbm2_history = vec![History::new(0..30, f32::INFINITY); grbm2.index.len()];
+    let mut fdinfo_history = History::new(0..30, f32::INFINITY);
 
     let data = CentralData {
         grbm: grbm.clone(),
@@ -80,6 +81,7 @@ pub fn egui_run(main_opt: MainOpt) {
         grbm2_history: grbm2_history.clone(),
         vram_usage: vram_usage.clone(),
         fdinfo: fdinfo.clone(),
+        fdinfo_history: fdinfo_history.clone(),
         gpu_metrics: gpu_metrics.clone(),
         sensors: sensors.clone(),
     };
@@ -161,6 +163,10 @@ pub fn egui_run(main_opt: MainOpt) {
                         fdinfo.get_proc_usage(pu);
                     }
                     fdinfo.interval = sample.to_duration();
+                    fdinfo_history.add(
+                        sec,
+                        fdinfo.fold_fdinfo_usage(),
+                    );
                 } else {
                     fdinfo.interval += sample.to_duration();
                 }
@@ -176,6 +182,7 @@ pub fn egui_run(main_opt: MainOpt) {
                         grbm2_history: grbm2_history.clone(),
                         vram_usage: vram_usage.clone(),
                         fdinfo: fdinfo.clone(),
+                        fdinfo_history: fdinfo_history.clone(),
                         gpu_metrics: gpu_metrics.clone(),
                         sensors: sensors.clone(),
                     };
@@ -202,16 +209,17 @@ fn collapsing(
         egui::Id::new(text),
         default_open,
     );
+
     let label = |text: &str| -> egui::Label {
         egui::Label::new(RichText::new(text).font(HEADING)).sense(egui::Sense::click())
     };
-    let header = label(text);
 
     let header_res = ui.horizontal(|ui| {
         let icon = {
             let text = if state.is_open() { "\u{25be}" } else { "\u{25b8}" };
             label(text)
         };
+        let header = label(text);
         if ui.add(icon).clicked() || ui.add(header).clicked() {
             state.toggle(ui);
         }
@@ -322,6 +330,7 @@ struct CentralData {
     grbm2_history: Vec<History<u8>>,
     vram_usage: VramUsageView,
     fdinfo: FdInfoView,
+    fdinfo_history: History<FdInfoUsage>,
     gpu_metrics: GpuMetrics,
     sensors: Sensors,
 }
@@ -632,6 +641,60 @@ impl MyApp {
     }
 
     fn egui_grid_fdinfo(&mut self, ui: &mut egui::Ui) {
+        use egui::plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
+        use std::ops::RangeInclusive;
+
+        let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
+            String::new()
+        };
+        let label_fmt = |name: &str, val: &PlotPoint| {
+            format!("{:.1}s : {name} {:.0}%", val.x, val.y)
+        };
+
+        let [mut gfx, mut compute, mut dma, mut dec, mut enc] = [
+            Vec::<[f64; 2]>::with_capacity(30),
+            Vec::<[f64; 2]>::with_capacity(30),
+            Vec::<[f64; 2]>::with_capacity(30),
+            Vec::<[f64; 2]>::with_capacity(30),
+            Vec::<[f64; 2]>::with_capacity(30),
+        ];
+
+        for (i, usage) in self.buf_data.fdinfo_history.iter() {
+            let usage_dec = usage.dec + usage.vcn_jpeg;
+            let usage_enc = usage.enc + usage.uvd_enc;
+
+            gfx.push([i, usage.gfx as f64]);
+            compute.push([i, usage.compute as f64]);
+            dma.push([i, usage.dma as f64]);
+            dec.push([i, usage_dec as f64]);
+            enc.push([i, usage_enc as f64]);
+        }
+
+        Plot::new("GFX Plot")
+            .allow_drag(false)
+            .allow_zoom(false)
+            .allow_scroll(false)
+            .show_axes([false, true])
+            .include_y(0.0)
+            .include_y(100.0)
+            .y_axis_formatter(y_fmt)
+            .label_formatter(label_fmt)
+            .auto_bounds_x()
+            .height(ui.available_width() / 4.0)
+            .width(ui.available_width() - 24.0)
+            .legend(Legend::default().position(Corner::LeftTop))
+            .show(ui, |plot_ui| {
+                for (usage, name) in [
+                    (gfx, "GFX"),
+                    (compute, "Compute"),
+                    (dma, "DMA"),
+                    (dec, "Decode"),
+                    (enc, "Encode"),
+                ] {
+                    plot_ui.line(Line::new(PlotPoints::new(usage)).name(name));
+                }
+            });
+
         egui::Grid::new("fdinfo").show(ui, |ui| {
             {
                 ui.style_mut().override_font_id = Some(MEDIUM);

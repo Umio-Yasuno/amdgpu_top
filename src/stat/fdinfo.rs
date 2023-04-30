@@ -43,7 +43,7 @@ impl ProcInfo {
     }
 }
 
-#[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, PartialOrd)]
 pub struct FdInfoUsage {
     // client_id: usize,
     pub vram_usage: u64, // KiB
@@ -56,6 +56,21 @@ pub struct FdInfoUsage {
     pub enc: i64,
     pub uvd_enc: i64,
     pub vcn_jpeg: i64,
+}
+
+impl std::ops::AddAssign for FdInfoUsage {
+    fn add_assign(&mut self, other: Self) {
+        self.vram_usage += other.vram_usage;
+        self.gtt_usage += other.gtt_usage;
+        self.cpu_accessible_usage += other.cpu_accessible_usage;
+        self.gfx += other.gfx;
+        self.compute += other.compute;
+        self.dma += other.dma;
+        self.dec += other.dec;
+        self.enc += other.enc;
+        self.uvd_enc += other.uvd_enc;
+        self.vcn_jpeg += other.vcn_jpeg;
+    }
 }
 
 #[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd)]
@@ -246,6 +261,16 @@ impl FdInfoView {
             name: name.to_string(),
             usage: diff
         });
+    }
+
+    pub fn fold_fdinfo_usage(&self) -> FdInfoUsage {
+        let mut fold = FdInfoUsage::default();
+
+        for pu in &self.proc_usage {
+            fold += pu.usage;
+        }
+
+        fold
     }
 
     #[cfg(feature = "proc_trace")]
