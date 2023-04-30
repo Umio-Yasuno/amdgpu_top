@@ -1,4 +1,4 @@
-use crate::DevicePath;
+use crate::{dump_info, DevicePath};
 use libdrm_amdgpu_sys::{
     AMDGPU::{drm_amdgpu_info_device, DeviceHandle, GPU_INFO},
 };
@@ -48,6 +48,7 @@ fn get_device_path_list() -> Vec<(DevicePath, String)> {
     let by_path = fs::read_dir("/dev/dri/by-path").unwrap();
 
     for path in by_path.flatten() {
+        // "pci-0000:06:00.0-render"
         let Ok(path) = path.file_name().into_string() else { continue };
         if !path.ends_with("render") { continue }
 
@@ -71,19 +72,25 @@ fn get_device_path_list() -> Vec<(DevicePath, String)> {
     dev_paths
 }
 
-pub fn device_list() {
+pub fn device_list(dump_info: bool) {
     let list = get_device_path_list();
 
     for (device_path, pci) in list {
         let amdgpu_dev = device_path.init_device_handle();
-        let Ok(mark_name) = amdgpu_dev.get_marketing_name() else { continue };
         let Some(instance) = device_path.get_instance_number() else { continue };
 
         println!("#{instance}");
-        println!("Marketing Name = {mark_name:?}");
+
+        if dump_info {
+            dump_info::dump(&amdgpu_dev);
+        } else {
+            if let Ok(mark_name) = amdgpu_dev.get_marketing_name() {
+                println!("Marketing Name = {mark_name:?}");
+            }
+            println!("pci = {pci:?}");
+        }
         println!("render_path = {:?}", device_path.render);
         println!("card_path = {:?}", device_path.card);
-        println!("pci = {pci:?}");
         println!();
     }
 }

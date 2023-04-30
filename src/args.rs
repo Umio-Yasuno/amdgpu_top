@@ -7,6 +7,7 @@ pub struct MainOpt {
     pub update_process_index: u64, // sec
     pub gui: bool,
     pub pci_path: Option<String>,
+    pub list: bool,
 }
 
 impl Default for MainOpt {
@@ -20,6 +21,7 @@ impl Default for MainOpt {
             update_process_index: 5, // sec
             gui: false,
             pci_path: None,
+            list: false,
         }
     }
 }
@@ -147,8 +149,7 @@ impl MainOpt {
                     skip = true;
                 },
                 "--list" => {
-                    crate::misc::device_list();
-                    std::process::exit(0);
+                    opt.list = true;
                 },
                 "-h" | "--help" => {
                     println!("{HELP_MSG}");

@@ -136,7 +136,11 @@ const TOGGLE_HELP: &str = concat!(
 
 fn main() {
     let main_opt = MainOpt::parse();
-    let self_pid = stat::get_self_pid().unwrap_or(0);
+
+    if main_opt.list {
+        misc::device_list(main_opt.dump);
+        return;
+    }
 
     #[cfg(feature = "egui")]
     if main_opt.gui {
@@ -146,6 +150,7 @@ fn main() {
 
     let device_path = DevicePath::from_main_opt(&main_opt);
     let amdgpu_dev = device_path.init_device_handle();
+    let self_pid = stat::get_self_pid().unwrap_or(0);
 
     if main_opt.dump {
         dump_info::dump(&amdgpu_dev);
