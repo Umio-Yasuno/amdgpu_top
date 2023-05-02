@@ -42,7 +42,7 @@ const HW_IP_LIST: &[HW_IP_TYPE] = &[
 struct DeviceListMenu {
     instance: u32,
     name: String,
-    pci: String,
+    pci: PCI::BUS_INFO,
 }
 
 impl DeviceListMenu {
@@ -56,7 +56,7 @@ impl DeviceListMenu {
 
         Some(Self {
             instance,
-            pci: pci.to_string(),
+            pci: PCI::BUS_INFO::from_number_str(pci).unwrap(),
             name,
         })
     }
@@ -440,13 +440,13 @@ impl MyApp {
                         pci = device.pci,
                     )).font(BASE);
 
-                    if self.app_device_info.pci_bus.to_string() == device.pci {
+                    if self.app_device_info.pci_bus == device.pci {
                         ui.add_enabled(false, egui::Button::new(text));
                     } else {
                         ui.menu_button(text, |ui| {
                             if ui.button("Launch in a new process").clicked() {
                                 std::process::Command::new(&self.command_path)
-                                    .args(["--gui", "--pci", &device.pci])
+                                    .args(["--gui", "--pci", &device.pci.to_string()])
                                     .spawn()
                                     .unwrap();
                             }

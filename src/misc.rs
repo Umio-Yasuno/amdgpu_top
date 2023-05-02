@@ -87,7 +87,7 @@ pub fn device_list(dump_info: bool) {
             if let Ok(mark_name) = amdgpu_dev.get_marketing_name() {
                 println!("Marketing Name = {mark_name:?}");
             }
-            println!("pci = {pci:?}");
+            println!("pci = {pci}");
         }
         println!("render_path = {:?}", device_path.render);
         println!("card_path = {:?}", device_path.card);
