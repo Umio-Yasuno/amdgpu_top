@@ -69,6 +69,10 @@ Dependencies:
  * libdrm-amdgpu1
 
 ```
+cargo install amdgpu_top
+```
+or  
+```
 git clone https://github.com/Umio-Yasuno/amdgpu_top
 cd amdgpu_top
 cargo install --locked --path .
