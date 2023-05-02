@@ -4,7 +4,7 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 
 | TUI                                     | GUI                                                  |
 | :-------------------------------------: | :--------------------------------------------------: |
-| ![amdgpu_top screenshot](/docs/ss0.png) | ![amdgpu_top GUI mode screenshot](/docs/ss1-gui.png)
+| ![amdgpu_top screenshot](https://user-images.githubusercontent.com/53935716/235711253-977d5ca9-813c-404d-8f21-bcbfd61ff823.png) | ![amdgpu_top GUI mode screenshot](https://user-images.githubusercontent.com/53935716/235711189-3379b4c2-8371-4760-a9e3-5f2c3e72e9c4.png)
 
 ## Usage
 ```
