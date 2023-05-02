@@ -1,6 +1,7 @@
 use crate::{dump_info, DevicePath};
 use libdrm_amdgpu_sys::{
     AMDGPU::{drm_amdgpu_info_device, DeviceHandle, GPU_INFO},
+    PCI::BUS_INFO,
 };
 
 pub fn info_bar(amdgpu_dev: &DeviceHandle, ext_info: &drm_amdgpu_info_device) -> String {
@@ -35,7 +36,7 @@ pub fn info_bar(amdgpu_dev: &DeviceHandle, ext_info: &drm_amdgpu_info_device) ->
     )
 }
 
-pub fn get_device_path_list() -> Vec<(DevicePath, String)> {
+pub fn get_device_path_list() -> Vec<(DevicePath, BUS_INFO)> {
     use std::fs;
     use std::path::PathBuf;
 
@@ -63,8 +64,8 @@ pub fn get_device_path_list() -> Vec<(DevicePath, String)> {
 
         if uevent.starts_with("DRIVER=amdgpu") {
             dev_paths.push((
-                DevicePath::from_pci(&pci),
-                pci.to_string()
+                DevicePath::from_pci(pci),
+                BUS_INFO::from_number_str(pci).unwrap(),
             ));
         }
     }

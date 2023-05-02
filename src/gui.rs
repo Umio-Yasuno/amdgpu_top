@@ -46,7 +46,7 @@ struct DeviceListMenu {
 }
 
 impl DeviceListMenu {
-    fn new(device_path: &DevicePath, pci: &str) -> Option<Self> {
+    fn new(device_path: &DevicePath, pci: &PCI::BUS_INFO) -> Option<Self> {
         let instance = device_path.get_instance_number()?;
 
         let name = {
@@ -56,7 +56,7 @@ impl DeviceListMenu {
 
         Some(Self {
             instance,
-            pci: PCI::BUS_INFO::from_number_str(pci).unwrap(),
+            pci: *pci,
             name,
         })
     }
@@ -112,7 +112,7 @@ pub fn egui_run(main_opt: MainOpt) {
 
     let app_device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &pci_bus);
     let device_list = misc::get_device_path_list().iter().flat_map(|(device, pci)| {
-        DeviceListMenu::new(&device, &pci)
+        DeviceListMenu::new(device, pci)
     }).collect();
     let command_path = std::fs::read_link("/proc/self/exe")
         .unwrap_or(PathBuf::from(env!("CARGO_PKG_NAME")));
