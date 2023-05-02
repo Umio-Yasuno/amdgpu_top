@@ -275,6 +275,7 @@ impl eframe::App for MyApp {
 
         egui::SidePanel::left(egui::Id::new(3)).show(ctx, |ui| {
             ui.set_min_width(360.0);
+            ui.add_space(SPACE / 2.0);
             self.egui_device_list(ui);
             egui::ScrollArea::both().show(ui, |ui| {
                 ui.add_space(SPACE);
