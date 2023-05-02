@@ -18,7 +18,7 @@ use libdrm_amdgpu_sys::AMDGPU::{
 };
 use libdrm_amdgpu_sys::PCI;
 use crate::{args::MainOpt, misc, stat, stat::FdInfoUsage, stat::Sensors, DevicePath, Sampling};
-use stat::{FdInfoSortType, FdInfoView, PerfCounter, VramUsageView};
+use stat::{FdInfoSortType, FdInfoView, PerfCounter};
 
 const SPACE: f32 = 8.0;
 const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
@@ -38,6 +38,27 @@ const HW_IP_LIST: &[HW_IP_TYPE] = &[
     HW_IP_TYPE::VCN_ENC,
     HW_IP_TYPE::VCN_JPEG,
 ];
+
+#[derive(Debug, Clone)]
+struct VramUsage(drm_amdgpu_memory_info);
+
+impl VramUsage {
+    fn new(memory_info: &drm_amdgpu_memory_info) -> Self {
+        VramUsage(*memory_info)
+    }
+
+    fn update_usage(&mut self, amdgpu_dev: &DeviceHandle) {
+        if let [Ok(vram), Ok(vis_vram), Ok(gtt)] = [
+            amdgpu_dev.vram_usage_info(),
+            amdgpu_dev.vis_vram_usage_info(),
+            amdgpu_dev.gtt_usage_info(),
+        ] {
+            self.0.vram.heap_usage = vram;
+            self.0.cpu_accessible_vram.heap_usage = vis_vram;
+            self.0.gtt.heap_usage = gtt;
+        }
+    }
+}
 
 struct DeviceListMenu {
     instance: u32,
@@ -80,7 +101,6 @@ pub fn egui_run(main_opt: MainOpt) {
 
     let mut grbm = stat::PerfCounter::new(stat::PCType::GRBM, grbm_index);
     let mut grbm2 = stat::PerfCounter::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
-    let mut vram_usage = stat::VramUsageView::new(&memory_info);
 
     let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
     let sample = Sampling::low();
@@ -94,6 +114,7 @@ pub fn egui_run(main_opt: MainOpt) {
 
     let mut gpu_metrics = amdgpu_dev.get_gpu_metrics().unwrap_or(GpuMetrics::Unknown);
     let mut sensors = Sensors::new(&amdgpu_dev, &pci_bus);
+    let mut vram_usage = VramUsage::new(&memory_info);
     let mut grbm_history = vec![History::new(0..30, f32::INFINITY); grbm.index.len()];
     let mut grbm2_history = vec![History::new(0..30, f32::INFINITY); grbm2.index.len()];
     let mut fdinfo_history = History::new(0..30, f32::INFINITY);
@@ -111,9 +132,8 @@ pub fn egui_run(main_opt: MainOpt) {
     };
 
     let app_device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &pci_bus);
-    let device_list = misc::get_device_path_list().iter().flat_map(|(device, pci)| {
-        DeviceListMenu::new(device, pci)
-    }).collect();
+    let device_list = misc::get_device_path_list().iter()
+        .flat_map(|(device, pci)| DeviceListMenu::new(device, pci)).collect();
     let command_path = std::fs::read_link("/proc/self/exe")
         .unwrap_or(PathBuf::from(env!("CARGO_PKG_NAME")));
 
@@ -194,10 +214,7 @@ pub fn egui_run(main_opt: MainOpt) {
                         fdinfo.get_proc_usage(pu);
                     }
                     fdinfo.interval = sample.to_duration();
-                    fdinfo_history.add(
-                        sec,
-                        fdinfo.fold_fdinfo_usage(),
-                    );
+                    fdinfo_history.add(sec, fdinfo.fold_fdinfo_usage());
                 } else {
                     fdinfo.interval += sample.to_duration();
                 }
@@ -256,7 +273,7 @@ fn collapsing(
         }
     });
 
-    state.show_body_indented(&header_res.response, ui, |ui| body(ui));
+    state.show_body_indented(&header_res.response, ui, body);
 }
 
 impl eframe::App for MyApp {
@@ -361,11 +378,11 @@ struct CentralData {
     grbm2: PerfCounter,
     grbm_history: Vec<History<u8>>,
     grbm2_history: Vec<History<u8>>,
-    vram_usage: VramUsageView,
     fdinfo: FdInfoView,
     fdinfo_history: History<FdInfoUsage>,
     gpu_metrics: GpuMetrics,
     sensors: Sensors,
+    vram_usage: VramUsage,
 }
 
 struct MyApp {
@@ -408,13 +425,13 @@ impl AppDeviceInfo {
             amdgpu_dev.get_min_max_memory_clock().unwrap_or((0, 0));
         let resizable_bar = memory_info.check_resizable_bar();
         let marketing_name = amdgpu_dev.get_marketing_name().unwrap_or_default();
-        let hw_ip_info = HW_IP_LIST.iter().filter_map(|ip_type|
-            amdgpu_dev.get_hw_ip_info(*ip_type).ok()
-        ).filter(|hw_ip_info| hw_ip_info.count != 0).collect();
+        let hw_ip_info = HW_IP_LIST.iter()
+            .filter_map(|ip_type| amdgpu_dev.get_hw_ip_info(*ip_type).ok())
+            .filter(|hw_ip_info| hw_ip_info.count != 0).collect();
 
         Self {
-            ext_info: ext_info.clone(),
-            memory_info: memory_info.clone(),
+            ext_info: *ext_info,
+            memory_info: *memory_info,
             hw_ip_info,
             resizable_bar,
             min_gpu_clk,
@@ -690,11 +707,12 @@ impl MyApp {
     fn egui_vram(&self, ui: &mut egui::Ui) {
         egui::Grid::new("VRAM").show(ui, |ui| {
             for (v, name) in [
-                (&self.buf_data.vram_usage.vram, "VRAM"),
-                (&self.buf_data.vram_usage.gtt, "GTT"),
+                (&self.buf_data.vram_usage.0.vram, "VRAM"),
+                (&self.buf_data.vram_usage.0.cpu_accessible_vram, "CPU-Visible VRAM"),
+                (&self.buf_data.vram_usage.0.gtt, "GTT"),
             ] {
-                let progress = (v.usage >> 20) as f32 / (v.total >> 20) as f32;
-                let text = format!("{:5} / {:5} MiB", v.usage >> 20, v.total >> 20);
+                let progress = (v.heap_usage >> 20) as f32 / (v.total_heap_size >> 20) as f32;
+                let text = format!("{:5} / {:5} MiB", v.heap_usage >> 20, v.total_heap_size >> 20);
                 let bar = egui::ProgressBar::new(progress)
                     .text(RichText::new(&text).font(BASE));
                 ui.label(RichText::new(name).font(MEDIUM));
@@ -734,7 +752,7 @@ impl MyApp {
             enc.push([i, usage_enc as f64]);
         }
 
-        Plot::new("GFX Plot")
+        Plot::new("fdinfo plot")
             .allow_drag(false)
             .allow_zoom(false)
             .allow_scroll(false)
