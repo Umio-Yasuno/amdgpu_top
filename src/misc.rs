@@ -35,7 +35,7 @@ pub fn info_bar(amdgpu_dev: &DeviceHandle, ext_info: &drm_amdgpu_info_device) ->
     )
 }
 
-fn get_device_path_list() -> Vec<(DevicePath, String)> {
+pub fn get_device_path_list() -> Vec<(DevicePath, String)> {
     use std::fs;
     use std::path::PathBuf;
 

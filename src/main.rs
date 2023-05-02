@@ -62,6 +62,21 @@ impl DevicePath {
         }
     }
 
+    pub fn init_with_option(&self) -> Option<DeviceHandle> {
+        let (amdgpu_dev, _major, _minor) = {
+            use std::os::fd::IntoRawFd;
+            use std::fs::OpenOptions;
+
+            // need write option for GUI context
+            // https://gitlab.freedesktop.org/mesa/mesa/-/issues/2424
+            let f = OpenOptions::new().read(true).write(true).open(&self.render).ok()?;
+
+            DeviceHandle::init(f.into_raw_fd()).ok()?
+        };
+
+        Some(amdgpu_dev)
+    }
+
     pub fn init_device_handle(&self) -> DeviceHandle {
         let (amdgpu_dev, _major, _minor) = {
             use std::os::fd::IntoRawFd;

@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use std::path::PathBuf;
 use eframe::egui;
 use egui::{FontFamily, FontId, RichText, util::History};
 
@@ -16,7 +17,7 @@ use libdrm_amdgpu_sys::AMDGPU::{
     VIDEO_CAPS::{VideoCapsInfo, CAP_TYPE},
 };
 use libdrm_amdgpu_sys::PCI;
-use crate::{args::MainOpt, stat, stat::FdInfoUsage, stat::Sensors, DevicePath, Sampling};
+use crate::{args::MainOpt, misc, stat, stat::FdInfoUsage, stat::Sensors, DevicePath, Sampling};
 use stat::{FdInfoSortType, FdInfoView, PerfCounter, VramUsageView};
 
 const SPACE: f32 = 8.0;
@@ -37,6 +38,29 @@ const HW_IP_LIST: &[HW_IP_TYPE] = &[
     HW_IP_TYPE::VCN_ENC,
     HW_IP_TYPE::VCN_JPEG,
 ];
+
+struct DeviceListMenu {
+    instance: u32,
+    name: String,
+    pci: String,
+}
+
+impl DeviceListMenu {
+    fn new(device_path: &DevicePath, pci: &str) -> Option<Self> {
+        let instance = device_path.get_instance_number()?;
+
+        let name = {
+            let amdgpu_dev = device_path.init_with_option()?;
+            amdgpu_dev.get_marketing_name().unwrap_or_default()
+        };
+
+        Some(Self {
+            instance,
+            pci: pci.to_string(),
+            name,
+        })
+    }
+}
 
 pub fn egui_run(main_opt: MainOpt) {
     let self_pid = 0; // no filtering in GUI
@@ -87,9 +111,17 @@ pub fn egui_run(main_opt: MainOpt) {
     };
 
     let app_device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &pci_bus);
+    let device_list = misc::get_device_path_list().iter().flat_map(|(device, pci)| {
+        DeviceListMenu::new(&device, &pci)
+    }).collect();
+    let command_path = std::fs::read_link("/proc/self/exe")
+        .unwrap_or(PathBuf::from(env!("CARGO_PKG_NAME")));
 
     let app = MyApp {
+        instance: main_opt.instance,
         app_device_info,
+        device_list,
+        command_path,
         decode: amdgpu_dev.get_video_caps_info(CAP_TYPE::DECODE).ok(),
         encode: amdgpu_dev.get_video_caps_info(CAP_TYPE::ENCODE).ok(),
         vbios: amdgpu_dev.get_vbios_info().ok(),
@@ -244,9 +276,10 @@ impl eframe::App for MyApp {
 
         egui::SidePanel::left(egui::Id::new(3)).show(ctx, |ui| {
             ui.set_min_width(360.0);
+            self.egui_device_list(ui);
             egui::ScrollArea::both().show(ui, |ui| {
                 ui.add_space(SPACE);
-                collapsing(ui, "App Device Info", true, |ui| self.egui_app_device_info(ui));
+                collapsing(ui, "Device Info", true, |ui| self.egui_app_device_info(ui));
 
                 ui.add_space(SPACE);
                 collapsing(ui, "Hardware IP Info", false, |ui| self.egui_hw_ip_info(ui));
@@ -336,7 +369,10 @@ struct CentralData {
 }
 
 struct MyApp {
+    instance: u32,
+    command_path: PathBuf,
     app_device_info: AppDeviceInfo,
+    device_list: Vec<DeviceListMenu>,
     decode: Option<VideoCapsInfo>,
     encode: Option<VideoCapsInfo>,
     vbios: Option<VbiosInfo>,
@@ -393,6 +429,35 @@ impl AppDeviceInfo {
 }
 
 impl MyApp {
+    pub fn egui_device_list(&self, ui: &mut egui::Ui) {
+        ui.menu_button(RichText::new("Device List").font(BASE), |ui| {
+            ui.set_width(360.0);
+            for device in &self.device_list {
+                ui.horizontal(|ui| {
+                    let text = RichText::new(format!(
+                        "#{instance} {name} ({pci})",
+                        instance = device.instance,
+                        name = device.name,
+                        pci = device.pci,
+                    )).font(BASE);
+
+                    if self.instance == device.instance {
+                        ui.add_enabled(false, egui::Button::new(text));
+                    } else {
+                        ui.menu_button(text, |ui| {
+                            if ui.button("Launch in a new process").clicked() {
+                                std::process::Command::new(&self.command_path)
+                                    .args(["--gui", "--pci", &device.pci])
+                                    .spawn()
+                                    .unwrap();
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
     pub fn egui_app_device_info(&self, ui: &mut egui::Ui) {
         egui::Grid::new("app_device_info").show(ui, |ui| {
             let ext_info = &self.app_device_info.ext_info;
