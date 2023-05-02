@@ -9,6 +9,10 @@ description = """
 Tool to displays AMDGPU usage.
 The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, gpu_metrics and AMDGPU driver.
 """
+exclude = [
+    "docs/",
+    "assets/"
+]
 
 [features]
 default = ["egui"]
