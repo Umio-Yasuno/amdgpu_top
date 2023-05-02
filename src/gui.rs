@@ -118,7 +118,6 @@ pub fn egui_run(main_opt: MainOpt) {
         .unwrap_or(PathBuf::from(env!("CARGO_PKG_NAME")));
 
     let app = MyApp {
-        instance: main_opt.instance,
         app_device_info,
         device_list,
         command_path,
@@ -369,7 +368,6 @@ struct CentralData {
 }
 
 struct MyApp {
-    instance: u32,
     command_path: PathBuf,
     app_device_info: AppDeviceInfo,
     device_list: Vec<DeviceListMenu>,
@@ -441,7 +439,7 @@ impl MyApp {
                         pci = device.pci,
                     )).font(BASE);
 
-                    if self.instance == device.instance {
+                    if self.app_device_info.pci_bus.to_string() == device.pci {
                         ui.add_enabled(false, egui::Button::new(text));
                     } else {
                         ui.menu_button(text, |ui| {
