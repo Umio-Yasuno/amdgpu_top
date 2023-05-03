@@ -70,6 +70,8 @@ pub fn get_device_path_list() -> Vec<(DevicePath, BUS_INFO)> {
         }
     }
 
+    if dev_paths.is_empty() { panic!("AMD GPU not found.") };
+
     dev_paths
 }
 

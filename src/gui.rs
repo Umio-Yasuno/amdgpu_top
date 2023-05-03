@@ -3,6 +3,8 @@ use std::time::Duration;
 use std::path::PathBuf;
 use eframe::egui;
 use egui::{FontFamily, FontId, RichText, util::History};
+use egui::plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
+use std::ops::{Range, RangeInclusive};
 
 use libdrm_amdgpu_sys::AMDGPU::{
     drm_amdgpu_info_device,
@@ -24,6 +26,7 @@ const SPACE: f32 = 8.0;
 const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
 const MEDIUM: FontId = FontId::new(15.0, FontFamily::Monospace);
 const HEADING: FontId = FontId::new(16.0, FontFamily::Monospace);
+const HISTORY_LENGTH: Range<usize> = 0..30; // seconds
 const PLOT_HEIGHT: f32 = 32.0;
 const PLOT_WIDTH: f32 = 240.0;
 
@@ -85,8 +88,21 @@ impl DeviceListMenu {
 
 pub fn egui_run(main_opt: MainOpt) {
     let self_pid = 0; // no filtering in GUI
-    let device_path = DevicePath::from_main_opt(&main_opt);
-    let amdgpu_dev = device_path.init_device_handle();
+    let device_path_list = misc::get_device_path_list();
+
+    let (device_path, amdgpu_dev) = {
+        let path = DevicePath::from_main_opt(&main_opt);
+
+        if let Ok(amdgpu_dev) = path.init() {
+            (path, amdgpu_dev)
+        } else {
+            eprintln!("Error: {path:?}");
+            let path = device_path_list[0].0.clone();
+            let amdgpu_dev = path.init_device_handle();
+
+            (path, amdgpu_dev)
+        }
+    };
 
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
@@ -115,9 +131,9 @@ pub fn egui_run(main_opt: MainOpt) {
     let mut gpu_metrics = amdgpu_dev.get_gpu_metrics().unwrap_or(GpuMetrics::Unknown);
     let mut sensors = Sensors::new(&amdgpu_dev, &pci_bus);
     let mut vram_usage = VramUsage::new(&memory_info);
-    let mut grbm_history = vec![History::new(0..30, f32::INFINITY); grbm.index.len()];
-    let mut grbm2_history = vec![History::new(0..30, f32::INFINITY); grbm2.index.len()];
-    let mut fdinfo_history = History::new(0..30, f32::INFINITY);
+    let mut grbm_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm.index.len()];
+    let mut grbm2_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm2.index.len()];
+    let mut fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
 
     let data = CentralData {
         grbm: grbm.clone(),
@@ -132,7 +148,7 @@ pub fn egui_run(main_opt: MainOpt) {
     };
 
     let app_device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &pci_bus);
-    let device_list = misc::get_device_path_list().iter()
+    let device_list = device_path_list.iter()
         .flat_map(|(device, pci)| DeviceListMenu::new(device, pci)).collect();
     let command_path = std::fs::read_link("/proc/self/exe")
         .unwrap_or(PathBuf::from(env!("CARGO_PKG_NAME")));
@@ -244,36 +260,6 @@ pub fn egui_run(main_opt: MainOpt) {
         options,
         Box::new(|_cc| Box::new(app)),
     ).unwrap();
-}
-
-fn collapsing(
-    ui: &mut egui::Ui,
-    text: &str,
-    default_open: bool,
-    body: impl FnOnce(&mut egui::Ui),
-) {
-    let mut state = egui::collapsing_header::CollapsingState::load_with_default_open(
-        ui.ctx(),
-        egui::Id::new(text),
-        default_open,
-    );
-
-    let label = |text: &str| -> egui::Label {
-        egui::Label::new(RichText::new(text).font(HEADING)).sense(egui::Sense::click())
-    };
-
-    let header_res = ui.horizontal(|ui| {
-        let icon = {
-            let text = if state.is_open() { "\u{25be}" } else { "\u{25b8}" };
-            label(text)
-        };
-        let header = label(text);
-        if ui.add(icon).clicked() || ui.add(header).clicked() {
-            state.toggle(ui);
-        }
-    });
-
-    state.show_body_indented(&header_res.response, ui, body);
 }
 
 impl eframe::App for MyApp {
@@ -667,9 +653,6 @@ impl MyApp {
         pc: &PerfCounter,
         history: &[History<u8>],
     ) {
-        use egui::plot::{Line, Plot, PlotPoint, PlotPoints};
-        use std::ops::RangeInclusive;
-
         let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
             String::new()
         };
@@ -723,9 +706,6 @@ impl MyApp {
     }
 
     fn egui_grid_fdinfo(&mut self, ui: &mut egui::Ui) {
-        use egui::plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
-        use std::ops::RangeInclusive;
-
         let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
             String::new()
         };
@@ -778,9 +758,7 @@ impl MyApp {
             });
 
         egui::Grid::new("fdinfo").show(ui, |ui| {
-            {
-                ui.style_mut().override_font_id = Some(MEDIUM);
-            }
+            ui.style_mut().override_font_id = Some(MEDIUM);
             ui.label(rt_base(format!("{:^15}", "Name"))).highlight();
             ui.label(rt_base(format!("{:^8}", "PID"))).highlight();
             if ui.button(rt_base(format!("{:^10}", "VRAM"))).clicked() {
@@ -860,10 +838,8 @@ impl MyApp {
     }
 
     fn egui_sensors(&self, ui: &mut egui::Ui) {
+        ui.style_mut().override_font_id = Some(MEDIUM);
         let sensors = &self.buf_data.sensors;
-        {
-            ui.style_mut().override_font_id = Some(MEDIUM);
-        }
         egui::Grid::new("Sensors").show(ui, |ui| {
             for (name, val, unit) in [
                 ("GFX_SCLK", sensors.sclk, "MHz"),
@@ -1040,6 +1016,36 @@ impl MyApp {
             }
         });
     }
+}
+
+fn collapsing(
+    ui: &mut egui::Ui,
+    text: &str,
+    default_open: bool,
+    body: impl FnOnce(&mut egui::Ui),
+) {
+    let mut state = egui::collapsing_header::CollapsingState::load_with_default_open(
+        ui.ctx(),
+        egui::Id::new(text),
+        default_open,
+    );
+
+    let label = |text: &str| -> egui::Label {
+        egui::Label::new(RichText::new(text).font(HEADING)).sense(egui::Sense::click())
+    };
+
+    let header_res = ui.horizontal(|ui| {
+        let icon = {
+            let text = if state.is_open() { "\u{25be}" } else { "\u{25b8}" };
+            label(text)
+        };
+        let header = label(text);
+        if ui.add(icon).clicked() || ui.add(header).clicked() {
+            state.toggle(ui);
+        }
+    });
+
+    state.show_body_indented(&header_res.response, ui, body);
 }
 
 fn rt_base<T: Into<String>>(s: T) -> RichText {
