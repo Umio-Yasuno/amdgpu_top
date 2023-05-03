@@ -120,7 +120,7 @@ pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reve
     );
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum FdInfoSortType {
     PID,

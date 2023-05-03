@@ -692,6 +692,15 @@ impl MyApp {
         });
     }
 
+    fn set_fdinfo_sort_type(&mut self, sort_type: FdInfoSortType) {
+        if sort_type == self.fdinfo_sort {
+            self.reverse_sort ^= true;
+        } else {
+            self.reverse_sort = false;
+        }
+        self.fdinfo_sort = sort_type;
+    }
+
     fn egui_grid_fdinfo(&mut self, ui: &mut egui::Ui) {
         let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
             String::new()
@@ -700,13 +709,8 @@ impl MyApp {
             format!("{:.1}s : {name} {:.0}%", val.x, val.y)
         };
 
-        let [mut gfx, mut compute, mut dma, mut dec, mut enc] = [
-            Vec::<[f64; 2]>::with_capacity(30),
-            Vec::<[f64; 2]>::with_capacity(30),
-            Vec::<[f64; 2]>::with_capacity(30),
-            Vec::<[f64; 2]>::with_capacity(30),
-            Vec::<[f64; 2]>::with_capacity(30),
-        ];
+        let [mut gfx, mut compute, mut dma, mut dec, mut enc] = [0; 5]
+            .map(|_| Vec::<[f64; 2]>::with_capacity(30));
 
         for (i, usage) in self.buf_data.fdinfo_history.iter() {
             let usage_dec = usage.dec + usage.vcn_jpeg;
@@ -749,52 +753,22 @@ impl MyApp {
             ui.label(rt_base(format!("{:^15}", "Name"))).highlight();
             ui.label(rt_base(format!("{:^8}", "PID"))).highlight();
             if ui.button(rt_base(format!("{:^10}", "VRAM"))).clicked() {
-                if let FdInfoSortType::VRAM = self.fdinfo_sort {
-                    self.reverse_sort ^= true;
-                } else {
-                    self.reverse_sort = false;
-                }
-                self.fdinfo_sort = FdInfoSortType::VRAM;
+                self.set_fdinfo_sort_type(FdInfoSortType::VRAM);
             }
             if ui.button(rt_base(format!("{:^5}", "GFX"))).clicked() {
-                if let FdInfoSortType::GFX = self.fdinfo_sort {
-                    self.reverse_sort ^= true;
-                } else {
-                    self.reverse_sort = false;
-                }
-                self.fdinfo_sort = FdInfoSortType::GFX;
+                self.set_fdinfo_sort_type(FdInfoSortType::GFX);
             }
             if ui.button(rt_base("Compute")).clicked() {
-                if let FdInfoSortType::Compute = self.fdinfo_sort {
-                    self.reverse_sort ^= true;
-                } else {
-                    self.reverse_sort = false;
-                }
-                self.fdinfo_sort = FdInfoSortType::Compute;
+                self.set_fdinfo_sort_type(FdInfoSortType::Compute);
             }
             if ui.button(rt_base(format!("{:^5}", "DMA"))).clicked() {
-                if let FdInfoSortType::DMA = self.fdinfo_sort {
-                    self.reverse_sort ^= true;
-                } else {
-                    self.reverse_sort = false;
-                }
-                self.fdinfo_sort = FdInfoSortType::DMA;
+                self.set_fdinfo_sort_type(FdInfoSortType::DMA);
             }
             if ui.button(rt_base("Decode")).clicked() {
-                if let FdInfoSortType::Decode = self.fdinfo_sort {
-                    self.reverse_sort ^= true;
-                } else {
-                    self.reverse_sort = false;
-                }
-                self.fdinfo_sort = FdInfoSortType::Decode;
+                self.set_fdinfo_sort_type(FdInfoSortType::Decode);
             }
             if ui.button(rt_base("Encode")).clicked() {
-                if let FdInfoSortType::Encode = self.fdinfo_sort {
-                    self.reverse_sort ^= true;
-                } else {
-                    self.reverse_sort = false;
-                }
-                self.fdinfo_sort = FdInfoSortType::Encode;
+                self.set_fdinfo_sort_type(FdInfoSortType::Encode);
             }
             ui.end_row();
 
@@ -1011,11 +985,9 @@ fn collapsing(
     default_open: bool,
     body: impl FnOnce(&mut egui::Ui),
 ) {
-    let mut state = egui::collapsing_header::CollapsingState::load_with_default_open(
-        ui.ctx(),
-        egui::Id::new(text),
-        default_open,
-    );
+    use egui::{collapsing_header::CollapsingState, Id};
+
+    let mut state = CollapsingState::load_with_default_open(ui.ctx(), Id::new(text), default_open);
 
     let label = |text: &str| -> egui::Label {
         egui::Label::new(RichText::new(text).font(HEADING)).sense(egui::Sense::click())
