@@ -1,7 +1,6 @@
 use crate::{dump_info, DevicePath};
 use libdrm_amdgpu_sys::{
     AMDGPU::{drm_amdgpu_info_device, DeviceHandle, GPU_INFO},
-    PCI::BUS_INFO,
 };
 
 pub fn info_bar(amdgpu_dev: &DeviceHandle, ext_info: &drm_amdgpu_info_device) -> String {
@@ -36,49 +35,10 @@ pub fn info_bar(amdgpu_dev: &DeviceHandle, ext_info: &drm_amdgpu_info_device) ->
     )
 }
 
-pub fn get_device_path_list() -> Vec<(DevicePath, BUS_INFO)> {
-    use std::fs;
-    use std::path::PathBuf;
-
-    let mut dev_paths = Vec::new();
-
-    const PRE: usize = "pci-".len();
-    const PCI: usize = "0000:00:00.0".len();
-    const SYS_BUS: &str = "/sys/bus/pci/devices/";
-
-    let by_path = fs::read_dir("/dev/dri/by-path").unwrap();
-
-    for path in by_path.flatten() {
-        // "pci-0000:06:00.0-render"
-        let Ok(path) = path.file_name().into_string() else { continue };
-        if !path.ends_with("render") { continue }
-
-        let pci = {
-            if path.len() < PRE+PCI { continue }
-            &path[PRE..PRE+PCI]
-        };
-
-        let Ok(uevent) = fs::read_to_string(
-            PathBuf::from(SYS_BUS).join(pci).join("uevent")
-        ) else { continue };
-
-        if uevent.lines().any(|line| line.starts_with("DRIVER=amdgpu")) {
-            dev_paths.push((
-                DevicePath::from_pci(pci),
-                BUS_INFO::from_number_str(pci).unwrap(),
-            ));
-        }
-    }
-
-    if dev_paths.is_empty() { panic!("AMD GPU not found.") };
-
-    dev_paths
-}
-
 pub fn device_list(dump_info: bool) {
-    let list = get_device_path_list();
+    let list = DevicePath::get_device_path_list();
 
-    for (device_path, pci) in list {
+    for device_path in list {
         let amdgpu_dev = device_path.init_device_handle();
         let Some(instance) = device_path.get_instance_number() else { continue };
 
@@ -90,10 +50,8 @@ pub fn device_list(dump_info: bool) {
             if let Ok(mark_name) = amdgpu_dev.get_marketing_name() {
                 println!("Marketing Name = {mark_name:?}");
             }
-            println!("pci = {pci}");
         }
-        println!("render_path = {:?}", device_path.render);
-        println!("card_path = {:?}", device_path.card);
+        println!("{device_path:?}");
         println!();
     }
 }

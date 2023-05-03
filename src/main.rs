@@ -1,8 +1,6 @@
-use anyhow::{anyhow, Context};
-use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, CHIP_CLASS, GPU_INFO};
+use libdrm_amdgpu_sys::AMDGPU::{CHIP_CLASS, GPU_INFO};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use std::path::PathBuf;
 use cursive::views::{TextView, LinearLayout, Panel};
 use cursive::view::Scrollable;
 use cursive::align::HAlign;
@@ -10,92 +8,16 @@ use cursive::align::HAlign;
 mod stat;
 mod args;
 mod misc;
+mod device_path;
 mod dump_info;
 #[cfg(feature = "proc_trace")]
 mod json_output;
 #[cfg(feature = "egui")]
 mod gui;
 
-use crate::args::MainOpt;
+use args::MainOpt;
+use device_path::DevicePath;
 use stat::FdInfoSortType;
-
-#[derive(Debug, Clone)]
-pub struct DevicePath {
-    pub render: PathBuf,
-    pub card: PathBuf,
-}
-
-impl DevicePath {
-    pub fn new(instance: u32) -> Self {
-        Self {
-            render: PathBuf::from(format!("/dev/dri/renderD{}", 128 + instance)),
-            card: PathBuf::from(format!("/dev/dri/card{}", instance)),
-        }
-    }
-
-    pub fn from_pci(pci_path: &str) -> Self {
-        use std::fs;
-
-        let base = PathBuf::from("/dev/dri/by-path");
-
-        let [render, card] = ["render", "card"].map(|v| {
-            let name = format!("pci-{pci_path}-{v}");
-            let link = fs::read_link(base.join(name))?;
-
-            fs::canonicalize(base.join(link))
-        }).map(|path| path.unwrap_or_else(|err| {
-            eprintln!("{err}");
-            eprintln!("pci_path = {pci_path}");
-            panic!();
-        }));
-
-        Self {
-            render,
-            card,
-        }
-    }
-
-    pub fn from_main_opt(main_opt: &MainOpt) -> Self {
-        if let Some(ref pci_path) = main_opt.pci_path {
-            Self::from_pci(pci_path)
-        } else {
-            Self::new(main_opt.instance)
-        }
-    }
-
-    pub fn init(&self) -> anyhow::Result<DeviceHandle> {
-        let (amdgpu_dev, _major, _minor) = {
-            use std::os::fd::IntoRawFd;
-            use std::fs::OpenOptions;
-
-            // need write option for GUI context
-            // https://gitlab.freedesktop.org/mesa/mesa/-/issues/2424
-            let f = OpenOptions::new().read(true).write(true).open(&self.render)?;
-
-            DeviceHandle::init(f.into_raw_fd()).map_err(|v| anyhow!(v))
-                .context("Failed DeviceHandle::init")?
-        };
-
-        Ok(amdgpu_dev)
-    }
-
-    pub fn init_device_handle(&self) -> DeviceHandle {
-        self.init().unwrap_or_else(|err| {
-            eprintln!("Error: {err}");
-            eprintln!("render_path = {:?}", self.render);
-            eprintln!("card_path = {:?}", self.card);
-            eprintln!("\nHelp: Try running `{} --list`", env!("CARGO_PKG_NAME"));
-            panic!();
-        })
-    }
-
-    pub fn get_instance_number(&self) -> Option<u32> {
-        let render = self.render.to_str()?;
-
-        render.trim_start_matches("/dev/dri/renderD").parse::<u32>().ok()
-            .map(|v| v.saturating_sub(128) )
-    }
-}
 
 #[derive(Debug, Clone)]
 struct ToggleOptions {
@@ -148,9 +70,10 @@ fn main() {
         return;
     }
 
-    let device_path = DevicePath::from_main_opt(&main_opt);
-    let amdgpu_dev = device_path.init_device_handle();
     let self_pid = stat::get_self_pid().unwrap_or(0);
+    let device_path_list = DevicePath::get_device_path_list();
+
+    let (device_path, amdgpu_dev) = DevicePath::init_with_fallback(&main_opt, &device_path_list);
 
     if main_opt.dump {
         dump_info::dump(&amdgpu_dev);

@@ -19,7 +19,7 @@ use libdrm_amdgpu_sys::AMDGPU::{
     VIDEO_CAPS::{VideoCapsInfo, CAP_TYPE},
 };
 use libdrm_amdgpu_sys::PCI;
-use crate::{args::MainOpt, misc, stat, stat::FdInfoUsage, stat::Sensors, DevicePath, Sampling};
+use crate::{MainOpt, stat, stat::FdInfoUsage, stat::Sensors, DevicePath, Sampling};
 use stat::{FdInfoSortType, FdInfoView, PerfCounter};
 
 const SPACE: f32 = 8.0;
@@ -70,9 +70,9 @@ struct DeviceListMenu {
 }
 
 impl DeviceListMenu {
-    fn new(device_path: &DevicePath, pci: &PCI::BUS_INFO) -> Option<Self> {
+    fn new(device_path: &DevicePath) -> Option<Self> {
         let instance = device_path.get_instance_number()?;
-
+        let pci = device_path.pci?;
         let name = {
             let amdgpu_dev = device_path.init().ok()?;
             amdgpu_dev.get_marketing_name().unwrap_or_default()
@@ -80,7 +80,7 @@ impl DeviceListMenu {
 
         Some(Self {
             instance,
-            pci: *pci,
+            pci,
             name,
         })
     }
@@ -88,21 +88,9 @@ impl DeviceListMenu {
 
 pub fn egui_run(main_opt: MainOpt) {
     let self_pid = 0; // no filtering in GUI
-    let device_path_list = misc::get_device_path_list();
+    let device_path_list = DevicePath::get_device_path_list();
 
-    let (device_path, amdgpu_dev) = {
-        let path = DevicePath::from_main_opt(&main_opt);
-
-        if let Ok(amdgpu_dev) = path.init() {
-            (path, amdgpu_dev)
-        } else {
-            eprintln!("Error: {path:?}");
-            let path = device_path_list[0].0.clone();
-            let amdgpu_dev = path.init_device_handle();
-
-            (path, amdgpu_dev)
-        }
-    };
+    let (device_path, amdgpu_dev) = DevicePath::init_with_fallback(&main_opt, &device_path_list);
 
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
@@ -148,8 +136,7 @@ pub fn egui_run(main_opt: MainOpt) {
     };
 
     let app_device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &pci_bus);
-    let device_list = device_path_list.iter()
-        .flat_map(|(device, pci)| DeviceListMenu::new(device, pci)).collect();
+    let device_list = device_path_list.iter().flat_map(DeviceListMenu::new).collect();
     let command_path = std::fs::read_link("/proc/self/exe")
         .unwrap_or(PathBuf::from(env!("CARGO_PKG_NAME")));
 
