@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Context};
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, CHIP_CLASS, GPU_INFO};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -62,46 +63,30 @@ impl DevicePath {
         }
     }
 
-    pub fn init_with_option(&self) -> Option<DeviceHandle> {
+    pub fn init(&self) -> anyhow::Result<DeviceHandle> {
         let (amdgpu_dev, _major, _minor) = {
             use std::os::fd::IntoRawFd;
             use std::fs::OpenOptions;
 
             // need write option for GUI context
             // https://gitlab.freedesktop.org/mesa/mesa/-/issues/2424
-            let f = OpenOptions::new().read(true).write(true).open(&self.render).ok()?;
+            let f = OpenOptions::new().read(true).write(true).open(&self.render)?;
 
-            DeviceHandle::init(f.into_raw_fd()).ok()?
+            DeviceHandle::init(f.into_raw_fd()).map_err(|v| anyhow!(v))
+                .context("Failed DeviceHandle::init")?
         };
 
-        Some(amdgpu_dev)
+        Ok(amdgpu_dev)
     }
 
     pub fn init_device_handle(&self) -> DeviceHandle {
-        let (amdgpu_dev, _major, _minor) = {
-            use std::os::fd::IntoRawFd;
-            use std::fs::OpenOptions;
-
-            // need write option for GUI context
-            // https://gitlab.freedesktop.org/mesa/mesa/-/issues/2424
-            let f = OpenOptions::new().read(true).write(true).open(&self.render)
-                .unwrap_or_else(|err| {
-                    eprintln!("{err}");
-                    eprintln!("render_path = {:?}", self.render);
-                    eprintln!("card_path = {:?}", self.card);
-                    panic!();
-                }
-            );
-
-            DeviceHandle::init(f.into_raw_fd()).unwrap_or_else(|err| {
-                eprintln!("DeviceHandle::init faild ({err})");
-                eprintln!("render_path = {:?}", self.render);
-                eprintln!("card_path = {:?}", self.card);
-                panic!();
-            })
-        };
-
-        amdgpu_dev
+        self.init().unwrap_or_else(|err| {
+            eprintln!("Error: {err}");
+            eprintln!("render_path = {:?}", self.render);
+            eprintln!("card_path = {:?}", self.card);
+            eprintln!("\nHelp: Try running `{} --list`", env!("CARGO_PKG_NAME"));
+            panic!();
+        })
     }
 
     pub fn get_instance_number(&self) -> Option<u32> {

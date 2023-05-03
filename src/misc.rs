@@ -62,7 +62,7 @@ pub fn get_device_path_list() -> Vec<(DevicePath, BUS_INFO)> {
             PathBuf::from(SYS_BUS).join(pci).join("uevent")
         ) else { continue };
 
-        if uevent.starts_with("DRIVER=amdgpu") {
+        if uevent.lines().any(|line| line.starts_with("DRIVER=amdgpu")) {
             dev_paths.push((
                 DevicePath::from_pci(pci),
                 BUS_INFO::from_number_str(pci).unwrap(),

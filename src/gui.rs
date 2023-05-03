@@ -71,7 +71,7 @@ impl DeviceListMenu {
         let instance = device_path.get_instance_number()?;
 
         let name = {
-            let amdgpu_dev = device_path.init_with_option()?;
+            let amdgpu_dev = device_path.init().ok()?;
             amdgpu_dev.get_marketing_name().unwrap_or_default()
         };
 

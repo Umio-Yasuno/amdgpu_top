@@ -40,6 +40,7 @@ dependencies = [
 name = "amdgpu_top"
 version = "0.1.7"
 dependencies = [
+ "anyhow",
  "ctrlc",
  "cursive",
  "eframe",
@@ -70,6 +71,12 @@ name = "android-properties"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc7eb209b1518d6bb87b283c20095f5228ecda460da70b44f0802523dea6da04"
+
+[[package]]
+name = "anyhow"
+version = "1.0.71"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
 
 [[package]]
 name = "arboard"
