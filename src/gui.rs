@@ -47,7 +47,7 @@ struct VramUsage(drm_amdgpu_memory_info);
 
 impl VramUsage {
     fn new(memory_info: &drm_amdgpu_memory_info) -> Self {
-        VramUsage(*memory_info)
+        Self(*memory_info)
     }
 
     fn update_usage(&mut self, amdgpu_dev: &DeviceHandle) {
@@ -83,6 +83,41 @@ impl DeviceListMenu {
             pci,
             name,
         })
+    }
+}
+
+#[derive(Debug, Clone)]
+struct SensorsHistory {
+    sclk: History<u32>,
+    mclk: History<u32>,
+    vddgfx: History<u32>,
+    vddnb: History<u32>,
+    temp: History<u32>,
+    power: History<u32>,
+    fan_rpm: History<u32>,
+}
+
+impl SensorsHistory {
+    fn new() -> Self {
+        let [sclk, mclk, vddgfx, vddnb, temp, power, fan_rpm] = [0; 7]
+            .map(|_| History::new(HISTORY_LENGTH, f32::INFINITY));
+
+        Self { sclk, mclk, vddgfx, vddnb, temp, power, fan_rpm }
+    }
+
+    fn add(&mut self, sec: f64, sensors: &Sensors) {
+        for (history, val) in [
+            (&mut self.sclk, sensors.sclk),
+            (&mut self.mclk, sensors.mclk),
+            (&mut self.vddgfx, sensors.vddgfx),
+            (&mut self.vddnb, sensors.vddnb),
+            (&mut self.temp, sensors.temp.map(|v| v.saturating_div(1000))),
+            (&mut self.power, sensors.power),
+            (&mut self.fan_rpm, sensors.fan_rpm),
+        ] {
+            let Some(val) = val else { continue };
+            history.add(sec, val);
+        }
     }
 }
 
@@ -122,6 +157,7 @@ pub fn egui_run(main_opt: MainOpt) {
     let mut grbm_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm.index.len()];
     let mut grbm2_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm2.index.len()];
     let mut fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
+    let mut sensors_history = SensorsHistory::new();
 
     let data = CentralData {
         grbm: grbm.clone(),
@@ -133,6 +169,7 @@ pub fn egui_run(main_opt: MainOpt) {
         fdinfo_history: fdinfo_history.clone(),
         gpu_metrics: gpu_metrics.clone(),
         sensors: sensors.clone(),
+        sensors_history: sensors_history.clone(),
     };
 
     let app_device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &pci_bus);
@@ -203,6 +240,7 @@ pub fn egui_run(main_opt: MainOpt) {
 
             vram_usage.update_usage(&amdgpu_dev);
             sensors.update(&amdgpu_dev);
+            sensors_history.add(sec, &sensors);
 
             if let Ok(v) = amdgpu_dev.get_gpu_metrics() {
                 gpu_metrics = v;
@@ -236,6 +274,7 @@ pub fn egui_run(main_opt: MainOpt) {
                         fdinfo_history: fdinfo_history.clone(),
                         gpu_metrics: gpu_metrics.clone(),
                         sensors: sensors.clone(),
+                        sensors_history: sensors_history.clone(),
                     };
                 }
             }
@@ -354,8 +393,9 @@ struct CentralData {
     fdinfo: FdInfoView,
     fdinfo_history: History<FdInfoUsage>,
     gpu_metrics: GpuMetrics,
-    sensors: Sensors,
     vram_usage: VramUsage,
+    sensors: Sensors,
+    sensors_history: SensorsHistory,
 }
 
 struct MyApp {
@@ -710,7 +750,7 @@ impl MyApp {
         };
 
         let [mut gfx, mut compute, mut dma, mut dec, mut enc] = [0; 5]
-            .map(|_| Vec::<[f64; 2]>::with_capacity(30));
+            .map(|_| Vec::<[f64; 2]>::with_capacity(HISTORY_LENGTH.end));
 
         for (i, usage) in self.buf_data.fdinfo_history.iter() {
             let usage_dec = usage.dec + usage.vcn_jpeg;
@@ -805,42 +845,90 @@ impl MyApp {
     fn egui_sensors(&self, ui: &mut egui::Ui) {
         ui.style_mut().override_font_id = Some(MEDIUM);
         let sensors = &self.buf_data.sensors;
+        let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
+            String::new()
+        };
         egui::Grid::new("Sensors").show(ui, |ui| {
-            for (name, val, unit) in [
-                ("GFX_SCLK", sensors.sclk, "MHz"),
-                ("GFX_MCLK", sensors.mclk, "MHz"),
-                ("VDDNB", sensors.vddnb, "mV"),
-                ("VDDGFX", sensors.vddgfx, "mV"),
+            for (history, val, label, min, max, unit) in [
+                (
+                    &self.buf_data.sensors_history.sclk,
+                    sensors.sclk,
+                    "GFX_SCLK",
+                    self.app_device_info.min_gpu_clk,
+                    self.app_device_info.max_gpu_clk,
+                    "MHz",
+                ),
+                (
+                    &self.buf_data.sensors_history.mclk,
+                    sensors.mclk,
+                    "GFX_MCLK",
+                    self.app_device_info.min_mem_clk,
+                    self.app_device_info.max_mem_clk,
+                    "MHz",
+                ),
+                (
+                    &self.buf_data.sensors_history.vddgfx,
+                    sensors.vddgfx,
+                    "VDDGFX",
+                    500, // "500 mV" is not an exact value
+                    1500, // "1500 mV" is not an exact value
+                    "mV",
+                ),
+                (
+                    &self.buf_data.sensors_history.temp,
+                    sensors.temp.map(|v| v.saturating_div(1000)),
+                    "GFX Temp.",
+                    0,
+                    sensors.critical_temp.unwrap_or(105), // "105 C" is not an exact value
+                    "C",
+                ),
+                (
+                    &self.buf_data.sensors_history.power,
+                    sensors.power,
+                    "GFX Power",
+                    0,
+                    sensors.power_cap.unwrap_or(350), // "350 W" is not an exact value
+                    "W",
+                ),
+                (
+                    &self.buf_data.sensors_history.fan_rpm,
+                    sensors.fan_rpm,
+                    "Fan",
+                    0,
+                    sensors.fan_max_rpm.unwrap_or(6000), // "6000 RPM" is not an exact value
+                    "RPM",
+                ),
             ] {
                 let Some(val) = val else { continue };
-                ui.label(name);
-                ui.label("=>");
-                ui.label(format!("{val:5} {unit}"));
+
+                ui.label(format!("{label}\n({val:4} {unit})"));
+
+                if min == max {
+                    ui.end_row();
+                    continue;
+                }
+
+                let label_fmt = move |_name: &str, val: &PlotPoint| {
+                    format!("{:.1}s\n{:.0} {unit}", val.x, val.y)
+                };
+                let points: PlotPoints = history.iter()
+                    .map(|(i, val)| [i, val as f64]).collect();
+                let line = Line::new(points).fill(1.0);
+                Plot::new(label)
+                    .allow_zoom(false)
+                    .allow_scroll(false)
+                    .show_axes([false, true])
+                    .include_y(min)
+                    .include_y(max)
+                    .y_axis_formatter(y_fmt)
+                    .label_formatter(label_fmt)
+                    .auto_bounds_x()
+                    .height(PLOT_HEIGHT * 1.5)
+                    .width(PLOT_WIDTH)
+                    .show(ui, |plot_ui| plot_ui.line(line));
                 ui.end_row();
             }
         });
-        if let Some(temp) = sensors.temp {
-            let temp = temp.saturating_div(1_000);
-            if let Some(crit) = sensors.critical_temp {
-                ui.label(format!("GPU Temp. => {temp:3} C (Crit. {crit} C)"));
-            } else {
-                ui.label(format!("GPU Temp. => {temp:3} C"));
-            }
-        }
-        if let Some(power) = sensors.power {
-            if let Some(cap) = sensors.power_cap {
-                ui.label(format!("GPU Power => {power:3} W (Cap. {cap} W)"));
-            } else {
-                ui.label(format!("GPU Power => {power:3} W"));
-            }
-        }
-        if let Some(fan_rpm) = sensors.fan_rpm {
-            if let Some(max_rpm) = sensors.fan_max_rpm {
-                ui.label(format!("Fan => {fan_rpm:4} RPM (Max. {max_rpm} RPM)"));
-            } else {
-                ui.label(format!("Fan => {fan_rpm:4} RPM"));
-            }
-        }
         ui.label(format!(
             "PCI Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
             cur_gen = sensors.cur.gen,
