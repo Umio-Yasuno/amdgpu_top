@@ -212,14 +212,11 @@ impl FdInfoView {
             let path = format!("/proc/{pid}/fdinfo/{fd}");
             let Ok(mut f) = fs::File::open(&path) else { continue };
             if f.read_to_string(&mut buf).is_err() { continue }
-            let mut lines = buf.lines();
 
-            'fdinfo: loop {
-                let Some(l) = lines.next() else { break 'fdinfo; };
-
+            'fdinfo: for l in buf.lines() {
                 if l.starts_with("drm-client-id") {
                     let id = FdInfoUsage::id_parse(l);
-                    if !self.drm_client_ids.insert(id) { continue 'fds; }
+                    if !self.drm_client_ids.insert(id) { continue 'fds }
                     continue 'fdinfo;
                 }
                 if l.starts_with("drm-memory") {
@@ -230,8 +227,8 @@ impl FdInfoView {
                     stat.engine_parse(l);
                     continue 'fdinfo;
                 }
-            } // 'fdinfo
-        } // 'fds
+            }
+        }
 
         let diff = {
             if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
@@ -454,40 +451,33 @@ pub fn get_self_pid() -> Option<i32> {
 use std::path::PathBuf;
 
 fn get_fds(pid: i32, device_path: &DevicePath) -> Vec<i32> {
-    let mut fds: Vec<i32> = Vec::new();
-    let fd_path = format!("/proc/{pid}/fd/");
-    let Ok(fd_list) = fs::read_dir(&fd_path) else { return fds };
+    let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else { return Vec::new() };
 
-    for fd_link in fd_list {
-        let Ok(dir_entry) = fd_link.map(|fd_link| fd_link.path()) else { continue };
-        let Ok(link) = fs::read_link(&dir_entry) else { continue };
+    fd_list.flat_map(|fd_link| {
+        let dir_entry = fd_link.map(|fd_link| fd_link.path()).ok()?;
+        let link = fs::read_link(&dir_entry).ok()?;
 
         // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
         if [&device_path.render, &device_path.card].into_iter().any(|path| link.starts_with(path)) {
-            let Some(fd_num) = dir_entry.file_name()
+            return dir_entry.file_name()
                 .and_then(|name| name.to_str())
-                .and_then(|name| name.parse::<i32>().ok()) else { continue };
-            fds.push(fd_num);
+                .and_then(|name| name.parse::<i32>().ok());
         }
-    }
 
-    fds
+        None
+    }).collect()
 }
 
 fn get_all_processes() -> Vec<i32> {
-    let mut pids: Vec<i32> = Vec::new();
-    let Ok(proc_dir) = fs::read_dir("/proc") else { return pids };
+    let Ok(proc_dir) = fs::read_dir("/proc") else { return Vec::new() };
 
-    for dir_entry in proc_dir.into_iter().flatten() {
-        let Ok(metadata) = dir_entry.metadata() else { continue };
-        if !metadata.is_dir() { continue }
+    proc_dir.flatten().flat_map(|dir_entry| {
+        let metadata = dir_entry.metadata().ok()?;
+        if !metadata.is_dir() { return None }
 
-        let Some(pid) = dir_entry.file_name().to_str()
-            .and_then(|name| name.parse::<i32>().ok()) else { continue };
-        pids.push(pid);
-    }
-
-    pids
+        dir_entry.file_name().to_str()
+            .and_then(|name| name.parse::<i32>().ok())
+    }).collect()
 }
 
 pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath, self_pid: i32) {
@@ -502,28 +492,24 @@ pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath, self
 
         let fds = get_fds(pid, device_path);
 
-        if !fds.is_empty() {
-            let base = PathBuf::from(format!("/proc/{pid}/"));
-            {
-                // filter systemd processes from fdinfo target
-                // gnome-shell share the AMDGPU driver context with systemd processes
-                let Ok(cmdline) = fs::read_to_string(base.join("cmdline")) else { continue };
-                if SYSTEMD_CMDLINE.iter().any(|path| cmdline.starts_with(path)) {
-                    continue
-                }
-            }
-            // Maximum 16 characters
-            // https://www.kernel.org/doc/html/latest/filesystems/proc.html#proc-pid-comm-proc-pid-task-tid-comm
-            let Ok(mut name) = fs::read_to_string(base.join("comm")) else {
-                continue
-            };
-            name.pop(); // trim '\n'
+        if fds.is_empty() { continue }
 
-            vec_info.push(ProcInfo {
-                pid,
-                name,
-                fds,
-            });
+        let base = PathBuf::from(format!("/proc/{pid}/"));
+        {
+            // filter systemd processes from fdinfo target
+            // gnome-shell share the AMDGPU driver context with systemd processes
+            let Ok(cmdline) = fs::read_to_string(base.join("cmdline")) else { continue };
+            if SYSTEMD_CMDLINE.iter().any(|path| cmdline.starts_with(path)) { continue }
         }
+        // Maximum 16 characters
+        // https://www.kernel.org/doc/html/latest/filesystems/proc.html#proc-pid-comm-proc-pid-task-tid-comm
+        let Ok(mut name) = fs::read_to_string(base.join("comm")) else { continue };
+        name.pop(); // trim '\n'
+
+        vec_info.push(ProcInfo {
+            pid,
+            name,
+            fds,
+        });
     }
 }
