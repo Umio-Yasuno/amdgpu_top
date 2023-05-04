@@ -172,7 +172,7 @@ pub fn egui_run(main_opt: MainOpt) {
         sensors_history: sensors_history.clone(),
     };
 
-    let app_device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &pci_bus);
+    let app_device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &sensors);
     let device_list = device_path_list.iter().flat_map(DeviceListMenu::new).collect();
     let command_path = std::fs::read_link("/proc/self/exe")
         .unwrap_or(PathBuf::from(env!("CARGO_PKG_NAME")));
@@ -423,6 +423,9 @@ struct AppDeviceInfo {
     max_mem_clk: u32,
     marketing_name: String,
     pci_bus: PCI::BUS_INFO,
+    critical_temp: Option<u32>,
+    power_cap: Option<u32>,
+    fan_max_rpm: Option<u32>,
 }
 
 impl AppDeviceInfo {
@@ -430,7 +433,7 @@ impl AppDeviceInfo {
         amdgpu_dev: &DeviceHandle,
         ext_info: &drm_amdgpu_info_device,
         memory_info: &drm_amdgpu_memory_info,
-        pci_bus: &PCI::BUS_INFO,
+        sensors: &Sensors,
     ) -> Self {
         let (min_gpu_clk, max_gpu_clk) =
             amdgpu_dev.get_min_max_gpu_clock().unwrap_or((0, 0));
@@ -452,7 +455,10 @@ impl AppDeviceInfo {
             min_mem_clk,
             max_mem_clk,
             marketing_name,
-            pci_bus: *pci_bus,
+            pci_bus: sensors.bus_info,
+            critical_temp: sensors.critical_temp,
+            power_cap: sensors.power_cap,
+            fan_max_rpm: sensors.fan_max_rpm,
         }
     }
 }
@@ -600,6 +606,18 @@ impl MyApp {
                 ("PCI (domain:bus:dev.func)", &pci_bus.to_string()),
                 ("PCI Link Speed (Max)", &format!("Gen{}x{}", link.gen, link.width)),
             ]);
+            ui.end_row();
+
+            for (label, val, unit) in [
+                ("Critical Temp.", &self.app_device_info.critical_temp, "C"),
+                ("Power Cap.", &self.app_device_info.power_cap, "W"),
+                ("Fan RPM (Max).", &self.app_device_info.fan_max_rpm, "RPM"),
+            ] {
+                let Some(val) = val else { continue };
+                ui.label(label);
+                ui.label(format!("{val:4} {unit}"));
+                ui.end_row();
+            }
         });
     }
 
