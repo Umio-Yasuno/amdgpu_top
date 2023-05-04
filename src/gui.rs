@@ -299,7 +299,7 @@ impl eframe::App for MyApp {
                 ui.add_space(SPACE);
                 collapsing(ui, "GRBM2", true, |ui| self.egui_perf_counter(
                     ui,
-                    "GRBM",
+                    "GRBM2",
                     &self.buf_data.grbm2,
                     &self.buf_data.grbm2_history,
                 ));
