@@ -208,6 +208,7 @@ impl FdInfoView {
         let mut buf = String::new();
 
         'fds: for fd in &proc_info.fds {
+            buf.clear();
             let path = format!("/proc/{pid}/fdinfo/{fd}");
             let Ok(mut f) = fs::File::open(&path) else { continue };
             if f.read_to_string(&mut buf).is_err() { continue }
