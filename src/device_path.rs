@@ -14,7 +14,7 @@ pub struct DevicePath {
 }
 
 impl DevicePath {
-    pub fn new(instance: u32) -> Self {
+    fn new(instance: u32) -> Self {
         Self {
             render: PathBuf::from(format!("/dev/dri/renderD{}", 128 + instance)),
             card: PathBuf::from(format!("/dev/dri/card{}", instance)),
@@ -22,15 +22,19 @@ impl DevicePath {
         }
     }
 
-    pub fn from_pci(pci_path: &str) -> anyhow::Result<Self> {
-
+    fn from_pci(pci_path: &str) -> anyhow::Result<Self> {
         let base = PathBuf::from("/dev/dri/by-path");
 
         let [render, card] = ["render", "card"].map(|v| {
             let name = format!("pci-{pci_path}-{v}");
-            let link = fs::read_link(base.join(name))?;
+            let link = fs::read_link(base.join(&name)).map_err(|err| {
+                eprintln!("Error: {err}");
+                eprintln!("path: {name}");
 
-            fs::canonicalize(base.join(link))
+                anyhow!(format!("pci: {pci_path}"))
+            })?;
+
+            fs::canonicalize(base.join(link)).map_err(|err| anyhow!(err))
         });
 
         let pci = PCI::BUS_INFO::from_number_str(pci_path); // pci_path.parse().ok()
@@ -40,6 +44,31 @@ impl DevicePath {
             card: card?,
             pci,
         })
+    }
+
+    pub fn from_main_opt(main_opt: &MainOpt, list: &[Self]) -> (Self, DeviceHandle) {
+        // default
+        if main_opt.instance == 0 && main_opt.pci_path.is_none() {
+            return Self::init_with_fallback(main_opt, list);
+        }
+
+        let device_path = if let Some(ref pci_path) = main_opt.pci_path {
+            Self::from_pci(pci_path).unwrap_or_else(|err| {
+                eprintln!("{err}");
+                eprintln!("Device list: {list:#?}");
+                panic!();
+            })
+        } else {
+            Self::new(main_opt.instance)
+        };
+        let amdgpu_dev = device_path.init().unwrap_or_else(|err| {
+            eprintln!("{err}");
+            eprintln!("{:?}", device_path);
+            eprintln!("Device list: {list:#?}");
+            panic!();
+        });
+
+        (device_path, amdgpu_dev)
     }
 
     pub fn init(&self) -> anyhow::Result<DeviceHandle> {
@@ -57,24 +86,9 @@ impl DevicePath {
         Ok(amdgpu_dev)
     }
 
-    pub fn init_device_handle(&self) -> DeviceHandle {
-        self.init().unwrap_or_else(|err| {
-            eprintln!("Error: {err}");
-            eprintln!("{:?}", self);
-            eprintln!("\nHelp: Try running `{} --list`", env!("CARGO_PKG_NAME"));
-            panic!();
-        })
-    }
-
     fn fallback(main_opt: &MainOpt) -> anyhow::Result<(Self, DeviceHandle)> {
         if let Some(ref pci_path) = main_opt.pci_path {
-            let device_path = match Self::from_pci(pci_path) {
-                Ok(path) => path,
-                Err(err) => {
-                    eprintln!("{err}");
-                    return Err(err).with_context(|| format!("pci: {pci_path}"));
-                },
-            };
+            let device_path = Self::from_pci(pci_path)?;
             let amdgpu_dev = device_path.init()?;
 
             return Ok((device_path, amdgpu_dev));
@@ -92,7 +106,7 @@ impl DevicePath {
         Ok((device_path, amdgpu_dev))
     }
 
-    pub fn init_with_fallback(main_opt: &MainOpt, list: &[Self]) -> (Self, DeviceHandle) {
+    fn init_with_fallback(main_opt: &MainOpt, list: &[Self]) -> (Self, DeviceHandle) {
         Self::fallback(main_opt).unwrap_or_else(|err| {
             eprintln!("{err}");
             eprintln!("Fallback: list: {list:#?}");

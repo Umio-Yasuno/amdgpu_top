@@ -35,11 +35,9 @@ pub fn info_bar(amdgpu_dev: &DeviceHandle, ext_info: &drm_amdgpu_info_device) ->
     )
 }
 
-pub fn device_list(dump_info: bool) {
-    let list = DevicePath::get_device_path_list();
-
+pub fn device_list(dump_info: bool, list: &[DevicePath]) {
     for device_path in list {
-        let amdgpu_dev = device_path.init_device_handle();
+        let Ok(amdgpu_dev) = device_path.init() else { continue };
         let Some(instance) = device_path.get_instance_number() else { continue };
 
         println!("#{instance}");

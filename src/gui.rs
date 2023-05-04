@@ -90,7 +90,7 @@ pub fn egui_run(main_opt: MainOpt) {
     let self_pid = 0; // no filtering in GUI
     let device_path_list = DevicePath::get_device_path_list();
 
-    let (device_path, amdgpu_dev) = DevicePath::init_with_fallback(&main_opt, &device_path_list);
+    let (device_path, amdgpu_dev) = DevicePath::from_main_opt(&main_opt, &device_path_list);
 
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
