@@ -701,7 +701,7 @@ impl MyApp {
         self.fdinfo_sort = sort_type;
     }
 
-    fn egui_grid_fdinfo(&mut self, ui: &mut egui::Ui) {
+    fn egui_fdinfo_plot(&self, ui: &mut egui::Ui) {
         let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
             String::new()
         };
@@ -747,6 +747,10 @@ impl MyApp {
                     plot_ui.line(Line::new(PlotPoints::new(usage)).name(name));
                 }
             });
+    }
+
+    fn egui_grid_fdinfo(&mut self, ui: &mut egui::Ui) {
+        collapsing_plot(ui, "fdinfo Plot", true, |ui| self.egui_fdinfo_plot(ui));
 
         egui::Grid::new("fdinfo").show(ui, |ui| {
             ui.style_mut().override_font_id = Some(MEDIUM);
@@ -979,6 +983,34 @@ impl MyApp {
     }
 }
 
+fn label(text: &str, font: FontId) -> egui::Label {
+    egui::Label::new(RichText::new(text).font(font)).sense(egui::Sense::click())
+}
+
+fn collapsing_plot(
+    ui: &mut egui::Ui,
+    text: &str,
+    default_open: bool,
+    body: impl FnOnce(&mut egui::Ui),
+) {
+    use egui::{collapsing_header::CollapsingState, Id};
+
+    let mut state = CollapsingState::load_with_default_open(ui.ctx(), Id::new(text), default_open);
+
+    let _ = ui.horizontal(|ui| {
+        let icon = {
+            let text = if state.is_open() { "\u{25be}" } else { "\u{25b8}" };
+            label(text, BASE)
+        };
+        let header = label(text, BASE);
+        if ui.add(icon).clicked() || ui.add(header).clicked() {
+            state.toggle(ui);
+        }
+    });
+
+    state.show_body_unindented(ui, body);
+}
+
 fn collapsing(
     ui: &mut egui::Ui,
     text: &str,
@@ -989,16 +1021,12 @@ fn collapsing(
 
     let mut state = CollapsingState::load_with_default_open(ui.ctx(), Id::new(text), default_open);
 
-    let label = |text: &str| -> egui::Label {
-        egui::Label::new(RichText::new(text).font(HEADING)).sense(egui::Sense::click())
-    };
-
     let header_res = ui.horizontal(|ui| {
         let icon = {
             let text = if state.is_open() { "\u{25be}" } else { "\u{25b8}" };
-            label(text)
+            label(text, HEADING)
         };
-        let header = label(text);
+        let header = label(text, HEADING);
         if ui.add(icon).clicked() || ui.add(header).clicked() {
             state.toggle(ui);
         }
