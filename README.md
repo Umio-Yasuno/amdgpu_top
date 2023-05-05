@@ -13,15 +13,18 @@ cargo run -- [options ..]
 
 ### Option
 ```
+USAGE:
+    cargo run -- [options ..] or <amdgpu_top> [options ..]
+
 FLAGS:
    -d, --dump
        Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)
    --list
-       Display a list of AMDGPU devices
-   -J
-       Output JSON formatted data for simple process trace (require "proc_trace" feature)
+       Display a list of AMDGPU devices (can be combined with "-d" option)
+   -J, --json
+       Output JSON formatted data
    --gui
-       Launch GUI mode (require "egui" feature)
+       Launch GUI mode
    -h, --help
        Print help information
 
@@ -32,10 +35,6 @@ OPTIONS:
        Specifying PCI path (domain:bus:dev.func)
    -u <u64>, --update-process-index <u64>
        Update interval in seconds of the process index for fdinfo (default: 5s)
-   -s <i64>, --ms <i64>
-       Refresh period in milliseconds for simple process trace (require "proc_trace" feature)
-   -p <i32>, --pid <i32>
-       Specification of PID, used for `-J` option (require "proc_trace" feature)
 ```
 
 ### Command
