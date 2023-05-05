@@ -20,7 +20,7 @@ use libamdgpu_top::AMDGPU::{
 };
 use libamdgpu_top::PCI;
 use libamdgpu_top::{stat, DevicePath, Sampling, VramUsage};
-use stat::{FdInfoUsage, Sensors, FdInfoSortType, FdInfoStat, PerfCounter};
+use stat::{check_metrics_val, FdInfoUsage, Sensors, FdInfoSortType, FdInfoStat, PerfCounter};
 
 const SPACE: f32 = 8.0;
 const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
@@ -935,6 +935,7 @@ impl MyApp {
 
     fn egui_gpu_metrics_v1(&self, ui: &mut egui::Ui) {
         let gpu_metrics = &self.buf_data.gpu_metrics;
+
         if let Some(socket_power) = gpu_metrics.get_average_socket_power() {
             if socket_power != u16::MAX {
                 ui.label(&format!("Socket Power => {socket_power:3} W"));
@@ -942,37 +943,83 @@ impl MyApp {
         }
 
         ui.horizontal(|ui| {
-            for (val, name) in [
+            v1_helper(ui, "C", &[
                 (gpu_metrics.get_temperature_edge(), "Edge"),
                 (gpu_metrics.get_temperature_hotspot(), "Hotspot"),
                 (gpu_metrics.get_temperature_mem(), "Memory"),
-            ] {
-                let Some(v) = val.and_then(|v| v.ne(&u16::MAX).then_some(v)) else { continue };
-                ui.label(&format!("{name} => {v:3} C,"));
-            }
+            ]);
         });
 
         ui.horizontal(|ui| {
-            for (val, name) in [
+            v1_helper(ui, "C", &[
                 (gpu_metrics.get_temperature_vrgfx(), "VRGFX"),
                 (gpu_metrics.get_temperature_vrsoc(), "VRSOC"),
                 (gpu_metrics.get_temperature_vrmem(), "VRMEM"),
-            ] {
-                let Some(v) = val.and_then(|v| v.ne(&u16::MAX).then_some(v)) else { continue };
-                ui.label(&format!("{name} => {v:3} C,"));
-            }
+            ]);
         });
 
         ui.horizontal(|ui| {
-            for (val, name) in [
+            v1_helper(ui, "mV", &[
                 (gpu_metrics.get_voltage_soc(), "SoC"),
                 (gpu_metrics.get_voltage_gfx(), "GFX"),
                 (gpu_metrics.get_voltage_mem(), "Mem"),
-            ] {
-                let Some(v) = val.and_then(|v| v.ne(&u16::MAX).then_some(v)) else { continue };
-                ui.label(&format!("{name} => {v:4} mV,"));
-            }
+            ]);
         });
+
+        for (avg, cur, name) in [
+            (
+                gpu_metrics.get_average_gfxclk_frequency(),
+                gpu_metrics.get_current_gfxclk(),
+                "GFXCLK",
+            ),
+            (
+                gpu_metrics.get_average_socclk_frequency(),
+                gpu_metrics.get_current_socclk(),
+                "SOCCLK",
+            ),
+            (
+                gpu_metrics.get_average_uclk_frequency(),
+                gpu_metrics.get_current_uclk(),
+                "UMCCLK",
+            ),
+            (
+                gpu_metrics.get_average_vclk_frequency(),
+                gpu_metrics.get_current_vclk(),
+                "VCLK",
+            ),
+            (
+                gpu_metrics.get_average_dclk_frequency(),
+                gpu_metrics.get_current_dclk(),
+                "DCLK",
+            ),
+            (
+                gpu_metrics.get_average_vclk1_frequency(),
+                gpu_metrics.get_current_vclk1(),
+                "VCLK1",
+            ),
+            (
+                gpu_metrics.get_average_dclk1_frequency(),
+                gpu_metrics.get_current_dclk1(),
+                "DCLK1",
+            ),
+        ] {
+            let [avg, cur] = [avg, cur].map(check_metrics_val);
+            ui.label(format!("{name:<6} => Avg. {avg:>4} MHz, Cur. {cur:>4} MHz"));
+        }
+
+        // Only Aldebaran (MI200) supports it.
+        if let Some(hbm_temp) = gpu_metrics.get_temperature_hbm().and_then(|hbm_temp|
+            (!hbm_temp.contains(&u16::MAX)).then_some(hbm_temp)
+        ) {
+            ui.horizontal(|ui| {
+                ui.label("HBM Temp. (C) => [");
+                for v in &hbm_temp {
+                    let v = v.saturating_div(100);
+                    ui.label(RichText::new(format!("{v:>5},")));
+                }
+                ui.label("]");
+            });
+        }
     }
 
     fn egui_gpu_metrics_v2(&self, ui: &mut egui::Ui) {
@@ -986,32 +1033,22 @@ impl MyApp {
 
         ui.horizontal(|ui| {
             ui.label("GFX =>");
-            for (val, unit, div) in [
-                (gpu_metrics.get_temperature_gfx(), "C", 100),
-                (gpu_metrics.get_average_gfx_power(), "mW", 1),
-                (gpu_metrics.get_current_gfxclk(), "MHz", 1),
-            ] {
-                let v = val
-                    .and_then(|v| v.ne(&u16::MAX).then_some(v))
-                    .unwrap_or(0)
-                    .saturating_div(div);
-                ui.label(&format!("{v:5} {unit}"));
-            }
+            let temp_gfx = gpu_metrics.get_temperature_gfx().map(|v| v.saturating_div(100));
+            v2_helper(ui, &[
+                (temp_gfx, "C"),
+                (gpu_metrics.get_average_gfx_power(), "mW"),
+                (gpu_metrics.get_current_gfxclk(), "MHz"),
+            ]);
         });
 
         ui.horizontal(|ui| {
             ui.label("SoC =>");
-            for (val, unit, div) in [
-                (gpu_metrics.get_temperature_soc(), "C", 100),
-                (gpu_metrics.get_average_soc_power(), "mW", 1),
-                (gpu_metrics.get_current_socclk(), "MHz", 1),
-            ] {
-                let v = val
-                    .and_then(|v| v.ne(&u16::MAX).then_some(v))
-                    .unwrap_or(0)
-                    .saturating_div(div);
-                ui.label(&format!("{v:5} {unit}"));
-            }
+            let temp_soc = gpu_metrics.get_temperature_soc().map(|v| v.saturating_div(100));
+            v2_helper(ui, &[
+                (temp_soc, "C"),
+                (gpu_metrics.get_average_soc_power(), "mW"),
+                (gpu_metrics.get_current_socclk(), "MHz"),
+            ]);
         });
 
         if let Some(socket_power) = gpu_metrics.get_average_socket_power() {
@@ -1020,49 +1057,84 @@ impl MyApp {
             }
         }
 
-        let for_array = |v: &u16, div: u16, ui: &mut egui::Ui| {
-            let v = if v == &u16::MAX {
-                0
-            } else {
-                v.saturating_div(div)
-            };
+        for (avg, cur, name) in [
+            (
+                gpu_metrics.get_average_uclk_frequency(),
+                gpu_metrics.get_current_uclk(),
+                "UMCCLK",
+            ),
+            (
+                gpu_metrics.get_average_fclk_frequency(),
+                gpu_metrics.get_current_fclk(),
+                "FCLK",
+            ),
+            (
+                gpu_metrics.get_average_vclk_frequency(),
+                gpu_metrics.get_current_vclk(),
+                "VCLK",
+            ),
+            (
+                gpu_metrics.get_average_dclk_frequency(),
+                gpu_metrics.get_current_dclk(),
+                "DCLK",
+            ),
+        ] {
+            let [avg, cur] = [avg, cur].map(check_metrics_val);
+            ui.label(format!("{name:<6} => Avg. {avg:>4} MHz, Cur. {cur:>4} MHz"));
+        }
 
-            ui.with_layout(
-                egui::Layout::right_to_left(egui::Align::TOP),
-                |ui| ui.label(&format!("{v:5},")),
-            );
+        let for_array = |ui: &mut egui::Ui, val: &[u16]| {
+            for v in val {
+                let v = if v == &u16::MAX { &0 } else { v };
+                ui.label(RichText::new(format!("{v:>5},")));
+            }
         };
 
         egui::Grid::new("GPU Metrics v2.x Core/L3").show(ui, |ui| {
-            for (val, label, div) in [
-                (gpu_metrics.get_temperature_core(), CORE_TEMP_LABEL, 100),
-                (gpu_metrics.get_average_core_power(), CORE_POWER_LABEL, 1),
-                (gpu_metrics.get_current_coreclk(), CORE_CLOCK_LABEL, 1),
+            let temp_core = gpu_metrics.get_temperature_core()
+                .map(|array| array.map(|v| v.saturating_div(100)));
+            let temp_l3 = gpu_metrics.get_temperature_l3()
+                .map(|array| array.map(|v| v.saturating_div(100)));
+
+            for (val, label) in [
+                (temp_core, CORE_TEMP_LABEL),
+                (gpu_metrics.get_average_core_power(), CORE_POWER_LABEL),
+                (gpu_metrics.get_current_coreclk(), CORE_CLOCK_LABEL),
             ] {
                 let Some(val) = val else { continue };
                 ui.label(label);
                 ui.label("=> [");
-                for v in &val {
-                    for_array(v, div, ui);
-                }
+                for_array(ui, &val);
                 ui.label("]");
                 ui.end_row();
             }
 
-            for (val, label, div) in [
-                (gpu_metrics.get_temperature_l3(), L3_TEMP_LABEL, 100),
-                (gpu_metrics.get_current_l3clk(), L3_CLOCK_LABEL, 1),
+            for (val, label) in [
+                (temp_l3, L3_TEMP_LABEL),
+                (gpu_metrics.get_current_l3clk(), L3_CLOCK_LABEL),
             ] {
                 let Some(val) = val else { continue };
                 ui.label(label);
                 ui.label("=> [");
-                for v in &val {
-                    for_array(v, div, ui);
-                }
+                for_array(ui, &val);
                 ui.label("]");
                 ui.end_row();
             }
         });
+    }
+}
+
+fn v1_helper(ui: &mut egui::Ui, unit: &str, v: &[(Option<u16>, &str)]) {
+    for (val, name) in v {
+        let v = check_metrics_val(*val);
+        ui.label(format!("{name} => {v:>4} {unit}, "));
+    }
+}
+
+fn v2_helper(ui: &mut egui::Ui, v: &[(Option<u16>, &str)]) {
+    for (val, unit) in v {
+        let v = check_metrics_val(*val);
+        ui.label(format!("{v:>5} {unit}, "));
     }
 }
 

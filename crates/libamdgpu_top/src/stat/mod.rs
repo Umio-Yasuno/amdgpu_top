@@ -44,3 +44,11 @@ pub use sensors::*;
 
 mod pcie_bw;
 pub use pcie_bw::*;
+
+pub fn check_metrics_val(val: Option<u16>) -> String {
+    if let Some(v) = val {
+        if v == u16::MAX { "N/A".to_string() } else { v.to_string() }
+    } else {
+        "N/A".to_string()
+    }
+}
