@@ -1,10 +1,3 @@
-use libdrm_amdgpu_sys::AMDGPU::DeviceHandle;
-use crate::Opt;
-mod utils;
-use utils::*;
-
-const PANEL_WIDTH: usize = 70;
-
 pub const GFX10_GRBM_INDEX: &[(&str, usize)] = &[
     ("Graphics Pipe", 31),
     ("Texture Pipe", 14),
@@ -40,23 +33,14 @@ pub const GRBM2_INDEX: &[(&str, usize)] = &[
     ("Command Processor - Graphics", 30),
 ];
 
-mod pc_type;
-pub use pc_type::*;
-
 mod perf_counter;
 pub use perf_counter::*;
 
 mod fdinfo;
 pub use fdinfo::*;
 
-mod vram_usage;
-pub use vram_usage::*;
-
 mod sensors;
 pub use sensors::*;
-
-mod gpu_metrics;
-pub use gpu_metrics::*;
 
 mod pcie_bw;
 pub use pcie_bw::*;

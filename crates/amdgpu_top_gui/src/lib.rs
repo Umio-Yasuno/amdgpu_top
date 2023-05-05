@@ -6,7 +6,7 @@ use egui::{FontFamily, FontId, RichText, util::History};
 use egui::plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
 use std::ops::{Range, RangeInclusive};
 
-use libdrm_amdgpu_sys::AMDGPU::{
+use libamdgpu_top::AMDGPU::{
     drm_amdgpu_info_device,
     drm_amdgpu_memory_info,
     DeviceHandle,
@@ -18,9 +18,9 @@ use libdrm_amdgpu_sys::AMDGPU::{
     VBIOS::VbiosInfo,
     VIDEO_CAPS::{VideoCapsInfo, CAP_TYPE},
 };
-use libdrm_amdgpu_sys::PCI;
-use crate::{MainOpt, stat, stat::FdInfoUsage, stat::Sensors, DevicePath, Sampling};
-use stat::{FdInfoSortType, FdInfoView, PerfCounter};
+use libamdgpu_top::PCI;
+use libamdgpu_top::{stat, DevicePath, Sampling, VramUsage};
+use stat::{FdInfoUsage, Sensors, FdInfoSortType, FdInfoStat, PerfCounter};
 
 const SPACE: f32 = 8.0;
 const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
@@ -41,27 +41,6 @@ const HW_IP_LIST: &[HW_IP_TYPE] = &[
     HW_IP_TYPE::VCN_ENC,
     HW_IP_TYPE::VCN_JPEG,
 ];
-
-#[derive(Debug, Clone)]
-struct VramUsage(drm_amdgpu_memory_info);
-
-impl VramUsage {
-    fn new(memory_info: &drm_amdgpu_memory_info) -> Self {
-        Self(*memory_info)
-    }
-
-    fn update_usage(&mut self, amdgpu_dev: &DeviceHandle) {
-        if let [Ok(vram), Ok(vis_vram), Ok(gtt)] = [
-            amdgpu_dev.vram_usage_info(),
-            amdgpu_dev.vis_vram_usage_info(),
-            amdgpu_dev.gtt_usage_info(),
-        ] {
-            self.0.vram.heap_usage = vram;
-            self.0.cpu_accessible_vram.heap_usage = vis_vram;
-            self.0.gtt.heap_usage = gtt;
-        }
-    }
-}
 
 struct DeviceListMenu {
     instance: u32,
@@ -121,12 +100,14 @@ impl SensorsHistory {
     }
 }
 
-pub fn egui_run(main_opt: MainOpt) {
+pub fn run(
+    title: &str,
+    device_path: DevicePath,
+    amdgpu_dev: DeviceHandle,
+    device_path_list: &[DevicePath],
+    interval: u64,
+) {
     let self_pid = 0; // no filtering in GUI
-    let device_path_list = DevicePath::get_device_path_list();
-
-    let (device_path, amdgpu_dev) = DevicePath::from_main_opt(&main_opt, &device_path_list);
-
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
@@ -138,12 +119,12 @@ pub fn egui_run(main_opt: MainOpt) {
         stat::GRBM_INDEX
     };
 
-    let mut grbm = stat::PerfCounter::new(stat::PCType::GRBM, grbm_index);
-    let mut grbm2 = stat::PerfCounter::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
+    let mut grbm = PerfCounter::new(stat::PCType::GRBM, grbm_index);
+    let mut grbm2 = PerfCounter::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
 
     let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
     let sample = Sampling::low();
-    let mut fdinfo = stat::FdInfoView::new(sample.to_duration());
+    let mut fdinfo = FdInfoStat::new(sample.to_duration());
     {
         stat::update_index(&mut proc_index, &device_path, self_pid);
         for pu in &proc_index {
@@ -175,7 +156,7 @@ pub fn egui_run(main_opt: MainOpt) {
     let app_device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &sensors);
     let device_list = device_path_list.iter().flat_map(DeviceListMenu::new).collect();
     let command_path = std::fs::read_link("/proc/self/exe")
-        .unwrap_or(PathBuf::from(env!("CARGO_PKG_NAME")));
+        .unwrap_or(PathBuf::from("amdgpu_top"));
 
     let app = MyApp {
         app_device_info,
@@ -201,7 +182,7 @@ pub fn egui_run(main_opt: MainOpt) {
         let mut buf_index: Vec<stat::ProcInfo> = Vec::new();
 
         std::thread::spawn(move || loop {
-            std::thread::sleep(Duration::from_secs(main_opt.update_process_index));
+            std::thread::sleep(Duration::from_secs(interval));
 
             stat::update_index(&mut buf_index, &device_path, self_pid);
 
@@ -249,11 +230,7 @@ pub fn egui_run(main_opt: MainOpt) {
             {
                 let lock = share_proc_index.lock();
                 if let Ok(proc_index) = lock {
-                    fdinfo.proc_usage.clear();
-                    fdinfo.drm_client_ids.clear();
-                    for pu in proc_index.iter() {
-                        fdinfo.get_proc_usage(pu);
-                    }
+                    fdinfo.get_all_proc_usage(&proc_index);
                     fdinfo.interval = sample.to_duration();
                     fdinfo_history.add(sec, fdinfo.fold_fdinfo_usage());
                 } else {
@@ -282,7 +259,7 @@ pub fn egui_run(main_opt: MainOpt) {
     }
 
     eframe::run_native(
-        concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION")),
+        title,
         options,
         Box::new(|_cc| Box::new(app)),
     ).unwrap();
@@ -390,7 +367,7 @@ struct CentralData {
     grbm2: PerfCounter,
     grbm_history: Vec<History<u8>>,
     grbm2_history: Vec<History<u8>>,
-    fdinfo: FdInfoView,
+    fdinfo: FdInfoStat,
     fdinfo_history: History<FdInfoUsage>,
     gpu_metrics: GpuMetrics,
     vram_usage: VramUsage,

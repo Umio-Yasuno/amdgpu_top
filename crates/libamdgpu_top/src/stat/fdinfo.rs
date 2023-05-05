@@ -1,46 +1,16 @@
 use std::fs;
 use std::io::Read;
-use std::fmt::{self, Write};
-use super::{Text, Opt};
-// use std::sync::{Arc, Mutex};
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
-#[cfg(feature = "proc_trace")]
-use serde_json::{json, Map, Value};
 use crate::DevicePath;
 
 /// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
 
-const PROC_NAME_LEN: usize = 16;
-
-const VRAM_LABEL: &str = "VRAM";
-const GFX_LABEL: &str = "GFX";
-const COMPUTE_LABEL: &str = "Compute";
-const DMA_LABEL: &str = "DMA";
-const DEC_LABEL: &str = "DEC";
-const ENC_LABEL: &str = "ENC";
-// const UVD_ENC_LABEL: &str = "UVD (ENC)";
-// const JPEG_LABEL: &str = "JPEG";
-
 #[derive(Debug, Default, Clone)]
 pub struct ProcInfo {
-    pid: i32,
-    name: String,
-    fds: Vec<i32>,
-}
-
-impl ProcInfo {
-    #[cfg(feature = "proc_trace")]
-    pub fn from_pid(pid: i32, device_path: &DevicePath) -> Self {
-        let mut name = fs::read_to_string(format!("/proc/{pid}/comm")).unwrap();
-        name.pop(); // trim '\n'
-
-        Self {
-            pid,
-            name,
-            fds: get_fds(pid, device_path),
-        }
-    }
+    pub pid: i32,
+    pub name: String,
+    pub fds: Vec<i32>,
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, PartialOrd)]
@@ -81,124 +51,19 @@ pub struct ProcUsage {
 }
 
 #[derive(Clone, Default)]
-pub struct FdInfoView {
+pub struct FdInfoStat {
     pid_map: HashMap<i32, FdInfoUsage>,
     pub drm_client_ids: HashSet<usize>,
     pub proc_usage: Vec<ProcUsage>,
     pub interval: Duration,
-    pub text: Text,
 }
 
-pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reverse: bool) {
-    proc_usage.sort_by(|a, b|
-        match (sort, reverse) {
-            (FdInfoSortType::PID, false) => b.pid.cmp(&a.pid),
-            (FdInfoSortType::PID, true) => a.pid.cmp(&b.pid),
-            (FdInfoSortType::VRAM, false) => b.usage.vram_usage.cmp(&a.usage.vram_usage),
-            (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
-            (FdInfoSortType::GFX, false) => b.usage.gfx.cmp(&a.usage.gfx),
-            (FdInfoSortType::GFX, true) => a.usage.gfx.cmp(&b.usage.gfx),
-            (FdInfoSortType::Compute, false) => b.usage.gfx.cmp(&a.usage.compute),
-            (FdInfoSortType::Compute, true) => a.usage.gfx.cmp(&b.usage.compute),
-            (FdInfoSortType::DMA, false) => b.usage.gfx.cmp(&a.usage.dma),
-            (FdInfoSortType::DMA, true) => a.usage.gfx.cmp(&b.usage.dma),
-            (FdInfoSortType::Decode, false) =>
-                (b.usage.dec + b.usage.vcn_jpeg).cmp(&(a.usage.dec + a.usage.vcn_jpeg)),
-            (FdInfoSortType::Decode, true) =>
-                (a.usage.dec + a.usage.vcn_jpeg).cmp(&(b.usage.dec + b.usage.vcn_jpeg)),
-            (FdInfoSortType::Encode, false) =>
-                (b.usage.enc + b.usage.uvd_enc).cmp(&(a.usage.enc + a.usage.uvd_enc)),
-            (FdInfoSortType::Encode, true) =>
-                (a.usage.enc + a.usage.uvd_enc).cmp(&(b.usage.enc + b.usage.uvd_enc)),
-            (FdInfoSortType::MediaEngine, false) =>
-                (b.usage.dec + b.usage.vcn_jpeg + b.usage.enc + b.usage.uvd_enc)
-                    .cmp(&(a.usage.dec + a.usage.vcn_jpeg + a.usage.enc + a.usage.uvd_enc)),
-            (FdInfoSortType::MediaEngine, true) =>
-                (a.usage.dec + a.usage.vcn_jpeg + a.usage.enc + a.usage.uvd_enc)
-                    .cmp(&(b.usage.dec + b.usage.vcn_jpeg + b.usage.enc + b.usage.uvd_enc)),
-        }
-    );
-}
-
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-#[allow(clippy::upper_case_acronyms)]
-pub enum FdInfoSortType {
-    PID,
-    #[default]
-    VRAM,
-    GFX,
-    Compute,
-    DMA,
-    Decode,
-    Encode,
-    MediaEngine,
-}
-
-impl FdInfoView {
+impl FdInfoStat {
     pub fn new(interval: Duration) -> Self {
         Self {
             interval,
             ..Default::default()
         }
-    }
-
-    pub fn print(
-        &mut self,
-        slice_proc_info: &[ProcInfo],
-        sort: &FdInfoSortType,
-        reverse: bool
-    ) -> Result<(), fmt::Error> {
-        self.text.clear();
-        self.proc_usage.clear();
-        self.drm_client_ids.clear();
-
-        writeln!(
-            self.text.buf,
-            " {pad:27} | {VRAM_LABEL:^8} | {GFX_LABEL} | {COMPUTE_LABEL} | {DMA_LABEL} | {DEC_LABEL} | {ENC_LABEL} |",
-            pad = "",
-        )?;
-
-        for proc_info in slice_proc_info {
-            self.get_proc_usage(proc_info);
-        }
-
-        sort_proc_usage(&mut self.proc_usage, sort, reverse);
-
-        self.print_usage()?;
-
-        Ok(())
-    }
-
-    pub fn print_usage(&mut self) -> Result<(), fmt::Error> {
-        for pu in &self.proc_usage {
-            let utf16_count = pu.name.encode_utf16().count();
-            let name_len = if pu.name.len() != utf16_count {
-                PROC_NAME_LEN - utf16_count
-            } else {
-                PROC_NAME_LEN
-            };
-            write!(
-                self.text.buf,
-                " {name:name_len$} ({pid:>8}) | {vram:>5} MiB|",
-                name = pu.name,
-                pid = pu.pid,
-                vram = pu.usage.vram_usage >> 10,
-            )?;
-            let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
-            let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
-            for (usage, label_len) in [
-                (pu.usage.gfx, GFX_LABEL.len()),
-                (pu.usage.compute, COMPUTE_LABEL.len()),
-                (pu.usage.dma, DMA_LABEL.len()),
-                (dec_usage, DEC_LABEL.len()), // UVD/VCN/VCN_JPEG
-                (enc_usage, ENC_LABEL.len()), // UVD/VCN
-            ] {
-                write!(self.text.buf, " {usage:>label_len$}%|")?;
-            }
-            writeln!(self.text.buf)?;
-        }
-
-        Ok(())
     }
 
     pub fn get_proc_usage(&mut self, proc_info: &ProcInfo) {
@@ -261,6 +126,14 @@ impl FdInfoView {
         });
     }
 
+    pub fn get_all_proc_usage(&mut self, proc_index: &[ProcInfo]) {
+        self.proc_usage.clear();
+        self.drm_client_ids.clear();
+        for pu in proc_index {
+            self.get_proc_usage(pu);
+        }
+    }
+
     pub fn fold_fdinfo_usage(&self) -> FdInfoUsage {
         let mut fold = FdInfoUsage::default();
 
@@ -270,96 +143,60 @@ impl FdInfoView {
 
         fold
     }
+}
 
-    #[cfg(feature = "proc_trace")]
-    pub fn json_value(&self) -> Value {
-        let Some(pu) = self.proc_usage.get(0) else { return Value::Null };
-        let mut m = Map::new();
-
-        for (usage, label) in [
-            (pu.usage.vram_usage >> 10, "VRAM Usage"),
-            (pu.usage.gtt_usage >> 10, "GTT Usage"),
-        ] {
-            m.insert(
-                label.to_string(),
-                json!({
-                    "value": usage,
-                    "unit": "MiB",
-                }),
-            );
+pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reverse: bool) {
+    proc_usage.sort_by(|a, b|
+        match (sort, reverse) {
+            (FdInfoSortType::PID, false) => b.pid.cmp(&a.pid),
+            (FdInfoSortType::PID, true) => a.pid.cmp(&b.pid),
+            (FdInfoSortType::VRAM, false) => b.usage.vram_usage.cmp(&a.usage.vram_usage),
+            (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
+            (FdInfoSortType::GFX, false) => b.usage.gfx.cmp(&a.usage.gfx),
+            (FdInfoSortType::GFX, true) => a.usage.gfx.cmp(&b.usage.gfx),
+            (FdInfoSortType::Compute, false) => b.usage.gfx.cmp(&a.usage.compute),
+            (FdInfoSortType::Compute, true) => a.usage.gfx.cmp(&b.usage.compute),
+            (FdInfoSortType::DMA, false) => b.usage.gfx.cmp(&a.usage.dma),
+            (FdInfoSortType::DMA, true) => a.usage.gfx.cmp(&b.usage.dma),
+            (FdInfoSortType::Decode, false) =>
+                (b.usage.dec + b.usage.vcn_jpeg).cmp(&(a.usage.dec + a.usage.vcn_jpeg)),
+            (FdInfoSortType::Decode, true) =>
+                (a.usage.dec + a.usage.vcn_jpeg).cmp(&(b.usage.dec + b.usage.vcn_jpeg)),
+            (FdInfoSortType::Encode, false) =>
+                (b.usage.enc + b.usage.uvd_enc).cmp(&(a.usage.enc + a.usage.uvd_enc)),
+            (FdInfoSortType::Encode, true) =>
+                (a.usage.enc + a.usage.uvd_enc).cmp(&(b.usage.enc + b.usage.uvd_enc)),
+            (FdInfoSortType::MediaEngine, false) =>
+                (b.usage.dec + b.usage.vcn_jpeg + b.usage.enc + b.usage.uvd_enc)
+                    .cmp(&(a.usage.dec + a.usage.vcn_jpeg + a.usage.enc + a.usage.uvd_enc)),
+            (FdInfoSortType::MediaEngine, true) =>
+                (a.usage.dec + a.usage.vcn_jpeg + a.usage.enc + a.usage.uvd_enc)
+                    .cmp(&(b.usage.dec + b.usage.vcn_jpeg + b.usage.enc + b.usage.uvd_enc)),
         }
+    );
+}
 
-        let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
-        let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
-        for (usage, label) in [
-            (pu.usage.gfx, GFX_LABEL),
-            (pu.usage.compute, COMPUTE_LABEL),
-            (pu.usage.dma, DMA_LABEL),
-            (dec_usage, DEC_LABEL), // UVD/VCN
-            (enc_usage, ENC_LABEL),
-        ] {
-            m.insert(
-                label.to_string(),
-                json!({
-                    "value": usage,
-                    "unit": "%",
-                }),
-            );
-        }
-
-        m.into()
-    }
-
-    pub fn cb(siv: &mut cursive::Cursive) {
-        {
-            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
-            opt.fdinfo ^= true;
-        }
-    }
-
-    pub fn cb_reverse_sort(siv: &mut cursive::Cursive) {
-        {
-            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
-            opt.reverse_sort ^= true;
-        }
-    }
-
-    pub fn cb_sort_by_pid(siv: &mut cursive::Cursive) {
-        {
-            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
-            opt.fdinfo_sort = FdInfoSortType::PID;
-        }
-    }
-
-    pub fn cb_sort_by_vram(siv: &mut cursive::Cursive) {
-        {
-            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
-            opt.fdinfo_sort = FdInfoSortType::VRAM;
-        }
-    }
-
-    pub fn cb_sort_by_gfx(siv: &mut cursive::Cursive) {
-        {
-            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
-            opt.fdinfo_sort = FdInfoSortType::GFX;
-        }
-    }
-
-    pub fn cb_sort_by_media(siv: &mut cursive::Cursive) {
-        {
-            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
-            opt.fdinfo_sort = FdInfoSortType::MediaEngine;
-        }
-    }
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[allow(clippy::upper_case_acronyms)]
+pub enum FdInfoSortType {
+    PID,
+    #[default]
+    VRAM,
+    GFX,
+    Compute,
+    DMA,
+    Decode,
+    Encode,
+    MediaEngine,
 }
 
 impl FdInfoUsage {
-    fn id_parse(s: &str) -> usize {
+    pub fn id_parse(s: &str) -> usize {
         const LEN: usize = "drm-client-id:\t".len();
         s[LEN..].parse().unwrap()
     }
 
-    fn mem_usage_parse(&mut self, s: &str) {
+    pub fn mem_usage_parse(&mut self, s: &str) {
         const PRE: usize = "drm-memory-xxxx:\t".len(); // "vram:" or "gtt: " or "cpu: "
         const KIB: usize = " KiB".len();
         let len = s.len();
@@ -380,7 +217,7 @@ impl FdInfoUsage {
         };
     }
 
-    fn engine_parse(&mut self, s: &str) {
+    pub fn engine_parse(&mut self, s: &str) {
         const PRE: usize = "drm-engine-".len();
         const NS: usize = " ns".len();
         let Some(pos) = s.find('\t') else { return };

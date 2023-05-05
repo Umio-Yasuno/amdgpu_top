@@ -15,9 +15,10 @@ exclude = [
 ]
 
 [features]
-default = ["egui"]
-egui = ["eframe"]
-proc_trace = ["ctrlc", "serde_json"]
+default = [ "tui", "gui", "json" ]
+gui = ["dep:amdgpu_top_gui"]
+tui = ["dep:amdgpu_top_tui"]
+json = ["dep:amdgpu_top_json"]
 
 [[bin]]
 name = "amdgpu_top"
@@ -26,12 +27,10 @@ path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = { version = "1.0.*" }
-libdrm_amdgpu_sys = { version = "0.1.2" }
-cursive = { version = "0.20", default-features = false, features = ["crossterm-backend"] }
-ctrlc = { version = "3.2.5", optional = true }
-serde_json = { version = "1.0.*", optional = true }
-eframe = { version = "^0.21.3", optional = true, default-features = false, features = [ "default_fonts", "glow"] }
+libamdgpu_top = { path = "crates/libamdgpu_top" }
+amdgpu_top_tui = { path = "crates/amdgpu_top_tui/", optional = true }
+amdgpu_top_gui = { path = "crates/amdgpu_top_gui/", optional = true }
+amdgpu_top_json = { path = "crates/amdgpu_top_json/", optional = true }
 
 [profile.release]
 opt-level = 2
@@ -46,4 +45,12 @@ section = "utils"
 assets = [
     ["target/release/amdgpu_top", "usr/bin/", "755"],
     ["assets/amdgpu_top.desktop", "usr/share/applications/", "644"],
+]
+
+[workspace]
+members = [
+    "crates/libamdgpu_top",
+    "crates/amdgpu_top_tui",
+    "crates/amdgpu_top_gui",
+    "crates/amdgpu_top_json",
 ]

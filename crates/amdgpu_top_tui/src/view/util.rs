@@ -41,43 +41,6 @@ impl Default for Text {
     }
 }
 
-#[derive(Clone, Default, Debug)]
-pub struct PCAcc(pub [u8; 32]);
-
-impl PCAcc {
-    pub fn clear(&mut self) {
-        *self = Self([0u8; 32])
-    }
-
-    pub fn acc(&mut self, reg: u32) {
-        *self += Self::from(reg)
-    }
-
-    pub fn get(&self, index: usize) -> u8 {
-        unsafe { *self.0.get_unchecked(index) }
-    }
-}
-
-impl From<u32> for PCAcc {
-    fn from(val: u32) -> Self {
-        let mut out = [0u8; 32];
-
-        for (i, o) in out.iter_mut().enumerate() {
-            *o = ((val >> i) & 0b1) as u8;
-        }
-
-        Self(out)
-    }
-}
-
-impl std::ops::AddAssign for PCAcc {
-    fn add_assign(&mut self, other: Self) {
-        for (dst, src) in self.0.iter_mut().zip(other.0.iter()) {
-            *dst += src;
-        }
-    }
-}
-
 pub type TopView = Panel<NamedView<HideableView<LinearLayout>>>;
 
 pub fn toggle_view(view: &mut HideableView<LinearLayout>) {

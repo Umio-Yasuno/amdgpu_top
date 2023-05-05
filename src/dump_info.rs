@@ -1,4 +1,4 @@
-use libdrm_amdgpu_sys::{
+use libamdgpu_top::{
     PCI,
     AMDGPU::{DeviceHandle, GPU_INFO, drm_amdgpu_info_device},
     AMDGPU::VIDEO_CAPS::{CAP_TYPE, CODEC},

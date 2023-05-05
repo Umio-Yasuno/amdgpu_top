@@ -1,6 +1,7 @@
 use std::fmt::{self, Write};
-use super::{Text, Opt};
-use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, GpuMetrics, MetricsInfo};
+use super::Text;
+use crate::Opt;
+use libamdgpu_top::AMDGPU::{DeviceHandle, GpuMetrics, MetricsInfo};
 use std::path::PathBuf;
 
 const CORE_TEMP_LABEL: &str = "Core Temp (C)";
