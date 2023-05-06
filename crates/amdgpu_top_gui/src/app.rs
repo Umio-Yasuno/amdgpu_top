@@ -27,6 +27,7 @@ pub struct MyApp {
     pub decode: Option<VideoCapsInfo>,
     pub encode: Option<VideoCapsInfo>,
     pub vbios: Option<VbiosInfo>,
+    pub support_pcie_bw: bool,
     pub fdinfo_sort: FdInfoSortType,
     pub reverse_sort: bool,
     pub buf_data: CentralData,

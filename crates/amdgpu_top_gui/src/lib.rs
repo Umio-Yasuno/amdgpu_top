@@ -126,6 +126,7 @@ pub fn run(
         decode: amdgpu_dev.get_video_caps_info(CAP_TYPE::DECODE).ok(),
         encode: amdgpu_dev.get_video_caps_info(CAP_TYPE::ENCODE).ok(),
         vbios: amdgpu_dev.get_vbios_info().ok(),
+        support_pcie_bw: pcie_bw.exists,
         fdinfo_sort: Default::default(),
         reverse_sort: false,
         buf_data: data.clone(),
@@ -297,8 +298,11 @@ impl eframe::App for MyApp {
                 collapsing(ui, "fdinfo", true, |ui| self.egui_grid_fdinfo(ui));
                 ui.add_space(SPACE);
                 collapsing(ui, "Sensors", true, |ui| self.egui_sensors(ui));
-                ui.add_space(SPACE);
-                collapsing(ui, "PCIe Bandwidth", true, |ui| self.egui_pcie_bw(ui));
+
+                if self.support_pcie_bw {
+                    ui.add_space(SPACE);
+                    collapsing(ui, "PCIe Bandwidth", true, |ui| self.egui_pcie_bw(ui));
+                }
 
                 let header = if let Some(h) = self.buf_data.gpu_metrics.get_header() {
                     format!(
