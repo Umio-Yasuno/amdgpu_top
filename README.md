@@ -13,9 +13,6 @@ cargo run -- [options ..]
 
 ### Option
 ```
-USAGE:
-    cargo run -- [options ..] or <amdgpu_top> [options ..]
-
 FLAGS:
    -d, --dump
        Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)
@@ -67,10 +64,6 @@ Dependencies:
  * libdrm2
  * libdrm-amdgpu1
 
-```
-cargo install amdgpu_top
-```
-or  
 ```
 git clone https://github.com/Umio-Yasuno/amdgpu_top
 cd amdgpu_top
