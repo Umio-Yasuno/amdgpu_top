@@ -362,7 +362,7 @@ impl MyApp {
             .label_formatter(label_fmt)
             .auto_bounds_x()
             .height(ui.available_width() / 4.0)
-            .width(ui.available_width() - 24.0)
+            .width(ui.available_width() - 36.0)
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| {
                 for (usage, name) in [
@@ -524,6 +524,52 @@ impl MyApp {
             max_gen = sensors.max.gen,
             max_width = sensors.max.width,
         ));
+    }
+
+    pub fn egui_pcie_bw(&self, ui: &mut egui::Ui) {
+        let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
+            String::new()
+        };
+        let label_fmt = |name: &str, val: &PlotPoint| {
+            format!("{:.1}s : {name} {:.0} MiB/s", val.x, val.y)
+        };
+
+        let [sent, rec] = {
+            let [mut sent_history, mut rec_history] = [0; 2].map(|_| Vec::<[f64; 2]>::new());
+
+            for (i, (sent, rec)) in self.buf_data.pcie_bw_history.iter() {
+                sent_history.push([i, sent as f64]);
+                rec_history.push([i, rec as f64]);
+            }
+
+            [
+                Line::new(PlotPoints::new(sent_history)).name("Sent"),
+                Line::new(PlotPoints::new(rec_history)).name("Received"),
+            ]
+        };
+
+        Plot::new("pcie_bw plot")
+            .allow_zoom(false)
+            .allow_scroll(false)
+            .show_axes([false, true])
+            .include_y(0.0)
+            .y_axis_formatter(y_fmt)
+            .label_formatter(label_fmt)
+            .auto_bounds_x()
+            .auto_bounds_y()
+            .height(ui.available_width() / 4.0)
+            .width(ui.available_width() - 36.0)
+            .legend(Legend::default().position(Corner::LeftTop))
+            .show(ui, |plot_ui| {
+                plot_ui.line(sent);
+                plot_ui.line(rec);
+            });
+
+        if let Some((sent, rec)) = self.buf_data.pcie_bw_history.latest() {
+            ui.label(format!("Sent: {sent:5} MiB/s, Received: {rec:5} MiB/s"));
+        } else {
+            ui.label(format!("Sent: _ MiB/s, Received: _ MiB/s"));
+        }
     }
 
     pub fn egui_gpu_metrics_v1(&self, ui: &mut egui::Ui) {

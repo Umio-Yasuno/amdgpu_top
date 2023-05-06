@@ -14,7 +14,7 @@ use libamdgpu_top::AMDGPU::{
     VIDEO_CAPS::CAP_TYPE,
 };
 use libamdgpu_top::{DevicePath, Sampling, VramUsage};
-use libamdgpu_top::stat::{self, FdInfoUsage, Sensors, FdInfoStat, PerfCounter};
+use libamdgpu_top::stat::{self, FdInfoUsage, Sensors, FdInfoStat, PerfCounter, PcieBw};
 
 mod app;
 use app::MyApp;
@@ -41,6 +41,7 @@ pub struct CentralData {
     pub vram_usage: VramUsage,
     pub sensors: Sensors,
     pub sensors_history: SensorsHistory,
+    pub pcie_bw_history: History<(u64, u64)>,
 }
 
 pub fn run(
@@ -82,6 +83,22 @@ pub fn run(
     let mut grbm2_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm2.index.len()];
     let mut fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
     let mut sensors_history = SensorsHistory::new();
+    let pcie_bw = PcieBw::new(pci_bus.get_sysfs_path());
+    let share_pcie_bw = Arc::new(Mutex::new(pcie_bw.clone()));
+    let mut pcie_bw_history: History<(u64, u64)> = History::new(HISTORY_LENGTH, f32::INFINITY);
+
+    if pcie_bw.exists {
+        let share_pcie_bw = share_pcie_bw.clone();
+
+        std::thread::spawn(move || loop {
+            std::thread::sleep(Duration::from_secs(1)); // wait for user input
+
+            let lock = share_pcie_bw.lock();
+            if let Ok(mut share_pcie_bw) = lock {
+                share_pcie_bw.update();
+            }
+        });
+    }
 
     let data = CentralData {
         grbm: grbm.clone(),
@@ -94,6 +111,7 @@ pub fn run(
         gpu_metrics: gpu_metrics.clone(),
         sensors: sensors.clone(),
         sensors_history: sensors_history.clone(),
+        pcie_bw_history: pcie_bw_history.clone(),
     };
 
     let app_device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &sensors);
@@ -171,6 +189,16 @@ pub fn run(
             }
 
             {
+                let lock = share_pcie_bw.try_lock();
+                if let Ok(pcie_bw) = lock {
+                    let sent = pcie_bw.sent.saturating_mul(pcie_bw.max_payload_size as u64) >> 20;
+                    let rec = pcie_bw.received.saturating_mul(pcie_bw.max_payload_size as u64) >> 20;
+
+                    pcie_bw_history.add(sec, (sent, rec));
+                }
+            }
+
+            {
                 let lock = share_proc_index.lock();
                 if let Ok(proc_index) = lock {
                     fdinfo.get_all_proc_usage(&proc_index);
@@ -195,6 +223,7 @@ pub fn run(
                         gpu_metrics: gpu_metrics.clone(),
                         sensors: sensors.clone(),
                         sensors_history: sensors_history.clone(),
+                        pcie_bw_history: pcie_bw_history.clone(),
                     };
                 }
             }
@@ -268,6 +297,8 @@ impl eframe::App for MyApp {
                 collapsing(ui, "fdinfo", true, |ui| self.egui_grid_fdinfo(ui));
                 ui.add_space(SPACE);
                 collapsing(ui, "Sensors", true, |ui| self.egui_sensors(ui));
+                ui.add_space(SPACE);
+                collapsing(ui, "PCIe Bandwidth", true, |ui| self.egui_pcie_bw(ui));
 
                 let header = if let Some(h) = self.buf_data.gpu_metrics.get_header() {
                     format!(
