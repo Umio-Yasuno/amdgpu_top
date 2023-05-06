@@ -89,13 +89,16 @@ pub fn run(
 
     if pcie_bw.exists {
         let share_pcie_bw = share_pcie_bw.clone();
+        let mut buf_pcie_bw = pcie_bw.clone();
 
         std::thread::spawn(move || loop {
-            std::thread::sleep(Duration::from_secs(1)); // wait for user input
+            std::thread::sleep(Duration::from_millis(500)); // wait for user input
+
+            buf_pcie_bw.update(); // msleep(1000)
 
             let lock = share_pcie_bw.lock();
             if let Ok(mut share_pcie_bw) = lock {
-                share_pcie_bw.update();
+                *share_pcie_bw = buf_pcie_bw.clone();
             }
         });
     }
