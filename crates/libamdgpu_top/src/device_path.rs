@@ -46,7 +46,7 @@ impl DevicePath {
 
     pub fn init(&self) -> anyhow::Result<DeviceHandle> {
         let (amdgpu_dev, _major, _minor) = {
-            use std::os::fd::IntoRawFd;
+            use std::os::unix::io::IntoRawFd;
 
             // need write option for GUI context
             // https://gitlab.freedesktop.org/mesa/mesa/-/issues/2424
