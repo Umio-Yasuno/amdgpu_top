@@ -285,68 +285,63 @@ pub fn get_self_pid() -> Option<i32> {
     path_str.parse::<i32>().ok()
 }
 
-use std::path::PathBuf;
-
 fn get_fds(pid: i32, device_path: &DevicePath) -> Vec<i32> {
     let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else { return Vec::new() };
 
-    fd_list.flat_map(|fd_link| {
+    fd_list.filter_map(|fd_link| {
         let dir_entry = fd_link.map(|fd_link| fd_link.path()).ok()?;
         let link = fs::read_link(&dir_entry).ok()?;
 
         // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
         if [&device_path.render, &device_path.card].into_iter().any(|path| link.starts_with(path)) {
-            return dir_entry.file_name()
-                .and_then(|name| name.to_str())
-                .and_then(|name| name.parse::<i32>().ok());
+            dir_entry.file_name()?.to_str()?.parse::<i32>().ok()
+        } else {
+            None
         }
-
-        None
     }).collect()
 }
 
-fn get_all_processes() -> Vec<i32> {
+fn get_all_processes(self_pid: i32) -> Vec<i32> {
+    const SYSTEMD_CMDLINE: &[&str] = &[ "/lib/systemd", "/usr/lib/systemd" ];
+
     let Ok(proc_dir) = fs::read_dir("/proc") else { return Vec::new() };
 
-    proc_dir.flatten().flat_map(|dir_entry| {
-        let metadata = dir_entry.metadata().ok()?;
-        if !metadata.is_dir() { return None }
+    proc_dir.flatten().filter_map(|dir_entry| {
+        if let Ok(metadata) = dir_entry.metadata() {
+            if !metadata.is_dir() { return None }
+        }
 
-        dir_entry.file_name().to_str()
-            .and_then(|name| name.parse::<i32>().ok())
+        let pid = dir_entry.file_name().to_str()?.parse::<i32>().ok()?;
+
+        if pid == 1 { return None } // init process, systemd
+        if pid == self_pid { return None }
+
+        // filter systemd processes from fdinfo target
+        // gnome-shell share the AMDGPU driver context with systemd processes
+        if let Ok(cmdline) = fs::read_to_string(format!("/proc/{pid}/cmdline")) {
+            if SYSTEMD_CMDLINE.iter().any(|path| cmdline.starts_with(path)) {
+                return None;
+            }
+        }
+
+        Some(pid)
     }).collect()
 }
 
 pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath, self_pid: i32) {
-    const SYSTEMD_CMDLINE: &[&str] = &[ "/lib/systemd", "/usr/lib/systemd" ];
-
     vec_info.clear();
 
-    for p in &get_all_processes() {
+    for p in &get_all_processes(self_pid) {
         let pid = *p;
-        if pid == self_pid { continue }
-        if pid == 1 { continue } // init process, systemd
-
         let fds = get_fds(pid, device_path);
 
         if fds.is_empty() { continue }
 
-        let base = PathBuf::from(format!("/proc/{pid}/"));
-        {
-            // filter systemd processes from fdinfo target
-            // gnome-shell share the AMDGPU driver context with systemd processes
-            let Ok(cmdline) = fs::read_to_string(base.join("cmdline")) else { continue };
-            if SYSTEMD_CMDLINE.iter().any(|path| cmdline.starts_with(path)) { continue }
-        }
         // Maximum 16 characters
         // https://www.kernel.org/doc/html/latest/filesystems/proc.html#proc-pid-comm-proc-pid-task-tid-comm
-        let Ok(mut name) = fs::read_to_string(base.join("comm")) else { continue };
+        let Ok(mut name) = fs::read_to_string(format!("/proc/{pid}/comm")) else { continue };
         name.pop(); // trim '\n'
 
-        vec_info.push(ProcInfo {
-            pid,
-            name,
-            fds,
-        });
+        vec_info.push(ProcInfo { pid, name, fds });
     }
 }
