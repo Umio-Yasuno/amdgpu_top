@@ -37,10 +37,9 @@ OPTIONS:
 ### Command
 | key |                                     |
 | :-- | :---------------------------------: |
-| g   | toggle GRBM                         |
-| r   | toggle GRBM2                        |
-| p   | toggle PCI                          |
-| v   | toggle VRAM/GTT Usage               |
+<!-- | g   | toggle GRBM                         | -->
+<!-- | r   | toggle GRBM2                        | -->
+<!-- | v   | toggle VRAM/GTT Usage               | -->
 | f   | toggle fdinfo                       |
 | n   | toggle Sensors                      |
 | m   | toggle GPU Metrics                  |
