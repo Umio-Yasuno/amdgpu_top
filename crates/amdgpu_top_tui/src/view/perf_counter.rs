@@ -12,9 +12,12 @@ use cursive::Rect;
 use cursive::align::HAlign;
 
 use libamdgpu_top::stat::PCType;
-use super::{PANEL_WIDTH, TopView, toggle_view};
+use super::{PANEL_WIDTH, TopView};
 use libamdgpu_top::stat::PerfCounter;
+/*
+use super::toggle_view;
 use crate::Opt;
+*/
 
 #[derive(Clone, Debug)]
 pub struct PerfCounterView {
@@ -81,6 +84,7 @@ impl PerfCounterView {
     }
 }
 
+/*
 pub fn pc_type_cb(pc_type: &PCType) -> impl Fn(&mut cursive::Cursive) {
     let name = pc_type.to_string();
     let toggle = match pc_type {
@@ -103,3 +107,4 @@ pub fn pc_type_cb(pc_type: &PCType) -> impl Fn(&mut cursive::Cursive) {
         siv.call_on_name(&name, toggle_view);
     }
 }
+*/

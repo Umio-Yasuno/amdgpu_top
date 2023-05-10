@@ -1,7 +1,8 @@
 use libamdgpu_top::AMDGPU::{CHIP_CLASS, DeviceHandle, drm_amdgpu_info_device, drm_amdgpu_memory_info, GPU_INFO};
 use std::sync::{Arc, Mutex};
 use cursive::align::HAlign;
-use cursive::views::{LinearLayout, TextView, Panel};
+use cursive::views::{LinearLayout, TextView, Panel, ResizedView};
+use cursive::view::SizeConstraint;
 
 use libamdgpu_top::{stat, DevicePath, Sampling};
 use stat::{PcieBw, ProcInfo};
@@ -104,7 +105,7 @@ impl TuiApp {
         self.sensors.text.set();
     }
 
-    pub fn layout(&self, title: &str, toggle_opt: &ToggleOptions) -> LinearLayout {
+    pub fn layout(&self, title: &str, toggle_opt: &ToggleOptions) -> ResizedView<LinearLayout> {
         let mut layout = LinearLayout::vertical()
             .child(
                 Panel::new(
@@ -127,11 +128,10 @@ impl TuiApp {
             };
 
             layout.add_child(self.gpu_metrics.text.panel(&title));
-            // siv.add_global_callback('m', GpuMetricsView::cb);
         }
         layout.add_child(TextView::new(TOGGLE_HELP));
 
-        layout
+        ResizedView::new(SizeConstraint::Free, SizeConstraint::Full, layout)
     }
 
     pub fn update_pc(&mut self, flags: &ToggleOptions) {

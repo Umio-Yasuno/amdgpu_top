@@ -11,10 +11,13 @@ use cursive::view::Nameable;
 use cursive::utils::Counter;
 use cursive::Rect;
 use cursive::align::HAlign;
-use super::{PANEL_WIDTH, TopView, toggle_view};
+use super::{PANEL_WIDTH, TopView};
 use libamdgpu_top::VramUsage;
 
+/*
 use crate::Opt;
+use super::toggle_view;
+*/
 
 #[derive(Clone, Debug)]
 pub struct VramUsageView {
@@ -85,6 +88,7 @@ impl VramUsageView {
         self.gtt_counter.set(self.memory_info.0.gtt.heap_usage as usize);
     }
 
+/*
     pub fn cb(siv: &mut cursive::Cursive) {
         {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
@@ -93,4 +97,5 @@ impl VramUsageView {
 
         siv.call_on_name(Self::TITLE, toggle_view);
     }
+*/
 }
