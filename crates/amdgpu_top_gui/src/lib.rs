@@ -51,7 +51,6 @@ pub fn run(
     device_path_list: &[DevicePath],
     interval: u64,
 ) {
-    let self_pid = 0; // no filtering in GUI
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
@@ -70,7 +69,7 @@ pub fn run(
     let sample = Sampling::low();
     let mut fdinfo = FdInfoStat::new(sample.to_duration());
     {
-        stat::update_index(&mut proc_index, &device_path, self_pid);
+        stat::update_index(&mut proc_index, &device_path);
         for pu in &proc_index {
             fdinfo.get_proc_usage(pu);
         }
@@ -149,7 +148,7 @@ pub fn run(
         std::thread::spawn(move || loop {
             std::thread::sleep(Duration::from_secs(interval));
 
-            stat::update_index(&mut buf_index, &device_path, self_pid);
+            stat::update_index(&mut buf_index, &device_path);
 
             let lock = index.lock();
             if let Ok(mut index) = lock {

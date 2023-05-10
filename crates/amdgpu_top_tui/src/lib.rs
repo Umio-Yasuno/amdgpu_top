@@ -153,7 +153,7 @@ pub fn run(
         std::thread::spawn(move || loop {
             std::thread::sleep(Duration::from_secs(interval));
 
-            stat::update_index(&mut buf_index, &device_path, 1);
+            stat::update_index(&mut buf_index, &device_path);
 
             let lock = index.lock();
             if let Ok(mut index) = lock {

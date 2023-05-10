@@ -51,7 +51,7 @@ impl TuiApp {
 
         let arc_proc_index = {
             let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
-            stat::update_index(&mut proc_index, &device_path, 1);
+            stat::update_index(&mut proc_index, &device_path);
 
             fdinfo.print(&proc_index, &Default::default(), false).unwrap();
             fdinfo.text.set();

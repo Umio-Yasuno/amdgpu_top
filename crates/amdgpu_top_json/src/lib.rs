@@ -14,7 +14,6 @@ pub fn run(
     refresh_period: u64,
     update_process_index: u64,
 ) {
-    let self_pid = 0;
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let chip_class = ext_info.get_chip_class();
@@ -39,7 +38,7 @@ pub fn run(
     let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
     let mut fdinfo = FdInfoStat::new(interval);
     {
-        stat::update_index(&mut proc_index, &device_path, self_pid);
+        stat::update_index(&mut proc_index, &device_path);
         for pu in &proc_index {
             fdinfo.get_proc_usage(pu);
         }
@@ -53,7 +52,7 @@ pub fn run(
         std::thread::spawn(move || loop {
             std::thread::sleep(Duration::from_secs(update_process_index));
 
-            stat::update_index(&mut buf_index, &device_path, self_pid);
+            stat::update_index(&mut buf_index, &device_path);
 
             let lock = index.lock();
             if let Ok(mut index) = lock {
