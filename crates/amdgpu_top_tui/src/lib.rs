@@ -145,19 +145,23 @@ pub fn run(
                 });
             }
         }
-
-        let index = app.arc_proc_index.clone();
-        let device_path = app.device_path.clone();
+    }
+    {
+        let t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)> = vec_app.iter().map(|app| {
+            (app.device_path.clone(), app.arc_proc_index.clone())
+        }).collect();
         let mut buf_index: Vec<ProcInfo> = Vec::new();
 
         std::thread::spawn(move || loop {
             std::thread::sleep(Duration::from_secs(interval));
 
-            stat::update_index(&mut buf_index, &device_path);
+            for (device_path, index) in &t_index {
+                stat::update_index(&mut buf_index, &device_path);
 
-            let lock = index.lock();
-            if let Ok(mut index) = lock {
-                *index = buf_index.clone();
+                let lock = index.lock();
+                if let Ok(mut index) = lock {
+                    *index = buf_index.clone();
+                }
             }
         });
     }
