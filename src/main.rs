@@ -22,7 +22,11 @@ fn main() {
         AppMode::TUI => {
             #[cfg(feature = "tui")]
             {
-                amdgpu_top_tui::run(TITLE, device_path, amdgpu_dev, main_opt.update_process_index)
+                amdgpu_top_tui::run(
+                    TITLE,
+                    &device_path_list,
+                    main_opt.update_process_index
+                )
             }
             #[cfg(not(feature = "tui"))]
             {
