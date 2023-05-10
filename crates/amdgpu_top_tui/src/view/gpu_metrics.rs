@@ -11,6 +11,7 @@ const CORE_CLOCK_LABEL: &str = "Core Clock (MHz)";
 const L3_TEMP_LABEL: &str = "L3 Cache Temp (C)";
 const L3_CLOCK_LABEL: &str = "L3 Cache Clock (MHz)";
 
+#[derive(Clone)]
 pub struct GpuMetricsView {
     sysfs_path: PathBuf,
     metrics: GpuMetrics,

@@ -12,6 +12,12 @@ pub struct Sampling {
     pub delay: Duration,
 }
 
+impl Default for Sampling {
+    fn default() -> Self {
+        Self::low()
+    }
+}
+
 impl Sampling {
     pub const fn low() -> Self {
         Self {

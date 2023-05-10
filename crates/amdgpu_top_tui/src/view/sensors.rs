@@ -8,6 +8,7 @@ use libamdgpu_top::stat::{Sensors, PcieBw};
 
 const WIDTH: usize = PANEL_WIDTH / 2;
 
+#[derive(Clone)]
 pub struct SensorsView {
     sensors: Sensors,
     pub text: Text,

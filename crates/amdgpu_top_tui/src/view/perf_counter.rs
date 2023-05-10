@@ -79,27 +79,27 @@ impl PerfCounterView {
         self.set_value();
         self.pc.bits.clear();
     }
+}
 
-    pub fn cb(&self) -> impl Fn(&mut cursive::Cursive) {
-        let name = self.pc.pc_type.to_string();
-        let toggle = match self.pc.pc_type {
-            PCType::GRBM => |opt: &mut Opt| {
-                let mut opt = opt.lock().unwrap();
-                opt.grbm ^= true;
-            },
-            PCType::GRBM2 => |opt: &mut Opt| {
-                let mut opt = opt.lock().unwrap();
-                opt.grbm2 ^= true;
-            },
-        };
+pub fn pc_type_cb(pc_type: &PCType) -> impl Fn(&mut cursive::Cursive) {
+    let name = pc_type.to_string();
+    let toggle = match pc_type {
+        PCType::GRBM => |opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.grbm ^= true;
+        },
+        PCType::GRBM2 => |opt: &mut Opt| {
+            let mut opt = opt.lock().unwrap();
+            opt.grbm2 ^= true;
+        },
+    };
 
-        move |siv: &mut cursive::Cursive| {
-            {
-                let opt = siv.user_data::<Opt>().unwrap();
-                toggle(opt);
-            }
-
-            siv.call_on_name(&name, toggle_view);
+    move |siv: &mut cursive::Cursive| {
+        {
+            let opt = siv.user_data::<Opt>().unwrap();
+            toggle(opt);
         }
+
+        siv.call_on_name(&name, toggle_view);
     }
 }
