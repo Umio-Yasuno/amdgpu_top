@@ -146,11 +146,11 @@ impl MyApp {
             ]);
             ui.end_row();
 
-            let gl1_cache_size = ext_info.get_gl1_cache_size();
+            let gl1_cache_size = ext_info.get_gl1_cache_size() >> 10;
             let l3_cache_size = ext_info.calc_l3_cache_size_mb();
 
             ui.label("L1 Cache (per CU)");
-            ui.label(format!("{:4} KiB", ext_info.get_l1_cache_size() / 1024));
+            ui.label(format!("{:4} KiB", ext_info.get_l1_cache_size() >> 10));
             ui.end_row();
             if 0 < gl1_cache_size {
                 ui.label("GL1 Cache (per SA/SH)");
@@ -160,7 +160,7 @@ impl MyApp {
             ui.label("L2 Cache");
             ui.label(format!(
                 "{:4} KiB ({} Banks)",
-                ext_info.calc_l2_cache_size() / 1024,
+                ext_info.calc_l2_cache_size() >> 10,
                 ext_info.num_tcc_blocks
             ));
             ui.end_row();

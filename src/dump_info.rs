@@ -93,17 +93,17 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
 }
 
 fn cache_info(ext_info: &drm_amdgpu_info_device) {
-    let gl1_cache_size = ext_info.get_gl1_cache_size();
+    let gl1_cache_size = ext_info.get_gl1_cache_size() >> 10;
     let l3_cache_size = ext_info.calc_l3_cache_size_mb();
 
     println!();
-    println!("L1 Cache (per CU)    : {:4} KiB", ext_info.get_l1_cache_size() / 1024);
+    println!("L1 Cache (per CU)    : {:4} KiB", ext_info.get_l1_cache_size() >> 10);
     if 0 < gl1_cache_size {
         println!("GL1 Cache (per SA/SH): {gl1_cache_size:4} KiB");
     }
     println!(
         "L2 Cache             : {:4} KiB ({} Banks)",
-        ext_info.calc_l2_cache_size() / 1024,
+        ext_info.calc_l2_cache_size() >> 10,
         ext_info.num_tcc_blocks
     );
     if 0 < l3_cache_size {
