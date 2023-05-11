@@ -21,12 +21,15 @@ impl Default for MainOpt {
 }
 
 #[derive(Debug, Eq, PartialEq)]
+#[allow(non_camel_case_types)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum AppMode {
     TUI,
     #[cfg(feature = "gui")]
     GUI,
     #[cfg(feature = "json")]
     JSON,
+    SMI,
     Dump,
 }
 
@@ -46,6 +49,8 @@ const HELP_MSG: &str = concat!(
     "       Output JSON formatted data\n",
     "   --gui\n",
     "       Launch GUI mode\n",
+    "   --smi\n",
+    "       Launch Simple TUI mode (like nvidia-smi, rocm-smi)\n",
     "   -h, --help\n",
     "       Print help information\n",
     "\n",
@@ -121,6 +126,9 @@ impl MainOpt {
                         eprintln!("\"gui\" feature is not enabled for this build.");
                         std::process::exit(1);
                     }
+                },
+                "--smi" => {
+                    opt.app_mode = AppMode::SMI;
                 },
                 "--pci" => {
                     opt.pci_path = args.get(idx+1).map(|v| v.to_string());

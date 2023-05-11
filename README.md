@@ -22,6 +22,8 @@ FLAGS:
        Output JSON formatted data
    --gui
        Launch GUI mode
+   --smi
+       Launch Simple TUI mode (like nvidia-smi, rocm-smi)
    -h, --help
        Print help information
 

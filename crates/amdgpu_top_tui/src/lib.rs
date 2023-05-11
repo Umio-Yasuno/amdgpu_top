@@ -13,6 +13,9 @@ use view::*;
 mod app;
 use app::TuiApp;
 
+mod smi;
+pub use smi::run_smi;
+
 #[derive(Debug, Clone)]
 struct ToggleOptions {
     grbm: bool,

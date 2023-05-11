@@ -51,6 +51,11 @@ fn main() {
             1000, // 1s
             main_opt.update_process_index,
         ),
+        AppMode::SMI => amdgpu_top_tui::run_smi(
+            TITLE,
+            &device_path_list,
+            main_opt.update_process_index,
+        ),
         AppMode::Dump => dump_info::dump(&amdgpu_dev),
     }
 }
