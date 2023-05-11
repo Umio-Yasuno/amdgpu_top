@@ -301,7 +301,7 @@ fn get_fds(pid: i32, device_path: &DevicePath) -> Vec<i32> {
     }).collect()
 }
 
-fn get_all_processes() -> Vec<i32> {
+pub fn get_all_processes() -> Vec<i32> {
     const SYSTEMD_CMDLINE: &[&str] = &[ "/lib/systemd", "/usr/lib/systemd" ];
 
     let Ok(proc_dir) = fs::read_dir("/proc") else { return Vec::new() };
@@ -327,10 +327,14 @@ fn get_all_processes() -> Vec<i32> {
     }).collect()
 }
 
-pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath) {
+pub fn update_index_by_all_proc(
+    vec_info: &mut Vec<ProcInfo>,
+    device_path: &DevicePath,
+    all_proc: &[i32],
+) {
     vec_info.clear();
 
-    for p in &get_all_processes() {
+    for p in all_proc {
         let pid = *p;
         let fds = get_fds(pid, device_path);
 
@@ -343,4 +347,8 @@ pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath) {
 
         vec_info.push(ProcInfo { pid, name, fds });
     }
+}
+
+pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath) {
+    update_index_by_all_proc(vec_info, device_path, &get_all_processes());
 }

@@ -24,6 +24,8 @@ fn main() {
             {
                 amdgpu_top_tui::run(
                     TITLE,
+                    device_path,
+                    amdgpu_dev,
                     &device_path_list,
                     main_opt.update_process_index
                 )

@@ -12,6 +12,7 @@ use crate::{TOGGLE_HELP, ToggleOptions, view::*};
 pub(crate) struct TuiApp {
     pub amdgpu_dev: DeviceHandle,
     pub device_path: DevicePath,
+    pub instance: u32,
     pub list_name: String,
     pub device_info: String,
     pub grbm: PerfCounterView,
@@ -32,6 +33,7 @@ impl TuiApp {
         ext_info: &drm_amdgpu_info_device,
         memory_info: &drm_amdgpu_memory_info,
     ) -> Self {
+        let instance = device_path.get_instance_number().unwrap();
         let device_info = info_bar(&amdgpu_dev, ext_info, memory_info.vram.total_heap_size);
         let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
         let list_name = format!("{} ({pci_bus})", amdgpu_dev.get_marketing_name().unwrap());
@@ -70,6 +72,7 @@ impl TuiApp {
         Self {
             amdgpu_dev,
             device_path: device_path.clone(),
+            instance,
             list_name,
             device_info,
             grbm,

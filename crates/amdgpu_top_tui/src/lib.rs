@@ -3,6 +3,7 @@ use std::time::Duration;
 use cursive::view::{Nameable, Scrollable};
 use cursive::{event::Key, menu, traits::With};
 
+use libamdgpu_top::AMDGPU::DeviceHandle;
 use libamdgpu_top::{stat, DevicePath, Sampling};
 use stat::ProcInfo;
 
@@ -23,6 +24,7 @@ struct ToggleOptions {
     fdinfo_sort: stat::FdInfoSortType,
     reverse_sort: bool,
     gpu_metrics: bool,
+    select_instance: u32,
 }
 
 impl Default for ToggleOptions {
@@ -37,6 +39,7 @@ impl Default for ToggleOptions {
             fdinfo_sort: Default::default(),
             reverse_sort: false,
             gpu_metrics: false,
+            select_instance: 0,
         }
     }
 }
@@ -57,21 +60,43 @@ pub const TOGGLE_HELP: &str = concat!(
 
 pub fn run(
     title: &str,
+    select_device_path: DevicePath,
+    select_amdgpu_dev: DeviceHandle,
     device_path_list: &[DevicePath],
     interval: u64,
 ) {
     let mut toggle_opt = ToggleOptions::default();
+    let mut vec_app: Vec<TuiApp> = Vec::new();
 
-    let mut vec_app: Vec<TuiApp> = device_path_list.iter().filter_map(|device_path| {
-        let amdgpu_dev = device_path.init().ok()?;
-        let ext_info = amdgpu_dev.device_info().ok()?;
-        let memory_info = amdgpu_dev.memory_info().ok()?;
+    for device_path in device_path_list {
+        if select_device_path.render == device_path.render { continue }
+
+        let Ok(amdgpu_dev) = device_path.init() else { continue };
+        let Ok(ext_info) = amdgpu_dev.device_info() else { continue };
+        let Ok(memory_info) = amdgpu_dev.memory_info() else { continue };
 
         let mut app = app::TuiApp::new(amdgpu_dev, device_path, &ext_info, &memory_info);
         app.fill(&mut toggle_opt);
 
-        Some(app)
-    }).collect();
+        vec_app.push(app);
+    }
+
+    {
+        let ext_info = select_amdgpu_dev.device_info().unwrap();
+        let memory_info = select_amdgpu_dev.memory_info().unwrap();
+
+        let mut app = app::TuiApp::new(
+            select_amdgpu_dev,
+            &select_device_path,
+            &ext_info,
+            &memory_info
+        );
+        app.fill(&mut toggle_opt);
+
+        toggle_opt.select_instance = app.instance;
+
+        vec_app.push(app);
+    }
 
     let mut siv = cursive::default();
 
@@ -103,12 +128,18 @@ pub fn run(
             menu::Tree::new()
                 .with(|tree| { for app in &vec_app {
                     let name = app.list_name.clone();
+                    let instance = app.instance;
+
                     tree.add_leaf(
                         name.clone(),
                         move |siv: &mut cursive::Cursive| {
                             let screen = siv.screen_mut();
-                            let Some(pos) = screen.find_layer_from_name(&name) else { return };
+                            let Some(pos) = screen.find_layer_from_name(&instance.to_string())
+                                else { return };
                             screen.move_to_front(pos);
+
+                            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+                            opt.select_instance = instance;
                         },
                     );
                 }})
@@ -123,7 +154,7 @@ pub fn run(
                 app.layout(title, &toggle_opt)
                     .scrollable()
                     .scroll_y(true)
-                    .with_name(&app.list_name)
+                    .with_name(&app.instance.to_string())
             );
         }
     }
@@ -155,8 +186,10 @@ pub fn run(
         std::thread::spawn(move || loop {
             std::thread::sleep(Duration::from_secs(interval));
 
+            let all_proc = stat::get_all_processes();
+
             for (device_path, index) in &t_index {
-                stat::update_index(&mut buf_index, device_path);
+                stat::update_index_by_all_proc(&mut buf_index, device_path, &all_proc);
 
                 let lock = index.lock();
                 if let Ok(mut index) = lock {
@@ -186,6 +219,7 @@ pub fn run(
 
         for _ in 0..sample.count {
             for app in vec_app.iter_mut() {
+                if flags.select_instance != app.instance { continue }
                 app.update_pc(&flags);
             }
 
@@ -193,6 +227,7 @@ pub fn run(
         }
 
         for app in vec_app.iter_mut() {
+            if flags.select_instance != app.instance { continue }
             app.update(&flags, &sample);
         }
 
