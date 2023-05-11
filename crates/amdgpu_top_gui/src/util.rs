@@ -46,7 +46,7 @@ impl SensorsHistory {
             (&mut self.mclk, sensors.mclk),
             (&mut self.vddgfx, sensors.vddgfx),
             (&mut self.vddnb, sensors.vddnb),
-            (&mut self.temp, sensors.temp.map(|v| v.saturating_div(1000))),
+            (&mut self.temp, sensors.temp),
             (&mut self.power, sensors.power),
             (&mut self.fan_rpm, sensors.fan_rpm),
         ] {

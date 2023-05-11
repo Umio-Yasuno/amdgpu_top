@@ -32,7 +32,8 @@ impl Sensors {
             amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_MCLK).ok(),
             amdgpu_dev.sensor_info(SENSOR_TYPE::VDDNB).ok(),
             amdgpu_dev.sensor_info(SENSOR_TYPE::VDDGFX).ok(),
-            amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_TEMP).ok(),
+            amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_TEMP).ok()
+                .map(|v| v.saturating_div(1_000)),
             amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok(),
         ];
         let critical_temp = Self::parse_hwmon(hwmon_path.join("temp1_crit"))
@@ -72,7 +73,8 @@ impl Sensors {
         self.mclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_MCLK).ok();
         self.vddnb = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDNB).ok();
         self.vddgfx = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDGFX).ok();
-        self.temp = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_TEMP).ok();
+        self.temp = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_TEMP).ok()
+            .map(|v| v.saturating_div(1_000));
         self.power = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok();
         self.fan_rpm = Self::parse_hwmon(self.hwmon_path.join("fan1_input"));
     }

@@ -52,7 +52,6 @@ impl SensorsView {
         if (c % 2) == 1 { writeln!(self.text.buf)?; }
 
         if let Some(temp) = sensors.temp {
-            let temp = temp.saturating_div(1_000);
             if let Some(crit) = sensors.critical_temp {
                 writeln!(self.text.buf, " GPU Temp. => {temp:3} C (Crit. {crit} C)")?;
             } else {

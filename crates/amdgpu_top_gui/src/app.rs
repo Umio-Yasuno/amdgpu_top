@@ -465,7 +465,7 @@ impl MyApp {
                 ),
                 (
                     &self.buf_data.sensors_history.temp,
-                    sensors.temp.map(|v| v.saturating_div(1000)),
+                    sensors.temp,
                     "GFX Temp.",
                     0,
                     sensors.critical_temp.unwrap_or(105), // "105 C" is not an exact value
