@@ -62,15 +62,15 @@ pub fn run(
 ) {
     let mut toggle_opt = ToggleOptions::default();
 
-    let mut vec_app: Vec<TuiApp> = device_path_list.iter().map(|device_path| {
-        let amdgpu_dev = device_path.init().unwrap();
-        let ext_info = amdgpu_dev.device_info().unwrap();
-        let memory_info = amdgpu_dev.memory_info().unwrap();
+    let mut vec_app: Vec<TuiApp> = device_path_list.iter().filter_map(|device_path| {
+        let amdgpu_dev = device_path.init().ok()?;
+        let ext_info = amdgpu_dev.device_info().ok()?;
+        let memory_info = amdgpu_dev.memory_info().ok()?;
 
-        let mut app = app::TuiApp::new(amdgpu_dev, &device_path, &ext_info, &memory_info);
+        let mut app = app::TuiApp::new(amdgpu_dev, device_path, &ext_info, &memory_info);
         app.fill(&mut toggle_opt);
 
-        app
+        Some(app)
     }).collect();
 
     let mut siv = cursive::default();
@@ -156,7 +156,7 @@ pub fn run(
             std::thread::sleep(Duration::from_secs(interval));
 
             for (device_path, index) in &t_index {
-                stat::update_index(&mut buf_index, &device_path);
+                stat::update_index(&mut buf_index, device_path);
 
                 let lock = index.lock();
                 if let Ok(mut index) = lock {

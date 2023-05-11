@@ -32,7 +32,7 @@ impl TuiApp {
         ext_info: &drm_amdgpu_info_device,
         memory_info: &drm_amdgpu_memory_info,
     ) -> Self {
-        let device_info = info_bar(&amdgpu_dev, &ext_info, memory_info.vram.total_heap_size);
+        let device_info = info_bar(&amdgpu_dev, ext_info, memory_info.vram.total_heap_size);
         let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
         let list_name = format!("{} ({pci_bus})", amdgpu_dev.get_marketing_name().unwrap());
         let chip_class = ext_info.get_chip_class();
@@ -45,13 +45,13 @@ impl TuiApp {
 
         let grbm = PerfCounterView::new(stat::PCType::GRBM, grbm_index);
         let grbm2 = PerfCounterView::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
-        let vram_usage = VramUsageView::new(&memory_info);
+        let vram_usage = VramUsageView::new(memory_info);
 
         let mut fdinfo = FdInfoView::new(Sampling::default().to_duration());
 
         let arc_proc_index = {
             let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
-            stat::update_index(&mut proc_index, &device_path);
+            stat::update_index(&mut proc_index, device_path);
 
             fdinfo.print(&proc_index, &Default::default(), false).unwrap();
             fdinfo.text.set();
