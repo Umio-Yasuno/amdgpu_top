@@ -38,7 +38,7 @@ dependencies = [
 
 [[package]]
 name = "amdgpu_top"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "amdgpu_top_gui",
  "amdgpu_top_json",
