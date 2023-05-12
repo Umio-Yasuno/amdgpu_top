@@ -75,7 +75,21 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     println!();
     println!("VRAM Type     : {}", ext_info.get_vram_type());
     println!("VRAM Bit Width: {}-bit", ext_info.vram_bit_width);
-    println!("VRAM size     : {} MiB", memory_info.vram.total_heap_size >> 20);
+    println!(
+        "VRAM Usage            : {:5} / {:5} MiB",
+        memory_info.vram.heap_usage >> 20,
+        memory_info.vram.total_heap_size >> 20,
+    );
+    println!(
+        "CPU-Visible VRAM Usage: {:5} / {:5} MiB",
+        memory_info.cpu_accessible_vram.heap_usage >> 20,
+        memory_info.cpu_accessible_vram.total_heap_size >> 20,
+    );
+    println!(
+        "GTT  Usage            : {:5} / {:5} MiB",
+        memory_info.gtt.heap_usage >> 20,
+        memory_info.gtt.total_heap_size >> 20,
+    );
     println!("Memory Clock  : {min_mem_clk}-{max_mem_clk} MHz");
     println!("Peak Memory BW: {} GB/s", ext_info.peak_memory_bw_gb());
     println!("ResizableBAR  : {resizable_bar}");
