@@ -2,9 +2,9 @@
 `amdgpu_top` is tool that display AMD GPU utilization, like [umr](https://gitlab.freedesktop.org/tomstdenis/umr/) or [clbr/radeontop](https://github.com/clbr/radeontop) or [intel_gpu_top](https://gitlab.freedesktop.org/drm/igt-gpu-tools/-/blob/master/man/intel_gpu_top.rst).  
 The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, and AMDGPU driver.  
 
-| TUI                                     | GUI                                                  |
-| :-------------------------------------: | :--------------------------------------------------: |
-| ![amdgpu_top TUI screenshot](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/17318061-d8db-4157-a13e-67006388f587) | ![amdgpu_top GUI mode screenshot](https://user-images.githubusercontent.com/53935716/235711189-3379b4c2-8371-4760-a9e3-5f2c3e72e9c4.png)
+| Simple TUI<br>(like nvidia-smi, rocm-smi) | TUI | GUI |
+| :-: | :-: | :-: |
+| ![amdgpu_top Simple TUI](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/a28b84af-c3e1-45c4-b1cc-1472a0ba8ac9) | ![amdgpu_top TUI](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/17318061-d8db-4157-a13e-67006388f587) | ![amdgpu_top GUI mode](https://user-images.githubusercontent.com/53935716/235711189-3379b4c2-8371-4760-a9e3-5f2c3e72e9c4.png)
 
 ## Usage
 ```
@@ -36,7 +36,7 @@ OPTIONS:
        Update interval in seconds of the process index for fdinfo (default: 5s)
 ```
 
-### Command
+### Commands for TUI
 | key |                                     |
 | :-- | :---------------------------------: |
 | f   | toggle fdinfo                       |
