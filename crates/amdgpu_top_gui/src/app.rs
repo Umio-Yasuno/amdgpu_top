@@ -15,7 +15,7 @@ use libamdgpu_top::AMDGPU::{
 use libamdgpu_top::PCI;
 use libamdgpu_top::stat::{self, check_metrics_val, FdInfoSortType, PerfCounter};
 
-use crate::{AppDeviceInfo, CentralData, util::*};
+use crate::{AppDeviceInfo, CentralData, GpuMetrics, util::*};
 
 const PLOT_HEIGHT: f32 = 32.0;
 const PLOT_WIDTH: f32 = 240.0;
@@ -576,11 +576,8 @@ impl MyApp {
     pub fn egui_gpu_metrics_v1(&self, ui: &mut egui::Ui) {
         let gpu_metrics = &self.buf_data.gpu_metrics;
 
-        if let Some(socket_power) = gpu_metrics.get_average_socket_power() {
-            if socket_power != u16::MAX {
-                ui.label(&format!("Socket Power => {socket_power:3} W"));
-            }
-        }
+        socket_power(ui, gpu_metrics);
+        avg_activity(ui, gpu_metrics);
 
         ui.horizontal(|ui| {
             v1_helper(ui, "C", &[
@@ -691,11 +688,8 @@ impl MyApp {
             ]);
         });
 
-        if let Some(socket_power) = gpu_metrics.get_average_socket_power() {
-            if socket_power != u16::MAX {
-                ui.label(&format!("Socket Power => {socket_power:3} W"));
-            }
-        }
+        socket_power(ui, gpu_metrics);
+        avg_activity(ui, gpu_metrics);
 
         for (avg, cur, name) in [
             (
@@ -762,6 +756,25 @@ impl MyApp {
             }
         });
     }
+}
+
+fn socket_power(ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
+    let v = check_metrics_val(gpu_metrics.get_average_socket_power());
+    ui.label(format!("Socket Power => {v:>3} W"));
+}
+
+fn avg_activity(ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
+    ui.horizontal(|ui| {
+        ui.label("Average Activity =>");
+        for (val, label) in [
+            (gpu_metrics.get_average_gfx_activity(), "GFX"),
+            (gpu_metrics.get_average_umc_activity(), "UMC"),
+            (gpu_metrics.get_average_mm_activity(), "Media"),
+        ] {
+            let v = check_metrics_val(val.map(|v| v.saturating_div(100)));
+            ui.label(format!("{label} {v:>3}%,"));
+        }
+    });
 }
 
 fn v1_helper(ui: &mut egui::Ui, unit: &str, v: &[(Option<u16>, &str)]) {

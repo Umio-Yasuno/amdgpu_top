@@ -63,11 +63,8 @@ impl GpuMetricsView {
 
     // AMDGPU always returns `u16::MAX` for some values it doesn't actually support.
     fn for_v1(&mut self) -> Result<(), fmt::Error> {
-        if let Some(socket_power) = self.metrics.get_average_socket_power() {
-            if socket_power != u16::MAX {
-                writeln!(self.text.buf, " Socket Power => {socket_power:3} W")?;
-            }
-        }
+        socket_power(&mut self.text.buf, &self.metrics)?;
+        avg_activity(&mut self.text.buf, &self.metrics)?;
 
         v1_helper(&mut self.text.buf, "C", &[
             (self.metrics.get_temperature_edge(), "Edge"),
@@ -161,11 +158,8 @@ impl GpuMetricsView {
             (self.metrics.get_current_socclk(), "MHz"),
         ])?;
 
-        if let Some(socket_power) = self.metrics.get_average_socket_power() {
-            if socket_power != u16::MAX {
-                writeln!(self.text.buf, " Socket Power => {socket_power:3} W")?;
-            }
-        }
+        socket_power(&mut self.text.buf, &self.metrics)?;
+        avg_activity(&mut self.text.buf, &self.metrics)?;
 
         for (avg, cur, name) in [
             (
@@ -237,6 +231,24 @@ impl GpuMetricsView {
             opt.gpu_metrics ^= true;
         }
     }
+}
+
+fn socket_power(buf: &mut String, gpu_metrics: &GpuMetrics) -> Result<(), fmt::Error> {
+    let v = check_metrics_val(gpu_metrics.get_average_socket_power());
+    writeln!(buf, " Socket Power => {v:>3} W")
+}
+
+fn avg_activity(buf: &mut String, gpu_metrics: &GpuMetrics) -> Result<(), fmt::Error> {
+    write!(buf, " Average Activity => ")?;
+    for (val, label) in [
+        (gpu_metrics.get_average_gfx_activity(), "GFX"),
+        (gpu_metrics.get_average_umc_activity(), "UMC"),
+        (gpu_metrics.get_average_mm_activity(), "Media"),
+    ] {
+        let v = check_metrics_val(val.map(|v| v.saturating_div(100)));
+        write!(buf, "{label} {v:>3}%, ")?;
+    }
+    writeln!(buf)
 }
 
 fn v1_helper(buf: &mut String, unit: &str, v: &[(Option<u16>, &str)]) -> Result<(), fmt::Error> {
