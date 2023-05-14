@@ -388,6 +388,7 @@ impl MyApp {
             if ui.button(rt_base(format!("{:^10}", "VRAM"))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::VRAM);
             }
+            ui.label(rt_base(format!("{:^10}", "GTT")));
             if ui.button(rt_base(format!("{:^5}", "GFX"))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::GFX);
             }
@@ -414,7 +415,8 @@ impl MyApp {
             for pu in &self.buf_data.fdinfo.proc_usage {
                 ui.label(pu.name.to_string());
                 ui.label(format!("{:>8}", pu.pid));
-                ui.label(&format!("{:5} MiB", pu.usage.vram_usage >> 10));
+                ui.label(format!("{:5} MiB", pu.usage.vram_usage >> 10));
+                ui.label(format!("{:5} MiB", pu.usage.gtt_usage >> 10));
                 let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
                 let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
                 for usage in [

@@ -88,6 +88,13 @@ impl OutputJson for FdInfoStat {
                     "unit": "MiB",
                 }),
             );
+            sub.insert(
+                "GTT".to_string(),
+                json!({
+                    "value": pu.usage.gtt_usage >> 10,
+                    "unit": "MiB",
+                }),
+            );
 
             let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
             let enc_usage = pu.usage.enc + pu.usage.uvd_enc;

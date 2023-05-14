@@ -10,6 +10,7 @@ use libamdgpu_top::stat::{sort_proc_usage, ProcInfo, FdInfoStat, FdInfoSortType}
 const PROC_NAME_LEN: usize = 16;
 
 const VRAM_LABEL: &str = "VRAM";
+const GTT_LABEL: &str = "GTT";
 const GFX_LABEL: &str = "GFX";
 const COMPUTE_LABEL: &str = "Compute";
 const DMA_LABEL: &str = "DMA";
@@ -43,7 +44,7 @@ impl FdInfoView {
 
         writeln!(
             self.text.buf,
-            " {pad:27} | {VRAM_LABEL:^8} | {GFX_LABEL} | {COMPUTE_LABEL} | {DMA_LABEL} | {DEC_LABEL} | {ENC_LABEL} |",
+            " {pad:27} | {VRAM_LABEL:^8} | {GTT_LABEL:^8} | {GFX_LABEL} | {COMPUTE_LABEL} | {DMA_LABEL} | {DEC_LABEL} | {ENC_LABEL} |",
             pad = "",
         )?;
 
@@ -66,10 +67,11 @@ impl FdInfoView {
             };
             write!(
                 self.text.buf,
-                " {name:name_len$} ({pid:>8}) | {vram:>5} MiB|",
+                " {name:name_len$} ({pid:>8}) | {vram:>5} MiB| {gtt:>5} MiB|",
                 name = pu.name,
                 pid = pu.pid,
                 vram = pu.usage.vram_usage >> 10,
+                gtt = pu.usage.gtt_usage >> 10,
             )?;
             let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
             let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
