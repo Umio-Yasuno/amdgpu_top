@@ -90,7 +90,7 @@ impl SmiDeviceInfo {
     fn update_info_text(&mut self) -> Result<(), std::fmt::Error> {
         self.info_text.clear();
         let [vram, gtt] = [&self.vram_usage.0.vram, &self.vram_usage.0.gtt].map(|v| {
-            (v.heap_usage * 100) / v.total_heap_size
+            (v.heap_usage * 100).checked_div(v.total_heap_size).unwrap_or(0)
         });
 
         write!(

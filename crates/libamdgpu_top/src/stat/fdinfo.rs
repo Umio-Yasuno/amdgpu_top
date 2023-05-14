@@ -256,10 +256,10 @@ impl FdInfoUsage {
                 } else {
                     let tmp = cur.saturating_sub(pre);
 
-                    if tmp.is_negative() { 0 } else { tmp }
-                };
+                    if tmp.is_negative() { 0 } else { tmp * 100 }
+                } as u128;
 
-                (usage as u128 / (interval.as_nanos() / 100)) as i64
+                usage.checked_div(interval.as_nanos()).unwrap_or(0) as i64
             })
         };
 
