@@ -1,4 +1,5 @@
 use libamdgpu_top::AMDGPU::{CHIP_CLASS, DeviceHandle, drm_amdgpu_info_device, drm_amdgpu_memory_info, GPU_INFO};
+use libamdgpu_top::PCI;
 use std::sync::{Arc, Mutex};
 use cursive::align::HAlign;
 use cursive::views::{LinearLayout, TextView, Panel, ResizedView};
@@ -34,8 +35,8 @@ impl TuiApp {
         memory_info: &drm_amdgpu_memory_info,
     ) -> Self {
         let instance = device_path.get_instance_number().unwrap();
-        let device_info = info_bar(&amdgpu_dev, ext_info, memory_info.vram.total_heap_size);
         let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
+        let device_info = info_bar(&amdgpu_dev, ext_info, memory_info.vram.total_heap_size, &pci_bus);
         let list_name = format!("{} ({pci_bus})", amdgpu_dev.get_marketing_name().unwrap());
         let chip_class = ext_info.get_chip_class();
 
@@ -199,6 +200,7 @@ pub fn info_bar(
     amdgpu_dev: &DeviceHandle,
     ext_info: &drm_amdgpu_info_device,
     vram_size: u64,
+    pci_bus: &PCI::BUS_INFO,
 ) -> String {
     let chip_class = ext_info.get_chip_class();
 
@@ -208,12 +210,13 @@ pub fn info_bar(
 
     format!(
         concat!(
-            "{mark_name} ({did:#06X}:{rid:#04X})\n",
+            "{mark_name} ({pci}, {did:#06X}:{rid:#04X})\n",
             "{asic}, {gpu_type}, {chip_class}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
             "{vram_type} {vram_bus_width}-bit, {vram_size} MiB, ",
             "{min_memory_clk}-{max_memory_clk} MHz",
         ),
         mark_name = mark_name,
+        pci = pci_bus,
         did = ext_info.device_id(),
         rid = ext_info.pci_rev_id(),
         asic = ext_info.get_asic_name(),
