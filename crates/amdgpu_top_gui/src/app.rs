@@ -179,11 +179,17 @@ impl MyApp {
             ]);
             ui.end_row();
 
+            if let Some(ref cap) = &self.app_device_info.power_cap {
+                ui.label("Power Cap.");
+                ui.label(format!("{:4} W ({}-{} W)", cap.current, cap.min, cap.max));
+                ui.end_row();
+                ui.label("Power Cap. (Default)");
+                ui.label(format!("{:4} W", cap.default));
+                ui.end_row();
+            }
+
             for (label, val, unit) in [
                 ("Critical Temp.", &self.app_device_info.critical_temp, "C"),
-                ("Power Cap.", &self.app_device_info.power_cap, "W"),
-                ("Power Cap. (Min)", &self.app_device_info.power_cap_min, "W"),
-                ("Power Cap. (Max)", &self.app_device_info.power_cap_max, "W"),
                 ("Fan RPM (Max).", &self.app_device_info.fan_max_rpm, "RPM"),
             ] {
                 let Some(val) = val else { continue };
@@ -480,7 +486,7 @@ impl MyApp {
                     sensors.power,
                     "GFX Power",
                     0,
-                    sensors.power_cap.unwrap_or(350), // "350 W" is not an exact value
+                    if let Some(ref cap) = sensors.power_cap { cap.current } else { 350 }, // "350 W" is not an exact value
                     "W",
                 ),
                 (

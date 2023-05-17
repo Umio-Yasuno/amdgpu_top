@@ -109,8 +109,8 @@ impl SmiDeviceInfo {
             write!(self.info_text.buf, " ___C, ")?;
         }
         if let Some(power) = self.sensors.power {
-            if let Some(cap) = self.sensors.power_cap {
-                write!(self.info_text.buf, " {power:>3}W / {cap:>3}W, ")?;
+            if let Some(ref cap) = self.sensors.power_cap {
+                write!(self.info_text.buf, " {power:>3}W / {:>3}W, ", cap.current)?;
             } else {
                 write!(self.info_text.buf, " {power:>3}W / ___W, ")?;
             }

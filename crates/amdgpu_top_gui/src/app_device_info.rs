@@ -4,7 +4,7 @@ use libamdgpu_top::AMDGPU::{
     drm_amdgpu_memory_info,
     HW_IP::{HwIpInfo, HW_IP_TYPE},
 };
-use libamdgpu_top::{PCI, stat::Sensors};
+use libamdgpu_top::{PCI, stat::Sensors, stat::PowerCap};
 
 const HW_IP_LIST: &[HW_IP_TYPE] = &[
     HW_IP_TYPE::GFX,
@@ -31,9 +31,7 @@ pub struct AppDeviceInfo {
     pub marketing_name: String,
     pub pci_bus: PCI::BUS_INFO,
     pub critical_temp: Option<u32>,
-    pub power_cap: Option<u32>,
-    pub power_cap_min: Option<u32>,
-    pub power_cap_max: Option<u32>,
+    pub power_cap: Option<PowerCap>,
     pub fan_max_rpm: Option<u32>,
 }
 
@@ -66,9 +64,7 @@ impl AppDeviceInfo {
             marketing_name,
             pci_bus: sensors.bus_info,
             critical_temp: sensors.critical_temp,
-            power_cap: sensors.power_cap,
-            power_cap_min: sensors.power_cap_min,
-            power_cap_max: sensors.power_cap_max,
+            power_cap: sensors.power_cap.clone(),
             fan_max_rpm: sensors.fan_max_rpm,
         }
     }

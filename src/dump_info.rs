@@ -112,16 +112,17 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
 fn sensors_info(sensors: &Sensors) {
     println!();
     if let Some(critical_temp) = sensors.critical_temp {
-        println!("Critical Temp.   : {critical_temp} C");
+        println!("Critical Temp.      : {critical_temp} C");
     }
-    if let Some(cap) = sensors.power_cap {
-        println!("Power Cap.       : {cap} W");
+    if let Some(power) = sensors.power {
+        println!("Power Avg.          : {power:3} W");
     }
-    if let [Some(cap_min), Some(cap_max)] = [sensors.power_cap_min, sensors.power_cap_max] {
-        println!("Power Cap. Range : {cap_min}-{cap_max} W");
+    if let Some(ref cap) = sensors.power_cap {
+        println!("Power Cap.          : {:3} W ({}-{} W)", cap.current, cap.min, cap.max);
+        println!("Power Cap. (Default): {:3} W", cap.default);
     }
     if let Some(fan_max_rpm) = sensors.fan_max_rpm {
-        println!("Fan RPM (Max)    : {fan_max_rpm} RPM");
+        println!("Fan RPM (Max)       : {fan_max_rpm} RPM");
     }
 }
 

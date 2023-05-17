@@ -4,6 +4,53 @@ use libdrm_amdgpu_sys::{
     AMDGPU::{DeviceHandle, SENSOR_INFO::SENSOR_TYPE},
 };
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum PowerCapType {
+    PPT,
+    FastPPT,
+    SlowPPT,
+}
+
+#[derive(Clone, Debug)]
+pub struct PowerCap {
+    pub type_: PowerCapType,
+    pub current: u32,
+    pub default: u32,
+    pub min: u32,
+    pub max: u32,
+}
+
+impl PowerCap {
+    pub fn from_hwmon_path<P: Into<PathBuf>>(path: P) -> Option<Self> {
+        let path = path.into();
+
+        let type_ = match std::fs::read_to_string(path.join("power1_label")).ok()?.as_str() {
+            "fastPPT" => PowerCapType::FastPPT,
+            "slowPPT" => PowerCapType::SlowPPT,
+            _ => PowerCapType::PPT,
+        };
+
+        let names = if type_ == PowerCapType::FastPPT || type_ == PowerCapType::SlowPPT {
+            // for VanGogh APU
+            ["power2_cap", "power2_cap_default", "power2_cap_min", "power2_cap_max"]
+        } else {
+            ["power1_cap", "power1_cap_default", "power1_cap_min", "power1_cap_max"]
+        };
+
+        let [current, default, min, max] = names.map(|name| {
+            parse_hwmon(path.join(name)).map(|v| v.saturating_div(1_000_000))
+        });
+
+        Some(Self {
+            type_,
+            current: current?,
+            default: default?,
+            min: min?,
+            max: max?,
+        })
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Sensors {
     pub hwmon_path: PathBuf,
@@ -17,9 +64,7 @@ pub struct Sensors {
     pub temp: Option<u32>,
     pub critical_temp: Option<u32>,
     pub power: Option<u32>,
-    pub power_cap: Option<u32>,
-    pub power_cap_min: Option<u32>,
-    pub power_cap_max: Option<u32>,
+    pub power_cap: Option<PowerCap>,
     pub fan_rpm: Option<u32>,
     pub fan_max_rpm: Option<u32>,
 }
@@ -38,18 +83,12 @@ impl Sensors {
                 .map(|v| v.saturating_div(1_000)),
             amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok(),
         ];
-        let critical_temp = Self::parse_hwmon(hwmon_path.join("temp1_crit"))
+        let critical_temp = parse_hwmon(hwmon_path.join("temp1_crit"))
             .map(|temp| temp.saturating_div(1_000));
-        let [power_cap, power_cap_min, power_cap_max] = [
-            "power1_cap",
-            "power1_cap_min",
-            "power1_cap_max",
-        ].map(|name| {
-            Self::parse_hwmon(hwmon_path.join(name)).map(|v| v.saturating_div(1_000_000))
-        });
+        let power_cap = PowerCap::from_hwmon_path(&hwmon_path);
 
-        let fan_rpm = Self::parse_hwmon(hwmon_path.join("fan1_input"));
-        let fan_max_rpm = Self::parse_hwmon(hwmon_path.join("fan1_max"));
+        let fan_rpm = parse_hwmon(hwmon_path.join("fan1_input"));
+        let fan_max_rpm = parse_hwmon(hwmon_path.join("fan1_max"));
 
         Self {
             hwmon_path,
@@ -64,16 +103,9 @@ impl Sensors {
             critical_temp,
             power,
             power_cap,
-            power_cap_min,
-            power_cap_max,
             fan_rpm,
             fan_max_rpm,
         }
-    }
-
-    fn parse_hwmon<P: Into<PathBuf>>(path: P) -> Option<u32> {
-        std::fs::read_to_string(path.into()).ok()
-            .and_then(|file| file.trim_end().parse::<u32>().ok())
     }
 
     pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
@@ -85,6 +117,12 @@ impl Sensors {
         self.temp = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_TEMP).ok()
             .map(|v| v.saturating_div(1_000));
         self.power = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok();
-        self.fan_rpm = Self::parse_hwmon(self.hwmon_path.join("fan1_input"));
+        self.fan_rpm = parse_hwmon(self.hwmon_path.join("fan1_input"));
     }
+}
+
+
+fn parse_hwmon<P: Into<PathBuf>>(path: P) -> Option<u32> {
+    std::fs::read_to_string(path.into()).ok()
+        .and_then(|file| file.trim_end().parse::<u32>().ok())
 }
