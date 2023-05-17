@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::path::PathBuf;
 use super::parse_hwmon;
 
@@ -6,6 +7,22 @@ pub enum PowerCapType {
     PPT,
     FastPPT,
     SlowPPT,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct ParsePowerCapTypeError;
+
+impl FromStr for PowerCapType {
+    type Err = ParsePowerCapTypeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "PPT" => Ok(Self::PPT),
+            "fastPPT" => Ok(Self::FastPPT),
+            "slowPPT" => Ok(Self::SlowPPT),
+            _ => Err(ParsePowerCapTypeError),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -21,21 +38,22 @@ impl PowerCap {
     pub fn from_hwmon_path<P: Into<PathBuf>>(path: P) -> Option<Self> {
         let path = path.into();
 
-        let type_ = match std::fs::read_to_string(path.join("power1_label")).ok()?.as_str() {
-            "fastPPT" => PowerCapType::FastPPT,
-            "slowPPT" => PowerCapType::SlowPPT,
-            _ => PowerCapType::PPT,
+        let label = match std::fs::read_to_string(path.join("power1_label")) {
+            Ok(s) => s,
+            Err(_) => std::fs::read_to_string(path.join("power2_label")).ok()?,
         };
-
-        let names = if type_ == PowerCapType::FastPPT || type_ == PowerCapType::SlowPPT {
-            // for VanGogh APU
-            ["power2_cap", "power2_cap_default", "power2_cap_min", "power2_cap_max"]
-        } else {
-            ["power1_cap", "power1_cap_default", "power1_cap_min", "power1_cap_max"]
+        let type_ = PowerCapType::from_str(label.as_str().trim_end()).ok()?;
+        let names = match type_ {
+            PowerCapType::PPT =>
+                ["power1_cap", "power1_cap_default", "power1_cap_min", "power1_cap_max"],
+            PowerCapType::FastPPT |
+            PowerCapType::SlowPPT =>
+                // for VanGogh APU
+                ["power2_cap", "power2_cap_default", "power2_cap_min", "power2_cap_max"],
         };
 
         let [current, default, min, max] = names.map(|name| {
-            parse_hwmon(path.join(name)).map(|v: u32| v.saturating_div(1_000_000))
+            parse_hwmon::<u32, _>(path.join(name)).map(|v| v.saturating_div(1_000_000))
         });
 
         Some(Self {
