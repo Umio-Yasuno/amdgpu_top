@@ -1,9 +1,10 @@
 use libamdgpu_top::{
-    PCI,
     AMDGPU::{DeviceHandle, GPU_INFO, drm_amdgpu_info_device},
     AMDGPU::VIDEO_CAPS::{CAP_TYPE, CODEC},
     AMDGPU::HW_IP::HW_IP_TYPE,
     AMDGPU::FW_VERSION::FW_TYPE,
+    PCI,
+    stat::Sensors,
 };
 
 pub fn dump(amdgpu_dev: &DeviceHandle) {
@@ -11,6 +12,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
+    let sensors = Sensors::new(amdgpu_dev, &pci_bus);
 
     let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock().unwrap_or((0, 0));
     let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock().unwrap_or((0, 0));
@@ -94,6 +96,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     println!("Peak Memory BW: {} GB/s", ext_info.peak_memory_bw_gb());
     println!("ResizableBAR  : {resizable_bar}");
 
+    sensors_info(&sensors);
     cache_info(&ext_info);
     pci_info(&pci_bus);
     hw_ip_info(amdgpu_dev);
@@ -103,6 +106,22 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
 
     if let Ok(metrics) = amdgpu_dev.get_gpu_metrics() {
         println!("\nGPU Metrics {metrics:#?}");
+    }
+}
+
+fn sensors_info(sensors: &Sensors) {
+    println!();
+    if let Some(critical_temp) = sensors.critical_temp {
+        println!("Critical Temp.   : {critical_temp} C");
+    }
+    if let Some(cap) = sensors.power_cap {
+        println!("Power Cap.       : {cap} W");
+    }
+    if let [Some(cap_min), Some(cap_max)] = [sensors.power_cap_min, sensors.power_cap_max] {
+        println!("Power Cap. Range : {cap_min}-{cap_max} W");
+    }
+    if let Some(fan_max_rpm) = sensors.fan_max_rpm {
+        println!("Fan RPM (Max)    : {fan_max_rpm} RPM");
     }
 }
 

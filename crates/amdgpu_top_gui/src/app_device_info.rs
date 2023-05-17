@@ -32,6 +32,8 @@ pub struct AppDeviceInfo {
     pub pci_bus: PCI::BUS_INFO,
     pub critical_temp: Option<u32>,
     pub power_cap: Option<u32>,
+    pub power_cap_min: Option<u32>,
+    pub power_cap_max: Option<u32>,
     pub fan_max_rpm: Option<u32>,
 }
 
@@ -65,6 +67,8 @@ impl AppDeviceInfo {
             pci_bus: sensors.bus_info,
             critical_temp: sensors.critical_temp,
             power_cap: sensors.power_cap,
+            power_cap_min: sensors.power_cap_min,
+            power_cap_max: sensors.power_cap_max,
             fan_max_rpm: sensors.fan_max_rpm,
         }
     }

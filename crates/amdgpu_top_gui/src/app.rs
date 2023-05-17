@@ -182,6 +182,8 @@ impl MyApp {
             for (label, val, unit) in [
                 ("Critical Temp.", &self.app_device_info.critical_temp, "C"),
                 ("Power Cap.", &self.app_device_info.power_cap, "W"),
+                ("Power Cap. (Min)", &self.app_device_info.power_cap_min, "W"),
+                ("Power Cap. (Max)", &self.app_device_info.power_cap_max, "W"),
                 ("Fan RPM (Max).", &self.app_device_info.fan_max_rpm, "RPM"),
             ] {
                 let Some(val) = val else { continue };

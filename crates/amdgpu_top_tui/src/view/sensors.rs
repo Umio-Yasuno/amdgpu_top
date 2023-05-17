@@ -59,11 +59,14 @@ impl SensorsView {
             }
         }
         if let Some(power) = sensors.power {
+            write!(self.text.buf, " GPU Power => {power:3} W")?;
             if let Some(cap) = sensors.power_cap {
-                writeln!(self.text.buf, " GPU Power => {power:3} W (Cap. {cap} W)")?;
-            } else {
-                writeln!(self.text.buf, " GPU Power => {power:3} W")?;
+                write!(self.text.buf, " (Cap. {cap} W)")?;
             }
+            if let [Some(min), Some(max)] = [sensors.power_cap_min, sensors.power_cap_max] {
+                write!(self.text.buf, " ({min}-{max} W)")?;
+            }
+            writeln!(self.text.buf)?;
         }
         if let Some(fan_rpm) = sensors.fan_rpm {
             if let Some(max_rpm) = sensors.fan_max_rpm {

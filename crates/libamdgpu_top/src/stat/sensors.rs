@@ -18,6 +18,8 @@ pub struct Sensors {
     pub critical_temp: Option<u32>,
     pub power: Option<u32>,
     pub power_cap: Option<u32>,
+    pub power_cap_min: Option<u32>,
+    pub power_cap_max: Option<u32>,
     pub fan_rpm: Option<u32>,
     pub fan_max_rpm: Option<u32>,
 }
@@ -38,8 +40,13 @@ impl Sensors {
         ];
         let critical_temp = Self::parse_hwmon(hwmon_path.join("temp1_crit"))
             .map(|temp| temp.saturating_div(1_000));
-        let power_cap = Self::parse_hwmon(hwmon_path.join("power1_cap"))
-            .map(|cap| cap.saturating_div(1_000_000));
+        let [power_cap, power_cap_min, power_cap_max] = [
+            "power1_cap",
+            "power1_cap_min",
+            "power1_cap_max",
+        ].map(|name| {
+            Self::parse_hwmon(hwmon_path.join(name)).map(|v| v.saturating_div(1_000_000))
+        });
 
         let fan_rpm = Self::parse_hwmon(hwmon_path.join("fan1_input"));
         let fan_max_rpm = Self::parse_hwmon(hwmon_path.join("fan1_max"));
@@ -57,6 +64,8 @@ impl Sensors {
             critical_temp,
             power,
             power_cap,
+            power_cap_min,
+            power_cap_max,
             fan_rpm,
             fan_max_rpm,
         }
