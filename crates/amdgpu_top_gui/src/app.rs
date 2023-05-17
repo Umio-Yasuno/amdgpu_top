@@ -573,7 +573,7 @@ impl MyApp {
         if let Some((sent, rec)) = self.buf_data.pcie_bw_history.latest() {
             ui.label(format!("Sent: {sent:5} MiB/s, Received: {rec:5} MiB/s"));
         } else {
-            ui.label(format!("Sent: _ MiB/s, Received: _ MiB/s"));
+            ui.label("Sent: _ MiB/s, Received: _ MiB/s");
         }
     }
 
