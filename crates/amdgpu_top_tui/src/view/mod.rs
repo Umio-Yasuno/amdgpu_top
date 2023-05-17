@@ -1,4 +1,4 @@
-pub const PANEL_WIDTH: usize = 70;
+pub const PANEL_WIDTH: usize = 80;
 
 mod fdinfo;
 pub use fdinfo::*;
