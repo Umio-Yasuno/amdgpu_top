@@ -103,8 +103,8 @@ impl SmiDeviceInfo {
             gtt = gtt,
         )?;
 
-        if let Some(temp) = self.sensors.temp {
-            write!(self.info_text.buf, " {temp:>3}C, ")?;
+        if let Some(temp) = &self.sensors.edge_temp {
+            write!(self.info_text.buf, " {:>3}C, ", temp.current)?;
         } else {
             write!(self.info_text.buf, " ___C, ")?;
         }

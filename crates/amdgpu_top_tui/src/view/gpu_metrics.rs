@@ -67,12 +67,6 @@ impl GpuMetricsView {
         avg_activity(&mut self.text.buf, &self.metrics)?;
 
         v1_helper(&mut self.text.buf, "C", &[
-            (self.metrics.get_temperature_edge(), "Edge"),
-            (self.metrics.get_temperature_hotspot(), "Hotspot"),
-            (self.metrics.get_temperature_mem(), "Memory"),
-        ])?;
-
-        v1_helper(&mut self.text.buf, "C", &[
             (self.metrics.get_temperature_vrgfx(), "VRGFX"),
             (self.metrics.get_temperature_vrsoc(), "VRSOC"),
             (self.metrics.get_temperature_vrmem(), "VRMEM"),

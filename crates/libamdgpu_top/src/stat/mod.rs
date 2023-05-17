@@ -39,11 +39,17 @@ pub use perf_counter::*;
 mod fdinfo;
 pub use fdinfo::*;
 
+mod hwmon_temp;
+pub use hwmon_temp::*;
+
 mod sensors;
 pub use sensors::*;
 
 mod pcie_bw;
 pub use pcie_bw::*;
+
+mod power_cap;
+pub use power_cap::*;
 
 pub fn check_metrics_val(val: Option<u16>) -> String {
     if let Some(v) = val {
@@ -51,4 +57,9 @@ pub fn check_metrics_val(val: Option<u16>) -> String {
     } else {
         "N/A".to_string()
     }
+}
+
+pub(crate) fn parse_hwmon<T: std::str::FromStr, P: Into<std::path::PathBuf>>(path: P) -> Option<T> {
+    std::fs::read_to_string(path.into()).ok()
+        .and_then(|file| file.trim_end().parse::<T>().ok())
 }

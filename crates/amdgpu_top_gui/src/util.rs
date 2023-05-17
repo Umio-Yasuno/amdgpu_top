@@ -27,17 +27,21 @@ pub struct SensorsHistory {
     pub mclk: History<u32>,
     pub vddgfx: History<u32>,
     pub vddnb: History<u32>,
-    pub temp: History<u32>,
+    pub edge_temp: History<i64>,
+    pub junction_temp: History<i64>,
+    pub memory_temp: History<i64>,
     pub power: History<u32>,
     pub fan_rpm: History<u32>,
 }
 
 impl SensorsHistory {
     pub fn new() -> Self {
-        let [sclk, mclk, vddgfx, vddnb, temp, power, fan_rpm] = [0; 7]
+        let [sclk, mclk, vddgfx, vddnb, power, fan_rpm] = [0; 6]
+            .map(|_| History::new(HISTORY_LENGTH, f32::INFINITY));
+        let [edge_temp, junction_temp, memory_temp] = [0;3]
             .map(|_| History::new(HISTORY_LENGTH, f32::INFINITY));
 
-        Self { sclk, mclk, vddgfx, vddnb, temp, power, fan_rpm }
+        Self { sclk, mclk, vddgfx, vddnb, edge_temp, junction_temp, memory_temp, power, fan_rpm }
     }
 
     pub fn add(&mut self, sec: f64, sensors: &Sensors) {
@@ -46,12 +50,20 @@ impl SensorsHistory {
             (&mut self.mclk, sensors.mclk),
             (&mut self.vddgfx, sensors.vddgfx),
             (&mut self.vddnb, sensors.vddnb),
-            (&mut self.temp, sensors.temp),
             (&mut self.power, sensors.power),
             (&mut self.fan_rpm, sensors.fan_rpm),
         ] {
             let Some(val) = val else { continue };
             history.add(sec, val);
+        }
+
+        for (history, temp) in [
+            (&mut self.edge_temp, &sensors.edge_temp),
+            (&mut self.junction_temp, &sensors.junction_temp),
+            (&mut self.memory_temp, &sensors.memory_temp),
+        ] {
+            let Some(temp) = temp else { continue };
+            history.add(sec, temp.current);
         }
     }
 }

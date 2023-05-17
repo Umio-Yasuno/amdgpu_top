@@ -56,7 +56,7 @@ impl OutputJson for Sensors {
             ("GFX_MCLK", self.mclk, "MHz"),
             ("VDDNB", self.vddnb, "mV"),
             ("VDDGFX", self.vddgfx, "mV"),
-            ("GFX Temp.", self.temp, "C"),
+            // ("GFX Temp.", self.temp, "C"),
             ("GFX Power", self.power, "W"),
             ("Fan", self.fan_rpm, "RPM"),
         ] {

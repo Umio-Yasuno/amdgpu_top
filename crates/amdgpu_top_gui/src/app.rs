@@ -188,8 +188,26 @@ impl MyApp {
                 ui.end_row();
             }
 
+            for temp in [
+                &self.app_device_info.edge_temp,
+                &self.app_device_info.junction_temp,
+                &self.app_device_info.memory_temp,
+            ] {
+                let Some(temp) = temp else { continue };
+                let name = temp.type_.to_string();
+                if let Some(crit) = temp.critical {
+                    ui.label(format!("{name} Temp. (Critical)"));
+                    ui.label(format!("{crit:4} C"));
+                    ui.end_row();
+                }
+                if let Some(e) = temp.emergency {
+                    ui.label(format!("{name} Temp. (Emergency)"));
+                    ui.label(format!("{e:4} C"));
+                    ui.end_row();
+                }
+            }
+
             for (label, val, unit) in [
-                ("Critical Temp.", &self.app_device_info.critical_temp, "C"),
                 ("Fan RPM (Max).", &self.app_device_info.fan_max_rpm, "RPM"),
             ] {
                 let Some(val) = val else { continue };
@@ -473,14 +491,16 @@ impl MyApp {
                     1500, // "1500 mV" is not an exact value
                     "mV",
                 ),
+                /*
                 (
                     &self.buf_data.sensors_history.temp,
-                    sensors.temp,
-                    "GFX Temp.",
+                    sensors.edge_temp,
+                    "Edge Temp.",
                     0,
                     sensors.critical_temp.unwrap_or(105), // "105 C" is not an exact value
                     "C",
                 ),
+                */
                 (
                     &self.buf_data.sensors_history.power,
                     sensors.power,
@@ -528,6 +548,9 @@ impl MyApp {
                 ui.end_row();
             }
         });
+
+        self.egui_temp_plot(ui);
+
         ui.label(format!(
             "PCI Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
             cur_gen = sensors.cur.gen,
@@ -535,6 +558,49 @@ impl MyApp {
             max_gen = sensors.max.gen,
             max_width = sensors.max.width,
         ));
+    }
+
+    pub fn egui_temp_plot(&self, ui: &mut egui::Ui) {
+        ui.style_mut().override_font_id = Some(MEDIUM);
+        let sensors = &self.buf_data.sensors;
+        let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
+            String::new()
+        };
+        let label_fmt = |_name: &str, val: &PlotPoint| {
+            format!("{:.1}s\n{:.0} C", val.x, val.y)
+        };
+
+        egui::Grid::new("Temp. Sensors").show(ui, |ui| {
+            for (label, temp, temp_history) in [
+                ("Edge", &sensors.edge_temp, &self.buf_data.sensors_history.edge_temp),
+                ("Junction", &sensors.junction_temp, &self.buf_data.sensors_history.junction_temp),
+                ("Memory", &sensors.memory_temp, &self.buf_data.sensors_history.memory_temp),
+            ] {
+                let Some(temp) = temp else { continue };
+                let val = temp.current;
+                let max = temp.critical.unwrap_or(105) as f64;
+
+                ui.label(format!("{label} Temp.\n({val:4} C)"));
+
+                let points: PlotPoints = temp_history.iter()
+                    .map(|(i, val)| [i, val as f64]).collect();
+                let line = Line::new(points).fill(1.0);
+                Plot::new(label)
+                    .allow_zoom(false)
+                    .allow_scroll(false)
+                    .show_axes([false, true])
+                    .include_y(0.0)
+                    .include_y(max)
+                    .y_axis_formatter(y_fmt)
+                    .label_formatter(label_fmt)
+                    .auto_bounds_x()
+                    .auto_bounds_y()
+                    .height(PLOT_HEIGHT * 1.5)
+                    .width(PLOT_WIDTH)
+                    .show(ui, |plot_ui| plot_ui.line(line));
+                ui.end_row();
+            }
+        });
     }
 
     pub fn egui_pcie_bw(&self, ui: &mut egui::Ui) {
@@ -588,14 +654,6 @@ impl MyApp {
 
         socket_power(ui, gpu_metrics);
         avg_activity(ui, gpu_metrics);
-
-        ui.horizontal(|ui| {
-            v1_helper(ui, "C", &[
-                (gpu_metrics.get_temperature_edge(), "Edge"),
-                (gpu_metrics.get_temperature_hotspot(), "Hotspot"),
-                (gpu_metrics.get_temperature_mem(), "Memory"),
-            ]);
-        });
 
         ui.horizontal(|ui| {
             v1_helper(ui, "C", &[

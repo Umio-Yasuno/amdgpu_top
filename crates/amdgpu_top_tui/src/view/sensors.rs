@@ -51,15 +51,8 @@ impl SensorsView {
         }
         if (c % 2) == 1 { writeln!(self.text.buf)?; }
 
-        if let Some(temp) = sensors.temp {
-            write!(self.text.buf, " GPU Temp. => {temp:3} C")?;
-            if let Some(crit) = sensors.critical_temp {
-                write!(self.text.buf, " (Crit. {crit} C)")?;
-            }
-            writeln!(self.text.buf)?;
-        }
         if let Some(power) = sensors.power {
-            write!(self.text.buf, " GPU Power => {power:3} W")?;
+            write!(self.text.buf, " GPU Power  => {power:3} W")?;
             if let Some(ref cap) = sensors.power_cap {
                 write!(
                     self.text.buf,
@@ -68,6 +61,22 @@ impl SensorsView {
             }
             writeln!(self.text.buf)?;
         }
+
+        for temp in [&sensors.edge_temp, &sensors.junction_temp, &sensors.memory_temp] {
+            let Some(temp) = temp else { continue };
+            let name = temp.type_.to_string();
+
+            let label = format!("{name} Temp.");
+            write!(self.text.buf, " {label:<15} => {:3} C", temp.current)?;
+            if let Some(crit) = temp.critical {
+                write!(self.text.buf, " (Crit. {crit} C)")?;
+            }
+            if let Some(e) = temp.emergency {
+                write!(self.text.buf, " (Emergency {e} C)")?;
+            }
+            writeln!(self.text.buf)?;
+        }
+
         if let Some(fan_rpm) = sensors.fan_rpm {
             write!(self.text.buf, " Fan => {fan_rpm:4} RPM")?;
             if let Some(max_rpm) = sensors.fan_max_rpm {
