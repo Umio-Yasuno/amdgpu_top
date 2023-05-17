@@ -64,9 +64,7 @@ impl SensorsView {
 
         for temp in [&sensors.edge_temp, &sensors.junction_temp, &sensors.memory_temp] {
             let Some(temp) = temp else { continue };
-            let name = temp.type_.to_string();
-
-            let label = format!("{name} Temp.");
+            let label = format!("{} Temp.", temp.type_);
             write!(self.text.buf, " {label:<15} => {:3} C", temp.current)?;
             if let Some(crit) = temp.critical {
                 write!(self.text.buf, " (Crit. {crit} C)")?;

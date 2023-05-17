@@ -18,7 +18,6 @@ pub struct Sensors {
     pub edge_temp: Option<HwmonTemp>,
     pub junction_temp: Option<HwmonTemp>,
     pub memory_temp: Option<HwmonTemp>,
-    pub critical_temp: Option<u32>,
     pub power: Option<u32>,
     pub power_cap: Option<PowerCap>,
     pub fan_rpm: Option<u32>,
@@ -37,8 +36,6 @@ impl Sensors {
             amdgpu_dev.sensor_info(SENSOR_TYPE::VDDGFX).ok(),
             amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok(),
         ];
-        let critical_temp = parse_hwmon(hwmon_path.join("temp1_crit"))
-            .map(|temp: u32| temp.saturating_div(1_000));
         let edge_temp = HwmonTemp::from_hwmon_path(&hwmon_path, HwmonTempType::Edge);
         let junction_temp = HwmonTemp::from_hwmon_path(&hwmon_path, HwmonTempType::Junction);
         let memory_temp = HwmonTemp::from_hwmon_path(&hwmon_path, HwmonTempType::Memory);
@@ -56,7 +53,6 @@ impl Sensors {
             mclk,
             vddnb,
             vddgfx,
-            critical_temp,
             edge_temp,
             junction_temp,
             memory_temp,

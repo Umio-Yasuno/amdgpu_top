@@ -295,9 +295,6 @@ impl MyApp {
         pc: &PerfCounter,
         history: &[History<u8>],
     ) {
-        let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
-            String::new()
-        };
         let label_fmt = |_s: &str, val: &PlotPoint| {
             format!("{:.1}s : {:.0}%", val.x, val.y)
         };
@@ -317,7 +314,7 @@ impl MyApp {
                     .allow_scroll(false)
                     .include_y(0.0)
                     .include_y(100.0)
-                    .y_axis_formatter(y_fmt)
+                    .y_axis_formatter(empty_y_fmt)
                     .label_formatter(label_fmt)
                     .auto_bounds_x()
                     .height(PLOT_HEIGHT)
@@ -356,9 +353,6 @@ impl MyApp {
     }
 
     pub fn egui_fdinfo_plot(&self, ui: &mut egui::Ui) {
-        let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
-            String::new()
-        };
         let label_fmt = |name: &str, val: &PlotPoint| {
             format!("{:.1}s : {name} {:.0}%", val.x, val.y)
         };
@@ -383,7 +377,7 @@ impl MyApp {
             .allow_scroll(false)
             .include_y(0.0)
             .include_y(100.0)
-            .y_axis_formatter(y_fmt)
+            .y_axis_formatter(empty_y_fmt)
             .label_formatter(label_fmt)
             .auto_bounds_x()
             .height(ui.available_width() / 4.0)
@@ -460,9 +454,6 @@ impl MyApp {
     pub fn egui_sensors(&self, ui: &mut egui::Ui) {
         ui.style_mut().override_font_id = Some(MEDIUM);
         let sensors = &self.buf_data.sensors;
-        let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
-            String::new()
-        };
         egui::Grid::new("Sensors").show(ui, |ui| {
             for (history, val, label, min, max, unit) in [
                 (
@@ -489,16 +480,6 @@ impl MyApp {
                     1500, // "1500 mV" is not an exact value
                     "mV",
                 ),
-                /*
-                (
-                    &self.buf_data.sensors_history.temp,
-                    sensors.edge_temp,
-                    "Edge Temp.",
-                    0,
-                    sensors.critical_temp.unwrap_or(105), // "105 C" is not an exact value
-                    "C",
-                ),
-                */
                 (
                     &self.buf_data.sensors_history.power,
                     sensors.power,
@@ -536,7 +517,7 @@ impl MyApp {
                     .allow_scroll(false)
                     .include_y(min)
                     .include_y(max)
-                    .y_axis_formatter(y_fmt)
+                    .y_axis_formatter(empty_y_fmt)
                     .label_formatter(label_fmt)
                     .auto_bounds_x()
                     .height(PLOT_HEIGHT * 1.5)
@@ -560,9 +541,6 @@ impl MyApp {
     pub fn egui_temp_plot(&self, ui: &mut egui::Ui) {
         ui.style_mut().override_font_id = Some(MEDIUM);
         let sensors = &self.buf_data.sensors;
-        let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
-            String::new()
-        };
         let label_fmt = |_name: &str, val: &PlotPoint| {
             format!("{:.1}s\n{:.0} C", val.x, val.y)
         };
@@ -587,7 +565,7 @@ impl MyApp {
                     .allow_scroll(false)
                     .include_y(0.0)
                     .include_y(max)
-                    .y_axis_formatter(y_fmt)
+                    .y_axis_formatter(empty_y_fmt)
                     .label_formatter(label_fmt)
                     .auto_bounds_x()
                     .auto_bounds_y()
@@ -600,9 +578,6 @@ impl MyApp {
     }
 
     pub fn egui_pcie_bw(&self, ui: &mut egui::Ui) {
-        let y_fmt = |_y: f64, _range: &RangeInclusive<f64>| {
-            String::new()
-        };
         let label_fmt = |name: &str, val: &PlotPoint| {
             format!("{:.1}s : {name} {:.0} MiB/s", val.x, val.y)
         };
@@ -625,7 +600,7 @@ impl MyApp {
             .allow_zoom(false)
             .allow_scroll(false)
             .include_y(0.0)
-            .y_axis_formatter(y_fmt)
+            .y_axis_formatter(empty_y_fmt)
             .label_formatter(label_fmt)
             .auto_bounds_x()
             .auto_bounds_y()
@@ -714,7 +689,6 @@ impl MyApp {
             ui.horizontal(|ui| {
                 ui.label("HBM Temp. (C) => [");
                 for v in &hbm_temp {
-                    let v = v.saturating_div(100);
                     ui.label(RichText::new(format!("{v:>5},")));
                 }
                 ui.label("]");
@@ -819,6 +793,10 @@ impl MyApp {
             }
         });
     }
+}
+
+fn empty_y_fmt(_y: f64, _range: &RangeInclusive<f64>) -> String {
+    String::new()
 }
 
 fn socket_power(ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {

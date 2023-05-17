@@ -111,8 +111,15 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
 
 fn sensors_info(sensors: &Sensors) {
     println!();
-    if let Some(critical_temp) = sensors.critical_temp {
-        println!("Critical Temp.      : {critical_temp} C");
+    for temp in [&sensors.edge_temp, &sensors.junction_temp, &sensors.memory_temp] {
+        let Some(temp) = temp else { continue };
+        let label = format!("{} Temp.", temp.type_);
+        if let Some(crit) = temp.critical {
+            println!("{label:<15} (Critical) : {crit:>3} C");
+        }
+        if let Some(e) = temp.emergency {
+            println!("{label:<15} (Emergency) : {e:>3} C");
+        }
     }
     if let Some(power) = sensors.power {
         println!("Power Avg.          : {power:3} W");

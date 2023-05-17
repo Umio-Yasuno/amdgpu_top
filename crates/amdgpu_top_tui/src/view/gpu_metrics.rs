@@ -125,7 +125,6 @@ impl GpuMetricsView {
         ) {
             write!(self.text.buf, "HBM Temp (C) => [")?;
             for v in &hbm_temp {
-                let v = v.saturating_div(100);
                 write!(self.text.buf, "{v:5},")?;
             }
             writeln!(self.text.buf, "]")?;
