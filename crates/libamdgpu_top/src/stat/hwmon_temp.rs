@@ -46,15 +46,14 @@ impl HwmonTemp {
     pub fn from_hwmon_path<P: Into<PathBuf>>(path: P, type_: HwmonTempType) -> Option<Self> {
         let path = path.into();
 
-        let names = type_.file_names();
-
-        let [current, critical, critical_hyst, emergency] = names.map(|name| {
+        let [current, critical, critical_hyst, emergency] = type_.file_names().map(|name| {
             parse_hwmon::<i64, _>(path.join(name)).map(|v| v.saturating_div(1_000))
         });
+        let current = current?;
 
         Some(Self {
             type_,
-            current: current?,
+            current,
             critical,
             critical_hyst,
             emergency,

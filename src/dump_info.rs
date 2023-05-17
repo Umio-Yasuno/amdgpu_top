@@ -121,6 +121,7 @@ fn sensors_info(sensors: &Sensors) {
             println!("{label:<15} (Emergency) : {e:>3} C");
         }
     }
+    println!();
     if let Some(power) = sensors.power {
         println!("Power Avg.          : {power:3} W");
     }
