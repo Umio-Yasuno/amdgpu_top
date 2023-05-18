@@ -145,6 +145,21 @@ impl FdInfoStat {
     }
 }
 
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[allow(clippy::upper_case_acronyms)]
+pub enum FdInfoSortType {
+    PID,
+    #[default]
+    VRAM,
+    GTT,
+    GFX,
+    Compute,
+    DMA,
+    Decode,
+    Encode,
+    MediaEngine,
+}
+
 pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reverse: bool) {
     proc_usage.sort_by(|a, b|
         match (sort, reverse) {
@@ -152,6 +167,8 @@ pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reve
             (FdInfoSortType::PID, true) => a.pid.cmp(&b.pid),
             (FdInfoSortType::VRAM, false) => b.usage.vram_usage.cmp(&a.usage.vram_usage),
             (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
+            (FdInfoSortType::GTT, false) => b.usage.gtt_usage.cmp(&a.usage.gtt_usage),
+            (FdInfoSortType::GTT, true) => a.usage.gtt_usage.cmp(&b.usage.gtt_usage),
             (FdInfoSortType::GFX, false) => b.usage.gfx.cmp(&a.usage.gfx),
             (FdInfoSortType::GFX, true) => a.usage.gfx.cmp(&b.usage.gfx),
             (FdInfoSortType::Compute, false) => b.usage.gfx.cmp(&a.usage.compute),
@@ -174,20 +191,6 @@ pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reve
                     .cmp(&(b.usage.dec + b.usage.vcn_jpeg + b.usage.enc + b.usage.uvd_enc)),
         }
     );
-}
-
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-#[allow(clippy::upper_case_acronyms)]
-pub enum FdInfoSortType {
-    PID,
-    #[default]
-    VRAM,
-    GFX,
-    Compute,
-    DMA,
-    Decode,
-    Encode,
-    MediaEngine,
 }
 
 impl FdInfoUsage {

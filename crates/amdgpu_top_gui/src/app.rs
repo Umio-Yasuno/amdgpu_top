@@ -406,7 +406,9 @@ impl MyApp {
             if ui.button(rt_base(format!("{:^10}", "VRAM"))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::VRAM);
             }
-            ui.label(rt_base(format!("{:^10}", "GTT")));
+            if ui.button(rt_base(format!("{:^10}", "GTT"))).clicked() {
+                self.set_fdinfo_sort_type(FdInfoSortType::GTT);
+            }
             if ui.button(rt_base(format!("{:^5}", "GFX"))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::GFX);
             }
