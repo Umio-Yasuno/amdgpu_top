@@ -13,7 +13,7 @@ use libamdgpu_top::AMDGPU::{
     VIDEO_CAPS::VideoCapsInfo,
 };
 use libamdgpu_top::PCI;
-use libamdgpu_top::stat::{self, check_metrics_val, FdInfoSortType, PerfCounter};
+use libamdgpu_top::stat::{self, check_metrics_val, check_temp_array, check_power_clock_array, FdInfoSortType, PerfCounter};
 
 use crate::{AppDeviceInfo, CentralData, GpuMetrics, util::*};
 
@@ -754,40 +754,40 @@ impl MyApp {
             ui.label(format!("{name:<6} => Avg. {avg:>4} MHz, Cur. {cur:>4} MHz"));
         }
 
-        let for_array = |ui: &mut egui::Ui, val: &[u16]| {
-            for v in val {
-                let v = if v == &u16::MAX { &0 } else { v };
-                ui.label(RichText::new(format!("{v:>5},")));
-            }
-        };
-
         egui::Grid::new("GPU Metrics v2.x Core/L3").show(ui, |ui| {
-            let temp_core = gpu_metrics.get_temperature_core()
-                .map(|array| array.map(|v| v.saturating_div(100)));
-            let temp_l3 = gpu_metrics.get_temperature_l3()
-                .map(|array| array.map(|v| v.saturating_div(100)));
+            let core_temp = check_temp_array(gpu_metrics.get_temperature_core());
+            let l3_temp = check_temp_array(gpu_metrics.get_temperature_l3());
+            let [core_power, core_clk] = [
+                gpu_metrics.get_average_core_power(),
+                gpu_metrics.get_current_coreclk(),
+            ].map(check_power_clock_array);
+            let l3_clk = check_power_clock_array(gpu_metrics.get_current_l3clk());
 
             for (val, label) in [
-                (temp_core, CORE_TEMP_LABEL),
-                (gpu_metrics.get_average_core_power(), CORE_POWER_LABEL),
-                (gpu_metrics.get_current_coreclk(), CORE_CLOCK_LABEL),
+                (core_temp, CORE_TEMP_LABEL),
+                (core_power, CORE_POWER_LABEL),
+                (core_clk, CORE_CLOCK_LABEL),
             ] {
                 let Some(val) = val else { continue };
                 ui.label(label);
                 ui.label("=> [");
-                for_array(ui, &val);
+                for v in &val {
+                    ui.label(RichText::new(format!("{v:>5},")));
+                }
                 ui.label("]");
                 ui.end_row();
             }
 
             for (val, label) in [
-                (temp_l3, L3_TEMP_LABEL),
-                (gpu_metrics.get_current_l3clk(), L3_CLOCK_LABEL),
+                (l3_temp, L3_TEMP_LABEL),
+                (l3_clk, L3_CLOCK_LABEL),
             ] {
                 let Some(val) = val else { continue };
                 ui.label(label);
                 ui.label("=> [");
-                for_array(ui, &val);
+                for v in &val {
+                    ui.label(RichText::new(format!("{v:>5},")));
+                }
                 ui.label("]");
                 ui.end_row();
             }

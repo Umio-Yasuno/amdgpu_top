@@ -59,6 +59,14 @@ pub fn check_metrics_val(val: Option<u16>) -> String {
     }
 }
 
+pub fn check_temp_array<const N: usize>(array: Option<[u16; N]>) -> Option<[u16; N]> {
+    Some(array?.map(|v| if v == u16::MAX { 0 } else { v.saturating_div(100) }))
+}
+
+pub fn check_power_clock_array<const N: usize>(array: Option<[u16; N]>) -> Option<[u16; N]> {
+    Some(array?.map(|v| if v == u16::MAX { 0 } else { v }))
+}
+
 pub(crate) fn parse_hwmon<T: std::str::FromStr, P: Into<std::path::PathBuf>>(path: P) -> Option<T> {
     std::fs::read_to_string(path.into()).ok()
         .and_then(|file| file.trim_end().parse::<T>().ok())

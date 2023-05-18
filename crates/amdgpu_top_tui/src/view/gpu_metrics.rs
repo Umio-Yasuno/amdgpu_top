@@ -2,7 +2,7 @@ use std::fmt::{self, Write};
 use super::Text;
 use crate::Opt;
 use libamdgpu_top::AMDGPU::{DeviceHandle, GpuMetrics, MetricsInfo};
-use libamdgpu_top::stat::check_metrics_val;
+use libamdgpu_top::stat::{check_metrics_val, check_temp_array, check_power_clock_array};
 use std::path::PathBuf;
 
 const CORE_TEMP_LABEL: &str = "Core Temp (C)";
@@ -180,38 +180,36 @@ impl GpuMetricsView {
             writeln!(self.text.buf, " {name:<6} => Avg. {avg:>4} MHz, Cur. {cur:>4} MHz")?;
         }
 
-        let for_array = |buf: &mut String, val: &[u16]| -> Result<(), fmt::Error> {
-            for v in val {
-                let v = if v == &u16::MAX { &0 } else { v };
-                write!(buf, "{v:5},")?;
-            }
-
-            Ok(())
-        };
-
-        let temp_core = self.metrics.get_temperature_core()
-            .map(|array| array.map(|v| v.saturating_div(100)));
-        let temp_l3 = self.metrics.get_temperature_l3()
-            .map(|array| array.map(|v| v.saturating_div(100)));
+        let core_temp = check_temp_array(self.metrics.get_temperature_core());
+        let l3_temp = check_temp_array(self.metrics.get_temperature_l3());
+        let [core_power, core_clk] = [
+            self.metrics.get_average_core_power(),
+            self.metrics.get_current_coreclk(),
+        ].map(check_power_clock_array);
+        let l3_clk = check_power_clock_array(self.metrics.get_current_l3clk());
 
         for (val, label) in [
-            (temp_core, CORE_TEMP_LABEL),
-            (self.metrics.get_average_core_power(), CORE_POWER_LABEL),
-            (self.metrics.get_current_coreclk(), CORE_CLOCK_LABEL),
+            (core_temp, CORE_TEMP_LABEL),
+            (core_power, CORE_POWER_LABEL),
+            (core_clk, CORE_CLOCK_LABEL),
         ] {
             let Some(val) = val else { continue };
             write!(self.text.buf, " {label:<16} => [")?;
-            for_array(&mut self.text.buf, &val)?;
+            for v in &val {
+                write!(self.text.buf, "{v:5},")?;
+            }
             writeln!(self.text.buf, "]")?;
         }
 
         for (val, label) in [
-            (temp_l3, L3_TEMP_LABEL),
-            (self.metrics.get_current_l3clk(), L3_CLOCK_LABEL),
+            (l3_temp, L3_TEMP_LABEL),
+            (l3_clk, L3_CLOCK_LABEL),
         ] {
             let Some(val) = val else { continue };
             write!(self.text.buf, " {label:<20} => [")?;
-            for_array(&mut self.text.buf, &val)?;
+            for v in &val {
+                write!(self.text.buf, "{v:5},")?;
+            }
             writeln!(self.text.buf, "]")?;
         }
 
