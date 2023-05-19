@@ -55,6 +55,7 @@ pub fn run(
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
     let chip_class = ext_info.get_chip_class();
+    let sysfs_path = pci_bus.get_sysfs_path();
 
     let grbm_index = if CHIP_CLASS::GFX10 <= chip_class {
         stat::GFX10_GRBM_INDEX
@@ -75,14 +76,15 @@ pub fn run(
         }
     }
 
-    let mut gpu_metrics = amdgpu_dev.get_gpu_metrics().unwrap_or(GpuMetrics::Unknown);
+    let mut gpu_metrics = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path)
+        .unwrap_or(GpuMetrics::Unknown);
     let mut sensors = Sensors::new(&amdgpu_dev, &pci_bus);
     let mut vram_usage = VramUsage::new(&memory_info);
     let mut grbm_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm.index.len()];
     let mut grbm2_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm2.index.len()];
     let mut fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
     let mut sensors_history = SensorsHistory::new();
-    let pcie_bw = PcieBw::new(pci_bus.get_sysfs_path());
+    let pcie_bw = PcieBw::new(&sysfs_path);
     let share_pcie_bw = Arc::new(Mutex::new(pcie_bw.clone()));
     let mut pcie_bw_history: History<(u64, u64)> = History::new(HISTORY_LENGTH, f32::INFINITY);
 
@@ -187,7 +189,7 @@ pub fn run(
             sensors.update(&amdgpu_dev);
             sensors_history.add(sec, &sensors);
 
-            if let Ok(v) = amdgpu_dev.get_gpu_metrics() {
+            if let Ok(v) = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path) {
                 gpu_metrics = v;
             }
 
