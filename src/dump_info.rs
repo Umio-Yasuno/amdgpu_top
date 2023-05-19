@@ -77,24 +77,23 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     println!();
     println!("VRAM Type     : {}", ext_info.get_vram_type());
     println!("VRAM Bit Width: {}-bit", ext_info.vram_bit_width);
-    println!(
-        "VRAM Usage            : {:5} / {:5} MiB",
-        memory_info.vram.heap_usage >> 20,
-        memory_info.vram.total_heap_size >> 20,
-    );
-    println!(
-        "CPU-Visible VRAM Usage: {:5} / {:5} MiB",
-        memory_info.cpu_accessible_vram.heap_usage >> 20,
-        memory_info.cpu_accessible_vram.total_heap_size >> 20,
-    );
-    println!(
-        "GTT  Usage            : {:5} / {:5} MiB",
-        memory_info.gtt.heap_usage >> 20,
-        memory_info.gtt.total_heap_size >> 20,
-    );
     println!("Memory Clock  : {min_mem_clk}-{max_mem_clk} MHz");
     println!("Peak Memory BW: {} GB/s", ext_info.peak_memory_bw_gb());
     println!("ResizableBAR  : {resizable_bar}");
+    println!();
+
+    for (label, mem) in [
+        ("VRAM", &memory_info.vram),
+        ("CPU-Visible VRAM", &memory_info.cpu_accessible_vram),
+        ("GTT", &memory_info.gtt),
+    ] {
+        println!(
+            "{label:<18}: usage {:5} MiB, total {:5} MiB (usable {:5} MiB)",
+            mem.heap_usage >> 20,
+            mem.total_heap_size >> 20,
+            mem.usable_heap_size >> 20,
+        );
+    }
 
     sensors_info(&sensors);
     cache_info(&ext_info);
@@ -114,6 +113,7 @@ fn sensors_info(sensors: &Sensors) {
     for temp in [&sensors.edge_temp, &sensors.junction_temp, &sensors.memory_temp] {
         let Some(temp) = temp else { continue };
         let label = format!("{} Temp.", temp.type_);
+        println!("{label:<15} (Current)  : {:>3} C", temp.current);
         if let Some(crit) = temp.critical {
             println!("{label:<15} (Critical) : {crit:>3} C");
         }
