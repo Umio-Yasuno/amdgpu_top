@@ -51,21 +51,7 @@ pub use pcie_bw::*;
 mod power_cap;
 pub use power_cap::*;
 
-pub fn check_metrics_val(val: Option<u16>) -> String {
-    if let Some(v) = val {
-        if v == u16::MAX { "N/A".to_string() } else { v.to_string() }
-    } else {
-        "N/A".to_string()
-    }
-}
-
-pub fn check_temp_array<const N: usize>(array: Option<[u16; N]>) -> Option<[u16; N]> {
-    Some(array?.map(|v| if v == u16::MAX { 0 } else { v.saturating_div(100) }))
-}
-
-pub fn check_power_clock_array<const N: usize>(array: Option<[u16; N]>) -> Option<[u16; N]> {
-    Some(array?.map(|v| if v == u16::MAX { 0 } else { v }))
-}
+pub mod gpu_metrics_util;
 
 pub(crate) fn parse_hwmon<T: std::str::FromStr, P: Into<std::path::PathBuf>>(path: P) -> Option<T> {
     std::fs::read_to_string(path.into()).ok()

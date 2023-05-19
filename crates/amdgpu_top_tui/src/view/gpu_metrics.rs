@@ -2,7 +2,7 @@ use std::fmt::{self, Write};
 use super::Text;
 use crate::Opt;
 use libamdgpu_top::AMDGPU::{DeviceHandle, GpuMetrics, MetricsInfo};
-use libamdgpu_top::stat::{check_metrics_val, check_temp_array, check_power_clock_array};
+use libamdgpu_top::stat::gpu_metrics_util::*;
 use std::path::PathBuf;
 
 const CORE_TEMP_LABEL: &str = "Core Temp (C)";
@@ -120,9 +120,7 @@ impl GpuMetricsView {
         }
 
         // Only Aldebaran (MI200) supports it.
-        if let Some(hbm_temp) = self.metrics.get_temperature_hbm().and_then(|hbm_temp|
-            (!hbm_temp.contains(&u16::MAX)).then_some(hbm_temp)
-        ) {
+        if let Some(hbm_temp) = check_hbm_temp(self.metrics.get_temperature_hbm()) {
             write!(self.text.buf, "HBM Temp (C) => [")?;
             for v in &hbm_temp {
                 write!(self.text.buf, "{v:5},")?;

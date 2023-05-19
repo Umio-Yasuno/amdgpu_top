@@ -13,7 +13,7 @@ use libamdgpu_top::AMDGPU::{
     VIDEO_CAPS::VideoCapsInfo,
 };
 use libamdgpu_top::PCI;
-use libamdgpu_top::stat::{self, check_metrics_val, check_temp_array, check_power_clock_array, FdInfoSortType, PerfCounter};
+use libamdgpu_top::stat::{self, gpu_metrics_util::*, FdInfoSortType, PerfCounter};
 
 use crate::{AppDeviceInfo, CentralData, GpuMetrics, util::*};
 
@@ -685,9 +685,7 @@ impl MyApp {
         }
 
         // Only Aldebaran (MI200) supports it.
-        if let Some(hbm_temp) = gpu_metrics.get_temperature_hbm().and_then(|hbm_temp|
-            (!hbm_temp.contains(&u16::MAX)).then_some(hbm_temp)
-        ) {
+        if let Some(hbm_temp) = check_hbm_temp(gpu_metrics.get_temperature_hbm()) {
             ui.horizontal(|ui| {
                 ui.label("HBM Temp. (C) => [");
                 for v in &hbm_temp {
