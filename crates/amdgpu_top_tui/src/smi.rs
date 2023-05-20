@@ -1,17 +1,19 @@
 use std::fmt::Write;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use std::path::PathBuf;
 use cursive::align::HAlign;
 use cursive::view::Scrollable;
-use cursive::views::{LinearLayout, TextView, Panel};
+use cursive::views::{LinearLayout, TextContent, TextView, Panel};
 
-use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO};
+use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO, MetricsInfo};
 use libamdgpu_top::{stat, DevicePath, PCI, Sampling, VramUsage};
 use stat::{Sensors, ProcInfo};
 
 use crate::{FdInfoView, Text, ToggleOptions, stat::FdInfoSortType};
 
 const GPU_NAME_LEN: usize = 25;
+const LINE_LEN: usize = 150;
 
 pub(crate) struct SmiDeviceInfo {
     pub amdgpu_dev: DeviceHandle,
@@ -19,9 +21,9 @@ pub(crate) struct SmiDeviceInfo {
     pub instance: u32,
     pub marketing_name: String,
     pub pci_bus: PCI::BUS_INFO,
+    pub sysfs_path: PathBuf,
     pub cu_number: u32,
     pub vram_usage: VramUsage,
-    pub vram_text: Text,
     pub sensors: Sensors,
     pub fdinfo: FdInfoView,
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
@@ -35,6 +37,7 @@ impl SmiDeviceInfo {
             Some(pci_bus) => pci_bus,
             None => amdgpu_dev.get_pci_bus_info().unwrap(),
         };
+        let sysfs_path = pci_bus.get_sysfs_path();
         let ext_info = amdgpu_dev.device_info().unwrap();
         let cu_number = ext_info.cu_active_number();
         let memory_info = amdgpu_dev.memory_info().unwrap();
@@ -59,9 +62,9 @@ impl SmiDeviceInfo {
             instance,
             marketing_name,
             pci_bus,
+            sysfs_path,
             cu_number,
             vram_usage,
-            vram_text: Default::default(),
             sensors,
             fdinfo,
             arc_proc_index,
@@ -70,10 +73,15 @@ impl SmiDeviceInfo {
     }
 
     fn info_header() -> TextView {
-        let text = format!(
-            "GPU  {name:<GPU_NAME_LEN$} {pad:7} | {pci:<12} | VRAM% | GTT% | Temp.  Pwr Avg/Cap   Fan",
+        let text = format!(concat!(
+            "GPU  {name:<name_len$} {pad:7} | {pci:<14} | {vram:^17} | {gtt:^17} |\n",
+            "SCLK    MCLK    Temp  Pwr_Avg/Cap      | GFX% UMC%  MM% |",
+            ),
             name = "Name",
+            name_len = GPU_NAME_LEN,
             pci = "PCI Bus",
+            vram = "VRAM Usage",
+            gtt = "GTT Usage",
             pad = "",
         );
 
@@ -86,72 +94,83 @@ impl SmiDeviceInfo {
 
     fn update_info_text(&mut self) -> Result<(), std::fmt::Error> {
         self.info_text.clear();
-        let [vram, gtt] = [&self.vram_usage.0.vram, &self.vram_usage.0.gtt].map(|v| {
-            (v.heap_usage * 100).checked_div(v.total_heap_size).unwrap_or(0)
-        });
 
-        write!(
+        writeln!(
             self.info_text.buf,
-            " #{i:<2} {name:GPU_NAME_LEN$} ({cu:3}CU) | {pci:12} |  {vram:3}% | {gtt:3}% |",
+            " #{i:<2} {name:GPU_NAME_LEN$} ({cu:3}CU) | {pci}   | {vu:5} / {vt:5} MiB | {gu:5} / {gt:5} MiB |",
             i = self.instance,
             name = self.marketing_name,
             cu = self.cu_number,
             pci = self.pci_bus,
-            vram = vram,
-            gtt = gtt,
-        )?;
-
-        if let Some(temp) = &self.sensors.edge_temp {
-            write!(self.info_text.buf, " {:>3}C, ", temp.current)?;
-        } else {
-            write!(self.info_text.buf, " ___C, ")?;
-        }
-        if let Some(power) = self.sensors.power {
-            if let Some(ref cap) = self.sensors.power_cap {
-                write!(self.info_text.buf, " {power:>3}W / {:>3}W, ", cap.current)?;
-            } else {
-                write!(self.info_text.buf, " {power:>3}W / ___W, ")?;
-            }
-        } else {
-            write!(self.info_text.buf, "  ____W / ____W, ")?;
-        }
-        if let Some(fan_rpm) = self.sensors.fan_rpm {
-            write!(self.info_text.buf, " {fan_rpm:4}RPM ")?;
-        } else {
-            write!(self.info_text.buf, " ____RPM ")?;
-        }
-
-        self.info_text.set();
-
-        Ok(())
-    }
-
-    fn vram_view(&self) -> TextView {
-        TextView::new_with_content(self.vram_text.content.clone())
-    }
-
-    fn fdinfo_panel(&self) -> Panel<TextView> {
-        let text = TextView::new_with_content(self.fdinfo.text.content.clone());
-        Panel::new(text)
-            .title("Processes")
-            .title_position(HAlign::Left)
-    }
-
-    fn update_vram(&mut self) -> Result<(), std::fmt::Error> {
-        self.vram_text.clear();
-        self.vram_usage.update_usage(&self.amdgpu_dev);
-        write!(
-            self.vram_text.buf,
-            " | VRAM: {vu:5} / {vt:5} MiB | GTT: {gu:5} / {gt:5} MiB |",
             vu = self.vram_usage.0.vram.heap_usage >> 20,
             vt = self.vram_usage.0.vram.total_heap_size >> 20,
             gu = self.vram_usage.0.gtt.heap_usage >> 20,
             gt = self.vram_usage.0.gtt.total_heap_size >> 20,
         )?;
 
-        self.vram_text.set();
+        if let Some(sclk) = &self.sensors.sclk {
+            write!(self.info_text.buf, "{sclk:4}MHz ")?;
+        } else {
+            write!(self.info_text.buf, "____MHz ")?;
+        }
+
+        if let Some(mclk) = &self.sensors.mclk {
+            write!(self.info_text.buf, "{mclk:4}MHz ")?;
+        } else {
+            write!(self.info_text.buf, "____MHz ")?;
+        }
+
+        if let Some(temp) = &self.sensors.edge_temp {
+            write!(self.info_text.buf, "{:>3}C ", temp.current)?;
+        } else {
+            write!(self.info_text.buf, "___C ")?;
+        }
+        if let Some(power) = self.sensors.power {
+            if let Some(ref cap) = self.sensors.power_cap {
+                write!(self.info_text.buf, " {power:>3}W / {:>3}W ", cap.current)?;
+            } else {
+                write!(self.info_text.buf, " {power:>3}W / ___W ")?;
+            }
+        } else {
+            write!(self.info_text.buf, " ____W / ____W ")?;
+        }
+        write!(self.info_text.buf, "     |")?;
+
+        match self.amdgpu_dev.get_gpu_metrics_from_sysfs_path(&self.sysfs_path) {
+            Ok(metrics) => {
+                for usage in [
+                    metrics.get_average_gfx_activity(),
+                    metrics.get_average_umc_activity(),
+                    metrics.get_average_mm_activity(),
+                ] {
+                    if let Some(usage) = usage {
+                        write!(self.info_text.buf, " {:>3}%", usage.saturating_div(100))?
+                    } else {
+                        write!(self.info_text.buf, " ___%")?
+                    }
+                }
+            },
+            Err(_) => write!(self.info_text.buf, " ___% ___% ___%")?,
+        }
+        write!(self.info_text.buf, " |")?;
+        /*
+        if let Some(fan_rpm) = self.sensors.fan_rpm {
+            write!(self.info_text.buf, " {fan_rpm:4}RPM ")?;
+        } else {
+            write!(self.info_text.buf, " ____RPM ")?;
+        }
+        */
+
+        self.info_text.set();
 
         Ok(())
+    }
+
+    fn fdinfo_panel(&self) -> Panel<TextView> {
+        let text = TextView::new_with_content(self.fdinfo.text.content.clone());
+        Panel::new(text)
+            .title(format!("#{:<2} {}", self.instance, self.marketing_name))
+            .title_position(HAlign::Left)
     }
 
     fn update(&mut self, sample: &Sampling, opt: &ToggleOptions) {
@@ -169,7 +188,6 @@ impl SmiDeviceInfo {
             self.fdinfo.text.clear();
         }
 
-        self.update_vram().unwrap();
         self.update_info_text().unwrap();
         self.fdinfo.text.set();
     }
@@ -189,27 +207,22 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
 
     let mut siv = cursive::default();
     {
-        let mut layout = LinearLayout::vertical()
-            .child(TextView::new(title));
+        let mut layout = LinearLayout::vertical().child(TextView::new(title));
+        let line = TextContent::new(format!("{:->LINE_LEN$}", ""));
 
         let mut info = LinearLayout::vertical()
-            .child(SmiDeviceInfo::info_header());
+            .child(SmiDeviceInfo::info_header())
+            .child(TextView::new_with_content(line.clone()).no_wrap());
         for app in vec_app.iter_mut() {
-            //app.update_info_text().unwrap();
             app.update(&sample, &opt);
             info.add_child(app.info_text());
+            info.add_child(TextView::new_with_content(line.clone()).no_wrap());
         }
+        info.remove_child(info.len()-1);
         layout.add_child(Panel::new(info));
 
         for app in &vec_app {
-            let mut sub = LinearLayout::vertical();
-            sub.add_child(app.vram_view());
-            sub.add_child(app.fdinfo_panel());
-            layout.add_child(
-                Panel::new(sub)
-                    .title(format!("#{i:<2} {name}", i = app.instance, name = app.marketing_name))
-                    .title_position(HAlign::Left)
-            );
+            layout.add_child(app.fdinfo_panel());
         }
 
         layout.add_child(TextView::new("\n(p)rocesses (q)uit"));
