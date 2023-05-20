@@ -5,7 +5,7 @@ use cursive::align::HAlign;
 use cursive::view::Scrollable;
 use cursive::views::{LinearLayout, TextView, Panel};
 
-use libamdgpu_top::AMDGPU::DeviceHandle;
+use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO};
 use libamdgpu_top::{stat, DevicePath, PCI, Sampling, VramUsage};
 use stat::{Sensors, ProcInfo};
 
@@ -19,6 +19,7 @@ pub(crate) struct SmiDeviceInfo {
     pub instance: u32,
     pub marketing_name: String,
     pub pci_bus: PCI::BUS_INFO,
+    pub cu_number: u32,
     pub vram_usage: VramUsage,
     pub vram_text: Text,
     pub sensors: Sensors,
@@ -29,19 +30,13 @@ pub(crate) struct SmiDeviceInfo {
 
 impl SmiDeviceInfo {
     pub fn new(amdgpu_dev: DeviceHandle, device_path: &DevicePath, instance: u32) -> Self {
-        let marketing_name = {
-            let tmp = amdgpu_dev.get_marketing_name().unwrap();
-
-            if GPU_NAME_LEN < tmp.len() {
-                tmp[..GPU_NAME_LEN].to_string()
-            } else {
-                tmp
-            }
-        };
+        let marketing_name = amdgpu_dev.get_marketing_name().unwrap();
         let pci_bus = match device_path.pci {
             Some(pci_bus) => pci_bus,
             None => amdgpu_dev.get_pci_bus_info().unwrap(),
         };
+        let ext_info = amdgpu_dev.device_info().unwrap();
+        let cu_number = ext_info.cu_active_number();
         let memory_info = amdgpu_dev.memory_info().unwrap();
         let vram_usage = VramUsage(memory_info);
         let sensors = Sensors::new(&amdgpu_dev, &pci_bus);
@@ -64,6 +59,7 @@ impl SmiDeviceInfo {
             instance,
             marketing_name,
             pci_bus,
+            cu_number,
             vram_usage,
             vram_text: Default::default(),
             sensors,
@@ -75,9 +71,10 @@ impl SmiDeviceInfo {
 
     fn info_header() -> TextView {
         let text = format!(
-            "GPU  {name:<GPU_NAME_LEN$} | {pci:<12} | VRAM% | GTT% | Temp.  Pwr Avg/Cap   Fan",
+            "GPU  {name:<GPU_NAME_LEN$} {pad:7} | {pci:<12} | VRAM% | GTT% | Temp.  Pwr Avg/Cap   Fan",
             name = "Name",
             pci = "PCI Bus",
+            pad = "",
         );
 
         TextView::new(text)
@@ -95,9 +92,10 @@ impl SmiDeviceInfo {
 
         write!(
             self.info_text.buf,
-            " #{i:<2} {name:GPU_NAME_LEN$} | {pci:12} |  {vram:3}% | {gtt:3}% |",
+            " #{i:<2} {name:GPU_NAME_LEN$} ({cu:3}CU) | {pci:12} |  {vram:3}% | {gtt:3}% |",
             i = self.instance,
             name = self.marketing_name,
+            cu = self.cu_number,
             pci = self.pci_bus,
             vram = vram,
             gtt = gtt,
