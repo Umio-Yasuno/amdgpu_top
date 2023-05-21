@@ -2,6 +2,7 @@ use libamdgpu_top::AMDGPU::{
     DeviceHandle,
     drm_amdgpu_info_device,
     drm_amdgpu_memory_info,
+    GPU_INFO,
     HW_IP::{HwIpInfo, HW_IP_TYPE},
 };
 use libamdgpu_top::{PCI, stat::{HwmonTemp, Sensors, PowerCap}};
@@ -44,10 +45,10 @@ impl AppDeviceInfo {
         memory_info: &drm_amdgpu_memory_info,
         sensors: &Sensors,
     ) -> Self {
-        let (min_gpu_clk, max_gpu_clk) =
-            amdgpu_dev.get_min_max_gpu_clock().unwrap_or((0, 0));
-        let (min_mem_clk, max_mem_clk) =
-            amdgpu_dev.get_min_max_memory_clock().unwrap_or((0, 0));
+        let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock()
+            .unwrap_or_else(|| (0, (ext_info.max_engine_clock() / 1000) as u32));
+        let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock()
+            .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
         let resizable_bar = memory_info.check_resizable_bar();
         let marketing_name = amdgpu_dev.get_marketing_name().unwrap_or_default();
         let hw_ip_info = HW_IP_LIST.iter()

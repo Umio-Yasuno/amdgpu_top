@@ -204,8 +204,10 @@ pub fn info_bar(
 ) -> String {
     let chip_class = ext_info.get_chip_class();
 
-    let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock().unwrap_or((0, 0));
-    let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock().unwrap_or((0, 0));
+    let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock()
+        .unwrap_or_else(|| (0, (ext_info.max_engine_clock() / 1000) as u32));
+    let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock()
+        .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
     let mark_name = amdgpu_dev.get_marketing_name().unwrap_or("".to_string());
 
     format!(
