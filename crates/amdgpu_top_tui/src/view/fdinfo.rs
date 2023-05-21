@@ -16,20 +16,23 @@ const COMPUTE_LABEL: &str = "Compute";
 const DMA_LABEL: &str = "DMA";
 const DEC_LABEL: &str = "DEC";
 const ENC_LABEL: &str = "ENC";
+const VCN_LABEL: &str = "VCN";
 // const UVD_ENC_LABEL: &str = "UVD (ENC)";
 // const JPEG_LABEL: &str = "JPEG";
 
 #[derive(Clone, Default)]
 pub struct FdInfoView {
     pub stat: FdInfoStat,
+    pub has_vcn_unified: bool,
     pub text: Text,
 }
 
 impl FdInfoView {
-    pub fn new(interval: Duration) -> Self {
+    pub fn new(interval: Duration, has_vcn_unified: bool) -> Self {
         let stat = FdInfoStat::new(interval);
         Self {
             stat,
+            has_vcn_unified,
             ..Default::default()
         }
     }
@@ -42,11 +45,17 @@ impl FdInfoView {
     ) -> Result<(), fmt::Error> {
         self.text.clear();
 
-        writeln!(
+        write!(
             self.text.buf,
-            " {pad:27} | {VRAM_LABEL:^8} | {GTT_LABEL:^8} | {GFX_LABEL} | {COMPUTE_LABEL} | {DMA_LABEL} | {DEC_LABEL} | {ENC_LABEL} |",
+            " {pad:27} | {VRAM_LABEL:^8} | {GTT_LABEL:^8} | {GFX_LABEL} | {COMPUTE_LABEL} | {DMA_LABEL} ",
             pad = "",
         )?;
+
+        if self.has_vcn_unified {
+            writeln!(self.text.buf, "| {VCN_LABEL} |")?;
+        } else {
+            writeln!(self.text.buf, "| {DEC_LABEL} | {ENC_LABEL} |")?;
+        }
 
         self.stat.get_all_proc_usage(proc_index);
 
@@ -73,17 +82,28 @@ impl FdInfoView {
                 vram = pu.usage.vram_usage >> 10,
                 gtt = pu.usage.gtt_usage >> 10,
             )?;
-            let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
-            let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
+
             for (usage, label_len) in [
                 (pu.usage.gfx, GFX_LABEL.len()),
                 (pu.usage.compute, COMPUTE_LABEL.len()),
                 (pu.usage.dma, DMA_LABEL.len()),
-                (dec_usage, DEC_LABEL.len()), // UVD/VCN/VCN_JPEG
-                (enc_usage, ENC_LABEL.len()), // UVD/VCN
             ] {
                 write!(self.text.buf, " {usage:>label_len$}%|")?;
             }
+
+        /*
+            From VCN4, the encoding queue and decoding queue have been unified.
+            The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.
+        */
+            if self.has_vcn_unified {
+                write!(self.text.buf, " {:>3}%|", pu.usage.enc)?;
+            } else {
+                let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg; // UVD/VCN/VCN_JPEG
+                let enc_usage = pu.usage.enc + pu.usage.uvd_enc; // UVD/VCN
+                write!(self.text.buf, " {dec_usage:>3}%|")?;
+                write!(self.text.buf, " {enc_usage:>3}%|")?;
+            }
+
             writeln!(self.text.buf)?;
         }
 

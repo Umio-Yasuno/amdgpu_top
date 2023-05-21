@@ -50,7 +50,10 @@ impl TuiApp {
         let grbm2 = PerfCounterView::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
         let vram_usage = VramUsageView::new(memory_info);
 
-        let mut fdinfo = FdInfoView::new(Sampling::default().to_duration());
+        let mut fdinfo = FdInfoView::new(
+            Sampling::default().to_duration(),
+            libamdgpu_top::has_vcn_unified(&amdgpu_dev),
+        );
 
         let arc_proc_index = {
             let mut proc_index: Vec<stat::ProcInfo> = Vec::new();

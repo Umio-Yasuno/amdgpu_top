@@ -44,7 +44,10 @@ impl SmiDeviceInfo {
         let vram_usage = VramUsage(memory_info);
         let sensors = Sensors::new(&amdgpu_dev, &pci_bus);
 
-        let mut fdinfo = FdInfoView::new(Sampling::default().to_duration());
+        let mut fdinfo = FdInfoView::new(
+            Sampling::default().to_duration(),
+            libamdgpu_top::has_vcn_unified(&amdgpu_dev),
+        );
 
         let arc_proc_index = {
             let mut proc_index: Vec<stat::ProcInfo> = Vec::new();

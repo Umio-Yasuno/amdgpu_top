@@ -27,6 +27,7 @@ pub struct MyApp {
     pub decode: Option<VideoCapsInfo>,
     pub encode: Option<VideoCapsInfo>,
     pub vbios: Option<VbiosInfo>,
+    pub has_vcn_unified: bool,
     pub support_pcie_bw: bool,
     pub fdinfo_sort: FdInfoSortType,
     pub reverse_sort: bool,
@@ -409,20 +410,26 @@ impl MyApp {
             if ui.button(rt_base(format!("{:^10}", "GTT"))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::GTT);
             }
-            if ui.button(rt_base(format!("{:^5}", "GFX"))).clicked() {
+            if ui.button(rt_base(" GFX ")).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::GFX);
             }
             if ui.button(rt_base("Compute")).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::Compute);
             }
-            if ui.button(rt_base(format!("{:^5}", "DMA"))).clicked() {
+            if ui.button(rt_base(" DMA ")).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::DMA);
             }
-            if ui.button(rt_base("Decode")).clicked() {
-                self.set_fdinfo_sort_type(FdInfoSortType::Decode);
-            }
-            if ui.button(rt_base("Encode")).clicked() {
-                self.set_fdinfo_sort_type(FdInfoSortType::Encode);
+            if self.has_vcn_unified {
+                if ui.button(rt_base(" VCN ")).clicked() {
+                    self.set_fdinfo_sort_type(FdInfoSortType::Encode);
+                }
+            } else {
+                if ui.button(rt_base("Decode")).clicked() {
+                    self.set_fdinfo_sort_type(FdInfoSortType::Decode);
+                }
+                if ui.button(rt_base("Encode")).clicked() {
+                    self.set_fdinfo_sort_type(FdInfoSortType::Encode);
+                }
             }
             ui.end_row();
 
@@ -437,16 +444,25 @@ impl MyApp {
                 ui.label(format!("{:>8}", pu.pid));
                 ui.label(format!("{:5} MiB", pu.usage.vram_usage >> 10));
                 ui.label(format!("{:5} MiB", pu.usage.gtt_usage >> 10));
-                let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
-                let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
                 for usage in [
                     pu.usage.gfx,
                     pu.usage.compute,
                     pu.usage.dma,
-                    dec_usage,
-                    enc_usage,
                 ] {
-                    ui.label(&format!("{usage:3} %"));
+                    ui.label(format!("{usage:3} %"));
+                }
+
+        /*
+            From VCN4, the encoding queue and decoding queue have been unified.
+            The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.
+        */
+                if self.has_vcn_unified {
+                    ui.label(format!("{:3} %", pu.usage.enc));
+                } else {
+                    let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
+                    let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
+                    ui.label(format!("{dec_usage:3} %"));
+                    ui.label(format!("{enc_usage:3} %"));
                 }
                 ui.end_row();
             } // proc_usage

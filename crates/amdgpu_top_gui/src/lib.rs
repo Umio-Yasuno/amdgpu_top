@@ -130,6 +130,7 @@ pub fn run(
         decode: amdgpu_dev.get_video_caps_info(CAP_TYPE::DECODE).ok(),
         encode: amdgpu_dev.get_video_caps_info(CAP_TYPE::ENCODE).ok(),
         vbios: amdgpu_dev.get_vbios_info().ok(),
+        has_vcn_unified: libamdgpu_top::has_vcn_unified(&amdgpu_dev),
         support_pcie_bw: pcie_bw.exists,
         fdinfo_sort: Default::default(),
         reverse_sort: false,

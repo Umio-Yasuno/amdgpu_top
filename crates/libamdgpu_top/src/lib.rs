@@ -1,6 +1,6 @@
 use std::time::Duration;
 pub use libdrm_amdgpu_sys::*;
-use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, drm_amdgpu_memory_info};
+use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, drm_amdgpu_memory_info, HW_IP::HW_IP_TYPE};
 
 pub mod stat;
 
@@ -57,4 +57,10 @@ impl VramUsage {
             self.0.gtt.heap_usage = gtt;
         }
     }
+}
+
+pub fn has_vcn_unified(amdgpu_dev: &DeviceHandle) -> bool {
+    let Ok(ip) = amdgpu_dev.get_hw_ip_info(HW_IP_TYPE::VCN_ENC) else { return false };
+
+    4 <= ip.info.hw_ip_version_major
 }
