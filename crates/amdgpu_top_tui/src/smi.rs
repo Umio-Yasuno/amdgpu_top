@@ -3,8 +3,8 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::path::PathBuf;
 use cursive::align::HAlign;
-use cursive::view::Scrollable;
-use cursive::views::{LinearLayout, TextContent, TextView, Panel};
+use cursive::view::{Nameable, Scrollable};
+use cursive::views::{HideableView, LinearLayout, TextContent, TextView, Panel};
 
 use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO, MetricsInfo};
 use libamdgpu_top::{stat, DevicePath, PCI, Sampling, VramUsage};
@@ -14,6 +14,7 @@ use crate::{FdInfoView, Text, ToggleOptions, stat::FdInfoSortType};
 
 const GPU_NAME_LEN: usize = 25;
 const LINE_LEN: usize = 150;
+const PROC_TITLE: &str = "Processes";
 
 pub(crate) struct SmiDeviceInfo {
     pub amdgpu_dev: DeviceHandle,
@@ -212,22 +213,26 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
     {
         let mut layout = LinearLayout::vertical().child(TextView::new(title));
         let line = TextContent::new(format!("{:->LINE_LEN$}", ""));
-
-        let mut info = LinearLayout::vertical()
-            .child(SmiDeviceInfo::info_header())
-            .child(TextView::new_with_content(line.clone()).no_wrap());
-        for app in vec_app.iter_mut() {
-            app.update(&sample, &opt);
-            info.add_child(app.info_text());
-            info.add_child(TextView::new_with_content(line.clone()).no_wrap());
+        {
+            let mut info = LinearLayout::vertical()
+                .child(SmiDeviceInfo::info_header())
+                .child(TextView::new_with_content(line.clone()).no_wrap());
+            for app in vec_app.iter_mut() {
+                app.update(&sample, &opt);
+                info.add_child(app.info_text());
+                info.add_child(TextView::new_with_content(line.clone()).no_wrap());
+            }
+            info.remove_child(info.len()-1);
+            layout.add_child(Panel::new(info));
         }
-        info.remove_child(info.len()-1);
-        layout.add_child(Panel::new(info));
-
-        for app in &vec_app {
-            layout.add_child(app.fdinfo_panel());
+        {
+            let mut proc = LinearLayout::vertical();
+            for app in &vec_app {
+                proc.add_child(app.fdinfo_panel());
+            }
+            let h = HideableView::new(proc).with_name(PROC_TITLE);
+            layout.add_child(Panel::new(h).title(PROC_TITLE).title_position(HAlign::Left));
         }
-
         layout.add_child(TextView::new("\n(p)rocesses (q)uit"));
 
         siv.add_fullscreen_layer(
@@ -259,7 +264,11 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
     }
 
     siv.add_global_callback('q', cursive::Cursive::quit);
-    siv.add_global_callback('p', FdInfoView::cb);
+    siv.add_global_callback('p', |s| {
+        s.call_on_name(PROC_TITLE, |view: &mut HideableView<LinearLayout>| {
+            view.set_visible(!view.is_visible());
+        });
+    });
     siv.set_theme(cursive::theme::Theme::terminal_default());
 
     let toggle_opt = Arc::new(Mutex::new(opt.clone()));
