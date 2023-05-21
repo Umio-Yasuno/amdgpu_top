@@ -14,8 +14,10 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
     let sensors = Sensors::new(amdgpu_dev, &pci_bus);
 
-    let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock().unwrap_or((0, 0));
-    let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock().unwrap_or((0, 0));
+    let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock()
+        .unwrap_or_else(|| (0, (ext_info.max_engine_clock() / 1000) as u32));
+    let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock()
+        .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
 
     println!("--- AMDGPU info dump ---");
     println!("drm version: {major}.{minor}.{patch}");
