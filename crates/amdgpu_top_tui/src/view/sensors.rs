@@ -85,8 +85,7 @@ impl SensorsView {
 
         writeln!(
             self.text.buf,
-            " PCI ({pci_bus}) => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
-            pci_bus = sensors.bus_info,
+            " PCIe Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
             cur_gen = sensors.cur.gen,
             cur_width = sensors.cur.width,
             max_gen = sensors.max.gen,

@@ -3,7 +3,6 @@ use libamdgpu_top::{
     AMDGPU::VIDEO_CAPS::{CAP_TYPE, CODEC},
     AMDGPU::HW_IP::HW_IP_TYPE,
     AMDGPU::FW_VERSION::FW_TYPE,
-    PCI,
     stat::Sensors,
 };
 
@@ -24,10 +23,10 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     }
     println!();
 
-    println!("Marketing Name: [{}]", amdgpu_dev.get_marketing_name_or_default());
-
+    println!("Marketing Name           : [{}]", amdgpu_dev.get_marketing_name_or_default());
+    println!("PCI (domain:bus:dev.func): {pci_bus}");
     println!(
-        "DeviceID.RevID: {:#0X}.{:#0X}",
+        "DeviceID.RevID           : {:#0X}.{:#0X}",
         ext_info.device_id(),
         ext_info.pci_rev_id()
     );
@@ -98,7 +97,6 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
 
     sensors_info(&sensors);
     cache_info(&ext_info);
-    pci_info(&pci_bus);
     hw_ip_info(amdgpu_dev);
     fw_info(amdgpu_dev);
     codec_info(amdgpu_dev);
@@ -134,6 +132,9 @@ fn sensors_info(sensors: &Sensors) {
     if let Some(fan_max_rpm) = sensors.fan_max_rpm {
         println!("Fan RPM (Max)       : {fan_max_rpm} RPM");
     }
+    if sensors.has_pcie_dpm {
+        println!("PCIe Link Speed     : Gen{}x{} (Max)", sensors.max.gen, sensors.max.width);
+    }
 }
 
 fn cache_info(ext_info: &drm_amdgpu_info_device) {
@@ -153,13 +154,6 @@ fn cache_info(ext_info: &drm_amdgpu_info_device) {
     if 0 < l3_cache_size {
         println!("L3 Cache             : {l3_cache_size:4} MiB");
     }
-}
-
-fn pci_info(pci_bus: &PCI::BUS_INFO) {
-    let link = pci_bus.get_link_info(PCI::STATUS::Max);
-    println!();
-    println!("PCI (domain:bus:dev.func): {pci_bus}");
-    println!("PCI Link Speed (Max)     : Gen{}x{}", link.gen, link.width);
 }
 
 fn hw_ip_info(amdgpu_dev: &DeviceHandle) {

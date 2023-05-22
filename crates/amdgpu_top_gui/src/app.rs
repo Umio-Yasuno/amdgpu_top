@@ -176,7 +176,7 @@ impl MyApp {
 
             grid(ui, &[
                 ("PCI (domain:bus:dev.func)", &pci_bus.to_string()),
-                ("PCI Link Speed (Max)", &format!("Gen{}x{}", link.gen, link.width)),
+                ("PCIe Link Speed (Max)", &format!("Gen{}x{}", link.gen, link.width)),
             ]);
             ui.end_row();
 
@@ -548,7 +548,7 @@ impl MyApp {
         self.egui_temp_plot(ui);
 
         ui.label(format!(
-            "PCI Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
+            "PCIe Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
             cur_gen = sensors.cur.gen,
             cur_width = sensors.cur.width,
             max_gen = sensors.max.gen,
