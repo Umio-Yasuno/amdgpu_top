@@ -1,9 +1,15 @@
 use std::path::PathBuf;
 use libdrm_amdgpu_sys::{
     PCI,
-    AMDGPU::{DeviceHandle, SENSOR_INFO::SENSOR_TYPE},
+    AMDGPU::{
+        DeviceHandle,
+        HwmonTemp,
+        HwmonTempType,
+        SENSOR_INFO::SENSOR_TYPE,
+        PowerCap,
+    },
 };
-use super::{hwmon_temp::*, power_cap::*, parse_hwmon};
+use super::parse_hwmon;
 
 #[derive(Clone, Debug)]
 pub struct Sensors {

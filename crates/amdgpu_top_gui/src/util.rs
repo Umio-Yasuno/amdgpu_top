@@ -14,7 +14,7 @@ impl DeviceListMenu {
         let pci = device_path.pci?;
         let name = {
             let amdgpu_dev = device_path.init().ok()?;
-            amdgpu_dev.get_marketing_name().unwrap_or_default()
+            amdgpu_dev.get_marketing_name_or_default()
         };
 
         Some(Self { instance, pci, name })

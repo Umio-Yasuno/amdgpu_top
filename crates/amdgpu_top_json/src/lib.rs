@@ -17,7 +17,7 @@ pub fn run(
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let chip_class = ext_info.get_chip_class();
-    let mark_name = amdgpu_dev.get_marketing_name().unwrap_or("".to_string());
+    let mark_name = amdgpu_dev.get_marketing_name_or_default();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
 
     let grbm_index = if CHIP_CLASS::GFX10 <= chip_class {

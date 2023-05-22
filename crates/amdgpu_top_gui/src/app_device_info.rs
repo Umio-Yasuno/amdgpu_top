@@ -4,8 +4,10 @@ use libamdgpu_top::AMDGPU::{
     drm_amdgpu_memory_info,
     GPU_INFO,
     HW_IP::{HwIpInfo, HW_IP_TYPE},
+    HwmonTemp,
+    PowerCap,
 };
-use libamdgpu_top::{PCI, stat::{HwmonTemp, Sensors, PowerCap}};
+use libamdgpu_top::{PCI, stat::Sensors};
 
 const HW_IP_LIST: &[HW_IP_TYPE] = &[
     HW_IP_TYPE::GFX,
@@ -50,7 +52,7 @@ impl AppDeviceInfo {
         let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock()
             .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
         let resizable_bar = memory_info.check_resizable_bar();
-        let marketing_name = amdgpu_dev.get_marketing_name().unwrap_or_default();
+        let marketing_name = amdgpu_dev.get_marketing_name_or_default();
         let hw_ip_info = HW_IP_LIST.iter()
             .filter_map(|ip_type| amdgpu_dev.get_hw_ip_info(*ip_type).ok())
             .filter(|hw_ip_info| hw_ip_info.count != 0).collect();

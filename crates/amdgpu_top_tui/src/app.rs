@@ -37,7 +37,7 @@ impl TuiApp {
         let instance = device_path.get_instance_number().unwrap();
         let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
         let device_info = info_bar(&amdgpu_dev, ext_info, memory_info.vram.total_heap_size, &pci_bus);
-        let list_name = format!("{} ({pci_bus})", amdgpu_dev.get_marketing_name().unwrap());
+        let list_name = format!("{} ({pci_bus})", amdgpu_dev.get_marketing_name_or_default());
         let chip_class = ext_info.get_chip_class();
 
         let grbm_index = if CHIP_CLASS::GFX10 <= chip_class {
@@ -211,7 +211,7 @@ pub fn info_bar(
         .unwrap_or_else(|| (0, (ext_info.max_engine_clock() / 1000) as u32));
     let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock()
         .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
-    let mark_name = amdgpu_dev.get_marketing_name().unwrap_or("".to_string());
+    let mark_name = amdgpu_dev.get_marketing_name_or_default();
 
     format!(
         concat!(

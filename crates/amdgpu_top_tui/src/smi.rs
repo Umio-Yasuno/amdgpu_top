@@ -33,7 +33,7 @@ pub(crate) struct SmiDeviceInfo {
 
 impl SmiDeviceInfo {
     pub fn new(amdgpu_dev: DeviceHandle, device_path: &DevicePath, instance: u32) -> Self {
-        let marketing_name = amdgpu_dev.get_marketing_name().unwrap();
+        let marketing_name = amdgpu_dev.get_marketing_name_or_default();
         let pci_bus = match device_path.pci {
             Some(pci_bus) => pci_bus,
             None => amdgpu_dev.get_pci_bus_info().unwrap(),

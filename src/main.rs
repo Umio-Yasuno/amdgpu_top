@@ -70,9 +70,7 @@ pub fn device_list(dump_info: bool, list: &[DevicePath]) {
         if dump_info {
             dump_info::dump(&amdgpu_dev);
         } else {
-            if let Ok(mark_name) = amdgpu_dev.get_marketing_name() {
-                println!("Marketing Name = {mark_name:?}");
-            }
+            println!("Marketing Name = {:?}", amdgpu_dev.get_marketing_name_or_default());
         }
         println!("{device_path:?}");
         println!();

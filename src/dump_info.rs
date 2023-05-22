@@ -8,7 +8,6 @@ use libamdgpu_top::{
 };
 
 pub fn dump(amdgpu_dev: &DeviceHandle) {
-    let (major, minor, patch) = amdgpu_dev.get_drm_version().unwrap();
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
@@ -20,12 +19,12 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
         .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
 
     println!("--- AMDGPU info dump ---");
-    println!("drm version: {major}.{minor}.{patch}");
+    if let Ok(drm) = amdgpu_dev.get_drm_version_struct() {
+        println!("drm version: {}.{}.{}", drm.version_major, drm.version_minor, drm.version_patchlevel);
+    }
     println!();
 
-    if let Ok(mark_name) = amdgpu_dev.get_marketing_name() {
-        println!("Marketing Name: [{mark_name}]");
-    }
+    println!("Marketing Name: [{}]", amdgpu_dev.get_marketing_name_or_default());
 
     println!(
         "DeviceID.RevID: {:#0X}.{:#0X}",
@@ -115,13 +114,14 @@ fn sensors_info(sensors: &Sensors) {
     for temp in [&sensors.edge_temp, &sensors.junction_temp, &sensors.memory_temp] {
         let Some(temp) = temp else { continue };
         let label = format!("{} Temp.", temp.type_);
-        println!("{label:<15} (Current)  : {:>3} C", temp.current);
+        print!("{label:<15} : {:>3} C (Current)", temp.current);
         if let Some(crit) = temp.critical {
-            println!("{label:<15} (Critical) : {crit:>3} C");
+            print!(", {crit:>3} C (Critical)");
         }
         if let Some(e) = temp.emergency {
-            println!("{label:<15} (Emergency) : {e:>3} C");
+            print!(", {e:>3} C (Emergency)");
         }
+        println!();
     }
     println!();
     if let Some(power) = sensors.power {

@@ -39,17 +39,11 @@ pub use perf_counter::*;
 mod fdinfo;
 pub use fdinfo::*;
 
-mod hwmon_temp;
-pub use hwmon_temp::*;
-
 mod sensors;
 pub use sensors::*;
 
 mod pcie_bw;
 pub use pcie_bw::*;
-
-mod power_cap;
-pub use power_cap::*;
 
 pub mod gpu_metrics_util;
 
