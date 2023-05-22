@@ -547,13 +547,15 @@ impl MyApp {
 
         self.egui_temp_plot(ui);
 
-        ui.label(format!(
-            "PCIe Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
-            cur_gen = sensors.cur.gen,
-            cur_width = sensors.cur.width,
-            max_gen = sensors.max.gen,
-            max_width = sensors.max.width,
-        ));
+        if sensors.has_pcie_dpm {
+            ui.label(format!(
+                "PCIe Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
+                cur_gen = sensors.cur.gen,
+                cur_width = sensors.cur.width,
+                max_gen = sensors.max.gen,
+                max_width = sensors.max.width,
+            ));
+        }
     }
 
     pub fn egui_temp_plot(&self, ui: &mut egui::Ui) {

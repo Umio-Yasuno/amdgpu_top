@@ -83,14 +83,16 @@ impl SensorsView {
             writeln!(self.text.buf)?;
         }
 
-        writeln!(
-            self.text.buf,
-            " PCIe Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
-            cur_gen = sensors.cur.gen,
-            cur_width = sensors.cur.width,
-            max_gen = sensors.max.gen,
-            max_width = sensors.max.width,
-        )?;
+        if sensors.has_pcie_dpm {
+            writeln!(
+                self.text.buf,
+                " PCIe Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
+                cur_gen = sensors.cur.gen,
+                cur_width = sensors.cur.width,
+                max_gen = sensors.max.gen,
+                max_width = sensors.max.width,
+            )?;
+        }
 
         Ok(())
     }

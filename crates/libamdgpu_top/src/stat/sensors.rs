@@ -14,6 +14,7 @@ use super::parse_hwmon;
 #[derive(Clone, Debug)]
 pub struct Sensors {
     pub hwmon_path: PathBuf,
+    pub has_pcie_dpm: bool,
     pub cur: PCI::LINK,
     pub max: PCI::LINK,
     pub bus_info: PCI::BUS_INFO,
@@ -33,6 +34,7 @@ pub struct Sensors {
 impl Sensors {
     pub fn new(amdgpu_dev: &DeviceHandle, pci_bus: &PCI::BUS_INFO) -> Self {
         let hwmon_path = pci_bus.get_hwmon_path().unwrap();
+        let has_pcie_dpm = pci_bus.get_current_link_info_from_dpm().is_some();
         let cur = pci_bus.get_link_info(PCI::STATUS::Current);
         let max = pci_bus.get_link_info(PCI::STATUS::Max);
         let [sclk, mclk, vddnb, vddgfx, power] = [
@@ -52,6 +54,7 @@ impl Sensors {
 
         Self {
             hwmon_path,
+            has_pcie_dpm,
             cur,
             max,
             bus_info: *pci_bus,
@@ -70,7 +73,9 @@ impl Sensors {
     }
 
     pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
-        self.cur = self.bus_info.get_link_info(PCI::STATUS::Current);
+        if self.has_pcie_dpm {
+            self.cur = self.bus_info.get_link_info(PCI::STATUS::Current);
+        }
         self.sclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_SCLK).ok();
         self.mclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_MCLK).ok();
         self.vddnb = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDNB).ok();
