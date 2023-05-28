@@ -58,6 +58,18 @@ impl GpuMetricsView {
             GpuMetrics::Unknown => {},
         };
 
+        if let Some(throttle) = self.metrics.get_throttle_status() {
+            let thr = format!("{throttle:032b}");
+            writeln!(
+                self.text.buf,
+                " Throttle Status: {}_{}_{}_{}",
+                &thr[..8],
+                &thr[8..16],
+                &thr[16..24],
+                &thr[24..32],
+            )?;
+        }
+
         Ok(())
     }
 

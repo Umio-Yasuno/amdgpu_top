@@ -712,6 +712,8 @@ impl MyApp {
                 ui.label("]");
             });
         }
+
+        throttle_status(ui, gpu_metrics);
     }
 
     pub fn egui_gpu_metrics_v2(&self, ui: &mut egui::Ui) {
@@ -810,6 +812,8 @@ impl MyApp {
                 ui.end_row();
             }
         });
+
+        throttle_status(ui, gpu_metrics);
     }
 }
 
@@ -834,6 +838,21 @@ fn avg_activity(ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
             ui.label(format!("{label} {v:>3}%,"));
         }
     });
+}
+
+fn throttle_status(ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
+    if let Some(throttle) = gpu_metrics.get_throttle_status() {
+        let thr = format!("{throttle:032b}");
+        ui.label(
+            format!(
+                "Throttle Status: {}_{}_{}_{}",
+                &thr[..8],
+                &thr[8..16],
+                &thr[16..24],
+                &thr[24..32],
+            )
+        );
+    }
 }
 
 fn v1_helper(ui: &mut egui::Ui, unit: &str, v: &[(Option<u16>, &str)]) {
