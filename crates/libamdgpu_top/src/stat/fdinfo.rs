@@ -72,18 +72,20 @@ impl FdInfoStat {
         let mut stat = FdInfoUsage::default();
         let mut buf = String::new();
 
-        'fds: for fd in &proc_info.fds {
+        for fd in &proc_info.fds {
             buf.clear();
             let path = format!("/proc/{pid}/fdinfo/{fd}");
             let Ok(mut f) = fs::File::open(&path) else { continue };
             if f.read_to_string(&mut buf).is_err() { continue }
 
-            'fdinfo: for l in buf.lines() {
-                if l.starts_with("drm-client-id") {
-                    let id = FdInfoUsage::id_parse(l);
-                    if !self.drm_client_ids.insert(id) { continue 'fds }
-                    continue 'fdinfo;
-                }
+            let mut lines = buf.lines().skip_while(|l| !l.starts_with("drm-client-id"));
+            if let Some(id) = lines.next().and_then(|l| FdInfoUsage::id_parse(l)) {
+                if !self.drm_client_ids.insert(id) { continue }
+            } else {
+                continue;
+            }
+
+            'fdinfo: for l in lines {
                 if l.starts_with("drm-memory") {
                     stat.mem_usage_parse(l);
                     continue 'fdinfo;
@@ -95,27 +97,25 @@ impl FdInfoStat {
             }
         }
 
-        let diff = {
-            if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
-                let tmp = stat.calc_usage(pre_stat, &self.interval);
-                *pre_stat = stat;
+        let diff = if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
+            let tmp = stat.calc_usage(pre_stat, &self.interval);
+            *pre_stat = stat;
 
-                tmp
-            } else {
-                let [vram_usage, gtt_usage, cpu_accessible_usage] = [
-                    stat.vram_usage,
-                    stat.gtt_usage,
-                    stat.cpu_accessible_usage,
-                ];
+            tmp
+        } else {
+            let [vram_usage, gtt_usage, cpu_accessible_usage] = [
+                stat.vram_usage,
+                stat.gtt_usage,
+                stat.cpu_accessible_usage,
+            ];
 
-                self.pid_map.insert(pid, stat);
+            self.pid_map.insert(pid, stat);
 
-                FdInfoUsage {
-                    vram_usage,
-                    gtt_usage,
-                    cpu_accessible_usage,
-                    ..Default::default()
-                }
+            FdInfoUsage {
+                vram_usage,
+                gtt_usage,
+                cpu_accessible_usage,
+                ..Default::default()
             }
         };
 
@@ -194,9 +194,9 @@ pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reve
 }
 
 impl FdInfoUsage {
-    pub fn id_parse(s: &str) -> usize {
+    pub fn id_parse(s: &str) -> Option<usize> {
         const LEN: usize = "drm-client-id:\t".len();
-        s[LEN..].parse().unwrap()
+        s[LEN..].parse().ok()
     }
 
     pub fn mem_usage_parse(&mut self, s: &str) {
@@ -309,7 +309,8 @@ pub fn get_all_processes() -> Vec<i32> {
 
     let Ok(proc_dir) = fs::read_dir("/proc") else { return Vec::new() };
 
-    proc_dir.flatten().filter_map(|dir_entry| {
+    proc_dir.filter_map(|dir_entry| {
+        let dir_entry = dir_entry.ok()?;
         if let Ok(metadata) = dir_entry.metadata() {
             if !metadata.is_dir() { return None }
         }
