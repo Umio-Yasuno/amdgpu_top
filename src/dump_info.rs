@@ -23,7 +23,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     }
     println!();
 
-    println!("Marketing Name           : [{}]", amdgpu_dev.get_marketing_name_or_default());
+    println!("Device Name              : [{}]", amdgpu_dev.get_marketing_name_or_default());
     println!("PCI (domain:bus:dev.func): {pci_bus}");
     println!(
         "DeviceID.RevID           : {:#0X}.{:#0X}",

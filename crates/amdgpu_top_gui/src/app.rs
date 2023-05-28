@@ -12,7 +12,6 @@ use libamdgpu_top::AMDGPU::{
     VBIOS::VbiosInfo,
     VIDEO_CAPS::VideoCapsInfo,
 };
-use libamdgpu_top::PCI;
 use libamdgpu_top::stat::{self, gpu_metrics_util::*, FdInfoSortType, PerfCounter};
 
 use crate::{AppDeviceInfo, CentralData, GpuMetrics, util::*};
@@ -95,6 +94,7 @@ impl MyApp {
 
             grid(ui, &[
                 ("Device Name", &self.app_device_info.marketing_name),
+                ("PCI (domain:bus:dev.func)", &pci_bus.to_string()),
                 ("DeviceID.RevID", &dev_id),
                 ("GPU Type", gpu_type),
                 ("Family", &family.to_string()),
@@ -170,14 +170,6 @@ impl MyApp {
                 ui.label(format!("{l3_cache_size:4} MiB"));
                 ui.end_row();
             }
-            ui.end_row();
-
-            let link = pci_bus.get_link_info(PCI::STATUS::Max);
-
-            grid(ui, &[
-                ("PCI (domain:bus:dev.func)", &pci_bus.to_string()),
-                ("PCIe Link Speed (Max)", &format!("Gen{}x{}", link.gen, link.width)),
-            ]);
             ui.end_row();
 
             if let Some(ref cap) = &self.app_device_info.power_cap {
