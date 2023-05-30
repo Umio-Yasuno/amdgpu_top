@@ -4,3 +4,4 @@
    * <https://gitlab.freedesktop.org/drm/amd/-/issues/2468>
  * Some AMD GPUs (GFX9 and later?) have some of the CP_STAT bits flipped.
    * <https://gitlab.freedesktop.org/drm/amd/-/issues/2512>
+ * Full support for fdinfo requires Linux Kernel v6.1.x or higher.
