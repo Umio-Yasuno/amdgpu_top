@@ -8,7 +8,7 @@ use cursive::views::{HideableView, LinearLayout, TextContent, TextView, Panel};
 
 use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO, MetricsInfo};
 use libamdgpu_top::{stat, DevicePath, PCI, Sampling, VramUsage};
-use stat::{Sensors, ProcInfo};
+use stat::{GfxoffStatus, Sensors, ProcInfo};
 
 use crate::{FdInfoView, Text, ToggleOptions, stat::FdInfoSortType};
 
@@ -164,6 +164,12 @@ impl SmiDeviceInfo {
             write!(self.info_text.buf, " ____RPM ")?;
         }
         */
+
+        if let Ok(GfxoffStatus::InGFXOFF) = GfxoffStatus::get(self.instance) {
+            write!(self.info_text.buf, " GFXOFF")?;
+        } else if let Ok(GfxoffStatus::Unknown(val)) = GfxoffStatus::get(self.instance) {
+            write!(self.info_text.buf, " Unknown ({val})")?;
+        }
 
         self.info_text.set();
 
