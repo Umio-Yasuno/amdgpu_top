@@ -29,6 +29,7 @@ pub enum AppMode {
     GUI,
     #[cfg(feature = "json")]
     JSON,
+    #[cfg(feature = "tui")]
     SMI,
     Dump,
 }
@@ -128,7 +129,15 @@ impl MainOpt {
                     }
                 },
                 "--smi" => {
-                    opt.app_mode = AppMode::SMI;
+                    #[cfg(feature = "tui")]
+                    {
+                        opt.app_mode = AppMode::SMI;
+                    }
+                    #[cfg(not(feature = "tui"))]
+                    {
+                        eprintln!("\"tui\" feature is not enabled for this build.");
+                        std::process::exit(1);
+                    }
                 },
                 "--pci" => {
                     opt.pci_path = args.get(idx+1).map(|v| v.to_string());

@@ -51,6 +51,7 @@ fn main() {
             1000, // 1s
             main_opt.update_process_index,
         ),
+        #[cfg(feature = "tui")]
         AppMode::SMI => amdgpu_top_tui::run_smi(
             TITLE,
             &device_path_list,
