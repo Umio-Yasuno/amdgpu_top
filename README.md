@@ -73,6 +73,11 @@ cd amdgpu_top
 cargo install --locked --path .
 ```
 
+#### without GUI
+```
+cargo install --locked --path . --no-default-features --features="tui"
+```
+
 ## Used library
  * [Cursive](https://github.com/gyscos/cursive)
  * [egui](https://github.com/emilk/egui)
