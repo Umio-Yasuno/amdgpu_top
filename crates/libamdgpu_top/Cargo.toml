@@ -1,6 +1,6 @@
 [package]
 name = "libamdgpu_top"
-version = "0.1.7"
+version = "0.1.9"
 edition = "2021"
 license = "MIT"
 homepage = "https://github.com/Umio-Yasuno/amdgpu_top"
@@ -10,4 +10,4 @@ authors = ["Umio Yasuno <coelacanth_dream@proton.me>"]
 
 [dependencies]
 anyhow = { version = "1.0.*" }
-libdrm_amdgpu_sys = { version = "0.1.2" }
+libdrm_amdgpu_sys = { version = "0.1.4" }

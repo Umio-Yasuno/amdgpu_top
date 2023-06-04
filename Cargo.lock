@@ -38,7 +38,7 @@ dependencies = [
 
 [[package]]
 name = "amdgpu_top"
-version = "0.1.8"
+version = "0.1.9"
 dependencies = [
  "amdgpu_top_gui",
  "amdgpu_top_json",
@@ -896,7 +896,7 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libamdgpu_top"
-version = "0.1.7"
+version = "0.1.9"
 dependencies = [
  "anyhow",
  "libdrm_amdgpu_sys",
