@@ -1,4 +1,6 @@
-// ref: https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gfxoff
+/// ref: https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gfxoff
+
+/// GFXOFF state is canceled by reading the register, so useful only in SMI mode.
 
 use std::io::{self, Read};
 use std::path::PathBuf;
@@ -71,9 +73,8 @@ impl From<u32> for GfxoffStatus {
 }
 
 fn read_gfxoff<P: Into<PathBuf>>(path: P) -> io::Result<u32> {
-    let mut buf: [u8; 4] = [0xFF; 4]; // u32
+    let mut buf = [0xFFu8; 4];
     
-    // let path = format!("{BASE}/{instance}/amdgpu_gfxoff_status");
     let mut f = fs::File::open(path.into())?;
     f.read_exact(&mut buf)?;
 
