@@ -26,6 +26,7 @@ pub(crate) struct SmiDeviceInfo {
     pub cu_number: u32,
     pub vram_usage: VramUsage,
     pub sensors: Sensors,
+    pub check_gfxoff: bool,
     pub fdinfo: FdInfoView,
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
     pub info_text: Text,
@@ -44,6 +45,7 @@ impl SmiDeviceInfo {
         let memory_info = amdgpu_dev.memory_info().unwrap();
         let vram_usage = VramUsage(memory_info);
         let sensors = Sensors::new(&amdgpu_dev, &pci_bus);
+        let check_gfxoff = GfxoffStatus::get(instance).is_ok();
 
         let mut fdinfo = FdInfoView::new(
             Sampling::default().to_duration(),
@@ -70,6 +72,7 @@ impl SmiDeviceInfo {
             cu_number,
             vram_usage,
             sensors,
+            check_gfxoff,
             fdinfo,
             arc_proc_index,
             info_text: Default::default(),
@@ -165,10 +168,13 @@ impl SmiDeviceInfo {
         }
         */
 
-        if let Ok(GfxoffStatus::InGFXOFF) = GfxoffStatus::get(self.instance) {
-            write!(self.info_text.buf, " GFXOFF")?;
-        } else if let Ok(GfxoffStatus::Unknown(val)) = GfxoffStatus::get(self.instance) {
-            write!(self.info_text.buf, " Unknown ({val})")?;
+        if self.check_gfxoff {
+            match GfxoffStatus::get(self.instance) {
+                Ok(GfxoffStatus::InGFXOFF) => write!(self.info_text.buf, " GFXOFF")?,
+                /* for debug */
+                Ok(GfxoffStatus::Unknown(val)) => write!(self.info_text.buf, " Unknown ({val})")?,
+                _ => {},
+            }
         }
 
         self.info_text.set();
