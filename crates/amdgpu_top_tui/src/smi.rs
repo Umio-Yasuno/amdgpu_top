@@ -101,6 +101,7 @@ impl SmiDeviceInfo {
 
     fn update_info_text(&mut self) -> Result<(), std::fmt::Error> {
         self.info_text.clear();
+        self.vram_usage.update_usage(&self.amdgpu_dev);
 
         writeln!(
             self.info_text.buf,
