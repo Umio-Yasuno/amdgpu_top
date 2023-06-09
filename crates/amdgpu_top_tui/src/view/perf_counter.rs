@@ -11,9 +11,9 @@ use cursive::utils::Counter;
 use cursive::Rect;
 use cursive::align::HAlign;
 
-use libamdgpu_top::stat::PCType;
+use libamdgpu_top::AMDGPU::CHIP_CLASS;
+use libamdgpu_top::stat::{PCType, PerfCounter};
 use super::{PANEL_WIDTH, PC_BAR_WIDTH, TopView};
-use libamdgpu_top::stat::PerfCounter;
 
 #[derive(Clone, Debug)]
 pub struct PerfCounterView {
@@ -22,8 +22,16 @@ pub struct PerfCounterView {
 }
 
 impl PerfCounterView {
+/*
     pub fn new(pc_type: PCType, s: &[(&str, usize)]) -> Self {
         let pc = PerfCounter::new(pc_type, s);
+        let counters = (0..pc.index.len()).map(|_| Counter::new(0)).collect();
+
+        Self { pc, counters }
+    }
+*/
+    pub fn new_with_chip_class(pc_type: PCType, chip_class: CHIP_CLASS) -> Self {
+        let pc = PerfCounter::new_with_chip_class(pc_type, chip_class);
         let counters = (0..pc.index.len()).map(|_| Counter::new(0)).collect();
 
         Self { pc, counters }

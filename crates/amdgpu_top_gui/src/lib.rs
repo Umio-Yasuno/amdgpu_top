@@ -9,7 +9,6 @@ use libamdgpu_top::AMDGPU::{
     DeviceHandle,
     GpuMetrics,
     MetricsInfo,
-    CHIP_CLASS,
     GPU_INFO,
     VIDEO_CAPS::CAP_TYPE,
 };
@@ -57,14 +56,8 @@ pub fn run(
     let chip_class = ext_info.get_chip_class();
     let sysfs_path = pci_bus.get_sysfs_path();
 
-    let grbm_index = if CHIP_CLASS::GFX10 <= chip_class {
-        stat::GFX10_GRBM_INDEX
-    } else {
-        stat::GRBM_INDEX
-    };
-
-    let mut grbm = PerfCounter::new(stat::PCType::GRBM, grbm_index);
-    let mut grbm2 = PerfCounter::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
+    let mut grbm = PerfCounter::new_with_chip_class(stat::PCType::GRBM, chip_class);
+    let mut grbm2 = PerfCounter::new_with_chip_class(stat::PCType::GRBM2, chip_class);
 
     let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
     let sample = Sampling::low();

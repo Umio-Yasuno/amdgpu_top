@@ -1,4 +1,4 @@
-use libamdgpu_top::AMDGPU::{DeviceHandle, CHIP_CLASS, GPU_INFO};
+use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO};
 use libamdgpu_top::{DevicePath, stat, VramUsage};
 use stat::{FdInfoStat, Sensors, PerfCounter};
 use serde_json::json;
@@ -20,14 +20,8 @@ pub fn run(
     let mark_name = amdgpu_dev.get_marketing_name_or_default();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
 
-    let grbm_index = if CHIP_CLASS::GFX10 <= chip_class {
-        stat::GFX10_GRBM_INDEX
-    } else {
-        stat::GRBM_INDEX
-    };
-
-    let mut grbm = PerfCounter::new(stat::PCType::GRBM, grbm_index);
-    let mut grbm2 = PerfCounter::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
+    let mut grbm = PerfCounter::new_with_chip_class(stat::PCType::GRBM, chip_class);
+    let mut grbm2 = PerfCounter::new_with_chip_class(stat::PCType::GRBM2, chip_class);
     let mut vram = VramUsage::new(&memory_info);
     let mut sensors = Sensors::new(&amdgpu_dev, &pci_bus);
 

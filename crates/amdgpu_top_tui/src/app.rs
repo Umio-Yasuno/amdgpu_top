@@ -1,4 +1,4 @@
-use libamdgpu_top::AMDGPU::{CHIP_CLASS, DeviceHandle, drm_amdgpu_info_device, drm_amdgpu_memory_info, GPU_INFO};
+use libamdgpu_top::AMDGPU::{DeviceHandle, drm_amdgpu_info_device, drm_amdgpu_memory_info, GPU_INFO};
 use libamdgpu_top::PCI;
 use std::sync::{Arc, Mutex};
 use cursive::align::HAlign;
@@ -40,14 +40,8 @@ impl TuiApp {
         let list_name = format!("{} ({pci_bus})", amdgpu_dev.get_marketing_name_or_default());
         let chip_class = ext_info.get_chip_class();
 
-        let grbm_index = if CHIP_CLASS::GFX10 <= chip_class {
-            stat::GFX10_GRBM_INDEX
-        } else {
-            stat::GRBM_INDEX
-        };
-
-        let grbm = PerfCounterView::new(stat::PCType::GRBM, grbm_index);
-        let grbm2 = PerfCounterView::new(stat::PCType::GRBM2, stat::GRBM2_INDEX);
+        let grbm = PerfCounterView::new_with_chip_class(stat::PCType::GRBM, chip_class);
+        let grbm2 = PerfCounterView::new_with_chip_class(stat::PCType::GRBM2, chip_class);
         let vram_usage = VramUsageView::new(memory_info);
 
         let mut fdinfo = FdInfoView::new(
