@@ -11,7 +11,7 @@ use cursive::view::Nameable;
 use cursive::utils::Counter;
 use cursive::Rect;
 use cursive::align::HAlign;
-use super::{PANEL_WIDTH, TopView};
+use super::{PANEL_WIDTH, VRAM_LABEL_WIDTH, TopView};
 use libamdgpu_top::VramUsage;
 
 #[derive(Clone, Debug)]
@@ -39,8 +39,7 @@ impl VramUsageView {
     pub fn view(
         &self,
     ) -> TopView {
-        const LEFT_LEN: usize = 6;
-        const BAR_WIDTH: usize = PANEL_WIDTH / 2 - LEFT_LEN;
+        const BAR_WIDTH: usize = PANEL_WIDTH / 2 - VRAM_LABEL_WIDTH;
 
         let title = Self::TITLE.to_string();
         let label = |value: usize, (_min, max): (usize, usize)| -> String {
@@ -56,11 +55,11 @@ impl VramUsageView {
             sub_layout.add_child(
                 FixedLayout::new()
                     .child(
-                        Rect::from_size((0, 0), (LEFT_LEN, 1)),
+                        Rect::from_size((0, 0), (VRAM_LABEL_WIDTH, 1)),
                         TextView::new(format!(" {name:>4}:")),
                     )
                     .child(
-                        Rect::from_size((LEFT_LEN+1, 0), (BAR_WIDTH, 1)),
+                        Rect::from_size((VRAM_LABEL_WIDTH+1, 0), (BAR_WIDTH, 1)),
                         ProgressBar::new()
                             .with_value(counter.clone())
                             .min(0)

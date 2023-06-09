@@ -25,7 +25,7 @@ impl Text {
 
     pub fn panel(&self, title: &str) -> Panel<TextView> {
        Panel::new(
-            TextView::new_with_content(self.content.clone())
+            TextView::new_with_content(self.content.clone()).no_wrap()
         )
         .title(title)
         .title_position(HAlign::Left)

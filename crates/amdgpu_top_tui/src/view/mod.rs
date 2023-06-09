@@ -1,4 +1,6 @@
-pub const PANEL_WIDTH: usize = 80;
+pub const PANEL_WIDTH: usize = 70;
+pub const PC_BAR_WIDTH: usize = 35;
+pub const VRAM_LABEL_WIDTH: usize = 6;
 
 mod fdinfo;
 pub use fdinfo::*;

@@ -12,12 +12,8 @@ use cursive::Rect;
 use cursive::align::HAlign;
 
 use libamdgpu_top::stat::PCType;
-use super::{PANEL_WIDTH, TopView};
+use super::{PANEL_WIDTH, PC_BAR_WIDTH, TopView};
 use libamdgpu_top::stat::PerfCounter;
-/*
-use super::toggle_view;
-use crate::Opt;
-*/
 
 #[derive(Clone, Debug)]
 pub struct PerfCounterView {
@@ -37,13 +33,12 @@ impl PerfCounterView {
         &self,
         visible: bool,
     ) -> TopView {
-        const BAR_WIDTH: usize = 40;
-        const LEFT_LEN: usize = PANEL_WIDTH - BAR_WIDTH;
+        const LEFT_LEN: usize = PANEL_WIDTH - PC_BAR_WIDTH;
         
         let title = self.pc.pc_type.to_string();
         let mut sub_layout = LinearLayout::vertical();
         let label = |value: usize, (_, _): (usize, usize)| -> String {
-            format!("[{val:^width$}]", width = BAR_WIDTH - 2, val = format!("{value:3} %"))
+            format!("[{val:^width$}]", width = PC_BAR_WIDTH - 2, val = format!("{value:3} %"))
         };
 
         for (c, (name, _)) in self.counters.iter().zip(self.pc.index.iter()) {
@@ -54,7 +49,7 @@ impl PerfCounterView {
                         TextView::new(format!("{name:>LEFT_LEN$}:")),
                     )
                     .child(
-                        Rect::from_size((LEFT_LEN+2,0), (BAR_WIDTH, 1)),
+                        Rect::from_size((LEFT_LEN+2,0), (PC_BAR_WIDTH, 1)),
                         ProgressBar::new()
                             .with_value(c.clone())
                             .with_label(label)

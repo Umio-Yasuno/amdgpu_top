@@ -156,6 +156,7 @@ pub fn run(
             screen.add_layer(
                 app.layout(title, &toggle_opt)
                     .scrollable()
+                    .scroll_x(true)
                     .scroll_y(true)
                     .with_name(&app.instance.to_string())
             );
@@ -180,6 +181,7 @@ pub fn run(
             }
         }
     }
+
     {
         let t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)> = vec_app.iter().map(|app| {
             (app.device_path.clone(), app.arc_proc_index.clone())
