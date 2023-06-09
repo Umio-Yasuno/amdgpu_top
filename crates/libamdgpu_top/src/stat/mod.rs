@@ -27,10 +27,38 @@ pub const GRBM_INDEX: &[(&str, usize)] = &[
 ];
 
 pub const GRBM2_INDEX: &[(&str, usize)] = &[
+    ("RucList Controller", 24),
     ("Texture Cache", 25),
+    // ("Texture Cache Resident", 26),
     ("Command Processor -  Fetcher", 28),
     ("Command Processor -  Compute", 29),
     ("Command Processor - Graphics", 30),
+];
+
+pub const GFX9_GRBM2_INDEX: &[(&str, usize)] = &[
+    ("RucList Controller", 24),
+    ("Texture Cache", 25),
+    // ("Texture Cache Resident", 26),
+    ("Unified Translation Cache Level-2", 15), // UTCL2
+    ("Efficiency Arbiter", 16), // EA
+    ("Render Backend Memory Interface", 17), // RMI
+    ("Command Processor -  Fetcher", 28), // CPF
+    ("Command Processor -  Compute", 29), // CPC
+    ("Command Processor - Graphics", 30), // CPG
+    // ("CPAXI_BUSY", 31),
+];
+
+pub const GFX10_GRBM2_INDEX: &[(&str, usize)] = &[
+    ("RucList Controller", 24),
+    // ("TCP_BUSY", 25), // TCP, Texture Cache Private?, Pipe?
+    ("Unified Translation Cache Level-2", 15), // UTCL2
+    ("Efficiency Arbiter", 16), // EA
+    ("Render Backend Memory Interface", 17), // RMI
+    ("SDMA", 21),
+    ("Command Processor -  Fetcher", 28), // CPF
+    ("Command Processor -  Compute", 29), // CPC
+    ("Command Processor - Graphics", 30), // CPG
+    // ("CPAXI_BUSY", 31),
 ];
 
 mod perf_counter;

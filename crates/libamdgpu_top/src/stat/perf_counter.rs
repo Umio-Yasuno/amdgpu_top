@@ -1,8 +1,10 @@
 use libdrm_amdgpu_sys::AMDGPU::{
+    CHIP_CLASS,
     DeviceHandle,
     GRBM_OFFSET,
     GRBM2_OFFSET,
 };
+use crate::stat;
 
 #[derive(Clone, Debug)]
 pub struct PerfCounter {
@@ -20,6 +22,29 @@ impl PerfCounter {
             bits: PCAcc::default(),
             index,
         }
+    }
+    
+    pub fn new_with_chip_class(pc_type: PCType, chip_class: CHIP_CLASS) -> Self {
+        let index = match pc_type {
+            PCType::GRBM => {
+                if CHIP_CLASS::GFX10 <= chip_class {
+                    stat::GFX10_GRBM_INDEX
+                } else {
+                    stat::GRBM_INDEX
+                }
+            },
+            PCType::GRBM2 => {
+                if CHIP_CLASS::GFX10 <= chip_class {
+                    stat::GFX10_GRBM2_INDEX
+                } else if CHIP_CLASS::GFX9 <= chip_class {
+                    stat::GFX9_GRBM2_INDEX
+                } else {
+                    stat::GRBM2_INDEX
+                }
+            },
+        };
+
+        Self::new(pc_type, index)
     }
 
     pub fn read_reg(&mut self, amdgpu_dev: &DeviceHandle) {
@@ -56,8 +81,8 @@ impl PCType {
     pub fn check_reg_offset(&self, amdgpu_dev: &DeviceHandle) -> bool {
         let offset = self.offset();
         let reg_name = match self {
-            Self::GRBM => "mmGRBM_STATUS",
-            Self::GRBM2 => "mmGRBM2_STATUS2",
+            Self::GRBM => "GRBM_STATUS",
+            Self::GRBM2 => "GRBM2_STATUS2",
         };
 
         amdgpu_dev.read_mm_registers(offset).map_or_else(|err| {
@@ -68,7 +93,7 @@ impl PCType {
 }
 
 #[derive(Clone, Default, Debug)]
-pub struct PCAcc(pub [u8; 32]);
+pub struct PCAcc([u8; 32]);
 
 impl PCAcc {
     pub fn clear(&mut self) {
