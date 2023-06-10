@@ -81,14 +81,14 @@ impl SmiDeviceInfo {
 
     fn info_header() -> TextView {
         let text = format!(concat!(
-            "GPU  {name:<name_len$} {pad:7} | {pci:<14} | {vram:^17} | {gtt:^17} |\n",
-            "SCLK    MCLK    Temp  Pwr_Avg/Cap      | GFX% UMC%  MM% |",
+            "GPU  {name:<name_len$} {pad:9}|{pci:<16}|{vram:^18}|\n",
+            "SCLK    MCLK    Temp  Pwr_Avg/Cap       | GFX% UMC%  MM% |{gtt:^18}|",
             ),
             name = "Name",
             name_len = GPU_NAME_LEN,
-            pci = "PCI Bus",
+            pci = " PCI Bus",
             vram = "VRAM Usage",
-            gtt = "GTT Usage",
+            gtt = " GTT Usage",
             pad = "",
         );
 
@@ -105,15 +105,13 @@ impl SmiDeviceInfo {
 
         writeln!(
             self.info_text.buf,
-            " #{i:<2} {name:GPU_NAME_LEN$} ({cu:3}CU) | {pci}   | {vu:5} / {vt:5} MiB | {gu:5} / {gt:5} MiB |",
+            " #{i:<2} {name:GPU_NAME_LEN$} ({cu:3}CU)  | {pci}   |{vu:6}/{vt:6} MiB |",
             i = self.instance,
             name = self.marketing_name,
             cu = self.cu_number,
             pci = self.pci_bus,
             vu = self.vram_usage.0.vram.heap_usage >> 20,
             vt = self.vram_usage.0.vram.total_heap_size >> 20,
-            gu = self.vram_usage.0.gtt.heap_usage >> 20,
-            gt = self.vram_usage.0.gtt.total_heap_size >> 20,
         )?;
 
         if let Some(sclk) = &self.sensors.sclk {
@@ -142,7 +140,19 @@ impl SmiDeviceInfo {
         } else {
             write!(self.info_text.buf, " ____W / ____W ")?;
         }
-        write!(self.info_text.buf, "     |")?;
+
+        if self.check_gfxoff {
+            match GfxoffStatus::get(self.instance) {
+                Ok(GfxoffStatus::InGFXOFF) =>
+                    write!(self.info_text.buf, "GFXOFF|")?,
+                /* for debug */
+                Ok(GfxoffStatus::Unknown(val)) =>
+                    write!(self.info_text.buf, "Unknown ({val})|")?,
+                _ => write!(self.info_text.buf, "      |")?,
+            }
+        } else {
+            write!(self.info_text.buf, "      |")?;
+        }
 
         match self.amdgpu_dev.get_gpu_metrics_from_sysfs_path(&self.sysfs_path) {
             Ok(metrics) => {
@@ -161,6 +171,12 @@ impl SmiDeviceInfo {
             Err(_) => write!(self.info_text.buf, " ___% ___% ___%")?,
         }
         write!(self.info_text.buf, " |")?;
+        write!(
+            self.info_text.buf,
+            "{gu:>6}/{gt:>6} MiB |",
+            gu = self.vram_usage.0.gtt.heap_usage >> 20,
+            gt = self.vram_usage.0.gtt.total_heap_size >> 20,
+        )?;
         /*
         if let Some(fan_rpm) = self.sensors.fan_rpm {
             write!(self.info_text.buf, " {fan_rpm:4}RPM ")?;
@@ -168,15 +184,6 @@ impl SmiDeviceInfo {
             write!(self.info_text.buf, " ____RPM ")?;
         }
         */
-
-        if self.check_gfxoff {
-            match GfxoffStatus::get(self.instance) {
-                Ok(GfxoffStatus::InGFXOFF) => write!(self.info_text.buf, " GFXOFF")?,
-                /* for debug */
-                Ok(GfxoffStatus::Unknown(val)) => write!(self.info_text.buf, " Unknown ({val})")?,
-                _ => {},
-            }
-        }
 
         self.info_text.set();
 
