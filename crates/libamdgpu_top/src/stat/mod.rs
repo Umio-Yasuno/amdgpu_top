@@ -27,7 +27,7 @@ pub const GRBM_INDEX: &[(&str, usize)] = &[
 ];
 
 pub const GRBM2_INDEX: &[(&str, usize)] = &[
-    ("RucList Controller", 24),
+    ("RunList Controller", 24),
     ("Texture Cache", 25),
     // ("Texture Cache Resident", 26),
     ("Command Processor -  Fetcher", 28),
@@ -36,7 +36,7 @@ pub const GRBM2_INDEX: &[(&str, usize)] = &[
 ];
 
 pub const GFX9_GRBM2_INDEX: &[(&str, usize)] = &[
-    ("RucList Controller", 24),
+    ("RunList Controller", 24),
     ("Texture Cache", 25),
     // ("Texture Cache Resident", 26),
     ("Unified Translation Cache Level-2", 15), // UTCL2
@@ -49,7 +49,7 @@ pub const GFX9_GRBM2_INDEX: &[(&str, usize)] = &[
 ];
 
 pub const GFX10_GRBM2_INDEX: &[(&str, usize)] = &[
-    ("RucList Controller", 24),
+    ("RunList Controller", 24),
     // ("TCP_BUSY", 25), // TCP, Texture Cache Private?, Pipe?
     ("Unified Translation Cache Level-2", 15), // UTCL2
     ("Efficiency Arbiter", 16), // EA
