@@ -1,12 +1,11 @@
-use libamdgpu_top::AMDGPU::{DeviceHandle, drm_amdgpu_info_device, drm_amdgpu_memory_info, GPU_INFO};
-use libamdgpu_top::PCI;
 use std::sync::{Arc, Mutex};
 use cursive::align::HAlign;
 use cursive::views::{LinearLayout, TextView, Panel, ResizedView};
 use cursive::view::SizeConstraint;
 
-use libamdgpu_top::{stat, DevicePath, Sampling};
-use stat::{PcieBw, ProcInfo};
+use libamdgpu_top::AMDGPU::{DeviceHandle, drm_amdgpu_info_device, drm_amdgpu_memory_info, GPU_INFO};
+use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling};
+use libamdgpu_top::stat::{self, PcieBw, ProcInfo, Sensors};
 
 use crate::{TOGGLE_HELP, ToggleOptions, view::*};
 
@@ -36,7 +35,9 @@ impl TuiApp {
     ) -> Self {
         let instance = device_path.get_instance_number().unwrap();
         let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
-        let device_info = info_bar(&amdgpu_dev, ext_info, memory_info.vram.total_heap_size, &pci_bus);
+        let sensors = Sensors::new(&amdgpu_dev, &pci_bus);
+        let device_info = AppDeviceInfo::new(&amdgpu_dev, ext_info, memory_info, &sensors).info_bar();
+        let sensors_view = SensorsView::new_with_sensors(sensors);
         let list_name = format!("{} ({pci_bus})", amdgpu_dev.get_marketing_name_or_default());
         let chip_class = ext_info.get_chip_class();
 
@@ -60,7 +61,6 @@ impl TuiApp {
         };
 
         let gpu_metrics = GpuMetricsView::new(&amdgpu_dev);
-        let sensors = SensorsView::new(&amdgpu_dev, &pci_bus);
         let (support_pcie_bw, arc_pcie_bw) = {
             let pcie_bw = PcieBw::new(pci_bus.get_sysfs_path());
 
@@ -78,7 +78,7 @@ impl TuiApp {
             arc_proc_index,
             fdinfo,
             vram_usage,
-            sensors,
+            sensors: sensors_view,
             support_pcie_bw,
             arc_pcie_bw,
             gpu_metrics,
@@ -193,41 +193,34 @@ impl TuiApp {
     }
 }
 
-pub fn info_bar(
-    amdgpu_dev: &DeviceHandle,
-    ext_info: &drm_amdgpu_info_device,
-    vram_size: u64,
-    pci_bus: &PCI::BUS_INFO,
-) -> String {
-    let chip_class = ext_info.get_chip_class();
+trait InfoBar {
+    fn info_bar(&self) -> String;
+}
 
-    let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock()
-        .unwrap_or_else(|| (0, (ext_info.max_engine_clock() / 1000) as u32));
-    let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock()
-        .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
-    let mark_name = amdgpu_dev.get_marketing_name_or_default();
-
-    format!(
-        concat!(
-            "{mark_name} ({pci}, {did:#06X}:{rid:#04X})\n",
-            "{asic}, {gpu_type}, {chip_class}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
-            "{vram_type} {vram_bus_width}-bit, {vram_size} MiB, ",
-            "{min_memory_clk}-{max_memory_clk} MHz",
-        ),
-        mark_name = mark_name,
-        pci = pci_bus,
-        did = ext_info.device_id(),
-        rid = ext_info.pci_rev_id(),
-        asic = ext_info.get_asic_name(),
-        gpu_type = if ext_info.is_apu() { "APU" } else { "dGPU" },
-        chip_class = chip_class,
-        num_cu = ext_info.cu_active_number(),
-        min_gpu_clk = min_gpu_clk,
-        max_gpu_clk = max_gpu_clk,
-        vram_type = ext_info.get_vram_type(),
-        vram_bus_width = ext_info.vram_bit_width,
-        vram_size = vram_size >> 20,
-        min_memory_clk = min_mem_clk,
-        max_memory_clk = max_mem_clk,
-    )
+impl InfoBar for AppDeviceInfo {
+    fn info_bar(&self) -> String {
+        format!(
+            concat!(
+                "{mark_name} ({pci}, {did:#06X}:{rid:#04X})\n",
+                "{asic}, {gpu_type}, {chip_class}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
+                "{vram_type} {vram_bus_width}-bit, {vram_size} MiB, ",
+                "{min_memory_clk}-{max_memory_clk} MHz",
+            ),
+            mark_name = self.marketing_name,
+            pci = self.pci_bus,
+            did = self.ext_info.device_id(),
+            rid = self.ext_info.pci_rev_id(),
+            asic = self.ext_info.get_asic_name(),
+            gpu_type = if self.ext_info.is_apu() { "APU" } else { "dGPU" },
+            chip_class = self.ext_info.get_chip_class(),
+            num_cu = self.ext_info.cu_active_number(),
+            min_gpu_clk = self.min_gpu_clk,
+            max_gpu_clk = self.max_gpu_clk,
+            vram_type = self.ext_info.get_vram_type(),
+            vram_bus_width = self.ext_info.vram_bit_width,
+            vram_size = self.memory_info.vram.total_heap_size >> 20,
+            min_memory_clk = self.min_mem_clk,
+            max_memory_clk = self.max_mem_clk,
+        )
+    }
 }

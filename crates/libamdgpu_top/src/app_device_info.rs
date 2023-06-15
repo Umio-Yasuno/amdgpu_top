@@ -1,4 +1,4 @@
-use libamdgpu_top::AMDGPU::{
+use crate::AMDGPU::{
     DeviceHandle,
     drm_amdgpu_info_device,
     drm_amdgpu_memory_info,
@@ -6,12 +6,10 @@ use libamdgpu_top::AMDGPU::{
     HW_IP::{HwIpInfo, HW_IP_TYPE},
     HwmonTemp,
     PowerCap,
-};
-use libamdgpu_top::AMDGPU::{
     VBIOS::VbiosInfo,
     VIDEO_CAPS::{CAP_TYPE, VideoCapsInfo},
 };
-use libamdgpu_top::{PCI, stat::Sensors};
+use crate::{PCI, stat::Sensors};
 
 const HW_IP_LIST: &[HW_IP_TYPE] = &[
     HW_IP_TYPE::GFX,

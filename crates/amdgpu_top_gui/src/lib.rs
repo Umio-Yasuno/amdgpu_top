@@ -11,13 +11,11 @@ use libamdgpu_top::AMDGPU::{
     MetricsInfo,
     GPU_INFO,
 };
-use libamdgpu_top::{DevicePath, Sampling, VramUsage};
+use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling, VramUsage};
 use libamdgpu_top::stat::{self, FdInfoUsage, Sensors, FdInfoStat, PerfCounter, PcieBw};
 
 mod app;
 use app::MyApp;
-mod app_device_info;
-use app_device_info::AppDeviceInfo;
 mod util;
 use util::*;
 

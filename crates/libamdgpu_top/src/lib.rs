@@ -2,6 +2,9 @@ use std::time::Duration;
 pub use libdrm_amdgpu_sys::*;
 use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, drm_amdgpu_memory_info, HW_IP::HW_IP_TYPE};
 
+mod app_device_info;
+pub use app_device_info::*;
+
 pub mod stat;
 
 mod device_path;

@@ -1,8 +1,14 @@
 use libamdgpu_top::{
-    AMDGPU::{DeviceHandle, GPU_INFO, drm_amdgpu_info_device},
-    AMDGPU::VIDEO_CAPS::{CAP_TYPE, CODEC},
-    AMDGPU::HW_IP::HW_IP_TYPE,
-    AMDGPU::FW_VERSION::FW_TYPE,
+    AMDGPU::{
+        VIDEO_CAPS::{CODEC, VideoCapsInfo},
+        HW_IP::HwIpInfo,
+        FW_VERSION::FW_TYPE,
+        DeviceHandle,
+        GPU_INFO,
+        drm_amdgpu_info_device,
+        VBIOS::VbiosInfo,
+    },
+    AppDeviceInfo,
     stat::Sensors,
 };
 
@@ -11,6 +17,9 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
     let sensors = Sensors::new(amdgpu_dev, &pci_bus);
+    let asic = ext_info.get_asic_name();
+
+    let info = AppDeviceInfo::new(amdgpu_dev, &ext_info, &memory_info, &sensors);
 
     let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock()
         .unwrap_or_else(|| (0, (ext_info.max_engine_clock() / 1000) as u32));
@@ -23,7 +32,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     }
     println!();
 
-    println!("Device Name              : [{}]", amdgpu_dev.get_marketing_name_or_default());
+    println!("Device Name              : [{}]", info.marketing_name);
     println!("PCI (domain:bus:dev.func): {pci_bus}");
     println!(
         "DeviceID.RevID           : {:#0X}.{:#0X}",
@@ -31,12 +40,10 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
         ext_info.pci_rev_id()
     );
 
-    let asic = ext_info.get_asic_name();
-
     println!();
     println!("GPU Type  : {}", if ext_info.is_apu() { "APU" } else { "dGPU" });
     println!("Family    : {}", ext_info.get_family_name());
-    println!("ASIC Name : {}", ext_info.get_asic_name());
+    println!("ASIC Name : {asic}");
     println!("Chip class: {}", ext_info.get_chip_class());
 
     let max_good_cu_per_sa = ext_info.get_max_good_cu_per_sa();
@@ -68,7 +75,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     println!("GPU Clock: {min_gpu_clk}-{max_gpu_clk} MHz");
     println!("Peak FP32: {} GFLOPS", ext_info.peak_gflops());
 
-    let resizable_bar = if memory_info.check_resizable_bar() {
+    let resizable_bar = if info.resizable_bar {
         "Enabled"
     } else {
         "Disabled"
@@ -97,11 +104,14 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
 
     sensors_info(&sensors);
     cache_info(&ext_info);
-    hw_ip_info(amdgpu_dev);
+    hw_ip_info(&info.hw_ip_info);
     fw_info(amdgpu_dev);
-    codec_info(amdgpu_dev);
-    vbios_info(amdgpu_dev);
-
+    if let [Some(dec), Some(enc)] = [&info.decode, &info.encode] {
+        codec_info(dec, enc);
+    }
+    if let Some(vbios) = &info.vbios {
+        vbios_info(vbios);
+    }
     if let Ok(metrics) = amdgpu_dev.get_gpu_metrics() {
         println!("\nGPU Metrics {metrics:#?}");
     }
@@ -113,23 +123,23 @@ fn sensors_info(sensors: &Sensors) {
         let Some(temp) = temp else { continue };
         let label = format!("{} Temp.", temp.type_);
         print!("{label:<15} : {:>3} C (Current)", temp.current);
-        if let Some(crit) = temp.critical {
+        if let Some(crit) = &temp.critical {
             print!(", {crit:>3} C (Critical)");
         }
-        if let Some(e) = temp.emergency {
+        if let Some(e) = &temp.emergency {
             print!(", {e:>3} C (Emergency)");
         }
         println!();
     }
     println!();
-    if let Some(power) = sensors.power {
+    if let Some(power) = &sensors.power {
         println!("Power Avg.          : {power:3} W");
     }
-    if let Some(ref cap) = sensors.power_cap {
+    if let Some(cap) = &sensors.power_cap {
         println!("Power Cap.          : {:3} W ({}-{} W)", cap.current, cap.min, cap.max);
         println!("Power Cap. (Default): {:3} W", cap.default);
     }
-    if let Some(fan_max_rpm) = sensors.fan_max_rpm {
+    if let Some(fan_max_rpm) = &sensors.fan_max_rpm {
         println!("Fan RPM (Max)       : {fan_max_rpm} RPM");
     }
     if sensors.has_pcie_dpm {
@@ -156,39 +166,18 @@ fn cache_info(ext_info: &drm_amdgpu_info_device) {
     }
 }
 
-fn hw_ip_info(amdgpu_dev: &DeviceHandle) {
-    let ip_list = [
-        HW_IP_TYPE::GFX,
-        HW_IP_TYPE::COMPUTE,
-        HW_IP_TYPE::DMA,
-        HW_IP_TYPE::UVD,
-        HW_IP_TYPE::VCE,
-        HW_IP_TYPE::UVD_ENC,
-        HW_IP_TYPE::VCN_DEC,
-        HW_IP_TYPE::VCN_ENC,
-        HW_IP_TYPE::VCN_JPEG,
-    ];
+fn hw_ip_info(hw_ip_list: &[HwIpInfo]) {
+    println!("\nHardware IP info:");
 
-    println!();
-    println!("Hardware IP info:");
-
-    for ip_type in &ip_list {
-        if let (Ok(ip_info), Ok(ip_count)) = (
-            amdgpu_dev.query_hw_ip_info(*ip_type, 0),
-            amdgpu_dev.query_hw_ip_count(*ip_type),
-        ) {
-            let (major, minor) = ip_info.version();
-            let queues = ip_info.num_queues();
-
-            if queues == 0 {
-                continue;
-            }
-
-            println!(
-                "    {ip_type:8} count: {ip_count}, ver: {major:2}.{minor}, queues: {queues}",
-                ip_type = ip_type.to_string(),
-            );
-        }
+    for hw_ip in hw_ip_list {
+        println!(
+            "    {ip_type:8} count: {ip_count}, ver: {major:2}.{minor}, queues: {queues}",
+            ip_type = hw_ip.ip_type.to_string(),
+            ip_count = hw_ip.count,
+            major = hw_ip.info.hw_ip_version_major,
+            minor = hw_ip.info.hw_ip_version_minor,
+            queues = hw_ip.info.num_queues(),
+        );
     }
 }
 
@@ -216,8 +205,7 @@ fn fw_info(amdgpu_dev: &DeviceHandle) {
         FW_TYPE::TOC,
     ];
 
-    println!();
-    println!("Firmware info:");
+    println!("\nFirmware info:");
 
     for fw_type in &fw_list {
         let fw_info = match amdgpu_dev.query_firmware_version(*fw_type, 0, 0) {
@@ -227,9 +215,7 @@ fn fw_info(amdgpu_dev: &DeviceHandle) {
 
         let (ver, ftr) = (fw_info.version, fw_info.feature);
 
-        if ver == 0 {
-            continue;
-        }
+        if ver == 0 { continue }
 
         println!(
             "    {fw_type:<8} feature: {ftr:>3}, ver: {ver:>#10X}",
@@ -238,45 +224,35 @@ fn fw_info(amdgpu_dev: &DeviceHandle) {
     }
 }
 
-fn vbios_info(amdgpu_dev: &DeviceHandle) {
-    if let Ok(vbios) = amdgpu_dev.get_vbios_info() {
-        println!();
-        println!("VBIOS info:");
-        println!("    name   : [{}]", vbios.name);
-        println!("    pn     : [{}]", vbios.pn);
-        println!("    ver_str: [{}]", vbios.ver);
-        println!("    date   : [{}]", vbios.date);
-    }
+fn vbios_info(vbios: &VbiosInfo) {
+    println!("\nVBIOS info:");
+    println!("    name   : [{}]", vbios.name);
+    println!("    pn     : [{}]", vbios.pn);
+    println!("    ver_str: [{}]", vbios.ver);
+    println!("    date   : [{}]", vbios.date);
 }
 
-fn codec_info(amdgpu_dev: &DeviceHandle) {
-    if let [Ok(dec), Ok(enc)] = [
-        amdgpu_dev.get_video_caps(CAP_TYPE::DECODE),
-        amdgpu_dev.get_video_caps(CAP_TYPE::ENCODE),
+fn codec_info(decode: &VideoCapsInfo, encode: &VideoCapsInfo) {
+    println!("\nVideo caps (WIDTHxHEIGHT):");
+
+    for (codec, dec_cap, enc_cap) in [
+        (CODEC::MPEG2, decode.mpeg2, encode.mpeg2),
+        (CODEC::MPEG4, decode.mpeg4, encode.mpeg4),
+        (CODEC::VC1, decode.vc1, encode.vc1),
+        (CODEC::MPEG4_AVC, decode.mpeg4_avc, encode.mpeg4_avc),
+        (CODEC::HEVC, decode.hevc, encode.hevc),
+        (CODEC::JPEG, decode.jpeg, encode.jpeg),
+        (CODEC::VP9, decode.vp9, encode.vp9),
+        (CODEC::AV1, decode.av1, encode.av1),
     ] {
-        let codec_list = [
-            CODEC::MPEG2,
-            CODEC::MPEG4,
-            CODEC::VC1,
-            CODEC::MPEG4_AVC,
-            CODEC::HEVC,
-            CODEC::JPEG,
-            CODEC::VP9,
-            CODEC::AV1,
-        ];
-
-        println!("\nVideo caps (WIDTHxHEIGHT):");
-
-        for codec in &codec_list {
-            let [dec_cap, enc_cap] = [dec, enc].map(|type_| type_.get_codec_info(*codec));
-            let dec = format!("{}x{}", dec_cap.max_width, dec_cap.max_height);
-            let enc = format!("{}x{}", enc_cap.max_width, enc_cap.max_height);
-            println!(
-                "    {codec:10}: {dec:>12} (Decode), {enc:>12} (Encode)",
-                codec = codec.to_string(),
-                dec = if dec_cap.is_supported() { &dec } else { "N/A" },
-                enc = if enc_cap.is_supported() { &enc } else { "N/A" },
-            );
-        }
+        let codec = codec.to_string();
+        let [dec, enc] = [dec_cap, enc_cap].map(|cap| {
+            if let Some(cap) = cap {
+                format!("{}x{}", cap.max_width, cap.max_height)
+            } else {
+                "N/A".to_string()
+            }
+        });
+        println!("    {codec:10}: {dec:>12} (Decode), {enc:>12} (Encode)");
     }
 }
