@@ -9,8 +9,6 @@ use crate::{BASE, MEDIUM, HISTORY_LENGTH};
 use libamdgpu_top::AMDGPU::{
     MetricsInfo,
     GPU_INFO,
-    VBIOS::VbiosInfo,
-    VIDEO_CAPS::VideoCapsInfo,
 };
 use libamdgpu_top::stat::{self, gpu_metrics_util::*, FdInfoSortType, PerfCounter};
 
@@ -23,9 +21,6 @@ pub struct MyApp {
     pub command_path: PathBuf,
     pub app_device_info: AppDeviceInfo,
     pub device_list: Vec<DeviceListMenu>,
-    pub decode: Option<VideoCapsInfo>,
-    pub encode: Option<VideoCapsInfo>,
-    pub vbios: Option<VbiosInfo>,
     pub has_vcn_unified: bool,
     pub support_pcie_bw: bool,
     pub fdinfo_sort: FdInfoSortType,
@@ -230,8 +225,8 @@ impl MyApp {
     }
 
     pub fn egui_video_caps_info(&self, ui: &mut egui::Ui) {
-        let Some(ref decode_caps) = self.decode else { return };
-        let Some(ref encode_caps) = self.encode else { return };
+        let Some(ref decode_caps) = self.app_device_info.decode else { return };
+        let Some(ref encode_caps) = self.app_device_info.encode else { return };
 
         egui::Grid::new("codec_info").show(ui, |ui| {
             ui.label("Codec").highlight();
@@ -266,7 +261,7 @@ impl MyApp {
     }
 
     pub fn egui_vbios_info(&self, ui: &mut egui::Ui) {
-        let Some(ref vbios) = self.vbios else { return };
+        let Some(ref vbios) = self.app_device_info.vbios else { return };
         egui::Grid::new("vbios_info").show(ui, |ui| {
             for (name, val) in [
                 ("Name", &vbios.name),

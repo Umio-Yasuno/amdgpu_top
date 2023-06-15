@@ -7,6 +7,10 @@ use libamdgpu_top::AMDGPU::{
     HwmonTemp,
     PowerCap,
 };
+use libamdgpu_top::AMDGPU::{
+    VBIOS::VbiosInfo,
+    VIDEO_CAPS::{CAP_TYPE, VideoCapsInfo},
+};
 use libamdgpu_top::{PCI, stat::Sensors};
 
 const HW_IP_LIST: &[HW_IP_TYPE] = &[
@@ -38,6 +42,9 @@ pub struct AppDeviceInfo {
     pub memory_temp: Option<HwmonTemp>,
     pub power_cap: Option<PowerCap>,
     pub fan_max_rpm: Option<u32>,
+    pub decode: Option<VideoCapsInfo>,
+    pub encode: Option<VideoCapsInfo>,
+    pub vbios: Option<VbiosInfo>,
 }
 
 impl AppDeviceInfo {
@@ -73,6 +80,9 @@ impl AppDeviceInfo {
             memory_temp: sensors.memory_temp.clone(),
             power_cap: sensors.power_cap.clone(),
             fan_max_rpm: sensors.fan_max_rpm,
+            decode: amdgpu_dev.get_video_caps_info(CAP_TYPE::DECODE).ok(),
+            encode: amdgpu_dev.get_video_caps_info(CAP_TYPE::ENCODE).ok(),
+            vbios: amdgpu_dev.get_vbios_info().ok(),
         }
     }
 }

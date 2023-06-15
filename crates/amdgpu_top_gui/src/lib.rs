@@ -10,7 +10,6 @@ use libamdgpu_top::AMDGPU::{
     GpuMetrics,
     MetricsInfo,
     GPU_INFO,
-    VIDEO_CAPS::CAP_TYPE,
 };
 use libamdgpu_top::{DevicePath, Sampling, VramUsage};
 use libamdgpu_top::stat::{self, FdInfoUsage, Sensors, FdInfoStat, PerfCounter, PcieBw};
@@ -120,9 +119,6 @@ pub fn run(
         app_device_info,
         device_list,
         command_path,
-        decode: amdgpu_dev.get_video_caps_info(CAP_TYPE::DECODE).ok(),
-        encode: amdgpu_dev.get_video_caps_info(CAP_TYPE::ENCODE).ok(),
-        vbios: amdgpu_dev.get_vbios_info().ok(),
         has_vcn_unified: libamdgpu_top::has_vcn_unified(&amdgpu_dev),
         support_pcie_bw: pcie_bw.exists,
         fdinfo_sort: Default::default(),
@@ -261,12 +257,12 @@ impl eframe::App for MyApp {
                 ui.add_space(SPACE);
                 collapsing(ui, "Hardware IP Info", false, |ui| self.egui_hw_ip_info(ui));
 
-                if self.decode.is_some() && self.encode.is_some() {
+                if self.app_device_info.decode.is_some() && self.app_device_info.encode.is_some() {
                     ui.add_space(SPACE);
                     collapsing(ui, "Video Caps Info", false, |ui| self.egui_video_caps_info(ui));
                 }
 
-                if self.vbios.is_some() {
+                if self.app_device_info.vbios.is_some() {
                     ui.add_space(SPACE);
                     collapsing(ui, "VBIOS Info", false, |ui| self.egui_vbios_info(ui));
                 }
