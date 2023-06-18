@@ -9,6 +9,7 @@ use crate::{BASE, MEDIUM, HISTORY_LENGTH};
 use libamdgpu_top::AMDGPU::{
     MetricsInfo,
     GPU_INFO,
+    HW_IP::HwIpInfo,
 };
 use libamdgpu_top::stat::{self, gpu_metrics_util::*, FdInfoSortType, PerfCounter};
 
@@ -21,6 +22,7 @@ pub struct MyApp {
     pub command_path: PathBuf,
     pub app_device_info: AppDeviceInfo,
     pub device_list: Vec<DeviceListMenu>,
+    pub hw_ip_info: Vec<HwIpInfo>,
     pub has_vcn_unified: bool,
     pub support_pcie_bw: bool,
     pub fdinfo_sort: FdInfoSortType,
@@ -213,7 +215,7 @@ impl MyApp {
             ui.label("queues").highlight();
             ui.end_row();
 
-            for hw_ip in &self.app_device_info.hw_ip_info {
+            for hw_ip in &self.hw_ip_info {
                 let (major, minor) = hw_ip.info.version();
 
                 ui.label(hw_ip.ip_type.to_string());

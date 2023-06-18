@@ -104,7 +104,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
 
     sensors_info(&sensors);
     cache_info(&ext_info);
-    hw_ip_info(&info.hw_ip_info);
+    hw_ip_info(&libamdgpu_top::get_hw_ip_info_list(&amdgpu_dev));
     fw_info(amdgpu_dev);
     if let [Some(dec), Some(enc)] = [&info.decode, &info.encode] {
         codec_info(dec, enc);

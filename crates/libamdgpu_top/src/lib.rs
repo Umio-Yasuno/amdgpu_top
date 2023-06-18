@@ -1,6 +1,10 @@
 use std::time::Duration;
 pub use libdrm_amdgpu_sys::*;
-use libdrm_amdgpu_sys::AMDGPU::{DeviceHandle, drm_amdgpu_memory_info, HW_IP::HW_IP_TYPE};
+use libdrm_amdgpu_sys::AMDGPU::{
+    DeviceHandle,
+    drm_amdgpu_memory_info,
+    HW_IP::{HW_IP_TYPE, HwIpInfo},
+};
 
 mod app_device_info;
 pub use app_device_info::*;
@@ -66,4 +70,22 @@ pub fn has_vcn_unified(amdgpu_dev: &DeviceHandle) -> bool {
     let Ok(ip) = amdgpu_dev.get_hw_ip_info(HW_IP_TYPE::VCN_ENC) else { return false };
 
     4 <= ip.info.hw_ip_version_major
+}
+
+pub fn get_hw_ip_info_list(amdgpu_dev: &DeviceHandle) -> Vec<HwIpInfo> {
+    const HW_IP_LIST: &[HW_IP_TYPE] = &[
+        HW_IP_TYPE::GFX,
+        HW_IP_TYPE::COMPUTE,
+        HW_IP_TYPE::DMA,
+        HW_IP_TYPE::UVD,
+        HW_IP_TYPE::VCE,
+        HW_IP_TYPE::UVD_ENC,
+        HW_IP_TYPE::VCN_DEC,
+        HW_IP_TYPE::VCN_ENC,
+        HW_IP_TYPE::VCN_JPEG,
+    ];
+
+    HW_IP_LIST.iter()
+        .filter_map(|ip_type| amdgpu_dev.get_hw_ip_info(*ip_type).ok())
+        .filter(|hw_ip_info| hw_ip_info.count != 0).collect()
 }

@@ -117,6 +117,7 @@ pub fn run(
         app_device_info,
         device_list,
         command_path,
+        hw_ip_info: libamdgpu_top::get_hw_ip_info_list(&amdgpu_dev),
         has_vcn_unified: libamdgpu_top::has_vcn_unified(&amdgpu_dev),
         support_pcie_bw: pcie_bw.exists,
         fdinfo_sort: Default::default(),
