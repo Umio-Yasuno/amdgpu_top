@@ -376,10 +376,15 @@ impl MyApp {
                     (gfx, "GFX"),
                     (compute, "Compute"),
                     (dma, "DMA"),
-                    (dec, "Decode"),
-                    (enc, "Encode"),
                 ] {
                     plot_ui.line(Line::new(PlotPoints::new(usage)).name(name));
+                }
+
+                if self.has_vcn_unified {
+                    plot_ui.line(Line::new(PlotPoints::new(enc)).name("VCN"));
+                } else {
+                    plot_ui.line(Line::new(PlotPoints::new(dec)).name("Decode"));
+                    plot_ui.line(Line::new(PlotPoints::new(enc)).name("Encode"));
                 }
             });
     }
