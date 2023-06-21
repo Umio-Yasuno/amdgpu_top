@@ -30,6 +30,156 @@ pub struct MyApp {
     pub buf_data: CentralData,
     pub arc_data: Arc<Mutex<CentralData>>,
 }
+fn grid(ui: &mut egui::Ui, v: &[(&str, &str)]) {
+    for (name, val) in v {
+        ui.label(*name);
+        ui.label(*val);
+        ui.end_row();
+    }
+}
+
+trait GuiInfo {
+    fn device_info(&self, ui: &mut egui::Ui);
+    fn gfx_info(&self, ui: &mut egui::Ui);
+    fn memory_info(&self, ui: &mut egui::Ui);
+    fn cache_info(&self, ui: &mut egui::Ui);
+    fn power_cap_info(&self, ui: &mut egui::Ui);
+    fn temp_info(&self, ui: &mut egui::Ui);
+    fn fan_info(&self, ui: &mut egui::Ui);
+}
+
+impl GuiInfo for AppDeviceInfo {
+    fn device_info(&self, ui: &mut egui::Ui) {
+        let dev_id = format!("{:#0X}.{:#0X}", self.ext_info.device_id(), self.ext_info.pci_rev_id());
+
+        grid(ui, &[
+            ("Device Name", &self.marketing_name),
+            ("PCI (domain:bus:dev.func)", &self.pci_bus.to_string()),
+            ("DeviceID.RevID", &dev_id),
+        ]);
+        ui.end_row();
+    }
+
+    fn gfx_info(&self, ui: &mut egui::Ui) {
+        let gpu_type = if self.ext_info.is_apu() { "APU" } else { "dGPU" };
+        let family = self.ext_info.get_family_name();
+        let asic = self.ext_info.get_asic_name();
+        let chip_class = self.ext_info.get_chip_class();
+        let max_good_cu_per_sa = self.ext_info.get_max_good_cu_per_sa();
+        let min_good_cu_per_sa = self.ext_info.get_min_good_cu_per_sa();
+        let cu_per_sa = if max_good_cu_per_sa != min_good_cu_per_sa {
+            format!("[{min_good_cu_per_sa}, {max_good_cu_per_sa}]")
+        } else {
+            max_good_cu_per_sa.to_string()
+        };
+        let rb_pipes = self.ext_info.rb_pipes();
+        let rop_count = self.ext_info.calc_rop_count();
+        let rb_type = if asic.rbplus_allowed() {
+            "RenderBackendPlus (RB+)"
+        } else {
+            "RenderBackend (RB)"
+        };
+        let peak_gp = format!("{} GP/s", rop_count * self.max_gpu_clk / 1000);
+        let peak_fp32 = format!("{} GFLOPS", self.ext_info.peak_gflops());
+
+        grid(ui, &[
+            ("GPU Type", gpu_type),
+            ("Family", &family.to_string()),
+            ("ASIC Name", &asic.to_string()),
+            ("Chip Class", &chip_class.to_string()),
+            ("Shader Engine (SE)", &self.ext_info.max_se().to_string()),
+            ("Shader Array (SA/SH) per SE", &self.ext_info.max_sa_per_se().to_string()),
+            ("CU per SA", &cu_per_sa),
+            ("Total CU", &self.ext_info.cu_active_number().to_string()),
+            (rb_type, &format!("{rb_pipes} ({rop_count} ROPs)")),
+            ("Peak Pixel Fill-Rate", &peak_gp),
+            ("GPU Clock", &format!("{}-{} MHz", self.min_gpu_clk, self.max_gpu_clk)),
+            ("Peak FP32", &peak_fp32),
+        ]);
+        ui.end_row();
+    }
+
+    fn memory_info(&self, ui: &mut egui::Ui) {
+        let re_bar = if self.resizable_bar {
+            "Enabled"
+        } else {
+            "Disabled"
+        };
+
+        grid(ui, &[
+            ("VRAM Type", &self.ext_info.get_vram_type().to_string()),
+            ("VRAM Bit Width", &format!("{}-bit", self.ext_info.vram_bit_width)),
+            ("VRAM Size", &format!("{} MiB", self.memory_info.vram.total_heap_size >> 20)),
+            ("Memory Clock", &format!("{}-{} MHz", self.min_mem_clk, self.max_mem_clk)),
+            ("ResizableBAR", re_bar),
+        ]);
+        ui.end_row();
+    }
+
+    fn cache_info(&self, ui: &mut egui::Ui) {
+        ui.label("L1 Cache (per CU)");
+        ui.label(format!("{:4} KiB", self.l1_cache_size_kib_per_cu));
+        ui.end_row();
+        if 0 < self.gl1_cache_size_kib_per_sa {
+            ui.label("GL1 Cache (per SA/SH)");
+            ui.label(format!("{:4} KiB", self.gl1_cache_size_kib_per_sa));
+            ui.end_row();
+        }
+        ui.label("L2 Cache");
+        ui.label(format!(
+            "{:4} KiB ({} Banks)",
+            self.total_l2_cache_size_kib,
+            self.ext_info.num_tcc_blocks,
+        ));
+        ui.end_row();
+        if 0 < self.total_l3_cache_size_mib {
+            ui.label("L3 Cache (MALL)");
+            ui.label(format!("{:4} MiB", self.total_l3_cache_size_mib));
+            ui.end_row();
+        }
+        ui.end_row();
+    }
+
+    fn power_cap_info(&self, ui: &mut egui::Ui) {
+        let Some(cap) = &self.power_cap else { return };
+
+        ui.label("Power Cap.");
+        ui.label(format!("{:4} W ({}-{} W)", cap.current, cap.min, cap.max));
+        ui.end_row();
+        ui.label("Power Cap. (Default)");
+        ui.label(format!("{:4} W", cap.default));
+        ui.end_row();
+    }
+
+    fn temp_info(&self, ui: &mut egui::Ui) {
+        for temp in [
+            &self.edge_temp,
+            &self.junction_temp,
+            &self.memory_temp,
+        ] {
+            let Some(temp) = temp else { continue };
+            let name = temp.type_.to_string();
+            if let Some(crit) = temp.critical {
+                ui.label(format!("{name} Temp. (Critical)"));
+                ui.label(format!("{crit:4} C"));
+                ui.end_row();
+            }
+            if let Some(e) = temp.emergency {
+                ui.label(format!("{name} Temp. (Emergency)"));
+                ui.label(format!("{e:4} C"));
+                ui.end_row();
+            }
+        }
+    }
+
+    fn fan_info(&self, ui: &mut egui::Ui) {
+        let Some(fan_rpm) = &self.fan_max_rpm else { return };
+
+        ui.label("Fan RPM (Max)");
+        ui.label(format!("{fan_rpm:4} RPM"));
+        ui.end_row();
+    }
+}
 
 impl MyApp {
     pub fn egui_device_list(&self, ui: &mut egui::Ui) {
@@ -63,148 +213,13 @@ impl MyApp {
 
     pub fn egui_app_device_info(&self, ui: &mut egui::Ui) {
         egui::Grid::new("app_device_info").show(ui, |ui| {
-            let ext_info = &self.app_device_info.ext_info;
-            let memory_info = &self.app_device_info.memory_info;
-            let pci_bus = &self.app_device_info.pci_bus;
-            let (min_gpu_clk, max_gpu_clk) = (
-                &self.app_device_info.min_gpu_clk,
-                &self.app_device_info.max_gpu_clk,
-            );
-            let (min_mem_clk, max_mem_clk) = (
-                &self.app_device_info.min_mem_clk,
-                &self.app_device_info.max_mem_clk,
-            );
-
-            let dev_id = format!("{:#0X}.{:#0X}", ext_info.device_id(), ext_info.pci_rev_id());
-            let gpu_type = if ext_info.is_apu() { "APU" } else { "dGPU" };
-            let family = ext_info.get_family_name();
-            let asic = ext_info.get_asic_name();
-            let chip_class = ext_info.get_chip_class();
-
-            let grid = |ui: &mut egui::Ui, v: &[(&str, &str)]| {
-                for (name, val) in v {
-                    ui.label(*name);
-                    ui.label(*val);
-                    ui.end_row();
-                }
-            };
-
-            grid(ui, &[
-                ("Device Name", &self.app_device_info.marketing_name),
-                ("PCI (domain:bus:dev.func)", &pci_bus.to_string()),
-                ("DeviceID.RevID", &dev_id),
-                ("GPU Type", gpu_type),
-                ("Family", &family.to_string()),
-                ("ASIC Name", &asic.to_string()),
-                ("Chip Class", &chip_class.to_string()),
-            ]);
-            ui.end_row();
-
-            let max_good_cu_per_sa = ext_info.get_max_good_cu_per_sa();
-            let min_good_cu_per_sa = ext_info.get_min_good_cu_per_sa();
-            let cu_per_sa = if max_good_cu_per_sa != min_good_cu_per_sa {
-                format!("[{min_good_cu_per_sa}, {max_good_cu_per_sa}]")
-            } else {
-                max_good_cu_per_sa.to_string()
-            };
-            let rb_pipes = ext_info.rb_pipes();
-            let rop_count = ext_info.calc_rop_count();
-            let rb_type = if asic.rbplus_allowed() {
-                "RenderBackendPlus (RB+)"
-            } else {
-                "RenderBackend (RB)"
-            };
-            let peak_gp = format!("{} GP/s", rop_count * max_gpu_clk / 1000);
-            let peak_fp32 = format!("{} GFLOPS", ext_info.peak_gflops());
-
-            grid(ui, &[
-                ("Shader Engine (SE)", &ext_info.max_se().to_string()),
-                ("Shader Array (SA/SH) per SE", &ext_info.max_sa_per_se().to_string()),
-                ("CU per SA", &cu_per_sa),
-                ("Total CU", &ext_info.cu_active_number().to_string()),
-                (rb_type, &format!("{rb_pipes} ({rop_count} ROPs)")),
-                ("Peak Pixel Fill-Rate", &peak_gp),
-                ("GPU Clock", &format!("{min_gpu_clk}-{max_gpu_clk} MHz")),
-                ("Peak FP32", &peak_fp32),
-            ]);
-            ui.end_row();
-
-            let re_bar = if self.app_device_info.resizable_bar {
-                "Enabled"
-            } else {
-                "Disabled"
-            };
-
-            grid(ui, &[
-                ("VRAM Type", &ext_info.get_vram_type().to_string()),
-                ("VRAM Bit Width", &format!("{}-bit", ext_info.vram_bit_width)),
-                ("VRAM Size", &format!("{} MiB", memory_info.vram.total_heap_size >> 20)),
-                ("Memory Clock", &format!("{min_mem_clk}-{max_mem_clk} MHz")),
-                ("ResizableBAR", re_bar),
-            ]);
-            ui.end_row();
-
-            let gl1_cache_size = ext_info.get_gl1_cache_size() >> 10;
-            let l3_cache_size = ext_info.calc_l3_cache_size_mb();
-
-            ui.label("L1 Cache (per CU)");
-            ui.label(format!("{:4} KiB", ext_info.get_l1_cache_size() >> 10));
-            ui.end_row();
-            if 0 < gl1_cache_size {
-                ui.label("GL1 Cache (per SA/SH)");
-                ui.label(format!("{gl1_cache_size:4} KiB"));
-                ui.end_row();
-            }
-            ui.label("L2 Cache");
-            ui.label(format!(
-                "{:4} KiB ({} Banks)",
-                ext_info.calc_l2_cache_size() >> 10,
-                ext_info.num_tcc_blocks
-            ));
-            ui.end_row();
-            if 0 < l3_cache_size {
-                ui.label("L3 Cache (MALL)");
-                ui.label(format!("{l3_cache_size:4} MiB"));
-                ui.end_row();
-            }
-            ui.end_row();
-
-            if let Some(ref cap) = &self.app_device_info.power_cap {
-                ui.label("Power Cap.");
-                ui.label(format!("{:4} W ({}-{} W)", cap.current, cap.min, cap.max));
-                ui.end_row();
-                ui.label("Power Cap. (Default)");
-                ui.label(format!("{:4} W", cap.default));
-                ui.end_row();
-            }
-
-            for temp in [
-                &self.app_device_info.edge_temp,
-                &self.app_device_info.junction_temp,
-                &self.app_device_info.memory_temp,
-            ] {
-                let Some(temp) = temp else { continue };
-                let name = temp.type_.to_string();
-                if let Some(crit) = temp.critical {
-                    ui.label(format!("{name} Temp. (Critical)"));
-                    ui.label(format!("{crit:4} C"));
-                    ui.end_row();
-                }
-                if let Some(e) = temp.emergency {
-                    ui.label(format!("{name} Temp. (Emergency)"));
-                    ui.label(format!("{e:4} C"));
-                    ui.end_row();
-                }
-            }
-
-            for (label, val, unit) in [
-                ("Fan RPM (Max).", &self.app_device_info.fan_max_rpm, "RPM"),
-            ] {
-                let Some(val) = val else { continue };
-                ui.label(label);
-                ui.label(format!("{val:4} {unit}"));
-                ui.end_row();
-            }
+            self.app_device_info.device_info(ui);
+            self.app_device_info.gfx_info(ui);
+            self.app_device_info.memory_info(ui);
+            self.app_device_info.cache_info(ui);
+            self.app_device_info.power_cap_info(ui);
+            self.app_device_info.temp_info(ui);
+            self.app_device_info.fan_info(ui);
         });
     }
 
@@ -227,8 +242,8 @@ impl MyApp {
     }
 
     pub fn egui_video_caps_info(&self, ui: &mut egui::Ui) {
-        let Some(ref decode_caps) = self.app_device_info.decode else { return };
-        let Some(ref encode_caps) = self.app_device_info.encode else { return };
+        let Some(decode_caps) = &self.app_device_info.decode else { return };
+        let Some(encode_caps) = &self.app_device_info.encode else { return };
 
         egui::Grid::new("codec_info").show(ui, |ui| {
             ui.label("Codec").highlight();
@@ -263,7 +278,7 @@ impl MyApp {
     }
 
     pub fn egui_vbios_info(&self, ui: &mut egui::Ui) {
-        let Some(ref vbios) = self.app_device_info.vbios else { return };
+        let Some(vbios) = &self.app_device_info.vbios else { return };
         egui::Grid::new("vbios_info").show(ui, |ui| {
             for (name, val) in [
                 ("Name", &vbios.name),

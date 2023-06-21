@@ -29,6 +29,10 @@ pub struct AppDeviceInfo {
     pub decode: Option<VideoCapsInfo>,
     pub encode: Option<VideoCapsInfo>,
     pub vbios: Option<VbiosInfo>,
+    pub l1_cache_size_kib_per_cu: u32,
+    pub gl1_cache_size_kib_per_sa: u32,
+    pub total_l2_cache_size_kib: u32,
+    pub total_l3_cache_size_mib: u32,
 }
 
 impl AppDeviceInfo {
@@ -63,6 +67,10 @@ impl AppDeviceInfo {
             decode: amdgpu_dev.get_video_caps_info(CAP_TYPE::DECODE).ok(),
             encode: amdgpu_dev.get_video_caps_info(CAP_TYPE::ENCODE).ok(),
             vbios: amdgpu_dev.get_vbios_info().ok(),
+            l1_cache_size_kib_per_cu: ext_info.get_l1_cache_size() >> 10,
+            gl1_cache_size_kib_per_sa: ext_info.get_gl1_cache_size() >> 10,
+            total_l2_cache_size_kib: ext_info.calc_l2_cache_size() >> 10,
+            total_l3_cache_size_mib: ext_info.calc_l3_cache_size_mb(),
         }
     }
 }
