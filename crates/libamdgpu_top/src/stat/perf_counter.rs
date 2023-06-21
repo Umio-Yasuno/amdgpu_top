@@ -23,7 +23,7 @@ impl PerfCounter {
             index,
         }
     }
-    
+
     pub fn new_with_chip_class(pc_type: PCType, chip_class: CHIP_CLASS) -> Self {
         let index = match pc_type {
             PCType::GRBM => {
