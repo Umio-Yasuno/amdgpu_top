@@ -850,15 +850,11 @@ fn avg_activity(ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
 }
 
 fn throttle_status(ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
-    if let Some(throttle) = gpu_metrics.get_throttle_status() {
-        let thr = format!("{throttle:032b}");
+    if let Some(thr) = gpu_metrics.get_throttle_status_info() {
         ui.label(
             format!(
-                "Throttle Status: {}_{}_{}_{}",
-                &thr[..8],
-                &thr[8..16],
-                &thr[16..24],
-                &thr[24..32],
+                "Throttle Status: {:?}",
+                thr.get_all_throttler(),
             )
         );
     }
