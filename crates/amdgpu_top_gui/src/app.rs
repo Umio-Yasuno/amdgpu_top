@@ -129,7 +129,7 @@ impl GuiInfo for AppDeviceInfo {
         ui.label(format!(
             "{:4} KiB ({} Banks)",
             self.total_l2_cache_size_kib,
-            self.ext_info.num_tcc_blocks,
+            self.actual_num_tcc_blocks,
         ));
         ui.end_row();
         if 0 < self.total_l3_cache_size_mib {
