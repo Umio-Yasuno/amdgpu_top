@@ -6,7 +6,7 @@ use cursive::align::HAlign;
 use cursive::view::{Nameable, Scrollable};
 use cursive::views::{HideableView, LinearLayout, TextContent, TextView, Panel};
 
-use libamdgpu_top::AMDGPU::{DeviceHandle, FAMILY_NAME, GPU_INFO};
+use libamdgpu_top::AMDGPU::{DeviceHandle, FAMILY_NAME, GPU_INFO, MetricsInfo};
 use libamdgpu_top::{stat, DevicePath, PCI, Sampling, VramUsage};
 use stat::{GfxoffStatus, GpuActivity, Sensors, ProcInfo};
 
@@ -14,6 +14,7 @@ use crate::{FdInfoView, Text, ToggleOptions, stat::FdInfoSortType};
 
 const GPU_NAME_LEN: usize = 25;
 const LINE_LEN: usize = 150;
+const THR_LEN: usize = 60;
 const PROC_TITLE: &str = "Processes";
 
 pub(crate) struct SmiDeviceInfo {
@@ -85,7 +86,8 @@ impl SmiDeviceInfo {
     fn info_header() -> TextView {
         let text = format!(concat!(
             "GPU  {name:<name_len$} {pad:9}|{pci:<16}|{vram:^18}|\n",
-            "SCLK    MCLK    Temp  Pwr_Avg/Cap       | GFX% UMC%  MM% |{gtt:^18}|",
+            "SCLK    MCLK    VDDGFX  Power           | GFX% UMC%  MM% |{gtt:^18}|\n",
+            "Temp    {fan:<7} {thr:<THR_LEN$}|"
             ),
             name = "Name",
             name_len = GPU_NAME_LEN,
@@ -93,13 +95,16 @@ impl SmiDeviceInfo {
             vram = "VRAM Usage",
             gtt = " GTT Usage",
             pad = "",
+            fan = "Fan",
+            thr = "Throttle_Status",
+            THR_LEN = THR_LEN,
         );
 
-        TextView::new(text)
+        TextView::new(text).no_wrap()
     }
 
     fn info_text(&mut self) -> TextView {
-        TextView::new_with_content(self.info_text.content.clone())
+        TextView::new_with_content(self.info_text.content.clone()).no_wrap()
     }
 
     fn update_info_text(&mut self) -> Result<(), std::fmt::Error> {
@@ -108,9 +113,13 @@ impl SmiDeviceInfo {
 
         writeln!(
             self.info_text.buf,
-            " #{i:<2} {name:GPU_NAME_LEN$} ({cu:3}CU)  | {pci}   |{vu:6}/{vt:6} MiB |",
+            " #{i:<2} [{name:GPU_NAME_LEN$}]({cu:3}CU) | {pci}   |{vu:6}/{vt:6} MiB |",
             i = self.instance,
-            name = self.marketing_name,
+            name = if GPU_NAME_LEN < self.marketing_name.len() {
+                &self.marketing_name[..GPU_NAME_LEN]
+            } else {
+                &self.marketing_name
+            },
             cu = self.cu_number,
             pci = self.pci_bus,
             vu = self.vram_usage.0.vram.heap_usage >> 20,
@@ -129,58 +138,88 @@ impl SmiDeviceInfo {
             write!(self.info_text.buf, "____MHz ")?;
         }
 
-        if let Some(temp) = &self.sensors.edge_temp {
-            write!(self.info_text.buf, "{:>3}C ", temp.current)?;
+        if let Some(vddgfx) = &self.sensors.vddgfx {
+            write!(self.info_text.buf, "{vddgfx:4}mV ")?;
         } else {
-            write!(self.info_text.buf, "___C ")?;
+            write!(self.info_text.buf, "____mV ")?;
         }
+
         if let Some(power) = &self.sensors.power {
             if let Some(cap) = &self.sensors.power_cap {
-                write!(self.info_text.buf, " {power:>3}W / {:>3}W ", cap.current)?;
+                write!(self.info_text.buf, " {power:>3}/{:>3}W ", cap.current)?;
             } else {
-                write!(self.info_text.buf, " {power:>3}W / ___W ")?;
+                write!(self.info_text.buf, " {power:>3}/___W ")?;
             }
         } else {
-            write!(self.info_text.buf, " ____W / ____W ")?;
+            write!(self.info_text.buf, " ___/___W ")?;
         }
 
         if self.check_gfxoff {
             match GfxoffStatus::get(self.instance) {
                 Ok(GfxoffStatus::InGFXOFF) =>
-                    write!(self.info_text.buf, "GFXOFF|")?,
+                    write!(self.info_text.buf, "GFXOFF |")?,
                 /* for debug */
                 Ok(GfxoffStatus::Unknown(val)) =>
                     write!(self.info_text.buf, "Unknown ({val})|")?,
-                _ => write!(self.info_text.buf, "      |")?,
+                _ => write!(self.info_text.buf, "       |")?,
             }
         } else {
-            write!(self.info_text.buf, "      |")?;
+            write!(self.info_text.buf, "       |")?;
         }
 
-        if let Some(activity) = GpuActivity::get(&self.amdgpu_dev, &self.sysfs_path, self.family_name) {
-            for usage in [activity.gfx, activity.umc, activity.media] {
-                if let Some(usage) = usage {
-                    write!(self.info_text.buf, " {usage:>3}%")?;
-                } else {
-                    write!(self.info_text.buf, " ___%")?;
-                }
-            }
+        let metrics = self.amdgpu_dev.get_gpu_metrics_from_sysfs_path(&self.sysfs_path).ok();
+        let activity = if let Some(metrics) = &metrics {
+            GpuActivity::from(metrics)
+        } else if let FAMILY_NAME::RV = self.family_name {
+            // Some Raven/Picasso/Raven2 APU always report gpu_busy_percent as 100.
+            // ref: https://gitlab.freedesktop.org/drm/amd/-/issues/1932
+            // gpu_metrics is supported from Renoir APU.
+            GpuActivity { gfx: None, umc: None, media: None }
         } else {
-            write!(self.info_text.buf, " ___% ___% ___%")?;
+            GpuActivity::get_from_sysfs(&self.sysfs_path)
+        };
+
+        for usage in [activity.gfx, activity.umc, activity.media] {
+            if let Some(usage) = usage {
+                write!(self.info_text.buf, " {usage:>3}%")?;
+            } else {
+                write!(self.info_text.buf, " ___%")?;
+            }
         }
-        write!(
+
+        writeln!(
             self.info_text.buf,
             " |{gu:>6}/{gt:>6} MiB |",
             gu = self.vram_usage.0.gtt.heap_usage >> 20,
             gt = self.vram_usage.0.gtt.total_heap_size >> 20,
         )?;
-        /*
-        if let Some(fan_rpm) = self.sensors.fan_rpm {
-            write!(self.info_text.buf, " {fan_rpm:4}RPM ")?;
+
+        if let Some(temp) = &self.sensors.edge_temp {
+            write!(self.info_text.buf, " {:>3}C ", temp.current)?;
         } else {
-            write!(self.info_text.buf, " ____RPM ")?;
+            write!(self.info_text.buf, " ___C ")?;
         }
-        */
+
+        if let Some(fan_rpm) = &self.sensors.fan_rpm {
+            write!(self.info_text.buf, "  {fan_rpm:4}RPM ")?;
+        } else {
+            write!(self.info_text.buf, "  ____RPM ")?;
+        }
+
+        if let Some(thr) = metrics.and_then(|m| m.get_throttle_status_info()) {
+            let thr = format!("{:?}", thr.get_all_throttler());
+            write!(
+                self.info_text.buf,
+                "{:<THR_LEN$}|",
+                if THR_LEN < thr.len() { &thr[..THR_LEN] } else { &thr },
+            )?;
+        } else {
+            write!(
+                self.info_text.buf,
+                "{:<THR_LEN$}|",
+                "N/A",
+            )?;
+        }
 
         self.info_text.set();
 
