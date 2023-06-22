@@ -6,7 +6,7 @@ use cursive::align::HAlign;
 use cursive::view::{Nameable, Scrollable};
 use cursive::views::{HideableView, LinearLayout, TextContent, TextView, Panel};
 
-use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO, MetricsInfo};
+use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo};
 use libamdgpu_top::{stat, DevicePath, PCI, Sampling, VramUsage};
 use stat::{GfxoffStatus, Sensors, ProcInfo};
 
@@ -27,6 +27,7 @@ pub(crate) struct SmiDeviceInfo {
     pub vram_usage: VramUsage,
     pub sensors: Sensors,
     pub check_gfxoff: bool,
+    pub is_apu: bool,
     pub fdinfo: FdInfoView,
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
     pub info_text: Text,
@@ -46,6 +47,7 @@ impl SmiDeviceInfo {
         let vram_usage = VramUsage(memory_info);
         let sensors = Sensors::new(&amdgpu_dev, &pci_bus);
         let check_gfxoff = GfxoffStatus::get(instance).is_ok();
+        let is_apu = ext_info.is_apu();
 
         let mut fdinfo = FdInfoView::new(
             Sampling::default().to_duration(),
@@ -73,6 +75,7 @@ impl SmiDeviceInfo {
             vram_usage,
             sensors,
             check_gfxoff,
+            is_apu,
             fdinfo,
             arc_proc_index,
             info_text: Default::default(),
@@ -154,21 +157,16 @@ impl SmiDeviceInfo {
             write!(self.info_text.buf, "      |")?;
         }
 
-        match self.amdgpu_dev.get_gpu_metrics_from_sysfs_path(&self.sysfs_path) {
-            Ok(metrics) => {
-                for usage in [
-                    metrics.get_average_gfx_activity(),
-                    metrics.get_average_umc_activity(),
-                    metrics.get_average_mm_activity(),
-                ] {
-                    if let Some(usage) = usage {
-                        write!(self.info_text.buf, " {:>3}%", usage.saturating_div(100))?
-                    } else {
-                        write!(self.info_text.buf, " ___%")?
-                    }
+        if let Some(activity) = GpuActivity::get(&self.amdgpu_dev, &self.sysfs_path, self.is_apu) {
+            for usage in [activity.gfx, activity.umc, activity.media] {
+                if let Some(usage) = usage {
+                    write!(self.info_text.buf, " {usage:>3}%")?;
+                } else {
+                    write!(self.info_text.buf, " ___%")?;
                 }
-            },
-            Err(_) => write!(self.info_text.buf, " ___% ___% ___%")?,
+            }
+        } else {
+            write!(self.info_text.buf, " ___% ___% ___%")?;
         }
         write!(
             self.info_text.buf,
@@ -314,4 +312,57 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
     );
 
     siv.run();
+}
+
+#[derive(Debug)]
+struct GpuActivity {
+    pub gfx: Option<u16>, // %
+    pub umc: Option<u16>, // %
+    pub media: Option<u16>, // %
+}
+
+impl GpuActivity {
+    fn get<P: Into<PathBuf>>(
+        amdgpu_dev: &DeviceHandle,
+        sysfs_path: P,
+        is_apu: bool,
+    ) -> Option<Self> {
+        let path = sysfs_path.into();
+
+        if let Ok(metrics) = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&path) {
+            Some(Self::from(&metrics))
+        } else {
+            // Some Raven/Picasso/Raven2 APU always report gpu_busy_percent as 100.
+            // ref: https://gitlab.freedesktop.org/drm/amd/-/issues/1932
+            // gpu_metrics is supported from Renoir APU.
+            if is_apu {
+                None
+            } else {
+                Some(Self::get_from_sysfs(&path))
+            }
+        }
+    }
+
+    fn get_from_sysfs<P: Into<PathBuf>>(sysfs_path: P) -> Self {
+        let path = sysfs_path.into();
+        let [gfx, umc] = ["gpu_busy_percent", "mem_busy_percent"].map(|name| {
+            std::fs::read_to_string(&path.join(name)).ok()
+                .and_then(|s| s.trim_end().parse().ok())
+        });
+
+
+        Self { gfx, umc, media: None }
+    }
+}
+
+impl From<&GpuMetrics> for GpuActivity {
+    fn from(metrics: &GpuMetrics) -> Self {
+        let [gfx, umc, media] = [
+            metrics.get_average_gfx_activity(),
+            metrics.get_average_umc_activity(),
+            metrics.get_average_mm_activity(),
+        ].map(|activity| activity.map(|v| v.saturating_div(100)));
+
+        Self { gfx, umc, media }
+    }
 }
