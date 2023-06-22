@@ -311,9 +311,9 @@ pub fn get_all_processes() -> Vec<i32> {
 
     proc_dir.filter_map(|dir_entry| {
         let dir_entry = dir_entry.ok()?;
-        if let Ok(metadata) = dir_entry.metadata() {
-            if !metadata.is_dir() { return None }
-        }
+        let metadata = dir_entry.metadata().ok()?;
+
+        if !metadata.is_dir() { return None }
 
         let pid = dir_entry.file_name().to_str()?.parse::<i32>().ok()?;
 
@@ -321,7 +321,8 @@ pub fn get_all_processes() -> Vec<i32> {
 
         // filter systemd processes from fdinfo target
         // gnome-shell share the AMDGPU driver context with systemd processes
-        if let Ok(cmdline) = fs::read_to_string(format!("/proc/{pid}/cmdline")) {
+        {
+            let cmdline = fs::read_to_string(format!("/proc/{pid}/cmdline")).ok()?;
             if SYSTEMD_CMDLINE.iter().any(|path| cmdline.starts_with(path)) {
                 return None;
             }
