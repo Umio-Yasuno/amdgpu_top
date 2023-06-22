@@ -131,8 +131,8 @@ impl SmiDeviceInfo {
         } else {
             write!(self.info_text.buf, "___C ")?;
         }
-        if let Some(power) = self.sensors.power {
-            if let Some(ref cap) = self.sensors.power_cap {
+        if let Some(power) = &self.sensors.power {
+            if let Some(cap) = &self.sensors.power_cap {
                 write!(self.info_text.buf, " {power:>3}W / {:>3}W ", cap.current)?;
             } else {
                 write!(self.info_text.buf, " {power:>3}W / ___W ")?;
@@ -170,10 +170,9 @@ impl SmiDeviceInfo {
             },
             Err(_) => write!(self.info_text.buf, " ___% ___% ___%")?,
         }
-        write!(self.info_text.buf, " |")?;
         write!(
             self.info_text.buf,
-            "{gu:>6}/{gt:>6} MiB |",
+            " |{gu:>6}/{gt:>6} MiB |",
             gu = self.vram_usage.0.gtt.heap_usage >> 20,
             gt = self.vram_usage.0.gtt.total_heap_size >> 20,
         )?;
