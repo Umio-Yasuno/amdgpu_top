@@ -128,6 +128,7 @@ pub fn run(
 
     let options = eframe::NativeOptions {
         initial_window_size: Some(egui::vec2(1080.0, 840.0)),
+        app_id: Some("amdgpu_top".to_string()),
         ..Default::default()
     };
 
