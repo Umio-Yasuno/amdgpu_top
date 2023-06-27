@@ -1,6 +1,7 @@
 use libamdgpu_top::DevicePath;
 use libamdgpu_top::AMDGPU::DeviceHandle;
 
+const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const TITLE: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"));
 
 mod args;
@@ -38,6 +39,7 @@ fn main() {
         },
         #[cfg(feature = "gui")]
         AppMode::GUI => amdgpu_top_gui::run(
+            APP_NAME,
             TITLE,
             device_path,
             amdgpu_dev,

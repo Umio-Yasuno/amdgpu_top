@@ -41,7 +41,8 @@ pub struct CentralData {
 }
 
 pub fn run(
-    title: &str,
+    app_name: &str,
+    title_with_version: &str,
     device_path: DevicePath,
     amdgpu_dev: DeviceHandle,
     device_path_list: &[DevicePath],
@@ -110,8 +111,7 @@ pub fn run(
 
     let app_device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &sensors);
     let device_list = device_path_list.iter().flat_map(DeviceListMenu::new).collect();
-    let command_path = std::fs::read_link("/proc/self/exe")
-        .unwrap_or(PathBuf::from("amdgpu_top"));
+    let command_path = std::fs::read_link("/proc/self/exe").unwrap_or(PathBuf::from(app_name));
 
     let app = MyApp {
         app_device_info,
@@ -128,7 +128,7 @@ pub fn run(
 
     let options = eframe::NativeOptions {
         initial_window_size: Some(egui::vec2(1080.0, 840.0)),
-        app_id: Some("amdgpu_top".to_string()),
+        app_id: Some(app_name.to_string()),
         ..Default::default()
     };
 
@@ -226,7 +226,7 @@ pub fn run(
     }
 
     eframe::run_native(
-        title,
+        title_with_version,
         options,
         Box::new(|_cc| Box::new(app)),
     ).unwrap();
