@@ -754,7 +754,15 @@ impl MyApp {
             ]);
         });
 
-        socket_power(ui, gpu_metrics);
+        /*
+            Most APUs return `average_socket_power` in mW,
+            but Renoir APU (Renoir, Lucienne, Cezanne, Barcelo) return in W
+            depending on the power management firmware version.  
+
+            ref: drivers/gpu/drm/amd/pm/swsmu/smu12/renoir_ppt.c
+            ref: https://gitlab.freedesktop.org/drm/amd/-/issues/2321
+        */
+        // socket_power(ui, gpu_metrics);
         avg_activity(ui, gpu_metrics);
 
         for (avg, cur, name) in [

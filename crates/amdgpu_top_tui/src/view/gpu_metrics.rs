@@ -157,7 +157,15 @@ impl GpuMetricsView {
             (self.metrics.get_current_socclk(), "MHz"),
         ])?;
 
-        socket_power(&mut self.text.buf, &self.metrics)?;
+        /*
+            Most APUs return `average_socket_power` in mW,
+            but Renoir APU (Renoir, Lucienne, Cezanne, Barcelo) return in W
+            depending on the power management firmware version.  
+
+            ref: drivers/gpu/drm/amd/pm/swsmu/smu12/renoir_ppt.c
+            ref: https://gitlab.freedesktop.org/drm/amd/-/issues/2321
+        */
+        // socket_power(&mut self.text.buf, &self.metrics)?;
         avg_activity(&mut self.text.buf, &self.metrics)?;
 
         for (avg, cur, name) in [
