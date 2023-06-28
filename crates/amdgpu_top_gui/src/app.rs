@@ -29,6 +29,7 @@ pub struct MyApp {
     pub reverse_sort: bool,
     pub buf_data: CentralData,
     pub arc_data: Arc<Mutex<CentralData>>,
+    pub show_sidepanel: bool,
 }
 fn grid(ui: &mut egui::Ui, v: &[(&str, &str)]) {
     for (name, val) in v {

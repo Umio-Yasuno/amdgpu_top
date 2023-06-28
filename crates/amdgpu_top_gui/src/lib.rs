@@ -124,6 +124,7 @@ pub fn run(
         reverse_sort: false,
         buf_data: data.clone(),
         arc_data: Arc::new(Mutex::new(data)),
+        show_sidepanel: true,
     };
 
     let options = eframe::NativeOptions {
@@ -232,10 +233,94 @@ pub fn run(
     ).unwrap();
 }
 
+impl MyApp {
+    fn egui_side_panel(&self, ui: &mut egui::Ui) {
+        ui.set_min_width(360.0);
+        egui::ScrollArea::both().show(ui, |ui| {
+            ui.add_space(SPACE);
+            collapsing(ui, "Device Info", true, |ui| self.egui_app_device_info(ui));
+
+            ui.add_space(SPACE);
+            collapsing(ui, "Hardware IP Info", false, |ui| self.egui_hw_ip_info(ui));
+
+            if self.app_device_info.decode.is_some() && self.app_device_info.encode.is_some() {
+                ui.add_space(SPACE);
+                collapsing(ui, "Video Caps Info", false, |ui| self.egui_video_caps_info(ui));
+            }
+
+            if self.app_device_info.vbios.is_some() {
+                ui.add_space(SPACE);
+                collapsing(ui, "VBIOS Info", false, |ui| self.egui_vbios_info(ui));
+            }
+            ui.add_space(SPACE);
+        });
+    }
+
+    fn egui_central_panel(&mut self, ui: &mut egui::Ui) {
+        ui.set_min_width(540.0);
+        egui::ScrollArea::both().show(ui, |ui| {
+            collapsing(ui, "GRBM", true, |ui| self.egui_perf_counter(
+                ui,
+                "GRBM",
+                &self.buf_data.grbm,
+                &self.buf_data.grbm_history,
+            ));
+            ui.add_space(SPACE);
+            collapsing(ui, "GRBM2", true, |ui| self.egui_perf_counter(
+                ui,
+                "GRBM2",
+                &self.buf_data.grbm2,
+                &self.buf_data.grbm2_history,
+            ));
+            ui.add_space(SPACE);
+            collapsing(ui, "VRAM", true, |ui| self.egui_vram(ui));
+            ui.add_space(SPACE);
+            collapsing(ui, "fdinfo", true, |ui| self.egui_grid_fdinfo(ui));
+            ui.add_space(SPACE);
+            collapsing(ui, "Sensors", true, |ui| self.egui_sensors(ui));
+
+            if self.support_pcie_bw {
+                ui.add_space(SPACE);
+                collapsing(ui, "PCIe Bandwidth", true, |ui| self.egui_pcie_bw(ui));
+            }
+
+            let header = if let Some(h) = self.buf_data.gpu_metrics.get_header() {
+                format!(
+                    "GPU Metrics v{}.{}",
+                    h.format_revision,
+                    h.content_revision
+                )
+            } else {
+                String::new()
+            };
+
+            match self.buf_data.gpu_metrics {
+                GpuMetrics::V1_0(_) |
+                GpuMetrics::V1_1(_) |
+                GpuMetrics::V1_2(_) |
+                GpuMetrics::V1_3(_) => {
+                    ui.add_space(SPACE);
+                    collapsing(ui, &header, true, |ui| self.egui_gpu_metrics_v1(ui));
+                },
+                GpuMetrics::V2_0(_) |
+                GpuMetrics::V2_1(_) |
+                GpuMetrics::V2_2(_) |
+                GpuMetrics::V2_3(_) => {
+                    ui.add_space(SPACE);
+                    collapsing(ui, &header, true, |ui| self.egui_gpu_metrics_v2(ui));
+                },
+                GpuMetrics::Unknown => {},
+            }
+            ui.add_space(SPACE);
+        });
+    }
+}
+
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         {
-            if let Ok(data) = self.arc_data.try_lock() {
+            let lock = self.arc_data.try_lock();
+            if let Ok(data) = lock {
                 self.buf_data = data.clone();
             }
         }
@@ -246,88 +331,18 @@ impl eframe::App for MyApp {
         }
         ctx.clear_animations();
 
-        egui::SidePanel::left(egui::Id::new(3)).show(ctx, |ui| {
-            ui.set_min_width(360.0);
-            ui.add_space(SPACE / 2.0);
-            self.egui_device_list(ui);
-            egui::ScrollArea::both().show(ui, |ui| {
-                ui.add_space(SPACE);
-                collapsing(ui, "Device Info", true, |ui| self.egui_app_device_info(ui));
-
-                ui.add_space(SPACE);
-                collapsing(ui, "Hardware IP Info", false, |ui| self.egui_hw_ip_info(ui));
-
-                if self.app_device_info.decode.is_some() && self.app_device_info.encode.is_some() {
-                    ui.add_space(SPACE);
-                    collapsing(ui, "Video Caps Info", false, |ui| self.egui_video_caps_info(ui));
-                }
-
-                if self.app_device_info.vbios.is_some() {
-                    ui.add_space(SPACE);
-                    collapsing(ui, "VBIOS Info", false, |ui| self.egui_vbios_info(ui));
-                }
-                ui.add_space(SPACE);
+        egui::TopBottomPanel::top("menu bar").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                ui.toggle_value(&mut self.show_sidepanel, "Info");
+                self.egui_device_list(ui);
             });
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.set_min_width(540.0);
-            egui::ScrollArea::both().show(ui, |ui| {
-                collapsing(ui, "GRBM", true, |ui| self.egui_perf_counter(
-                    ui,
-                    "GRBM",
-                    &self.buf_data.grbm,
-                    &self.buf_data.grbm_history,
-                ));
-                ui.add_space(SPACE);
-                collapsing(ui, "GRBM2", true, |ui| self.egui_perf_counter(
-                    ui,
-                    "GRBM2",
-                    &self.buf_data.grbm2,
-                    &self.buf_data.grbm2_history,
-                ));
-                ui.add_space(SPACE);
-                collapsing(ui, "VRAM", true, |ui| self.egui_vram(ui));
-                ui.add_space(SPACE);
-                collapsing(ui, "fdinfo", true, |ui| self.egui_grid_fdinfo(ui));
-                ui.add_space(SPACE);
-                collapsing(ui, "Sensors", true, |ui| self.egui_sensors(ui));
+        if self.show_sidepanel {
+            egui::SidePanel::left(egui::Id::new(3)).show(ctx, |ui| self.egui_side_panel(ui));
+        }
 
-                if self.support_pcie_bw {
-                    ui.add_space(SPACE);
-                    collapsing(ui, "PCIe Bandwidth", true, |ui| self.egui_pcie_bw(ui));
-                }
-
-                let header = if let Some(h) = self.buf_data.gpu_metrics.get_header() {
-                    format!(
-                        "GPU Metrics v{}.{}",
-                        h.format_revision,
-                        h.content_revision
-                    )
-                } else {
-                    String::new()
-                };
-
-                match self.buf_data.gpu_metrics {
-                    GpuMetrics::V1_0(_) |
-                    GpuMetrics::V1_1(_) |
-                    GpuMetrics::V1_2(_) |
-                    GpuMetrics::V1_3(_) => {
-                        ui.add_space(SPACE);
-                        collapsing(ui, &header, true, |ui| self.egui_gpu_metrics_v1(ui));
-                    },
-                    GpuMetrics::V2_0(_) |
-                    GpuMetrics::V2_1(_) |
-                    GpuMetrics::V2_2(_) |
-                    GpuMetrics::V2_3(_) => {
-                        ui.add_space(SPACE);
-                        collapsing(ui, &header, true, |ui| self.egui_gpu_metrics_v2(ui));
-                    },
-                    GpuMetrics::Unknown => {},
-                }
-                ui.add_space(SPACE);
-            });
-        });
+        egui::CentralPanel::default().show(ctx, |ui| self.egui_central_panel(ui));
 
         ctx.request_repaint_after(Duration::from_millis(500));
     }
