@@ -1,4 +1,8 @@
-use libamdgpu_top::{stat, VramUsage};
+use libamdgpu_top::{
+    stat,
+    AMDGPU::{GpuMetrics, MetricsInfo},
+    VramUsage,
+};
 use stat::{FdInfoStat, Sensors, PerfCounter};
 use serde_json::{json, Map, Value};
 
@@ -125,6 +129,18 @@ impl OutputJson for FdInfoStat {
     }
 }
 
-/*
-    TODO: GpuMetrics
-*/
+impl OutputJson for GpuMetrics {
+    fn json(&self) -> Value {
+        let mut m = Map::new();
+
+        m.insert(
+            "Throttle Status".to_string(),
+            json!(self.get_throttle_status_info().map(|thr|
+                thr.get_all_throttler().into_iter()
+                    .map(|v| v.to_string()).collect::<Vec<String>>()
+            )),
+        );
+
+        m.into()
+    }
+}

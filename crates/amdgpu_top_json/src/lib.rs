@@ -19,6 +19,7 @@ pub fn run(
     let chip_class = ext_info.get_chip_class();
     let mark_name = amdgpu_dev.get_marketing_name_or_default();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
+    let sysfs_path = pci_bus.get_sysfs_path();
 
     let mut grbm = PerfCounter::new_with_chip_class(stat::PCType::GRBM, chip_class);
     let mut grbm2 = PerfCounter::new_with_chip_class(stat::PCType::GRBM2, chip_class);
@@ -78,6 +79,8 @@ pub fn run(
             }
         }
 
+        let metrics = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path).ok();
+
         let now = Instant::now();
         period = now.duration_since(base);
 
@@ -92,6 +95,7 @@ pub fn run(
             "VRAM": vram.json(),
             "Sensors": sensors.json(),
             "fdinfo": fdinfo.json(),
+            "gpu_metrics": metrics.map(|m| m.json()),
         });
 
         grbm.bits.clear();
