@@ -183,35 +183,6 @@ impl GuiInfo for AppDeviceInfo {
 }
 
 impl MyApp {
-    pub fn egui_device_list(&self, ui: &mut egui::Ui) {
-        ui.menu_button(RichText::new("Device List").font(BASE), |ui| {
-            ui.set_width(360.0);
-            for device in &self.device_list {
-                ui.horizontal(|ui| {
-                    let text = RichText::new(format!(
-                        "#{instance} {name} ({pci})",
-                        instance = device.instance,
-                        name = device.name,
-                        pci = device.pci,
-                    )).font(BASE);
-
-                    if self.app_device_info.pci_bus == device.pci {
-                        ui.add_enabled(false, egui::Button::new(text));
-                    } else {
-                        ui.menu_button(text, |ui| {
-                            if ui.button("Launch in a new process").clicked() {
-                                std::process::Command::new(&self.command_path)
-                                    .args(["--gui", "--pci", &device.pci.to_string()])
-                                    .spawn()
-                                    .unwrap();
-                            }
-                        });
-                    }
-                });
-            }
-        });
-    }
-
     pub fn egui_app_device_info(&self, ui: &mut egui::Ui) {
         egui::Grid::new("app_device_info").show(ui, |ui| {
             self.app_device_info.device_info(ui);

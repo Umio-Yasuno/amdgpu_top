@@ -3,7 +3,7 @@ use std::time::Duration;
 use std::ops::Range;
 use std::path::PathBuf;
 use eframe::egui;
-use egui::{FontFamily, FontId, util::History};
+use egui::{FontFamily, FontId, RichText, util::History};
 
 use libamdgpu_top::AMDGPU::{
     DeviceHandle,
@@ -234,6 +234,35 @@ pub fn run(
 }
 
 impl MyApp {
+    fn egui_device_list(&self, ui: &mut egui::Ui) {
+        ui.menu_button(RichText::new("Device List").font(BASE), |ui| {
+            ui.set_width(360.0);
+            for device in &self.device_list {
+                ui.horizontal(|ui| {
+                    let text = RichText::new(format!(
+                        "#{instance} {name} ({pci})",
+                        instance = device.instance,
+                        name = device.name,
+                        pci = device.pci,
+                    )).font(BASE);
+
+                    if self.app_device_info.pci_bus == device.pci {
+                        ui.add_enabled(false, egui::Button::new(text));
+                    } else {
+                        ui.menu_button(text, |ui| {
+                            if ui.button("Launch in a new process").clicked() {
+                                std::process::Command::new(&self.command_path)
+                                    .args(["--gui", "--pci", &device.pci.to_string()])
+                                    .spawn()
+                                    .unwrap();
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
     fn egui_side_panel(&self, ui: &mut egui::Ui) {
         ui.set_min_width(360.0);
         egui::ScrollArea::both().show(ui, |ui| {
@@ -333,7 +362,7 @@ impl eframe::App for MyApp {
 
         egui::TopBottomPanel::top("menu bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.toggle_value(&mut self.show_sidepanel, "Info");
+                ui.toggle_value(&mut self.show_sidepanel, RichText::new("Info").font(BASE));
                 self.egui_device_list(ui);
             });
         });
