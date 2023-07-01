@@ -24,7 +24,7 @@ pub fn run(
     let mut grbm = PerfCounter::new_with_chip_class(stat::PCType::GRBM, chip_class);
     let mut grbm2 = PerfCounter::new_with_chip_class(stat::PCType::GRBM2, chip_class);
     let mut vram = VramUsage::new(&memory_info);
-    let mut sensors = Sensors::new(&amdgpu_dev, &pci_bus);
+    let mut sensors = Sensors::new(&amdgpu_dev, &pci_bus, ext_info.get_asic_name());
 
     let mut period = Duration::from_millis(refresh_period);
     let interval = period.clone();

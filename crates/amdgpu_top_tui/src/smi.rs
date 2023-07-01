@@ -46,7 +46,7 @@ impl SmiDeviceInfo {
         let cu_number = ext_info.cu_active_number();
         let memory_info = amdgpu_dev.memory_info().unwrap();
         let vram_usage = VramUsage(memory_info);
-        let sensors = Sensors::new(&amdgpu_dev, &pci_bus);
+        let sensors = Sensors::new(&amdgpu_dev, &pci_bus, ext_info.get_asic_name());
         let check_gfxoff = GfxoffStatus::get(instance).is_ok();
         let family_name = ext_info.get_family_name();
 

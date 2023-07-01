@@ -1,5 +1,4 @@
 use libamdgpu_top::AMDGPU::{DeviceHandle};
-use libamdgpu_top::PCI;
 use super::{PANEL_WIDTH, Text};
 use std::fmt::{self, Write};
 use crate::Opt;
@@ -15,13 +14,14 @@ pub struct SensorsView {
 }
 
 impl SensorsView {
+/*
     pub fn _new(amdgpu_dev: &DeviceHandle, pci_bus: &PCI::BUS_INFO) -> Self {
         Self {
             sensors: Sensors::new(amdgpu_dev, pci_bus),
             text: Text::default(),
         }
     }
-
+*/
     pub fn new_with_sensors(sensors: Sensors) -> Self {
         Self {
             sensors,
@@ -90,14 +90,14 @@ impl SensorsView {
             writeln!(self.text.buf)?;
         }
 
-        if sensors.has_pcie_dpm {
+        if let [Some(cur), Some(max)] = [sensors.cur, sensors.max] {
             writeln!(
                 self.text.buf,
                 " PCIe Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
-                cur_gen = sensors.cur.gen,
-                cur_width = sensors.cur.width,
-                max_gen = sensors.max.gen,
-                max_width = sensors.max.width,
+                cur_gen = cur.gen,
+                cur_width = cur.width,
+                max_gen = max.gen,
+                max_width = max.width,
             )?;
         }
 

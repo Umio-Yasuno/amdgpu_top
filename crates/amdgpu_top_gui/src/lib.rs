@@ -69,7 +69,7 @@ pub fn run(
 
     let mut gpu_metrics = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path)
         .unwrap_or(GpuMetrics::Unknown);
-    let mut sensors = Sensors::new(&amdgpu_dev, &pci_bus);
+    let mut sensors = Sensors::new(&amdgpu_dev, &pci_bus, ext_info.get_asic_name());
     let mut vram_usage = VramUsage::new(&memory_info);
     let mut grbm_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm.index.len()];
     let mut grbm2_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm2.index.len()];
