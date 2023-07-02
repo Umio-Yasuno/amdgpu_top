@@ -68,8 +68,7 @@ impl TuiApp {
         let gpu_metrics = GpuMetricsView::new(&amdgpu_dev);
         let (support_pcie_bw, arc_pcie_bw) = {
             let pcie_bw = PcieBw::new(pci_bus.get_sysfs_path());
-
-            (pcie_bw.exists.clone(), Arc::new(Mutex::new(pcie_bw)))
+            (pcie_bw.check_pcie_bw_support(ext_info), pcie_bw.spawn_update_thread())
         };
 
         Self {
@@ -83,8 +82,8 @@ impl TuiApp {
             arc_proc_index,
             fdinfo,
             vram_usage,
-            sensors: sensors_view,
             support_pcie_bw,
+            sensors: sensors_view,
             arc_pcie_bw,
             gpu_metrics,
         }
@@ -101,13 +100,7 @@ impl TuiApp {
 
         self.sensors.update(&self.amdgpu_dev);
         self.sensors.print().unwrap();
-        {
-            if let Ok(pcie_bw) = self.arc_pcie_bw.lock() {
-                if pcie_bw.exists {
-                    self.sensors.print_pcie_bw(&pcie_bw).unwrap();
-                }
-            }
-        }
+
         self.sensors.text.set();
     }
 
@@ -159,9 +152,10 @@ impl TuiApp {
             self.sensors.update(&self.amdgpu_dev);
             self.sensors.print().unwrap();
 
-            if let Ok(pcie_bw) = self.arc_pcie_bw.try_lock() {
-                if pcie_bw.exists {
-                    self.sensors.print_pcie_bw(&pcie_bw).unwrap();
+            if self.support_pcie_bw {
+                let lock = self.arc_pcie_bw.try_lock();
+                if let Ok(ref pcie_bw) = lock {
+                    self.sensors.print_pcie_bw(pcie_bw).unwrap();
                 }
             }
         } else {

@@ -105,8 +105,9 @@ impl SensorsView {
     }
 
     pub fn print_pcie_bw(&mut self, pcie_bw: &PcieBw) -> Result<(), fmt::Error> {
-        let sent = (pcie_bw.sent * pcie_bw.max_payload_size as u64) >> 20; // MiB
-        let rec = (pcie_bw.received * pcie_bw.max_payload_size as u64) >> 20; // MiB
+        let Some(mps) = pcie_bw.max_payload_size else { return Ok(()) };
+        let Some(sent) = pcie_bw.sent.map(|v| (v * mps as u64) >> 20) else { return Ok(()) };
+        let Some(rec) = pcie_bw.received.map(|v| (v * mps as u64) >> 20) else { return Ok(()) };
 
         writeln!(
             self.text.buf,

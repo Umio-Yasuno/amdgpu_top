@@ -1,4 +1,7 @@
+use crate::AMDGPU::{drm_amdgpu_info_device, GPU_INFO, ASIC_NAME};
 use std::fs;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use std::path::PathBuf;
 
 // PCIe bandwidth (throughput) available from `pcie_bw` sysfs
@@ -17,23 +20,20 @@ use std::path::PathBuf;
 #[derive(Clone, Debug)]
 pub struct PcieBw {
     path: PathBuf,
-    pub exists: bool,
-    pub sent: u64,
-    pub received: u64,
-    pub max_payload_size: i32,
+    pub sent: Option<u64>,
+    pub received: Option<u64>,
+    pub max_payload_size: Option<i32>,
 }
 
 impl PcieBw {
     pub fn new<P: Into<PathBuf>>(sysfs_path: P) -> Self {
         let path = sysfs_path.into().join("pcie_bw");
-        let exists = path.exists();
 
         Self {
             path,
-            exists,
-            sent: 0,
-            received: 0,
-            max_payload_size: 0,
+            sent: None,
+            received: None,
+            max_payload_size: None,
         }
     }
 
@@ -41,16 +41,41 @@ impl PcieBw {
         let Ok(s) = fs::read_to_string(&self.path) else { return };
         let mut split = s.trim_end().split(' ');
 
-        if let Some(sent) = split.next().and_then(|v| v.parse().ok()) {
-            self.sent = sent;
-        }
+        self.sent = split.next().and_then(|v| v.parse().ok());
+        self.received = split.next().and_then(|v| v.parse().ok());
+        self.max_payload_size = split.next().and_then(|v| v.parse().ok());
+    }
 
-        if let Some(rec) = split.next().and_then(|v| v.parse().ok()) {
-            self.received = rec;
-        }
+    pub fn spawn_update_thread(&self) -> Arc<Mutex<Self>> {
+        let arc = Arc::new(Mutex::new(self.clone()));
+        let arc_pcie_bw = arc.clone();
+        let mut buf_pcie_bw = self.clone();
 
-        if let Some(mps) = split.next().and_then(|v| v.parse().ok()) {
-            self.max_payload_size = mps;
-        }
+        std::thread::spawn(move || loop {
+            buf_pcie_bw.update(); // msleep(1000)
+
+            if buf_pcie_bw.sent.is_none()
+            && buf_pcie_bw.received.is_none()
+            && buf_pcie_bw.max_payload_size.is_none() {
+                return;
+            }
+
+            let lock = arc.lock();
+            if let Ok(mut pcie_bw) = lock {
+                *pcie_bw = buf_pcie_bw.clone();
+            }
+
+            std::thread::sleep(Duration::from_millis(500)); // wait for user input
+        });
+
+        arc_pcie_bw
+    }
+
+    pub fn check_pcie_bw_support(&self, ext_info: &drm_amdgpu_info_device) -> bool {
+        // APU and RDNA GPU dose not support `pcie_bw`.
+        // ref: https://lists.freedesktop.org/archives/amd-gfx/2020-May/049649.html
+        self.path.exists()
+        && !ext_info.is_apu()
+        && ext_info.get_asic_name() < ASIC_NAME::CHIP_NAVI10
     }
 }

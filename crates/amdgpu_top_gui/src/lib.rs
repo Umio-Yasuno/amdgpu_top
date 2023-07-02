@@ -75,25 +75,11 @@ pub fn run(
     let mut grbm2_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm2.index.len()];
     let mut fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
     let mut sensors_history = SensorsHistory::new();
-    let pcie_bw = PcieBw::new(&sysfs_path);
-    let share_pcie_bw = Arc::new(Mutex::new(pcie_bw.clone()));
+    let (support_pcie_bw, share_pcie_bw) = {
+        let pcie_bw = PcieBw::new(&sysfs_path);
+        (pcie_bw.check_pcie_bw_support(&ext_info), pcie_bw.spawn_update_thread())
+    };
     let mut pcie_bw_history: History<(u64, u64)> = History::new(HISTORY_LENGTH, f32::INFINITY);
-
-    if pcie_bw.exists {
-        let share_pcie_bw = share_pcie_bw.clone();
-        let mut buf_pcie_bw = pcie_bw.clone();
-
-        std::thread::spawn(move || loop {
-            std::thread::sleep(Duration::from_millis(500)); // wait for user input
-
-            buf_pcie_bw.update(); // msleep(1000)
-
-            let lock = share_pcie_bw.lock();
-            if let Ok(mut share_pcie_bw) = lock {
-                *share_pcie_bw = buf_pcie_bw.clone();
-            }
-        });
-    }
 
     let data = CentralData {
         grbm: grbm.clone(),
@@ -119,7 +105,7 @@ pub fn run(
         command_path,
         hw_ip_info: libamdgpu_top::get_hw_ip_info_list(&amdgpu_dev),
         has_vcn_unified: libamdgpu_top::has_vcn_unified(&amdgpu_dev),
-        support_pcie_bw: pcie_bw.exists,
+        support_pcie_bw,
         fdinfo_sort: Default::default(),
         reverse_sort: false,
         buf_data: data.clone(),
@@ -187,10 +173,15 @@ pub fn run(
             {
                 let lock = share_pcie_bw.try_lock();
                 if let Ok(pcie_bw) = lock {
-                    let sent = pcie_bw.sent.saturating_mul(pcie_bw.max_payload_size as u64) >> 20;
-                    let rec = pcie_bw.received.saturating_mul(pcie_bw.max_payload_size as u64) >> 20;
-
-                    pcie_bw_history.add(sec, (sent, rec));
+                    if let (Some(sent), Some(rec), Some(mps)) = (
+                        pcie_bw.sent,
+                        pcie_bw.received,
+                        pcie_bw.max_payload_size,
+                    ) {
+                        let sent = (sent * mps as u64) >> 20;
+                        let rec = (rec * mps as u64) >> 20;
+                        pcie_bw_history.add(sec, (sent, rec));
+                    }
                 }
             }
 

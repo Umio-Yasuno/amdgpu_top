@@ -163,25 +163,6 @@ pub fn run(
         }
     }
 
-    for app in &vec_app {
-        if app.support_pcie_bw {
-            if let Ok(pcie_bw) = app.arc_pcie_bw.lock() {
-                let arc_pcie_bw = app.arc_pcie_bw.clone();
-                let mut buf_pcie_bw = pcie_bw.clone();
-
-                std::thread::spawn(move || loop {
-                    std::thread::sleep(Duration::from_millis(500)); // wait for user input
-                    buf_pcie_bw.update(); // msleep(1000)
-
-                    let lock = arc_pcie_bw.lock();
-                    if let Ok(mut pcie_bw) = lock {
-                        *pcie_bw = buf_pcie_bw.clone();
-                    }
-                });
-            }
-        }
-    }
-
     {
         let t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)> = vec_app.iter().map(|app| {
             (app.device_path.clone(), app.arc_proc_index.clone())
