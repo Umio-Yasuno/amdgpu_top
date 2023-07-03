@@ -90,15 +90,10 @@ impl SensorsView {
             writeln!(self.text.buf)?;
         }
 
-        if let [Some(cur), Some(max)] = [sensors.cur, sensors.max] {
-            writeln!(
-                self.text.buf,
-                " PCIe Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
-                cur_gen = cur.gen,
-                cur_width = cur.width,
-                max_gen = max.gen,
-                max_width = max.width,
-            )?;
+        if let Ok(s) = sensors.print_pcie_link() {
+            if !s.is_empty() {
+                writeln!(self.text.buf, " {s}")?;
+            }
         }
 
         Ok(())

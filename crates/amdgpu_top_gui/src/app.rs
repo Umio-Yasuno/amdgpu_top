@@ -528,14 +528,10 @@ impl MyApp {
 
         self.egui_temp_plot(ui);
 
-        if let [Some(cur), Some(max)] = [sensors.cur, sensors.max] {
-            ui.label(format!(
-                "PCIe Link Speed => Gen{cur_gen}x{cur_width:<2} (Max. Gen{max_gen}x{max_width})",
-                cur_gen = cur.gen,
-                cur_width = cur.width,
-                max_gen = max.gen,
-                max_width = max.width,
-            ));
+        if let Ok(s) = sensors.print_pcie_link() {
+            if !s.is_empty() {
+                ui.label(s);
+            }
         }
     }
 

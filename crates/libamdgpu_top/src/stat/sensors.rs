@@ -1,3 +1,4 @@
+use std::fmt::{self, Write};
 use std::path::PathBuf;
 use libdrm_amdgpu_sys::{
     PCI,
@@ -16,8 +17,9 @@ use super::parse_hwmon;
 pub struct Sensors {
     pub hwmon_path: PathBuf,
     pub vega10_and_later: bool,
-    pub cur: Option<PCI::LINK>,
-    pub max: Option<PCI::LINK>,
+    pub cur_link: Option<PCI::LINK>,
+    pub min_link: Option<PCI::LINK>,
+    pub max_link: Option<PCI::LINK>,
     pub bus_info: PCI::BUS_INFO,
     pub sclk: Option<u32>,
     pub mclk: Option<u32>,
@@ -44,16 +46,21 @@ impl Sensors {
         // However, recent AMD GPUs have multiple endpoints, and the correct PCIe speed/width
         // for the GPU is output to `pp_dpm_pcie`.  
         // ref: <https://gitlab.freedesktop.org/drm/amd/-/issues/1967>
-        let [cur, max] = if vega10_and_later {
-            let max = pci_bus.get_min_max_link_info_from_dpm().map(|[_min, max]| max);
+        let [cur_link, min_link, max_link] = if vega10_and_later {
+            let [min, max] = match pci_bus.get_min_max_link_info_from_dpm() {
+                Some([min, max]) => [Some(min), Some(max)],
+                None => [None, None],
+            };
 
             [
                 pci_bus.get_current_link_info_from_dpm(),
+                min,
                 max,
             ]
         } else {
             [
                 Some(pci_bus.get_link_info(PCI::STATUS::Current)),
+                None,
                 Some(pci_bus.get_link_info(PCI::STATUS::Max)),
             ]
         };
@@ -76,8 +83,9 @@ impl Sensors {
         Self {
             hwmon_path,
             vega10_and_later,
-            cur,
-            max,
+            cur_link,
+            min_link,
+            max_link,
             bus_info: *pci_bus,
             sclk,
             mclk,
@@ -94,7 +102,7 @@ impl Sensors {
     }
 
     pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
-        self.cur = if self.vega10_and_later {
+        self.cur_link = if self.vega10_and_later {
             self.bus_info.get_current_link_info_from_dpm()
         } else {
             Some(self.bus_info.get_link_info(PCI::STATUS::Current))
@@ -111,5 +119,28 @@ impl Sensors {
 
         self.power = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok();
         self.fan_rpm = parse_hwmon(self.hwmon_path.join("fan1_input"));
+    }
+
+    pub fn print_pcie_link(&self) -> Result<String, fmt::Error> {
+        let mut buf = String::new();
+
+        if let Some(cur) = self.cur_link {
+            write!(buf, "PCIe Link Speed => Gen{}x{:<2}", cur.gen, cur.width)?;
+        }
+
+        if let [Some(min), Some(max)] = [self.min_link, self.max_link] {
+            write!(
+                buf,
+                " (Gen{}x{} - Gen{}x{})",
+                min.gen,
+                min.width,
+                max.gen,
+                max.width,
+            )?;
+        } else if let Some(max) = self.max_link {
+            write!(buf, " (Max. Gen{}x{})", max.gen, max.width)?;
+        }
+
+        Ok(buf)
     }
 }

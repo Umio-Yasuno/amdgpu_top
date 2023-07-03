@@ -62,7 +62,10 @@ fn sensors_info(sensors: &Sensors) {
     if let Some(fan_max_rpm) = &sensors.fan_max_rpm {
         println!("Fan RPM (Max)       : {fan_max_rpm} RPM");
     }
-    if let Some(max) = &sensors.max {
+    if let Some(min) = &sensors.min_link {
+        println!("PCIe Link Speed     : Gen{}x{} (Min)", min.gen, min.width);
+    }
+    if let Some(max) = &sensors.max_link {
         println!("PCIe Link Speed     : Gen{}x{} (Max)", max.gen, max.width);
     }
 }
