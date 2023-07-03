@@ -353,7 +353,9 @@ impl eframe::App for MyApp {
 
         egui::TopBottomPanel::top("menu bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.toggle_value(&mut self.show_sidepanel, RichText::new("Info").font(BASE));
+                ui.toggle_value(&mut self.show_sidepanel, RichText::new("Info")
+                    .font(BASE))
+                    .on_hover_text("Toggle the side panel visibility");
                 self.egui_device_list(ui);
             });
         });
