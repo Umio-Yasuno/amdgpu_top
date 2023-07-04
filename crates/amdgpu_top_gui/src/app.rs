@@ -30,7 +30,9 @@ pub struct MyApp {
     pub buf_data: CentralData,
     pub arc_data: Arc<Mutex<CentralData>>,
     pub show_sidepanel: bool,
+    pub gl_vendor_info: Option<String>,
 }
+
 fn grid(ui: &mut egui::Ui, v: &[(&str, &str)]) {
     for (name, val) in v {
         ui.label(*name);
@@ -40,7 +42,7 @@ fn grid(ui: &mut egui::Ui, v: &[(&str, &str)]) {
 }
 
 trait GuiInfo {
-    fn device_info(&self, ui: &mut egui::Ui);
+    fn device_info(&self, ui: &mut egui::Ui, gl_vendor_info: &Option<String>);
     fn gfx_info(&self, ui: &mut egui::Ui);
     fn memory_info(&self, ui: &mut egui::Ui);
     fn cache_info(&self, ui: &mut egui::Ui);
@@ -50,7 +52,7 @@ trait GuiInfo {
 }
 
 impl GuiInfo for AppDeviceInfo {
-    fn device_info(&self, ui: &mut egui::Ui) {
+    fn device_info(&self, ui: &mut egui::Ui, gl_vendor_info: &Option<String>) {
         let dev_id = format!("{:#0X}.{:#0X}", self.ext_info.device_id(), self.ext_info.pci_rev_id());
 
         grid(ui, &[
@@ -58,6 +60,13 @@ impl GuiInfo for AppDeviceInfo {
             ("PCI (domain:bus:dev.func)", &self.pci_bus.to_string()),
             ("DeviceID.RevID", &dev_id),
         ]);
+
+        if let Some(gl) = gl_vendor_info {
+            ui.label("OpenGL");
+            ui.label(gl);
+            ui.end_row();
+        }
+
         ui.end_row();
     }
 
@@ -183,9 +192,9 @@ impl GuiInfo for AppDeviceInfo {
 }
 
 impl MyApp {
-    pub fn egui_app_device_info(&self, ui: &mut egui::Ui) {
+    pub fn egui_app_device_info(&self, ui: &mut egui::Ui, gl_vendor_info: &Option<String>) {
         egui::Grid::new("app_device_info").show(ui, |ui| {
-            self.app_device_info.device_info(ui);
+            self.app_device_info.device_info(ui, gl_vendor_info);
             self.app_device_info.gfx_info(ui);
             self.app_device_info.memory_info(ui);
             self.app_device_info.cache_info(ui);

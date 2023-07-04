@@ -99,7 +99,7 @@ pub fn run(
     let device_list = device_path_list.iter().flat_map(DeviceListMenu::new).collect();
     let command_path = std::fs::read_link("/proc/self/exe").unwrap_or(PathBuf::from(app_name));
 
-    let app = MyApp {
+    let mut app = MyApp {
         app_device_info,
         device_list,
         command_path,
@@ -111,6 +111,7 @@ pub fn run(
         buf_data: data.clone(),
         arc_data: Arc::new(Mutex::new(data)),
         show_sidepanel: true,
+        gl_vendor_info: None,
     };
 
     let options = eframe::NativeOptions {
@@ -220,7 +221,16 @@ pub fn run(
     eframe::run_native(
         title_with_version,
         options,
-        Box::new(|_cc| Box::new(app)),
+        Box::new(|cc| {
+            use eframe::glow::HasContext;
+
+            if let Some(ctx) = &cc.gl {
+                let ver = ctx.version().vendor_info.trim_start_matches("(Core Profile) ");
+                app.gl_vendor_info = Some(ver.to_string());
+            }
+
+            Box::new(app)
+        }),
     ).unwrap();
 }
 
@@ -258,7 +268,12 @@ impl MyApp {
         ui.set_min_width(360.0);
         egui::ScrollArea::both().show(ui, |ui| {
             ui.add_space(SPACE);
-            collapsing(ui, "Device Info", true, |ui| self.egui_app_device_info(ui));
+            collapsing(
+                ui,
+                "Device Info",
+                true,
+                |ui| self.egui_app_device_info(ui, &self.gl_vendor_info),
+            );
 
             ui.add_space(SPACE);
             collapsing(ui, "Hardware IP Info", false, |ui| self.egui_hw_ip_info(ui));
