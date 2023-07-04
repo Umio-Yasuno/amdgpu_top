@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
 Name=AMDGPU TOP (GUI)
-GenericName=AMDGPU TOP GUI mode
+GenericName=AMDGPU Monitoring Tool
 Exec=amdgpu_top --gui
-Categories=System;
+Categories=System;Monitor;
