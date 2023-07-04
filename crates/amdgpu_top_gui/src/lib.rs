@@ -75,9 +75,13 @@ pub fn run(
     let mut grbm2_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm2.index.len()];
     let mut fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
     let mut sensors_history = SensorsHistory::new();
-    let (support_pcie_bw, share_pcie_bw) = {
+    let share_pcie_bw = {
         let pcie_bw = PcieBw::new(&sysfs_path);
-        (pcie_bw.check_pcie_bw_support(&ext_info), pcie_bw.spawn_update_thread())
+        if pcie_bw.check_pcie_bw_support(&ext_info) {
+            Some(pcie_bw.spawn_update_thread())
+        } else {
+            None
+        }
     };
     let mut pcie_bw_history: History<(u64, u64)> = History::new(HISTORY_LENGTH, f32::INFINITY);
 
@@ -105,7 +109,7 @@ pub fn run(
         command_path,
         hw_ip_info: libamdgpu_top::get_hw_ip_info_list(&amdgpu_dev),
         has_vcn_unified: libamdgpu_top::has_vcn_unified(&amdgpu_dev),
-        support_pcie_bw,
+        support_pcie_bw: share_pcie_bw.is_some(),
         fdinfo_sort: Default::default(),
         reverse_sort: false,
         buf_data: data.clone(),
@@ -171,8 +175,8 @@ pub fn run(
                 gpu_metrics = v;
             }
 
-            {
-                let lock = share_pcie_bw.try_lock();
+            if let Some(arc_pcie_bw) = &share_pcie_bw {
+                let lock = arc_pcie_bw.try_lock();
                 if let Ok(pcie_bw) = lock {
                     if let (Some(sent), Some(rec), Some(mps)) = (
                         pcie_bw.sent,

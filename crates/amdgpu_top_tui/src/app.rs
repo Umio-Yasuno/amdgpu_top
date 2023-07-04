@@ -21,9 +21,8 @@ pub(crate) struct TuiApp {
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
     pub gpu_metrics: GpuMetricsView,
     pub vram_usage: VramUsageView,
-    pub support_pcie_bw: bool,
     pub sensors: SensorsView,
-    pub arc_pcie_bw: Arc<Mutex<PcieBw>>,
+    pub arc_pcie_bw: Option<Arc<Mutex<PcieBw>>>,
 }
 
 impl TuiApp {
@@ -66,9 +65,14 @@ impl TuiApp {
         };
 
         let gpu_metrics = GpuMetricsView::new(&amdgpu_dev);
-        let (support_pcie_bw, arc_pcie_bw) = {
+        let arc_pcie_bw = {
             let pcie_bw = PcieBw::new(pci_bus.get_sysfs_path());
-            (pcie_bw.check_pcie_bw_support(ext_info), pcie_bw.spawn_update_thread())
+
+            if pcie_bw.check_pcie_bw_support(ext_info) {
+                Some(pcie_bw.spawn_update_thread())
+            } else {
+                None
+            }
         };
 
         Self {
@@ -82,7 +86,6 @@ impl TuiApp {
             arc_proc_index,
             fdinfo,
             vram_usage,
-            support_pcie_bw,
             sensors: sensors_view,
             arc_pcie_bw,
             gpu_metrics,
@@ -152,8 +155,8 @@ impl TuiApp {
             self.sensors.update(&self.amdgpu_dev);
             self.sensors.print().unwrap();
 
-            if self.support_pcie_bw {
-                let lock = self.arc_pcie_bw.try_lock();
+            if let Some(arc_pcie_bw) = &self.arc_pcie_bw {
+                let lock = arc_pcie_bw.try_lock();
                 if let Ok(ref pcie_bw) = lock {
                     self.sensors.print_pcie_bw(pcie_bw).unwrap();
                 }
