@@ -235,7 +235,11 @@ pub fn run(
 
             Box::new(app)
         }),
-    ).unwrap();
+    ).unwrap_or_else(|err| {
+        eprintln!("Failed to set up a graphics context (OpenGL).");
+        eprintln!("{err}");
+        panic!();
+    });
 }
 
 impl MyApp {
