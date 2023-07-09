@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=AMDGPU TOP (TUI)
+GenericName=AMDGPU Monitoring Tool
+Exec=amdgpu_top
+Terminal=true
+Categories=System;Monitor;
