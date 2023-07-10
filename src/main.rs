@@ -1,4 +1,4 @@
-use libamdgpu_top::DevicePath;
+use libamdgpu_top::{DevicePath, PCI};
 use libamdgpu_top::AMDGPU::DeviceHandle;
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
@@ -11,6 +11,11 @@ mod dump_info;
 fn main() {
     let main_opt = MainOpt::parse();
     let device_path_list = DevicePath::get_device_path_list();
+
+    if device_path_list.is_empty() {
+        eprintln!("There are no AMD GPU devices found.");
+        panic!();
+    }
 
     if main_opt.list {
         device_list(AppMode::Dump == main_opt.app_mode, &device_path_list);
@@ -83,18 +88,25 @@ pub fn device_list(dump_info: bool, list: &[DevicePath]) {
 pub fn from_main_opt(main_opt: &MainOpt, list: &[DevicePath]) -> (DevicePath, DeviceHandle) {
     // default
     if main_opt.instance == 0 && main_opt.pci_path.is_none() {
-        return DevicePath::init_with_fallback(main_opt.instance, &main_opt.pci_path, list);
+        return DevicePath::init_with_fallback(main_opt.instance, list);
     }
 
-    let device_path = if let Some(ref pci_path) = main_opt.pci_path {
-        DevicePath::from_pci(pci_path).unwrap_or_else(|err| {
+    let device_path = if let Some(pci_path) = &main_opt.pci_path {
+        let pci = pci_path.parse::<PCI::BUS_INFO>().unwrap_or_else(|_| {
+            eprintln!("Failed to parse from {pci_path:?} to `PCI::BUS_INFO`");
+            panic!();
+        });
+
+        DevicePath::try_from(pci).unwrap_or_else(|err| {
             eprintln!("{err}");
+            eprintln!("pci_path: {pci_path:?}");
             eprintln!("Device list: {list:#?}");
             panic!();
         })
     } else {
         DevicePath::new(main_opt.instance)
     };
+
     let amdgpu_dev = device_path.init().unwrap_or_else(|err| {
         eprintln!("{err}");
         eprintln!("{:?}", device_path);

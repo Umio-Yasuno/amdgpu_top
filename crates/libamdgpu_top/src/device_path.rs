@@ -4,6 +4,8 @@ use std::path::PathBuf;
 use std::fs;
 use std::fmt;
 
+const DRM_RENDER: u32 = 128;
+
 #[derive(Clone)]
 pub struct DevicePath {
     pub render: PathBuf,
@@ -14,34 +16,10 @@ pub struct DevicePath {
 impl DevicePath {
     pub fn new(instance: u32) -> Self {
         Self {
-            render: PathBuf::from(format!("/dev/dri/renderD{}", 128 + instance)),
+            render: PathBuf::from(format!("/dev/dri/renderD{}", DRM_RENDER + instance)),
             card: PathBuf::from(format!("/dev/dri/card{}", instance)),
             pci: None,
         }
-    }
-
-    pub fn from_pci(pci_path: &str) -> anyhow::Result<Self> {
-        let base = PathBuf::from("/dev/dri/by-path");
-
-        let [render, card] = ["render", "card"].map(|v| {
-            let name = format!("pci-{pci_path}-{v}");
-            let link = fs::read_link(base.join(&name)).map_err(|err| {
-                eprintln!("Error: {err}");
-                eprintln!("path: {name}");
-
-                anyhow!(format!("pci: {pci_path}"))
-            })?;
-
-            fs::canonicalize(base.join(link)).map_err(|err| anyhow!(err))
-        });
-
-        let pci = PCI::BUS_INFO::from_number_str(pci_path); // pci_path.parse().ok()
-
-        Ok(Self {
-            render: render?,
-            card: card?,
-            pci,
-        })
     }
 
     pub fn init(&self) -> anyhow::Result<DeviceHandle> {
@@ -52,21 +30,15 @@ impl DevicePath {
             // https://gitlab.freedesktop.org/mesa/mesa/-/issues/2424
             let f = fs::OpenOptions::new().read(true).write(true).open(&self.render)?;
 
-            DeviceHandle::init(f.into_raw_fd()).map_err(|v| anyhow!(v))
-                .context("Failed DeviceHandle::init")?
+            DeviceHandle::init(f.into_raw_fd())
+                .map_err(|v| anyhow!(v))
+                .context("Failed to DeviceHandle::init")?
         };
 
         Ok(amdgpu_dev)
     }
 
-    fn fallback(instance: u32, pci_path: &Option<String>) -> anyhow::Result<(Self, DeviceHandle)> {
-        if let Some(ref pci_path) = pci_path {
-            let device_path = Self::from_pci(pci_path)?;
-            let amdgpu_dev = device_path.init()?;
-
-            return Ok((device_path, amdgpu_dev));
-        }
-
+    fn fallback(instance: u32) -> anyhow::Result<(Self, DeviceHandle)> {
         let device_path = Self::new(instance);
         let amdgpu_dev = match device_path.init() {
             Ok(amdgpu_dev) => amdgpu_dev,
@@ -81,13 +53,12 @@ impl DevicePath {
 
     pub fn init_with_fallback(
         instance: u32,
-        pci_path: &Option<String>,
         list: &[Self],
     ) -> (Self, DeviceHandle) {
-        Self::fallback(instance, pci_path).unwrap_or_else(|err| {
+        Self::fallback(instance).unwrap_or_else(|err| {
             eprintln!("{err}");
             eprintln!("Fallback: list: {list:#?}");
-            let device_path = DevicePath::fallback_device_path(list);
+            let device_path = list[0].clone();
             let amdgpu_dev = device_path.init().unwrap();
             eprintln!("Fallback: to: {device_path:?}");
 
@@ -96,48 +67,42 @@ impl DevicePath {
     }
 
     pub fn get_instance_number(&self) -> Option<u32> {
-        let card = self.card.to_str()?;
-
-        card.trim_start_matches("/dev/dri/card").parse::<u32>().ok()
+        self.card
+            .to_str()?
+            .trim_start_matches("/dev/dri/card")
+            .parse::<u32>().ok()
     }
 
     pub fn get_device_path_list() -> Vec<Self> {
-        let mut dev_paths = Vec::new();
+        let amdgpu_devices = fs::read_dir("/sys/bus/pci/drivers/amdgpu").unwrap();
 
-        const PRE: usize = "pci-".len();
-        const PCI: usize = "0000:00:00.0".len();
-        const SYS_BUS: &str = "/sys/bus/pci/devices/";
+        amdgpu_devices.flat_map(|v| {
+            let name = v.ok()?.file_name();
+            let pci = name.into_string().ok()?.parse::<PCI::BUS_INFO>().ok()?;
 
-        let by_path = fs::read_dir("/dev/dri/by-path").unwrap();
-
-        for path in by_path.flatten() {
-            // "pci-0000:06:00.0-render"
-            let Ok(path) = path.file_name().into_string() else { continue };
-            if !path.ends_with("render") { continue }
-
-            let pci = {
-                if path.len() < PRE+PCI { continue }
-                &path[PRE..PRE+PCI]
-            };
-
-            let Ok(uevent) = fs::read_to_string(
-                PathBuf::from(SYS_BUS).join(pci).join("uevent")
-            ) else { continue };
-
-            if uevent.lines().any(|line| line.starts_with("DRIVER=amdgpu")) {
-                if let Ok(path) = DevicePath::from_pci(pci) {
-                    dev_paths.push(path);
-                }
-            }
-        }
-
-        if dev_paths.is_empty() { panic!("AMD GPU not found.") };
-
-        dev_paths
+            Self::try_from(pci).ok()
+        }).collect()
     }
+}
 
-    pub fn fallback_device_path(list: &[Self]) -> Self {
-        list.get(0).unwrap_or_else(|| panic!("AMD GPU not found.")).clone()
+impl TryFrom<PCI::BUS_INFO> for DevicePath {
+    type Error = std::io::Error;
+
+    fn try_from(pci: PCI::BUS_INFO) -> Result<Self, Self::Error> {
+        let base = PathBuf::from("/dev/dri/by-path");
+
+        let [render, card] = ["render", "card"].map(|v| -> std::io::Result<PathBuf> {
+            let name = format!("pci-{pci}-{v}");
+            let link = fs::read_link(base.join(name))?;
+
+            fs::canonicalize(base.join(link))
+        });
+
+        Ok(Self {
+            render: render?,
+            card: card?,
+            pci: Some(pci),
+        })
     }
 }
 
