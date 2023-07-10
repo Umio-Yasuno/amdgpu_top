@@ -14,7 +14,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
-    let sensors = Sensors::new(amdgpu_dev, &pci_bus, ext_info.get_asic_name());
+    let sensors = Sensors::new(amdgpu_dev, &pci_bus, &ext_info);
 
     let info = AppDeviceInfo::new(amdgpu_dev, &ext_info, &memory_info, &sensors);
 
@@ -62,11 +62,13 @@ fn sensors_info(sensors: &Sensors) {
     if let Some(fan_max_rpm) = &sensors.fan_max_rpm {
         println!("Fan RPM (Max)       : {fan_max_rpm} RPM");
     }
-    if let Some(min) = &sensors.min_link {
-        println!("PCIe Link Speed     : Gen{}x{} (Min)", min.gen, min.width);
-    }
-    if let Some(max) = &sensors.max_link {
-        println!("PCIe Link Speed     : Gen{}x{} (Max)", max.gen, max.width);
+    for (link, label) in [
+        (&sensors.min_link, "(Min)"),
+        (&sensors.max_link, "(Max)"),
+        (&sensors.max_system_link, "(System, Max)"),
+    ] {
+        let Some(link) = link else { continue };
+        println!("PCIe Link Speed     : Gen{}x{:<2} {label}", link.gen, link.width);
     }
 }
 

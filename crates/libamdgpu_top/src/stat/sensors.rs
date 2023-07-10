@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use libdrm_amdgpu_sys::{
     PCI,
     AMDGPU::{
+        drm_amdgpu_info_device,
+        GPU_INFO,
         ASIC_NAME,
         DeviceHandle,
         HwmonTemp,
@@ -16,10 +18,12 @@ use super::parse_hwmon;
 #[derive(Clone, Debug)]
 pub struct Sensors {
     pub hwmon_path: PathBuf,
+    pub is_apu: bool,
     pub vega10_and_later: bool,
     pub cur_link: Option<PCI::LINK>,
     pub min_link: Option<PCI::LINK>,
     pub max_link: Option<PCI::LINK>,
+    pub max_system_link: Option<PCI::LINK>,
     pub bus_info: PCI::BUS_INFO,
     pub sclk: Option<u32>,
     pub mclk: Option<u32>,
@@ -35,8 +39,14 @@ pub struct Sensors {
 }
 
 impl Sensors {
-    pub fn new(amdgpu_dev: &DeviceHandle, pci_bus: &PCI::BUS_INFO, asic_name: ASIC_NAME) -> Self {
+    pub fn new(
+        amdgpu_dev: &DeviceHandle,
+        pci_bus: &PCI::BUS_INFO,
+        ext_info: &drm_amdgpu_info_device,
+    ) -> Self {
         let hwmon_path = pci_bus.get_hwmon_path().unwrap();
+        let asic_name = ext_info.get_asic_name();
+        let is_apu = ext_info.is_apu();
         let vega10_and_later = ASIC_NAME::CHIP_VEGA10 <= asic_name;
 
         // AMDGPU driver reports maximum number of PCIe lanes of Polaris11/Polaris12 as x16
@@ -64,6 +74,11 @@ impl Sensors {
                 Some(pci_bus.get_link_info(PCI::STATUS::Max)),
             ]
         };
+        let max_system_link = if is_apu {
+            None
+        } else {
+            Self::get_max_system_link(pci_bus)
+        };
 
         let [sclk, mclk, vddnb, vddgfx, power] = [
             amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_SCLK).ok(),
@@ -82,10 +97,12 @@ impl Sensors {
 
         Self {
             hwmon_path,
+            is_apu,
             vega10_and_later,
             cur_link,
             min_link,
             max_link,
+            max_system_link,
             bus_info: *pci_bus,
             sclk,
             mclk,
@@ -142,5 +159,28 @@ impl Sensors {
         }
 
         Ok(buf)
+    }
+
+    fn get_max_system_link(gpu_pci: &PCI::BUS_INFO) -> Option<PCI::LINK> {
+        let base_path = gpu_pci.get_sysfs_path().join("../");
+        let [s_speed, s_width] = ["max_link_speed", "max_link_width"].map(|name| {
+            let mut s = std::fs::read_to_string(base_path.join(name)).ok()?;
+            s.pop(); // trim `\n`
+
+            Some(s)
+        });
+
+        let gen = match s_speed?.as_str() {
+            "2.5 GT/s PCIe" => 1,
+            "5.0 GT/s PCIe" => 2,
+            "8.0 GT/s PCIe" => 3,
+            "16.0 GT/s PCIe" => 4,
+            "32.0 GT/s PCIe" => 5,
+            "64.0 GT/s PCIe" => 6,
+            _ => 0,
+        };
+        let width = s_width?.parse::<u8>().ok()?;
+
+        Some(PCI::LINK { gen, width })
     }
 }

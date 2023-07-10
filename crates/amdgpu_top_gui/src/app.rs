@@ -49,6 +49,7 @@ trait GuiInfo {
     fn power_cap_info(&self, ui: &mut egui::Ui);
     fn temp_info(&self, ui: &mut egui::Ui);
     fn fan_info(&self, ui: &mut egui::Ui);
+    fn link_info(&self, ui: &mut egui::Ui);
 }
 
 impl GuiInfo for AppDeviceInfo {
@@ -189,6 +190,24 @@ impl GuiInfo for AppDeviceInfo {
         ui.label(format!("{fan_rpm:4} RPM"));
         ui.end_row();
     }
+
+    fn link_info(&self, ui: &mut egui::Ui) {
+        if let [Some(min), Some(max)] = [&self.min_gpu_link, &self.max_gpu_link] {
+            ui.label("PCIe Link Speed");
+            ui.label(format!("Gen{}x{} - Gen{}x{}", min.gen, min.width, max.gen, max.width));
+            ui.end_row();
+        } else if let Some(max) = &self.max_gpu_link {
+            ui.label("PCIe Link Speed (Max)");
+            ui.label(format!("Gen{}x{}", max.gen, max.width));
+            ui.end_row();
+        }
+
+        if let Some(system) = &self.max_system_link {
+            ui.label("PCIe Link Speed (System, Max)");
+            ui.label(format!("Gen{}x{}", system.gen, system.width));
+            ui.end_row();
+        }
+    }
 }
 
 impl MyApp {
@@ -201,6 +220,7 @@ impl MyApp {
             self.app_device_info.power_cap_info(ui);
             self.app_device_info.temp_info(ui);
             self.app_device_info.fan_info(ui);
+            self.app_device_info.link_info(ui);
         });
     }
 

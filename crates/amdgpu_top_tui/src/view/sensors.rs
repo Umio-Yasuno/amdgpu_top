@@ -14,14 +14,6 @@ pub struct SensorsView {
 }
 
 impl SensorsView {
-/*
-    pub fn _new(amdgpu_dev: &DeviceHandle, pci_bus: &PCI::BUS_INFO) -> Self {
-        Self {
-            sensors: Sensors::new(amdgpu_dev, pci_bus),
-            text: Text::default(),
-        }
-    }
-*/
     pub fn new_with_sensors(sensors: Sensors) -> Self {
         Self {
             sensors,

@@ -34,7 +34,7 @@ impl TuiApp {
     ) -> Self {
         let instance = device_path.get_instance_number().unwrap();
         let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
-        let sensors = Sensors::new(&amdgpu_dev, &pci_bus, ext_info.get_asic_name());
+        let sensors = Sensors::new(&amdgpu_dev, &pci_bus, ext_info);
         let device_info = info_bar(
             &amdgpu_dev,
             ext_info,
