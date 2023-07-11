@@ -23,6 +23,7 @@ pub struct Sensors {
     pub current_link: Option<PCI::LINK>,
     pub min_dpm_link: Option<PCI::LINK>,
     pub max_dpm_link: Option<PCI::LINK>,
+    pub max_gpu_link: Option<PCI::LINK>,
     pub max_system_link: Option<PCI::LINK>,
     pub bus_info: PCI::BUS_INFO,
     pub sclk: Option<u32>,
@@ -56,8 +57,8 @@ impl Sensors {
         // However, recent AMD GPUs have multiple endpoints, and the PCIe speed/width actually 
         // runs in that system for the GPU is output to `pp_dpm_pcie`.
         // ref: <https://gitlab.freedesktop.org/drm/amd/-/issues/1967>
-        let [current_link, min_dpm_link, max_dpm_link, max_system_link] = if is_apu {
-            [None; 4]
+        let [current_link, min_dpm_link, max_dpm_link, max_gpu_link, max_system_link] = if is_apu {
+            [None; 5]
         } else if vega10_and_later {
             let [min, max] = match pci_bus.get_min_max_link_info_from_dpm() {
                 Some([min, max]) => [Some(min), Some(max)],
@@ -68,13 +69,21 @@ impl Sensors {
                 pci_bus.get_current_link_info_from_dpm(),
                 min,
                 max,
+                Some(pci_bus.get_link_info(PCI::STATUS::Max)),
                 Self::get_max_system_link(pci_bus),
             ]
         } else {
+            let min = match pci_bus.get_min_max_link_info_from_dpm() {
+                Some([min, _]) => Some(min),
+                None => None,
+            };
+            let max = pci_bus.get_link_info(PCI::STATUS::Max);
+
             [
                 Some(pci_bus.get_link_info(PCI::STATUS::Current)),
-                None,
-                Some(pci_bus.get_link_info(PCI::STATUS::Max)),
+                min,
+                Some(max.clone()),
+                Some(max.clone()),
                 Self::get_max_system_link(pci_bus),
             ]
         };
@@ -101,6 +110,7 @@ impl Sensors {
             current_link,
             min_dpm_link,
             max_dpm_link,
+            max_gpu_link,
             max_system_link,
             bus_info: *pci_bus,
             sclk,

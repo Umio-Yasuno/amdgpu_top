@@ -63,8 +63,9 @@ fn sensors_info(sensors: &Sensors) {
         println!("Fan RPM (Max)       : {fan_max_rpm} RPM");
     }
     for (link, label) in [
-        (&sensors.min_dpm_link, "(Min)"),
-        (&sensors.max_dpm_link, "(Max)"),
+        (&sensors.min_dpm_link, "(DPM, Min)"),
+        (&sensors.max_dpm_link, "(DPM, Max)"),
+        (&sensors.max_gpu_link, "(GPU, Max)"),
         (&sensors.max_system_link, "(System, Max)"),
     ] {
         let Some(link) = link else { continue };

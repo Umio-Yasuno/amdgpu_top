@@ -202,6 +202,12 @@ impl GuiInfo for AppDeviceInfo {
             ui.end_row();
         }
 
+        if let Some(gpu) = &self.max_gpu_link {
+            ui.label("PCIe Link Speed (GPU, Max)");
+            ui.label(format!("Gen{}x{}", gpu.gen, gpu.width));
+            ui.end_row();
+        }
+
         if let Some(system) = &self.max_system_link {
             ui.label("PCIe Link Speed (System, Max)");
             ui.label(format!("Gen{}x{}", system.gen, system.width));
