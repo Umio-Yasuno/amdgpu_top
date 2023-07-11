@@ -62,6 +62,23 @@ fn sensors_info(sensors: &Sensors) {
     if let Some(fan_max_rpm) = &sensors.fan_max_rpm {
         println!("Fan RPM (Max)       : {fan_max_rpm} RPM");
     }
+
+    const PCIE_LABEL: &str = "PCIe Link Speed";
+    const PCIE_LEN: usize = 14;
+
+    if let [Some(min), Some(max)] = [&sensors.min_dpm_link, &sensors.max_dpm_link] {
+        println!(
+            "{PCIE_LABEL} {:PCIE_LEN$}: Gen{}x{:<2} - Gen{}x{:<2}",
+            "(DPM, Min-Max)",
+            min.gen,
+            min.width,
+            max.gen,
+            max.width,
+        );
+    } else if let Some(max) = &sensors.max_dpm_link {
+        println!("{PCIE_LABEL} {:PCIE_LEN$}: Gen{}x{:<2}", "(DPM, Max)", max.gen, max.width);
+    }
+
     for (link, label) in [
         (&sensors.min_dpm_link, "(DPM, Min)"),
         (&sensors.max_dpm_link, "(DPM, Max)"),
@@ -69,7 +86,7 @@ fn sensors_info(sensors: &Sensors) {
         (&sensors.max_system_link, "(System, Max)"),
     ] {
         let Some(link) = link else { continue };
-        println!("PCIe Link Speed     : Gen{}x{:<2} {label}", link.gen, link.width);
+        println!("{PCIE_LABEL} {label:PCIE_LEN$}: Gen{}x{:<2}", link.gen, link.width);
     }
 }
 

@@ -193,11 +193,11 @@ impl GuiInfo for AppDeviceInfo {
 
     fn link_info(&self, ui: &mut egui::Ui) {
         if let [Some(min), Some(max)] = [&self.min_dpm_link, &self.max_dpm_link] {
-            ui.label("PCIe Link Speed");
+            ui.label("PCIe Link Speed (DPM)");
             ui.label(format!("Gen{}x{} - Gen{}x{}", min.gen, min.width, max.gen, max.width));
             ui.end_row();
         } else if let Some(max) = &self.max_dpm_link {
-            ui.label("PCIe Link Speed (Max)");
+            ui.label("PCIe Link Speed (DPM, Max)");
             ui.label(format!("Gen{}x{}", max.gen, max.width));
             ui.end_row();
         }
