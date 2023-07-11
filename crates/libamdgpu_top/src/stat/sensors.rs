@@ -20,9 +20,9 @@ pub struct Sensors {
     pub hwmon_path: PathBuf,
     pub is_apu: bool,
     pub vega10_and_later: bool,
-    pub cur_link: Option<PCI::LINK>,
-    pub min_link: Option<PCI::LINK>,
-    pub max_link: Option<PCI::LINK>,
+    pub current_link: Option<PCI::LINK>,
+    pub min_dpm_link: Option<PCI::LINK>,
+    pub max_dpm_link: Option<PCI::LINK>,
     pub max_system_link: Option<PCI::LINK>,
     pub bus_info: PCI::BUS_INFO,
     pub sclk: Option<u32>,
@@ -50,13 +50,13 @@ impl Sensors {
         let vega10_and_later = ASIC_NAME::CHIP_VEGA10 <= asic_name;
 
         // AMDGPU driver reports maximum number of PCIe lanes of Polaris11/Polaris12 as x16
-        // in `pp_dpm_pcie` (actually x8), so we use `{current,max}_link_{speed,width}`.  
+        // in `pp_dpm_pcie` (actually x8), so we use `{current,max}_link_{speed,width}`.
         // ref: drivers/gpu/drm/amd/pm/powerplay/hwmgr/smu7_hwmgr.c
         // 
-        // However, recent AMD GPUs have multiple endpoints, and the correct PCIe speed/width
-        // for the GPU is output to `pp_dpm_pcie`.  
+        // However, recent AMD GPUs have multiple endpoints, and the PCIe speed/width actually 
+        // runs in that system for the GPU is output to `pp_dpm_pcie`.
         // ref: <https://gitlab.freedesktop.org/drm/amd/-/issues/1967>
-        let [cur_link, min_link, max_link, max_system_link] = if is_apu {
+        let [current_link, min_dpm_link, max_dpm_link, max_system_link] = if is_apu {
             [None; 4]
         } else if vega10_and_later {
             let [min, max] = match pci_bus.get_min_max_link_info_from_dpm() {
@@ -98,9 +98,9 @@ impl Sensors {
             hwmon_path,
             is_apu,
             vega10_and_later,
-            cur_link,
-            min_link,
-            max_link,
+            current_link,
+            min_dpm_link,
+            max_dpm_link,
             max_system_link,
             bus_info: *pci_bus,
             sclk,
@@ -118,7 +118,9 @@ impl Sensors {
     }
 
     pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
-        self.cur_link = if self.vega10_and_later {
+        self.current_link = if self.is_apu {
+            None
+        } else if self.vega10_and_later {
             self.bus_info.get_current_link_info_from_dpm()
         } else {
             Some(self.bus_info.get_link_info(PCI::STATUS::Current))
@@ -140,11 +142,13 @@ impl Sensors {
     pub fn print_pcie_link(&self) -> Result<String, fmt::Error> {
         let mut buf = String::new();
 
-        if let Some(cur) = self.cur_link {
+        if let Some(cur) = self.current_link {
             write!(buf, "PCIe Link Speed => Gen{}x{:<2}", cur.gen, cur.width)?;
+        } else {
+            return Ok(buf);
         }
 
-        if let [Some(min), Some(max)] = [self.min_link, self.max_link] {
+        if let [Some(min), Some(max)] = [self.min_dpm_link, self.max_dpm_link] {
             write!(
                 buf,
                 " (Gen{}x{} - Gen{}x{})",
@@ -153,7 +157,7 @@ impl Sensors {
                 max.gen,
                 max.width,
             )?;
-        } else if let Some(max) = self.max_link {
+        } else if let Some(max) = self.max_dpm_link {
             write!(buf, " (Max. Gen{}x{})", max.gen, max.width)?;
         }
 
@@ -161,7 +165,7 @@ impl Sensors {
     }
 
     fn get_max_system_link(gpu_pci: &PCI::BUS_INFO) -> Option<PCI::LINK> {
-        let base_path = gpu_pci.get_sysfs_path().join("../");
+        let base_path = gpu_pci.get_sysfs_path().join("../"); // system pcie port
         let [s_speed, s_width] = ["max_link_speed", "max_link_width"].map(|name| {
             let mut s = std::fs::read_to_string(base_path.join(name)).ok()?;
             s.pop(); // trim `\n`
