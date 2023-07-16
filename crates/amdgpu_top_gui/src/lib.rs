@@ -273,8 +273,7 @@ impl MyApp {
     }
 
     fn egui_side_panel(&self, ui: &mut egui::Ui) {
-        ui.set_min_width(360.0);
-        egui::ScrollArea::both().show(ui, |ui| {
+        egui::ScrollArea::vertical().show(ui, |ui| {
             ui.add_space(SPACE);
             collapsing(
                 ui,
@@ -300,7 +299,7 @@ impl MyApp {
     }
 
     fn egui_central_panel(&mut self, ui: &mut egui::Ui) {
-        ui.set_min_width(540.0);
+        // ui.set_min_width(540.0);
         egui::ScrollArea::both().show(ui, |ui| {
             collapsing(ui, "GRBM", true, |ui| self.egui_perf_counter(
                 ui,
