@@ -68,6 +68,12 @@ impl SensorsHistory {
     }
 }
 
+impl Default for SensorsHistory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub fn label(text: &str, font: FontId) -> egui::Label {
     egui::Label::new(RichText::new(text).font(font)).sense(egui::Sense::click())
 }

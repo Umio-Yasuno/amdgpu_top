@@ -74,7 +74,7 @@ pub fn run(
     let mut grbm_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm.index.len()];
     let mut grbm2_history = vec![History::new(HISTORY_LENGTH, f32::INFINITY); grbm2.index.len()];
     let mut fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
-    let mut sensors_history = SensorsHistory::new();
+    let mut sensors_history = SensorsHistory::default();
     let share_pcie_bw = {
         let pcie_bw = PcieBw::new(&sysfs_path);
         if pcie_bw.check_pcie_bw_support(&ext_info) {
