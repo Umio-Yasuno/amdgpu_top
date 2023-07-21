@@ -63,7 +63,7 @@ impl GuiInfo for AppDeviceInfo {
         ]);
 
         if let Some(gl) = gl_vendor_info {
-            ui.label("OpenGL");
+            ui.label("OpenGL Driver Version");
             ui.label(gl);
             ui.end_row();
         }
