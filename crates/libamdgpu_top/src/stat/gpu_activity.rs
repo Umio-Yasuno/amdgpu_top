@@ -17,7 +17,7 @@ impl GpuActivity {
         let path = sysfs_path.into();
 
         if let Ok(metrics) = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&path) {
-            Some(Self::from(&metrics))
+            Some(Self::from_gpu_metrics(&metrics))
         } else {
             // Some Raven/Picasso/Raven2 APU always report gpu_busy_percent as 100.
             // ref: https://gitlab.freedesktop.org/drm/amd/-/issues/1932
@@ -30,6 +30,27 @@ impl GpuActivity {
         }
     }
 
+    pub fn from_gpu_metrics(metrics: &GpuMetrics) -> Self {
+        let Some(header) = metrics.get_header() else {
+            return Self { gfx: None, umc: None, media: None }
+        };
+
+        let [gfx, umc, media] = [
+            metrics.get_average_gfx_activity(),
+            metrics.get_average_umc_activity(),
+            metrics.get_average_mm_activity(),
+        ].map(|activity| activity.map(|v| {
+            if header.format_revision == 2 {
+                /* for APU (gpu_metrics v2.x) */
+                v.saturating_div(100)
+            } else {
+                v
+            }
+        }));
+
+        Self { gfx, umc, media }
+    }
+
     pub fn get_from_sysfs<P: Into<PathBuf>>(sysfs_path: P) -> Self {
         let path = sysfs_path.into();
         let [gfx, umc] = ["gpu_busy_percent", "mem_busy_percent"].map(|name| {
@@ -39,17 +60,5 @@ impl GpuActivity {
 
 
         Self { gfx, umc, media: None }
-    }
-}
-
-impl From<&GpuMetrics> for GpuActivity {
-    fn from(metrics: &GpuMetrics) -> Self {
-        let [gfx, umc, media] = [
-            metrics.get_average_gfx_activity(),
-            metrics.get_average_umc_activity(),
-            metrics.get_average_mm_activity(),
-        ].map(|activity| activity.map(|v| v.saturating_div(100)));
-
-        Self { gfx, umc, media }
     }
 }

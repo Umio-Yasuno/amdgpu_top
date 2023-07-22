@@ -169,7 +169,7 @@ impl SmiDeviceInfo {
 
         let metrics = self.amdgpu_dev.get_gpu_metrics_from_sysfs_path(&self.sysfs_path).ok();
         let activity = if let Some(metrics) = &metrics {
-            GpuActivity::from(metrics)
+            GpuActivity::from_gpu_metrics(metrics)
         } else if let FAMILY_NAME::RV = self.family_name {
             // Some Raven/Picasso/Raven2 APU always report gpu_busy_percent as 100.
             // ref: https://gitlab.freedesktop.org/drm/amd/-/issues/1932
