@@ -849,13 +849,18 @@ fn socket_power(ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
 fn avg_activity(ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
     ui.horizontal(|ui| {
         ui.label("Average Activity =>");
+        let activity = stat::GpuActivity::from_gpu_metrics(gpu_metrics);
+
         for (val, label) in [
-            (gpu_metrics.get_average_gfx_activity(), "GFX"),
-            (gpu_metrics.get_average_umc_activity(), "UMC"),
-            (gpu_metrics.get_average_mm_activity(), "Media"),
+            (activity.gfx, "GFX"),
+            (activity.umc, "UMC"),
+            (activity.media, "Media"),
         ] {
-            let v = check_metrics_val(val.map(|v| v.saturating_div(100)));
-            ui.label(format!("{label} {v:>3}%,"));
+            if let Some(val) = val {
+                ui.label(format!("{label} {val:>3}%,"));
+            } else {
+                ui.label(format!("{label} ___%,"));
+            }
         }
     });
 }

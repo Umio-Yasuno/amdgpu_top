@@ -2,7 +2,7 @@ use std::fmt::{self, Write};
 use super::Text;
 use crate::Opt;
 use libamdgpu_top::AMDGPU::{DeviceHandle, GpuMetrics, MetricsInfo};
-use libamdgpu_top::stat::gpu_metrics_util::*;
+use libamdgpu_top::stat::{gpu_metrics_util::*, GpuActivity};
 use std::path::PathBuf;
 
 const CORE_TEMP_LABEL: &str = "Core Temp (C)";
@@ -245,14 +245,20 @@ fn socket_power(buf: &mut String, gpu_metrics: &GpuMetrics) -> Result<(), fmt::E
 
 fn avg_activity(buf: &mut String, gpu_metrics: &GpuMetrics) -> Result<(), fmt::Error> {
     write!(buf, " Average Activity => ")?;
+    let activity = GpuActivity::from_gpu_metrics(gpu_metrics);
+
     for (val, label) in [
-        (gpu_metrics.get_average_gfx_activity(), "GFX"),
-        (gpu_metrics.get_average_umc_activity(), "UMC"),
-        (gpu_metrics.get_average_mm_activity(), "Media"),
+        (activity.gfx, "GFX"),
+        (activity.umc, "UMC"),
+        (activity.media, "Media"),
     ] {
-        let v = check_metrics_val(val.map(|v| v.saturating_div(100)));
-        write!(buf, "{label} {v:>3}%, ")?;
+        if let Some(val) = val {
+            write!(buf, "{label} {val:>3}%, ")?;
+        } else {
+            write!(buf, "{label} ___%, ")?;
+        }
     }
+
     writeln!(buf)
 }
 
