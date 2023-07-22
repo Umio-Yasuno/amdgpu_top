@@ -69,7 +69,7 @@ impl Sensors {
                 pci_bus.get_current_link_info_from_dpm(),
                 min,
                 max,
-                Some(pci_bus.get_link_info(PCI::STATUS::Max)),
+                Self::get_max_gpu_link(pci_bus),
                 Self::get_max_system_link(pci_bus),
             ]
         } else {
@@ -174,10 +174,40 @@ impl Sensors {
         Ok(buf)
     }
 
+    fn get_max_gpu_link(gpu_pci: &PCI::BUS_INFO) -> Option<PCI::LINK> {
+        let mut tmp = Self::get_system_pcie_port_sysfs_path(gpu_pci);
+
+        tmp.pop();
+
+        Self::get_max_link(&tmp)
+    }
+
     fn get_max_system_link(gpu_pci: &PCI::BUS_INFO) -> Option<PCI::LINK> {
-        let base_path = gpu_pci.get_sysfs_path().join("../"); // system pcie port
+        Self::get_max_link(&Self::get_system_pcie_port_sysfs_path(gpu_pci))
+    }
+
+    fn get_system_pcie_port_sysfs_path(gpu_pci: &PCI::BUS_INFO) -> PathBuf {
+        const NAVI10_UPSTREAM_PORT: &str = "0x1478\n";
+        const NAVI10_DOWNSTREAM_PORT: &str = "0x1479\n";
+
+        let mut tmp = gpu_pci.get_sysfs_path().join("../"); // pcie port
+
+        loop {
+            let Ok(did) = std::fs::read_to_string(&tmp.join("device")) else { break };
+
+            if &did == NAVI10_UPSTREAM_PORT || &did == NAVI10_DOWNSTREAM_PORT {
+                tmp.push("../");
+            } else {
+                break;
+            }
+        }
+
+        tmp
+    }
+
+    fn get_max_link(sysfs_path: &PathBuf) -> Option<PCI::LINK> {
         let [s_speed, s_width] = ["max_link_speed", "max_link_width"].map(|name| {
-            let mut s = std::fs::read_to_string(base_path.join(name)).ok()?;
+            let mut s = std::fs::read_to_string(sysfs_path.join(name)).ok()?;
             s.pop(); // trim `\n`
 
             Some(s)
