@@ -107,7 +107,6 @@ pub fn run(
         app_device_info,
         device_list,
         command_path,
-        hw_ip_info: libamdgpu_top::get_hw_ip_info_list(&amdgpu_dev),
         has_vcn_unified: libamdgpu_top::has_vcn_unified(&amdgpu_dev),
         support_pcie_bw: share_pcie_bw.is_some(),
         fdinfo_sort: Default::default(),
@@ -281,9 +280,6 @@ impl MyApp {
                 true,
                 |ui| self.egui_app_device_info(ui, &self.gl_vendor_info),
             );
-
-            ui.add_space(SPACE);
-            collapsing(ui, "Hardware IP Info", false, |ui| self.egui_hw_ip_info(ui));
 
             if !self.app_device_info.ip_die_entries.is_empty() {
                 ui.add_space(SPACE);

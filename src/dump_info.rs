@@ -1,7 +1,6 @@
 use libamdgpu_top::{
     AMDGPU::{
         VIDEO_CAPS::CODEC,
-        HW_IP::HwIpInfo,
         FW_VERSION::FW_TYPE,
         DeviceHandle,
         GPU_INFO,
@@ -31,7 +30,6 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     if !info.ip_die_entries.is_empty() {
         info.ip_discovery_table();
     }
-    hw_ip_info(&libamdgpu_top::get_hw_ip_info_list(&amdgpu_dev));
     fw_info(amdgpu_dev);
     info.codec_info();
     info.vbios_info();
@@ -90,21 +88,6 @@ fn sensors_info(sensors: &Sensors) {
     ] {
         let Some(link) = link else { continue };
         println!("{PCIE_LABEL} {label:PCIE_LEN$}: Gen{}x{:<2}", link.gen, link.width);
-    }
-}
-
-fn hw_ip_info(hw_ip_list: &[HwIpInfo]) {
-    println!("\nHardware IP info:");
-
-    for hw_ip in hw_ip_list {
-        println!(
-            "    {ip_type:8} count: {ip_count}, ver: {major:2}.{minor}, queues: {queues}",
-            ip_type = hw_ip.ip_type.to_string(),
-            ip_count = hw_ip.count,
-            major = hw_ip.info.hw_ip_version_major,
-            minor = hw_ip.info.hw_ip_version_minor,
-            queues = hw_ip.info.num_queues(),
-        );
     }
 }
 
