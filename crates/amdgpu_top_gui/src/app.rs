@@ -10,6 +10,7 @@ use libamdgpu_top::AMDGPU::{
     MetricsInfo,
     GPU_INFO,
     HW_IP::HwIpInfo,
+    IpDieEntry,
 };
 use libamdgpu_top::stat::{self, gpu_metrics_util::*, FdInfoSortType, PerfCounter};
 
@@ -227,6 +228,40 @@ impl MyApp {
             self.app_device_info.temp_info(ui);
             self.app_device_info.fan_info(ui);
             self.app_device_info.link_info(ui);
+        });
+    }
+
+    pub fn egui_ip_discovery_table(&self, ui: &mut egui::Ui) {
+        for die in &self.app_device_info.ip_die_entries {
+            let label = format!("Die: {}", die.die_id);
+            collapsing(ui, &label, false, |ui| Self::egui_ip_discovery_table_per_die(die, ui));
+        }
+    }
+
+    pub fn egui_ip_discovery_table_per_die(ip_die_entry: &IpDieEntry, ui: &mut egui::Ui) {
+        egui::Grid::new(format!("ip_discovery_table die{}", ip_die_entry.die_id)).show(ui, |ui| {
+            ui.label("IP HW").highlight();
+            ui.label("version").highlight();
+            ui.label("num").highlight();
+            ui.end_row();
+
+            for ip_hw in &ip_die_entry.ip_hw_ids {
+                let hw_id = ip_hw.hw_id.to_string();
+                let Some(inst) = ip_hw.instances.first() else { continue };
+                /*
+                println!(
+                    "        {hw_id:<10} num: {}, ver: {:>3}.{}.{}",
+                    ip_hw.instances.len(),
+                    inst_info.major,
+                    inst_info.minor,
+                    inst_info.revision,
+                );
+                */
+                ui.label(hw_id);
+                ui.label(format!("{}.{}.{}", inst.major, inst.minor, inst.revision));
+                ui.label(ip_hw.instances.len().to_string());
+                ui.end_row();
+            }
         });
     }
 

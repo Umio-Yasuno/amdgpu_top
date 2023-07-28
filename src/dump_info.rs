@@ -28,6 +28,9 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     info.memory_info();
     sensors_info(&sensors);
     info.cache_info();
+    if !info.ip_die_entries.is_empty() {
+        info.ip_discovery_table();
+    }
     hw_ip_info(&libamdgpu_top::get_hw_ip_info_list(&amdgpu_dev));
     fw_info(amdgpu_dev);
     info.codec_info();
@@ -155,6 +158,7 @@ trait DumpInfo {
     fn cache_info(&self);
     fn vbios_info(&self);
     fn codec_info(&self);
+    fn ip_discovery_table(&self);
 }
 
 impl DumpInfo for AppDeviceInfo {
@@ -286,6 +290,25 @@ impl DumpInfo for AppDeviceInfo {
                 }
             });
             println!("    {codec:10}: {dec:>12} (Decode), {enc:>12} (Encode)");
+        }
+    }
+
+    fn ip_discovery_table(&self) {
+        println!("\nIP Discovery table:");
+        for die in &self.ip_die_entries {
+            println!("    die_id: {:>2}", die.die_id);
+
+            for ip_hw in &die.ip_hw_ids {
+                let hw_id = ip_hw.hw_id.to_string();
+                let Some(inst_info) = ip_hw.instances.first() else { continue };
+                println!(
+                    "        {hw_id:<10} num: {}, ver: {:>3}.{}.{}",
+                    ip_hw.instances.len(),
+                    inst_info.major,
+                    inst_info.minor,
+                    inst_info.revision,
+                );
+            }
         }
     }
 }

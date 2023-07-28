@@ -285,6 +285,11 @@ impl MyApp {
             ui.add_space(SPACE);
             collapsing(ui, "Hardware IP Info", false, |ui| self.egui_hw_ip_info(ui));
 
+            if !self.app_device_info.ip_die_entries.is_empty() {
+                ui.add_space(SPACE);
+                collapsing(ui, "IP Discovery table", false, |ui| self.egui_ip_discovery_table(ui));
+            }
+
             if self.app_device_info.decode.is_some() && self.app_device_info.encode.is_some() {
                 ui.add_space(SPACE);
                 collapsing(ui, "Video Caps Info", false, |ui| self.egui_video_caps_info(ui));

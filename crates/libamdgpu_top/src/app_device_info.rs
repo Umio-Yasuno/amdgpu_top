@@ -4,6 +4,7 @@ use crate::AMDGPU::{
     drm_amdgpu_memory_info,
     GPU_INFO,
     HwmonTemp,
+    IpDieEntry,
     PowerCap,
     VBIOS::VbiosInfo,
     VIDEO_CAPS::{CAP_TYPE, VideoCapsInfo},
@@ -38,6 +39,7 @@ pub struct AppDeviceInfo {
     pub gl1_cache_size_kib_per_sa: u32,
     pub total_l2_cache_size_kib: u32,
     pub total_l3_cache_size_mib: u32,
+    pub ip_die_entries: Vec<IpDieEntry>,
 }
 
 impl AppDeviceInfo {
@@ -53,6 +55,8 @@ impl AppDeviceInfo {
             .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
         let resizable_bar = memory_info.check_resizable_bar();
         let marketing_name = amdgpu_dev.get_marketing_name_or_default();
+        let sysfs_path = sensors.bus_info.get_sysfs_path();
+        let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);
 
         Self {
             ext_info: *ext_info,
@@ -81,6 +85,7 @@ impl AppDeviceInfo {
             gl1_cache_size_kib_per_sa: ext_info.get_gl1_cache_size() >> 10,
             total_l2_cache_size_kib: ext_info.calc_l2_cache_size() >> 10,
             total_l3_cache_size_mib: ext_info.calc_l3_cache_size_mb(),
+            ip_die_entries,
         }
     }
 }
