@@ -3,7 +3,7 @@ use libamdgpu_top::{
     AMDGPU::{GpuMetrics, MetricsInfo},
     VramUsage,
 };
-use stat::{FdInfoStat, Sensors, PerfCounter};
+use stat::{FdInfoStat, GpuActivity, Sensors, PerfCounter};
 use serde_json::{json, Map, Value};
 
 pub trait OutputJson {
@@ -140,6 +140,28 @@ impl OutputJson for GpuMetrics {
                     .map(|v| v.to_string()).collect::<Vec<String>>()
             )),
         );
+
+        m.into()
+    }
+}
+
+impl OutputJson for GpuActivity {
+    fn json(&self) -> Value {
+        let mut m = Map::new();
+
+        for (s, usage) in [
+            ("GFX", &self.gfx),
+            ("Memory", &self.umc),
+            ("MediaEngine", &self.media),
+        ] {
+            m.insert(
+                s.to_string(),
+                json!({
+                    "value": usage,
+                    "unit": "%",
+                }),
+            );
+        }
 
         m.into()
     }

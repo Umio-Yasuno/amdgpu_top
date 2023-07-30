@@ -1,6 +1,6 @@
 use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO};
 use libamdgpu_top::{DevicePath, stat, VramUsage};
-use stat::{FdInfoStat, Sensors, PerfCounter};
+use stat::{FdInfoStat, GpuActivity, Sensors, PerfCounter};
 use serde_json::json;
 use std::time::{Duration, Instant};
 use std::sync::{Arc, Mutex};
@@ -20,6 +20,7 @@ pub fn run(
     let mark_name = amdgpu_dev.get_marketing_name_or_default();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
     let sysfs_path = pci_bus.get_sysfs_path();
+    let family = ext_info.get_family_name();
 
     let mut grbm = PerfCounter::new_with_chip_class(stat::PCType::GRBM, chip_class);
     let mut grbm2 = PerfCounter::new_with_chip_class(stat::PCType::GRBM2, chip_class);
@@ -80,6 +81,7 @@ pub fn run(
         }
 
         let metrics = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path).ok();
+        let gpu_activity = GpuActivity::get(&amdgpu_dev, &sysfs_path, family);
 
         let now = Instant::now();
         period = now.duration_since(base);
@@ -96,6 +98,7 @@ pub fn run(
             "Sensors": sensors.json(),
             "fdinfo": fdinfo.json(),
             "gpu_metrics": metrics.map(|m| m.json()),
+            "gpu_activity": gpu_activity.map(|a| a.json()),
         });
 
         grbm.bits.clear();
