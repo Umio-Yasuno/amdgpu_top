@@ -124,7 +124,7 @@ impl GpuMetricsView {
             ),
         ] {
             let [avg, cur] = [avg, cur].map(check_metrics_val);
-            writeln!(self.text.buf, " {name:<6} => Avg. {avg:4} MHz, Cur. {cur:4} MHz")?;
+            writeln!(self.text.buf, " {name:<6} => Avg. {avg:>4} MHz, Cur. {cur:>4} MHz")?;
         }
 
         // Only Aldebaran (MI200) supports it.
