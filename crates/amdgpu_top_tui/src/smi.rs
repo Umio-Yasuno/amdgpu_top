@@ -86,7 +86,7 @@ impl SmiDeviceInfo {
     fn info_header() -> TextView {
         let text = format!(concat!(
             "GPU  {name:<name_len$} {pad:9}|{pci:<16}|{vram:^18}|\n",
-            "SCLK    MCLK    VDDGFX  Power           | GFX% UMC%  MM% |{gtt:^18}|\n",
+            "SCLK    MCLK    VDDGFX  Power           | GFX% UMC%Media%|{gtt:^18}|\n",
             "Temp    {fan:<7} {thr:<THR_LEN$}|"
             ),
             name = "Name",
