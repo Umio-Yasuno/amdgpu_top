@@ -1,3 +1,6 @@
+// GRBM: Graphics Register Bus Management
+// ref: https://rocmdocs.amd.com/en/develop/understand/gpu_arch/mi200_performance_counters.html
+
 pub const GFX10_GRBM_INDEX: &[(&str, usize)] = &[
     ("Graphics Pipe", 31),
     ("Texture Pipe", 14),
