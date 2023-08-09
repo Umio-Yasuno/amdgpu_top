@@ -13,7 +13,7 @@ use libamdgpu_top::AMDGPU::{
 };
 use libamdgpu_top::stat::{self, gpu_metrics_util::*, FdInfoSortType, PerfCounter};
 
-use crate::{AppDeviceInfo, CentralData, GpuMetrics, util::*};
+use crate::{AppDeviceInfo, CentralData, GpuMetrics, util::*, fl};
 
 const PLOT_HEIGHT: f32 = 32.0;
 const PLOT_WIDTH: f32 = 240.0;
@@ -56,13 +56,13 @@ impl GuiInfo for AppDeviceInfo {
         let dev_id = format!("{:#0X}.{:#0X}", self.ext_info.device_id(), self.ext_info.pci_rev_id());
 
         grid(ui, &[
-            ("Device Name", &self.marketing_name),
-            ("PCI (domain:bus:dev.func)", &self.pci_bus.to_string()),
-            ("DeviceID.RevID", &dev_id),
+            (&fl!("device_name"), &self.marketing_name),
+            (&fl!("pci_bus"), &self.pci_bus.to_string()),
+            (&fl!("did_rid"), &dev_id),
         ]);
 
         if let Some(gl) = gl_vendor_info {
-            ui.label("OpenGL Driver Version");
+            ui.label(&fl!("opengl_driver_ver"));
             ui.label(gl);
             ui.end_row();
         }
@@ -71,7 +71,7 @@ impl GuiInfo for AppDeviceInfo {
     }
 
     fn gfx_info(&self, ui: &mut egui::Ui) {
-        let gpu_type = if self.ext_info.is_apu() { "APU" } else { "dGPU" };
+        let gpu_type = if self.ext_info.is_apu() { fl!("apu") } else { fl!("dgpu") };
         let family = self.ext_info.get_family_name();
         let asic = self.ext_info.get_asic_name();
         let chip_class = self.ext_info.get_chip_class();
@@ -85,66 +85,74 @@ impl GuiInfo for AppDeviceInfo {
         let rb_pipes = self.ext_info.rb_pipes();
         let rop_count = self.ext_info.calc_rop_count();
         let rb_type = if asic.rbplus_allowed() {
-            "RenderBackendPlus (RB+)"
+            fl!("rb")
         } else {
-            "RenderBackend (RB)"
+            fl!("rb_plus")
         };
-        let peak_gp = format!("{} GP/s", rop_count * self.max_gpu_clk / 1000);
-        let peak_fp32 = format!("{} GFLOPS", self.ext_info.peak_gflops());
+        let peak_gp = format!("{} {}", rop_count * self.max_gpu_clk / 1000, fl!("gp_s"));
+        let peak_fp32 = format!("{} {}", self.ext_info.peak_gflops(), fl!("gflops"));
 
         grid(ui, &[
-            ("GPU Type", gpu_type),
-            ("Family", &family.to_string()),
-            ("ASIC Name", &asic.to_string()),
-            ("Chip Class", &chip_class.to_string()),
-            ("Shader Engine (SE)", &self.ext_info.max_se().to_string()),
-            ("Shader Array (SA/SH) per SE", &self.ext_info.max_sa_per_se().to_string()),
-            ("CU per SA", &cu_per_sa),
-            ("Total CU", &self.ext_info.cu_active_number().to_string()),
-            (rb_type, &format!("{rb_pipes} ({rop_count} ROPs)")),
-            ("Peak Pixel Fill-Rate", &peak_gp),
-            ("GPU Clock", &format!("{}-{} MHz", self.min_gpu_clk, self.max_gpu_clk)),
-            ("Peak FP32", &peak_fp32),
+            (&fl!("gpu_type"), &gpu_type),
+            (&fl!("family"), &family.to_string()),
+            (&fl!("asic_name"), &asic.to_string()),
+            (&fl!("chip_class"), &chip_class.to_string()),
+            (&fl!("shader_engine"), &self.ext_info.max_se().to_string()),
+            (&fl!("shader_array_per_se"), &self.ext_info.max_sa_per_se().to_string()),
+            (&fl!("cu_per_sa"), &cu_per_sa),
+            (&fl!("total_cu"), &self.ext_info.cu_active_number().to_string()),
+            (&rb_type, &format!("{rb_pipes} ({rop_count} ROPs)")),
+            (&fl!("peak_gp"), &peak_gp),
+            (&fl!("gpu_clock"), &format!("{}-{} MHz", self.min_gpu_clk, self.max_gpu_clk)),
+            (&fl!("peak_fp32"), &peak_fp32),
         ]);
         ui.end_row();
     }
 
     fn memory_info(&self, ui: &mut egui::Ui) {
         let re_bar = if self.resizable_bar {
-            "Enabled"
+            fl!("enabled")
         } else {
-            "Disabled"
+            fl!("disabled")
         };
 
         grid(ui, &[
-            ("VRAM Type", &self.ext_info.get_vram_type().to_string()),
-            ("VRAM Bit Width", &format!("{}-bit", self.ext_info.vram_bit_width)),
-            ("VRAM Size", &format!("{} MiB", self.memory_info.vram.total_heap_size >> 20)),
-            ("Memory Clock", &format!("{}-{} MHz", self.min_mem_clk, self.max_mem_clk)),
-            ("ResizableBAR", re_bar),
+            (&fl!("vram_type"), &self.ext_info.get_vram_type().to_string()),
+            (&fl!("vram_bit_width"), &format!("{}-{}", self.ext_info.vram_bit_width, fl!("bit"))),
+            (&fl!("vram_size"), &format!("{} {}", self.memory_info.vram.total_heap_size >> 20, fl!("mib"))),
+            (&fl!("memory_clock"), &format!("{}-{} {}", self.min_mem_clk, self.max_mem_clk, fl!("mhz"))),
+            (&fl!("resizable_bar"), &re_bar),
         ]);
         ui.end_row();
     }
 
     fn cache_info(&self, ui: &mut egui::Ui) {
-        ui.label("L1 Cache (per CU)");
-        ui.label(format!("{:4} KiB", self.l1_cache_size_kib_per_cu));
+        let kib = fl!("kib");
+        let mib = fl!("mib");
+        let banks = fl!("banks");
+
+        ui.label(fl!("l1_cache_per_cu"));
+        ui.label(format!("{:4} {kib}", self.l1_cache_size_kib_per_cu));
         ui.end_row();
         if 0 < self.gl1_cache_size_kib_per_sa {
-            ui.label("GL1 Cache (per SA/SH)");
-            ui.label(format!("{:4} KiB", self.gl1_cache_size_kib_per_sa));
+            ui.label(fl!("gl1_cache_per_sa"));
+            ui.label(format!("{:4} {kib}", self.gl1_cache_size_kib_per_sa));
             ui.end_row();
         }
-        ui.label("L2 Cache");
+        ui.label(fl!("l2_cache"));
         ui.label(format!(
-            "{:4} KiB ({} Banks)",
+            "{:4} {kib} ({} {banks})",
             self.total_l2_cache_size_kib,
             self.actual_num_tcc_blocks,
         ));
         ui.end_row();
         if 0 < self.total_l3_cache_size_mib {
-            ui.label("L3 Cache (MALL)");
-            ui.label(format!("{:4} MiB", self.total_l3_cache_size_mib));
+            ui.label(fl!("l3_cache"));
+            ui.label(format!(
+                "{:4} {mib} ({} {banks})",
+                self.total_l3_cache_size_mib,
+                self.actual_num_tcc_blocks,
+            ));
             ui.end_row();
         }
         ui.end_row();
@@ -153,10 +161,10 @@ impl GuiInfo for AppDeviceInfo {
     fn power_cap_info(&self, ui: &mut egui::Ui) {
         let Some(cap) = &self.power_cap else { return };
 
-        ui.label("Power Cap.");
+        ui.label(fl!("power_cap"));
         ui.label(format!("{:4} W ({}-{} W)", cap.current, cap.min, cap.max));
         ui.end_row();
-        ui.label("Power Cap. (Default)");
+        ui.label(fl!("power_cap_default"));
         ui.label(format!("{:4} W", cap.default));
         ui.end_row();
     }
@@ -191,24 +199,27 @@ impl GuiInfo for AppDeviceInfo {
     }
 
     fn link_info(&self, ui: &mut egui::Ui) {
+        let pcie_link_speed = fl!("pcie_link_speed");
+        let fl_max = fl!("max");
+        let dpm = fl!("dpm");
         if let [Some(min), Some(max)] = [&self.min_dpm_link, &self.max_dpm_link] {
-            ui.label("PCIe Link Speed (DPM)");
+            ui.label(format!("{pcie_link_speed} ({dpm})"));
             ui.label(format!("Gen{}x{} - Gen{}x{}", min.gen, min.width, max.gen, max.width));
             ui.end_row();
         } else if let Some(max) = &self.max_dpm_link {
-            ui.label("PCIe Link Speed (DPM, Max)");
+            ui.label(format!("{pcie_link_speed} ({dpm}, {fl_max})"));
             ui.label(format!("Gen{}x{}", max.gen, max.width));
             ui.end_row();
         }
 
         if let Some(gpu) = &self.max_gpu_link {
-            ui.label("PCIe Link Speed (GPU, Max)");
+            ui.label(format!("{pcie_link_speed} ({}, {fl_max})", fl!("gpu")));
             ui.label(format!("Gen{}x{}", gpu.gen, gpu.width));
             ui.end_row();
         }
 
         if let Some(system) = &self.max_system_link {
-            ui.label("PCIe Link Speed (System, Max)");
+            ui.label(format!("{pcie_link_speed} ({}, {fl_max})", fl!("system")));
             ui.label(format!("Gen{}x{}", system.gen, system.width));
             ui.end_row();
         }
@@ -230,31 +241,23 @@ impl MyApp {
     }
 
     pub fn egui_ip_discovery_table(&self, ui: &mut egui::Ui) {
+        let gpu_die = fl!("gpu_die");
         for die in &self.app_device_info.ip_die_entries {
-            let label = format!("Die: {}", die.die_id);
+            let label = format!("{gpu_die}: {}", die.die_id);
             collapsing(ui, &label, false, |ui| Self::egui_ip_discovery_table_per_die(die, ui));
         }
     }
 
     pub fn egui_ip_discovery_table_per_die(ip_die_entry: &IpDieEntry, ui: &mut egui::Ui) {
         egui::Grid::new(format!("ip_discovery_table die{}", ip_die_entry.die_id)).show(ui, |ui| {
-            ui.label("IP HW").highlight();
-            ui.label("version").highlight();
-            ui.label("num").highlight();
+            ui.label(fl!("ip_hw")).highlight();
+            ui.label(fl!("version")).highlight();
+            ui.label(fl!("num")).highlight();
             ui.end_row();
 
             for ip_hw in &ip_die_entry.ip_hw_ids {
                 let hw_id = ip_hw.hw_id.to_string();
                 let Some(inst) = ip_hw.instances.first() else { continue };
-                /*
-                println!(
-                    "        {hw_id:<10} num: {}, ver: {:>3}.{}.{}",
-                    ip_hw.instances.len(),
-                    inst_info.major,
-                    inst_info.minor,
-                    inst_info.revision,
-                );
-                */
                 ui.label(hw_id);
                 ui.label(format!("{}.{}.{}", inst.major, inst.minor, inst.revision));
                 ui.label(ip_hw.instances.len().to_string());
@@ -268,10 +271,12 @@ impl MyApp {
         let Some(encode_caps) = &self.app_device_info.encode else { return };
 
         egui::Grid::new("codec_info").show(ui, |ui| {
-            ui.label("Codec").highlight();
-            ui.label("Decode").highlight();
-            ui.label("Encode").highlight();
+            ui.label(fl!("codec")).highlight();
+            ui.label(fl!("decode")).highlight();
+            ui.label(fl!("encode")).highlight();
             ui.end_row();
+
+            let n_a = fl!("n_a");
             
             for (name, decode, encode) in [
                 ("MPEG2", decode_caps.mpeg2, encode_caps.mpeg2),
@@ -287,12 +292,12 @@ impl MyApp {
                 if let Some(dec) = decode {
                     ui.label(&format!("{}x{}", dec.max_width, dec.max_height));
                 } else {
-                    ui.label("N/A");
+                    ui.label(&n_a);
                 }
                 if let Some(enc) = encode {
                     ui.label(&format!("{}x{}", enc.max_width, enc.max_height));
                 } else {
-                    ui.label("N/A");
+                    ui.label(&n_a);
                 }
                 ui.end_row();
             }
@@ -303,10 +308,10 @@ impl MyApp {
         let Some(vbios) = &self.app_device_info.vbios else { return };
         egui::Grid::new("vbios_info").show(ui, |ui| {
             for (name, val) in [
-                ("Name", &vbios.name),
-                ("PN", &vbios.pn),
-                ("Version", &vbios.ver),
-                ("Date", &vbios.date),
+                (fl!("vbios_name"), &vbios.name),
+                (fl!("vbios_pn"), &vbios.pn),
+                (fl!("vbios_version"), &vbios.ver),
+                (fl!("vbios_date"), &vbios.date),
             ] {
                 ui.label(name).highlight();
                 ui.label(val);
@@ -354,13 +359,14 @@ impl MyApp {
 
     pub fn egui_vram(&self, ui: &mut egui::Ui) {
         egui::Grid::new("VRAM").show(ui, |ui| {
+            let mib = fl!("mib");
             for (v, name) in [
-                (&self.buf_data.vram_usage.0.vram, "VRAM"),
-                (&self.buf_data.vram_usage.0.cpu_accessible_vram, "CPU-Visible VRAM"),
-                (&self.buf_data.vram_usage.0.gtt, "GTT"),
+                (&self.buf_data.vram_usage.0.vram, fl!("vram")),
+                (&self.buf_data.vram_usage.0.cpu_accessible_vram, fl!("cpu_visible_vram")),
+                (&self.buf_data.vram_usage.0.gtt, fl!("gtt")),
             ] {
                 let progress = (v.heap_usage >> 20) as f32 / (v.total_heap_size >> 20) as f32;
-                let text = format!("{:5} / {:5} MiB", v.heap_usage >> 20, v.total_heap_size >> 20);
+                let text = format!("{:5} / {:5} {mib}", v.heap_usage >> 20, v.total_heap_size >> 20);
                 let bar = egui::ProgressBar::new(progress)
                     .text(RichText::new(&text).font(BASE));
                 ui.label(RichText::new(name).font(MEDIUM));
@@ -398,7 +404,7 @@ impl MyApp {
             enc.push([i, usage_enc as f64]);
         }
 
-        Plot::new("fdinfo plot")
+        Plot::new(fl!("fdinfo_plot"))
             .allow_drag(false)
             .allow_zoom(false)
             .allow_scroll(false)
@@ -412,18 +418,18 @@ impl MyApp {
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| {
                 for (usage, name) in [
-                    (gfx, "GFX"),
-                    (compute, "Compute"),
-                    (dma, "DMA"),
+                    (gfx, fl!("gfx")),
+                    (compute, fl!("compute")),
+                    (dma, fl!("dma")),
                 ] {
                     plot_ui.line(Line::new(PlotPoints::new(usage)).name(name));
                 }
 
                 if self.has_vcn_unified {
-                    plot_ui.line(Line::new(PlotPoints::new(enc)).name("VCN"));
+                    plot_ui.line(Line::new(PlotPoints::new(enc)).name(fl!("vcn")));
                 } else {
-                    plot_ui.line(Line::new(PlotPoints::new(dec)).name("Decode"));
-                    plot_ui.line(Line::new(PlotPoints::new(enc)).name("Encode"));
+                    plot_ui.line(Line::new(PlotPoints::new(dec)).name(fl!("decode")));
+                    plot_ui.line(Line::new(PlotPoints::new(enc)).name(fl!("encode")));
                 }
             });
     }
@@ -433,35 +439,35 @@ impl MyApp {
 
         egui::Grid::new("fdinfo").show(ui, |ui| {
             ui.style_mut().override_font_id = Some(MEDIUM);
-            ui.label(rt_base(format!("{:^15}", "Name"))).highlight();
-            ui.label(rt_base(format!("{:^8}", "PID"))).highlight();
-            if ui.button(rt_base(format!("{:^10}", "VRAM"))).clicked() {
+            ui.label(rt_base(format!("{:^15}", fl!("name")))).highlight();
+            ui.label(rt_base(format!("{:^8}", fl!("pid")))).highlight();
+            if ui.button(rt_base(format!("{:^10}", fl!("vram")))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::VRAM);
             }
-            if ui.button(rt_base(format!("{:^10}", "GTT"))).clicked() {
+            if ui.button(rt_base(format!("{:^10}", fl!("gtt")))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::GTT);
             }
-            if ui.button(rt_base(" CPU ")).clicked() {
+            if ui.button(rt_base(format!("{:^5}", fl!("cpu")))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::CPU);
             }
-            if ui.button(rt_base(" GFX ")).clicked() {
+            if ui.button(rt_base(format!("{:^5}", fl!("gfx")))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::GFX);
             }
-            if ui.button(rt_base("Compute")).clicked() {
+            if ui.button(rt_base(fl!("compute"))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::Compute);
             }
-            if ui.button(rt_base(" DMA ")).clicked() {
+            if ui.button(rt_base(format!("{:^5}", fl!("dma")))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::DMA);
             }
             if self.has_vcn_unified {
-                if ui.button(rt_base(" VCN ")).clicked() {
+                if ui.button(rt_base(format!("{:^5}", fl!("vcn")))).clicked() {
                     self.set_fdinfo_sort_type(FdInfoSortType::Encode);
                 }
             } else {
-                if ui.button(rt_base("Decode")).clicked() {
+                if ui.button(rt_base(fl!("decode"))).clicked() {
                     self.set_fdinfo_sort_type(FdInfoSortType::Decode);
                 }
-                if ui.button(rt_base("Encode")).clicked() {
+                if ui.button(rt_base(fl!("encode"))).clicked() {
                     self.set_fdinfo_sort_type(FdInfoSortType::Encode);
                 }
             }
@@ -473,11 +479,13 @@ impl MyApp {
                 self.reverse_sort,
             );
 
+            let mib = fl!("mib");
+
             for pu in &self.buf_data.fdinfo.proc_usage {
                 ui.label(pu.name.to_string());
                 ui.label(format!("{:>8}", pu.pid));
-                ui.label(format!("{:5} MiB", pu.usage.vram_usage >> 10));
-                ui.label(format!("{:5} MiB", pu.usage.gtt_usage >> 10));
+                ui.label(format!("{:5} {mib}", pu.usage.vram_usage >> 10));
+                ui.label(format!("{:5} {mib}", pu.usage.gtt_usage >> 10));
                 for usage in [
                     pu.cpu_usage,
                     pu.usage.gfx,
@@ -515,7 +523,7 @@ impl MyApp {
                     "GFX_SCLK",
                     self.app_device_info.min_gpu_clk,
                     self.app_device_info.max_gpu_clk,
-                    "MHz",
+                    fl!("mhz"),
                 ),
                 (
                     &self.buf_data.sensors_history.mclk,
@@ -523,7 +531,7 @@ impl MyApp {
                     "GFX_MCLK",
                     self.app_device_info.min_mem_clk,
                     self.app_device_info.max_mem_clk,
-                    "MHz",
+                    fl!("mhz"),
                 ),
                 (
                     &self.buf_data.sensors_history.vddgfx,
@@ -531,7 +539,7 @@ impl MyApp {
                     "VDDGFX",
                     500, // "500 mV" is not an exact value
                     1500, // "1500 mV" is not an exact value
-                    "mV",
+                    fl!("mw"),
                 ),
                 (
                     &self.buf_data.sensors_history.power,
@@ -539,7 +547,7 @@ impl MyApp {
                     "GFX Power",
                     0,
                     if let Some(ref cap) = sensors.power_cap { cap.current } else { 350 }, // "350 W" is not an exact value
-                    "W",
+                    fl!("w"),
                 ),
                 (
                     &self.buf_data.sensors_history.fan_rpm,
@@ -547,7 +555,7 @@ impl MyApp {
                     "Fan",
                     0,
                     sensors.fan_max_rpm.unwrap_or(6000), // "6000 RPM" is not an exact value
-                    "RPM",
+                    fl!("rpm"),
                 ),
             ] {
                 let Some(val) = val else { continue };
@@ -581,6 +589,29 @@ impl MyApp {
         });
 
         self.egui_temp_plot(ui);
+
+        if let Some(cur) = sensors.current_link {
+            let min_max = if let [Some(min), Some(max)] = [sensors.min_dpm_link, sensors.max_dpm_link] {
+                format!(
+                    " (Gen{}x{} - Gen{}x{})",
+                    min.gen,
+                    min.width,
+                    max.gen,
+                    max.width,
+                )
+            } else if let Some(max) = sensors.max_dpm_link {
+                format!(" ({} Gen{}x{})", fl!("max"), max.gen, max.width)
+            } else {
+                String::new()
+            };
+
+            ui.label(format!(
+                "{} => Gen{}x{} {min_max}",
+                fl!("pcie_link_speed"),
+                cur.gen,
+                cur.width,
+            ));
+        }
 
         if let Ok(s) = sensors.print_pcie_link() {
             if !s.is_empty() {
@@ -630,8 +661,12 @@ impl MyApp {
 
     pub fn egui_pcie_bw(&self, ui: &mut egui::Ui) {
         let label_fmt = |name: &str, val: &PlotPoint| {
-            format!("{:.1}s : {name} {:.0} MiB/s", val.x, val.y)
+            format!("{:.1}s : {name} {:.0} {}", val.x, val.y, fl!("mib_s"))
         };
+
+        let fl_sent = fl!("sent");
+        let fl_rec = fl!("received");
+        let mib_s = fl!("mib_s");
 
         let [sent, rec] = {
             let [mut sent_history, mut rec_history] = [0; 2].map(|_| Vec::<[f64; 2]>::new());
@@ -642,8 +677,8 @@ impl MyApp {
             }
 
             [
-                Line::new(PlotPoints::new(sent_history)).name("Sent"),
-                Line::new(PlotPoints::new(rec_history)).name("Received"),
+                Line::new(PlotPoints::new(sent_history)).name(&fl_sent),
+                Line::new(PlotPoints::new(rec_history)).name(&fl_rec),
             ]
         };
 
@@ -664,9 +699,9 @@ impl MyApp {
             });
 
         if let Some((sent, rec)) = self.buf_data.pcie_bw_history.latest() {
-            ui.label(format!("Sent: {sent:5} MiB/s, Received: {rec:5} MiB/s"));
+            ui.label(format!("{fl_sent}: {sent:5} {mib_s}, {fl_rec}: {rec:5} {mib_s}"));
         } else {
-            ui.label("Sent: _ MiB/s, Received: _ MiB/s");
+            ui.label(format!("{fl_sent}: _ {mib_s}, {fl_rec}: _ {mib_s}"));
         }
     }
 
@@ -677,7 +712,7 @@ impl MyApp {
         avg_activity(ui, gpu_metrics);
 
         ui.horizontal(|ui| {
-            v1_helper(ui, "C", &[
+            v1_helper(ui, &fl!("c"), &[
                 (gpu_metrics.get_temperature_vrgfx(), "VRGFX"),
                 (gpu_metrics.get_temperature_vrsoc(), "VRSOC"),
                 (gpu_metrics.get_temperature_vrmem(), "VRMEM"),
@@ -685,12 +720,16 @@ impl MyApp {
         });
 
         ui.horizontal(|ui| {
-            v1_helper(ui, "mV", &[
+            v1_helper(ui, &fl!("mv"), &[
                 (gpu_metrics.get_voltage_soc(), "SoC"),
                 (gpu_metrics.get_voltage_gfx(), "GFX"),
                 (gpu_metrics.get_voltage_mem(), "Mem"),
             ]);
         });
+
+        let fl_avg = fl!("avg");
+        let fl_cur = fl!("cur");
+        let mhz = fl!("mhz");
 
         for (avg, cur, name) in [
             (
@@ -730,13 +769,13 @@ impl MyApp {
             ),
         ] {
             let [avg, cur] = [avg, cur].map(check_metrics_val);
-            ui.label(format!("{name:<6} => Avg. {avg:>4} MHz, Cur. {cur:>4} MHz"));
+            ui.label(format!("{name:<6} => {fl_avg} {avg:>4} {mhz}, {fl_cur} {cur:>4} {mhz}"));
         }
 
         // Only Aldebaran (MI200) supports it.
         if let Some(hbm_temp) = check_hbm_temp(gpu_metrics.get_temperature_hbm()) {
             ui.horizontal(|ui| {
-                ui.label("HBM Temp. (C) => [");
+                ui.label(format!("{} => [", fl!("hbm_temp")));
                 for v in &hbm_temp {
                     ui.label(RichText::new(format!("{v:>5},")));
                 }
@@ -748,31 +787,27 @@ impl MyApp {
     }
 
     pub fn egui_gpu_metrics_v2(&self, ui: &mut egui::Ui) {
-        const CORE_TEMP_LABEL: &str = "Core Temp (C)";
-        const CORE_POWER_LABEL: &str = "Core Power (mW)";
-        const CORE_CLOCK_LABEL: &str = "Core Clock (MHz)";
-        const L3_TEMP_LABEL: &str = "L3 Cache Temp (C)";
-        const L3_CLOCK_LABEL: &str = "L3 Cache Clock (MHz)";
-
         let gpu_metrics = &self.buf_data.gpu_metrics;
+        let mhz = fl!("mhz");
+        let mw = fl!("mw");
 
         ui.horizontal(|ui| {
-            ui.label("GFX =>");
+            ui.label(format!("{} =>", fl!("gfx")));
             let temp_gfx = gpu_metrics.get_temperature_gfx().map(|v| v.saturating_div(100));
             v2_helper(ui, &[
                 (temp_gfx, "C"),
-                (gpu_metrics.get_average_gfx_power(), "mW"),
-                (gpu_metrics.get_current_gfxclk(), "MHz"),
+                (gpu_metrics.get_average_gfx_power(), &mw),
+                (gpu_metrics.get_current_gfxclk(), &mhz),
             ]);
         });
 
         ui.horizontal(|ui| {
-            ui.label("SoC =>");
+            ui.label(format!("{} =>", fl!("soc")));
             let temp_soc = gpu_metrics.get_temperature_soc().map(|v| v.saturating_div(100));
             v2_helper(ui, &[
                 (temp_soc, "C"),
-                (gpu_metrics.get_average_soc_power(), "mW"),
-                (gpu_metrics.get_current_socclk(), "MHz"),
+                (gpu_metrics.get_average_soc_power(), &mw),
+                (gpu_metrics.get_current_socclk(), &mhz),
             ]);
         });
 
@@ -786,6 +821,9 @@ impl MyApp {
         */
         // socket_power(ui, gpu_metrics);
         avg_activity(ui, gpu_metrics);
+
+        let fl_avg = fl!("avg");
+        let fl_cur = fl!("cur");
 
         for (avg, cur, name) in [
             (
@@ -810,7 +848,7 @@ impl MyApp {
             ),
         ] {
             let [avg, cur] = [avg, cur].map(check_metrics_val);
-            ui.label(format!("{name:<6} => Avg. {avg:>4} MHz, Cur. {cur:>4} MHz"));
+            ui.label(format!("{name:<6} => {fl_avg} {avg:>4} {mhz}, {fl_cur} {cur:>4} {mhz}"));
         }
 
         egui::Grid::new("GPU Metrics v2.x Core/L3").show(ui, |ui| {
@@ -823,9 +861,9 @@ impl MyApp {
             let l3_clk = check_power_clock_array(gpu_metrics.get_current_l3clk());
 
             for (val, label) in [
-                (core_temp, CORE_TEMP_LABEL),
-                (core_power, CORE_POWER_LABEL),
-                (core_clk, CORE_CLOCK_LABEL),
+                (core_temp, fl!("core_temp")),
+                (core_power, fl!("core_power")),
+                (core_clk, fl!("core_clock")),
             ] {
                 let Some(val) = val else { continue };
                 ui.label(label);
@@ -838,8 +876,8 @@ impl MyApp {
             }
 
             for (val, label) in [
-                (l3_temp, L3_TEMP_LABEL),
-                (l3_clk, L3_CLOCK_LABEL),
+                (l3_temp, fl!("l3_temp")),
+                (l3_clk, fl!("l3_clock")),
             ] {
                 let Some(val) = val else { continue };
                 ui.label(label);
@@ -862,18 +900,18 @@ fn empty_y_fmt(_y: f64, _range: &RangeInclusive<f64>) -> String {
 
 fn socket_power(ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
     let v = check_metrics_val(gpu_metrics.get_average_socket_power());
-    ui.label(format!("Socket Power => {v:>3} W"));
+    ui.label(format!("{} => {v:>3} W", fl!("socket_power")));
 }
 
 fn avg_activity(ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
     ui.horizontal(|ui| {
-        ui.label("Average Activity =>");
+        ui.label(format!("{} =>", fl!("avg_activity")));
         let activity = stat::GpuActivity::from_gpu_metrics(gpu_metrics);
 
         for (val, label) in [
-            (activity.gfx, "GFX"),
-            (activity.umc, "UMC"),
-            (activity.media, "Media"),
+            (activity.gfx, fl!("gfx")),
+            (activity.umc, fl!("memory")),
+            (activity.media, fl!("media")),
         ] {
             if let Some(val) = val {
                 ui.label(format!("{label} {val:>3}%,"));
@@ -888,7 +926,8 @@ fn throttle_status(ui: &mut egui::Ui, gpu_metrics: &GpuMetrics) {
     if let Some(thr) = gpu_metrics.get_throttle_status_info() {
         ui.label(
             format!(
-                "Throttle Status: {:?}",
+                "{}: {:?}",
+                fl!("throttle_status"),
                 thr.get_all_throttler(),
             )
         );

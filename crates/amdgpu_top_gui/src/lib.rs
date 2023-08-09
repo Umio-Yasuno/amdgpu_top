@@ -4,6 +4,7 @@ use std::ops::Range;
 use std::path::PathBuf;
 use eframe::egui;
 use egui::{FontFamily, FontId, RichText, util::History};
+use i18n_embed::DesktopLanguageRequester;
 
 use libamdgpu_top::AMDGPU::{
     DeviceHandle,
@@ -18,6 +19,9 @@ mod app;
 use app::MyApp;
 mod util;
 use util::*;
+mod localize;
+pub use localize::LANGUAGE_LOADER;
+use localize::localizer;
 
 const SPACE: f32 = 8.0;
 const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
@@ -48,6 +52,13 @@ pub fn run(
     device_path_list: &[DevicePath],
     interval: u64,
 ) {
+    let localizer = localizer();
+    let requested_languages = DesktopLanguageRequester::requested_languages();
+
+    if let Err(error) = localizer.select(&requested_languages) {
+        eprintln!("Error while loading languages for library_fluent {error}");
+    }
+
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
@@ -56,6 +67,8 @@ pub fn run(
 
     let mut grbm = PerfCounter::new_with_chip_class(stat::PCType::GRBM, chip_class);
     let mut grbm2 = PerfCounter::new_with_chip_class(stat::PCType::GRBM2, chip_class);
+    grbm.get_i18n_index(&LANGUAGE_LOADER);
+    grbm2.get_i18n_index(&LANGUAGE_LOADER);
 
     let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
     let sample = Sampling::low();
@@ -226,16 +239,32 @@ pub fn run(
         options,
         Box::new(|cc| {
             use eframe::glow::HasContext;
+            use crate::egui::FontDefinitions;
+            use crate::egui::FontData;
 
             if let Some(ctx) = &cc.gl {
                 let ver = ctx.version().vendor_info.trim_start_matches("(Core Profile) ");
                 app.gl_vendor_info = Some(ver.to_string());
             }
 
+            let mut fonts = FontDefinitions::default();
+
+            fonts.font_data.insert(
+                "BIZUDGothic".to_string(),
+                FontData::from_static(include_bytes!("../fonts/BIZUDGothic-Regular.ttf")),
+            );
+
+            fonts.families.get_mut(&FontFamily::Proportional).unwrap()
+                .insert(3, "BIZUDGothic".to_owned());
+            fonts.families.get_mut(&FontFamily::Monospace).unwrap()
+                .insert(3, "BIZUDGothic".to_owned());
+
+            cc.egui_ctx.set_fonts(fonts);
+
             Box::new(app)
         }),
     ).unwrap_or_else(|err| {
-        eprintln!("Failed to set up a graphics context (OpenGL).");
+        eprintln!("{}", fl!("failed_to_set_up_gui"));
         eprintln!("{err}");
         panic!();
     });
@@ -258,7 +287,7 @@ impl MyApp {
                         ui.add_enabled(false, egui::Button::new(text));
                     } else {
                         ui.menu_button(text, |ui| {
-                            if ui.button("Launch in a new process").clicked() {
+                            if ui.button(&fl!("launch_new_process")).clicked() {
                                 std::process::Command::new(&self.command_path)
                                     .args(["--gui", "--pci", &device.pci.to_string()])
                                     .spawn()
@@ -276,24 +305,29 @@ impl MyApp {
             ui.add_space(SPACE);
             collapsing(
                 ui,
-                "Device Info",
+                &fl!("device_info"),
                 true,
                 |ui| self.egui_app_device_info(ui, &self.gl_vendor_info),
             );
 
             if !self.app_device_info.ip_die_entries.is_empty() {
                 ui.add_space(SPACE);
-                collapsing(ui, "IP Discovery table", false, |ui| self.egui_ip_discovery_table(ui));
+                collapsing(
+                    ui,
+                    &fl!("ip_discovery_table"),
+                    false,
+                    |ui| self.egui_ip_discovery_table(ui),
+                );
             }
 
             if self.app_device_info.decode.is_some() && self.app_device_info.encode.is_some() {
                 ui.add_space(SPACE);
-                collapsing(ui, "Video Caps Info", false, |ui| self.egui_video_caps_info(ui));
+                collapsing(ui, &fl!("video_caps_info"), false, |ui| self.egui_video_caps_info(ui));
             }
 
             if self.app_device_info.vbios.is_some() {
                 ui.add_space(SPACE);
-                collapsing(ui, "VBIOS Info", false, |ui| self.egui_vbios_info(ui));
+                collapsing(ui, &fl!("vbios_info"), false, |ui| self.egui_vbios_info(ui));
             }
             ui.add_space(SPACE);
         });
@@ -302,34 +336,35 @@ impl MyApp {
     fn egui_central_panel(&mut self, ui: &mut egui::Ui) {
         // ui.set_min_width(540.0);
         egui::ScrollArea::both().show(ui, |ui| {
-            collapsing(ui, "GRBM", true, |ui| self.egui_perf_counter(
+            collapsing(ui, &fl!("grbm"), true, |ui| self.egui_perf_counter(
                 ui,
                 "GRBM",
                 &self.buf_data.grbm,
                 &self.buf_data.grbm_history,
             ));
             ui.add_space(SPACE);
-            collapsing(ui, "GRBM2", true, |ui| self.egui_perf_counter(
+            collapsing(ui, &fl!("grbm2"), true, |ui| self.egui_perf_counter(
                 ui,
                 "GRBM2",
                 &self.buf_data.grbm2,
                 &self.buf_data.grbm2_history,
             ));
             ui.add_space(SPACE);
-            collapsing(ui, "VRAM", true, |ui| self.egui_vram(ui));
+            collapsing(ui, &fl!("vram"), true, |ui| self.egui_vram(ui));
             ui.add_space(SPACE);
-            collapsing(ui, "fdinfo", true, |ui| self.egui_grid_fdinfo(ui));
+            collapsing(ui, &fl!("fdinfo"), true, |ui| self.egui_grid_fdinfo(ui));
             ui.add_space(SPACE);
-            collapsing(ui, "Sensors", true, |ui| self.egui_sensors(ui));
+            collapsing(ui, &fl!("sensor"), true, |ui| self.egui_sensors(ui));
 
             if self.support_pcie_bw {
                 ui.add_space(SPACE);
-                collapsing(ui, "PCIe Bandwidth", true, |ui| self.egui_pcie_bw(ui));
+                collapsing(ui, &fl!("pcie_bw"), true, |ui| self.egui_pcie_bw(ui));
             }
 
             let header = if let Some(h) = self.buf_data.gpu_metrics.get_header() {
                 format!(
-                    "GPU Metrics v{}.{}",
+                    "{} v{}.{}",
+                    fl!("gpu_metrics"),
                     h.format_revision,
                     h.content_revision
                 )
@@ -376,9 +411,9 @@ impl eframe::App for MyApp {
 
         egui::TopBottomPanel::top("menu bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.toggle_value(&mut self.show_sidepanel, RichText::new("Info")
+                ui.toggle_value(&mut self.show_sidepanel, RichText::new(fl!("info"))
                     .font(BASE))
-                    .on_hover_text("Toggle the side panel visibility");
+                    .on_hover_text(fl!("toggle_side_panel"));
                 self.egui_device_list(ui);
             });
         });
@@ -390,5 +425,19 @@ impl eframe::App for MyApp {
         egui::CentralPanel::default().show(ctx, |ui| self.egui_central_panel(ui));
 
         ctx.request_repaint_after(Duration::from_millis(500));
+    }
+}
+
+use i18n_embed::fluent::FluentLanguageLoader;
+
+trait I18nPerfCounter {
+    fn get_i18n_index(&mut self, loader: &FluentLanguageLoader);
+}
+
+impl I18nPerfCounter for PerfCounter {
+    fn get_i18n_index(&mut self, loader: &FluentLanguageLoader) {
+        for (ref mut name, _) in self.index.iter_mut() {
+            *name = loader.get(&name.replace(' ', "_").replace('/', ""));
+        }
     }
 }
