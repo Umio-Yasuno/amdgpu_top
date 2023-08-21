@@ -441,6 +441,9 @@ impl MyApp {
             if ui.button(rt_base(format!("{:^10}", "GTT"))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::GTT);
             }
+            if ui.button(rt_base(" CPU ")).clicked() {
+                self.set_fdinfo_sort_type(FdInfoSortType::CPU);
+            }
             if ui.button(rt_base(" GFX ")).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::GFX);
             }
@@ -476,6 +479,7 @@ impl MyApp {
                 ui.label(format!("{:5} MiB", pu.usage.vram_usage >> 10));
                 ui.label(format!("{:5} MiB", pu.usage.gtt_usage >> 10));
                 for usage in [
+                    pu.cpu_usage,
                     pu.usage.gfx,
                     pu.usage.compute,
                     pu.usage.dma,

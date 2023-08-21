@@ -112,6 +112,7 @@ pub fn run(
         siv.add_global_callback('R', FdInfoView::cb_reverse_sort);
         siv.add_global_callback('P', FdInfoView::cb_sort_by_pid);
         siv.add_global_callback('V', FdInfoView::cb_sort_by_vram);
+        siv.add_global_callback('C', FdInfoView::cb_sort_by_cpu);
         siv.add_global_callback('G', FdInfoView::cb_sort_by_gfx);
         siv.add_global_callback('M', FdInfoView::cb_sort_by_media);
         siv.add_global_callback('n', SensorsView::cb);

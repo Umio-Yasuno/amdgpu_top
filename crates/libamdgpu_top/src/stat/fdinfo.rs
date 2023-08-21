@@ -48,6 +48,7 @@ pub struct ProcUsage {
     pub pid: i32,
     pub name: String,
     pub usage: FdInfoUsage,
+    pub cpu_usage: i64, // %
 }
 
 #[derive(Clone, Default)]
@@ -56,14 +57,47 @@ pub struct FdInfoStat {
     pub drm_client_ids: HashSet<usize>,
     pub proc_usage: Vec<ProcUsage>,
     pub interval: Duration,
+    pub uptime: f64,
 }
 
 impl FdInfoStat {
     pub fn new(interval: Duration) -> Self {
         Self {
             interval,
+            uptime: Self::get_uptime().unwrap_or(0.0),
             ..Default::default()
         }
+    }
+
+    fn get_uptime() -> Option<f64> {
+        let s = std::fs::read_to_string("/proc/uptime").ok()?;
+        let pos = s.find(" ")?;
+
+        s[..pos].parse::<f64>().ok()
+    }
+
+    pub fn get_cpu_usage(&self, pid: i32, name: &str) -> f64 {
+        const OFFSET: usize = 3;
+        let Ok(s) = std::fs::read_to_string(format!("/proc/{pid}/stat")) else { return 0.0 };
+        let len = format!("{pid} ({name}) ").len();
+        let split: Vec<&str> = s[len..].split(" ").collect();
+
+        // ref: https://man7.org/linux/man-pages/man5/proc.5.html
+        let [utime, stime, starttime] = [
+            split.get(14-OFFSET),
+            split.get(15-OFFSET),
+            split.get(22-OFFSET),
+        ].map(|t| t.and_then(|tt|
+                tt.parse::<f64>().ok()
+            ).unwrap_or(0.0)
+        );
+
+        // ref: https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat
+        let total_time = utime + stime; // tick + tick
+        let seconds = self.uptime - (starttime / 100.0); // sec - (tick / Hertz)
+        let cpu_usage = 100.0 * ((total_time / 100.0) / seconds); // 100.0 * ((tick / Hertz) / sec)
+
+        cpu_usage
     }
 
     pub fn get_proc_usage(&mut self, proc_info: &ProcInfo) {
@@ -119,16 +153,22 @@ impl FdInfoStat {
             }
         };
 
+        let cpu_usage = self.get_cpu_usage(pid, &name);
+
         self.proc_usage.push(ProcUsage {
             pid,
             name: name.to_string(),
-            usage: diff
+            usage: diff,
+            cpu_usage: cpu_usage as i64,
         });
     }
 
     pub fn get_all_proc_usage(&mut self, proc_index: &[ProcInfo]) {
         self.proc_usage.clear();
         self.drm_client_ids.clear();
+        if let Some(u) = Self::get_uptime() {
+            self.uptime = u;
+        }
         for pu in proc_index {
             self.get_proc_usage(pu);
         }
@@ -152,6 +192,7 @@ pub enum FdInfoSortType {
     #[default]
     VRAM,
     GTT,
+    CPU,
     GFX,
     Compute,
     DMA,
@@ -169,6 +210,8 @@ pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reve
             (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
             (FdInfoSortType::GTT, false) => b.usage.gtt_usage.cmp(&a.usage.gtt_usage),
             (FdInfoSortType::GTT, true) => a.usage.gtt_usage.cmp(&b.usage.gtt_usage),
+            (FdInfoSortType::CPU, false) => b.cpu_usage.cmp(&a.cpu_usage),
+            (FdInfoSortType::CPU, true) => a.cpu_usage.cmp(&b.cpu_usage),
             (FdInfoSortType::GFX, false) => b.usage.gfx.cmp(&a.usage.gfx),
             (FdInfoSortType::GFX, true) => a.usage.gfx.cmp(&b.usage.gfx),
             (FdInfoSortType::Compute, false) => b.usage.gfx.cmp(&a.usage.compute),

@@ -11,8 +11,9 @@ const PROC_NAME_LEN: usize = 16;
 
 const VRAM_LABEL: &str = "VRAM";
 const GTT_LABEL: &str = "GTT";
+const CPU_LABEL: &str = "CPU";
 const GFX_LABEL: &str = "GFX";
-const COMPUTE_LABEL: &str = "Compute";
+const COMPUTE_LABEL: &str = "COMP";
 const DMA_LABEL: &str = "DMA";
 const DEC_LABEL: &str = "DEC";
 const ENC_LABEL: &str = "ENC";
@@ -47,7 +48,7 @@ impl FdInfoView {
 
         write!(
             self.text.buf,
-            " {pad:25} |{VRAM_LABEL:^7}|{GTT_LABEL:^7}|{GFX_LABEL:^4}|{COMPUTE_LABEL}|{DMA_LABEL:^4}",
+            " {pad:25} |{VRAM_LABEL:^6}|{GTT_LABEL:^6}|{CPU_LABEL:^4}|{GFX_LABEL:^4}|{COMPUTE_LABEL:^4}|{DMA_LABEL:^4}",
             pad = "",
         )?;
 
@@ -76,12 +77,14 @@ impl FdInfoView {
             };
             write!(
                 self.text.buf,
-                " {name:name_len$}({pid:>8})|{vram:>5} M|{gtt:>5} M|",
+                " {name:name_len$}({pid:>8})|{vram:>5}M|{gtt:>5}M|",
                 name = pu.name,
                 pid = pu.pid,
                 vram = pu.usage.vram_usage >> 10,
                 gtt = pu.usage.gtt_usage >> 10,
             )?;
+
+            write!(self.text.buf, "{:>3}%|", pu.cpu_usage)?;
 
             for (usage, label_len) in [
                 (pu.usage.gfx, GFX_LABEL.len()),
@@ -135,6 +138,13 @@ impl FdInfoView {
         {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.fdinfo_sort = FdInfoSortType::VRAM;
+        }
+    }
+
+    pub fn cb_sort_by_cpu(siv: &mut cursive::Cursive) {
+        {
+            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+            opt.fdinfo_sort = FdInfoSortType::CPU;
         }
     }
 
