@@ -93,7 +93,7 @@ cargo install --locked --path . --no-default-features --features="tui"
  * [egui](https://github.com/emilk/egui)
 
 ### i18n
- * [cargo-i18n](https://github.com/kellpossible/cargo-i18n/tree/master)
+ * [cargo-i18n](https://github.com/kellpossible/cargo-i18n/)
 
 ## Reference
  * [Tom St Denis / umr · GitLab](https://gitlab.freedesktop.org/tomstdenis/umr/)
@@ -112,6 +112,14 @@ cargo install --locked --path . --no-default-features --features="tui"
         * `/drivers/gpu/drm/amd/amdgpu/amdgpu_kms.c`
     * `amdgpu_allowed_register_entry`
         * `/drivers/gpu/drm/amd/amdgpu/{cik,nv,vi,si,soc15,soc21}.c`
+
+## Translate
+`amdgpu_top` is using [cargo-i18n](https://github.com/kellpossible/cargo-i18n/) with [Project Fluent](https://projectfluent.org/) for translation.  
+Please refer to [pop-os/popsicle](https://github.com/pop-os/popsicle#translators) for additional supported languages.  
+
+### Supported Languages
+ * [en](./crates/amdgpu_top_gui/i18n/en/amdgpu_top_gui.ftl)
+ * [ja (partial)](./crates/amdgpu_top_gui/i18n/ja/amdgpu_top_gui.ftl)
 
 ## Alternatives
 If `amdgpu_top` is not enough for you or you don't like it, try the following applications.
