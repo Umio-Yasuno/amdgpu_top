@@ -84,7 +84,9 @@ cargo install --locked --path . --no-default-features --features="tui"
 ```
 
 ## Used library
+ * [anyhow](https://github.com/dtolnay/anyhow)
  * [libdrm-amdgpu-sys-rs](https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs)
+ * [serde-rs/json](https://github.com/serde-rs/json)
 
 ### TUI
  * [Cursive](https://github.com/gyscos/cursive)
