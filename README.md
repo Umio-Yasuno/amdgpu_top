@@ -39,6 +39,9 @@ OPTIONS:
 ### Commands for TUI
 | key |                                     |
 | :-- | :---------------------------------: |
+| g   | toggle GRBM                         |
+| r   | toggle GRBM2                        |
+| v   | toggle VRAM/GTT Usage               |
 | f   | toggle fdinfo                       |
 | n   | toggle Sensors                      |
 | m   | toggle GPU Metrics                  |
@@ -49,10 +52,6 @@ OPTIONS:
 | G   | sort fdinfo by GFX usage            |
 | M   | sort fdinfo by MediaEngine usage    |
 | R   | reverse sort                        |
-
-<!-- | g   | toggle GRBM                         | -->
-<!-- | r   | toggle GRBM2                        | -->
-<!-- | v   | toggle VRAM/GTT Usage               | -->
 
 ## Installation
 ### Packages

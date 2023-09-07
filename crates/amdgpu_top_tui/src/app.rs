@@ -45,9 +45,9 @@ impl TuiApp {
         let list_name = format!("{} ({pci_bus})", amdgpu_dev.get_marketing_name_or_default());
         let chip_class = ext_info.get_chip_class();
 
-        let grbm = PerfCounterView::new_with_chip_class(stat::PCType::GRBM, chip_class);
-        let grbm2 = PerfCounterView::new_with_chip_class(stat::PCType::GRBM2, chip_class);
-        let vram_usage = VramUsageView::new(memory_info);
+        let grbm = PerfCounterView::new_with_chip_class(stat::PCType::GRBM, chip_class, instance);
+        let grbm2 = PerfCounterView::new_with_chip_class(stat::PCType::GRBM2, chip_class, instance);
+        let vram_usage = VramUsageView::new(memory_info, instance);
 
         let mut fdinfo = FdInfoView::new(
             Sampling::default().to_duration(),

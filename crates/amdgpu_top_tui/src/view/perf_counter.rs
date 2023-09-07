@@ -19,22 +19,15 @@ use super::{PANEL_WIDTH, PC_BAR_WIDTH, TopView};
 pub struct PerfCounterView {
     pub pc: PerfCounter,
     pub counters: Vec<Counter>,
+    instance: u32,
 }
 
 impl PerfCounterView {
-/*
-    pub fn new(pc_type: PCType, s: &[(&str, usize)]) -> Self {
-        let pc = PerfCounter::new(pc_type, s);
-        let counters = (0..pc.index.len()).map(|_| Counter::new(0)).collect();
-
-        Self { pc, counters }
-    }
-*/
-    pub fn new_with_chip_class(pc_type: PCType, chip_class: CHIP_CLASS) -> Self {
+    pub fn new_with_chip_class(pc_type: PCType, chip_class: CHIP_CLASS, instance: u32) -> Self {
         let pc = PerfCounter::new_with_chip_class(pc_type, chip_class);
         let counters = (0..pc.index.len()).map(|_| Counter::new(0)).collect();
 
-        Self { pc, counters }
+        Self { pc, counters, instance }
     }
 
     pub fn top_view(
@@ -68,12 +61,11 @@ impl PerfCounterView {
         Panel::new(
             HideableView::new(sub_layout)
                 .visible(visible)
-                .with_name(&title)
+                .with_name(&pc_view_name(self.pc.pc_type, self.instance))
         )
         .title(&title)
         .title_position(HAlign::Left)
     }
-
 
     pub fn set_value(&self) {
         for (c, (_, pos)) in self.counters.iter().zip(self.pc.index.iter()) {
@@ -87,27 +79,35 @@ impl PerfCounterView {
     }
 }
 
-/*
-pub fn pc_type_cb(pc_type: &PCType) -> impl Fn(&mut cursive::Cursive) {
-    let name = pc_type.to_string();
+pub fn pc_view_name(pc_type: PCType, instance: u32) -> String {
+    format!("{pc_type} {instance}")
+}
+
+pub fn pc_type_cb(pc_type: PCType) -> impl Fn(&mut cursive::Cursive) {
+    use crate::{toggle_view, ToggleOptions, Opt};
+
     let toggle = match pc_type {
-        PCType::GRBM => |opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
+        PCType::GRBM => |opt: &mut ToggleOptions| {
             opt.grbm ^= true;
         },
-        PCType::GRBM2 => |opt: &mut Opt| {
-            let mut opt = opt.lock().unwrap();
+        PCType::GRBM2 => |opt: &mut ToggleOptions| {
             opt.grbm2 ^= true;
         },
     };
 
     move |siv: &mut cursive::Cursive| {
-        {
+        let instances = {
             let opt = siv.user_data::<Opt>().unwrap();
-            toggle(opt);
-        }
+            let mut opt = opt.lock().unwrap();
 
-        siv.call_on_name(&name, toggle_view);
+            toggle(&mut opt);
+
+            opt.instances.clone()
+        };
+
+        for i in &instances {
+            let name = pc_view_name(pc_type, *i);
+            siv.call_on_name(&name, toggle_view);
+        }
     }
 }
-*/

@@ -55,7 +55,7 @@ impl PerfCounter {
 }
 
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 #[allow(non_camel_case_types)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum PCType {

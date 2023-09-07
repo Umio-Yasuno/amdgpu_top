@@ -5,7 +5,7 @@ use cursive::{event::Key, menu, traits::With};
 
 use libamdgpu_top::AMDGPU::DeviceHandle;
 use libamdgpu_top::{stat, DevicePath, Sampling};
-use stat::ProcInfo;
+use stat::{PCType, ProcInfo};
 
 mod view;
 use view::*;
@@ -28,6 +28,7 @@ struct ToggleOptions {
     reverse_sort: bool,
     gpu_metrics: bool,
     select_instance: u32,
+    instances: Vec<u32>,
 }
 
 impl Default for ToggleOptions {
@@ -43,6 +44,7 @@ impl Default for ToggleOptions {
             reverse_sort: false,
             gpu_metrics: false,
             select_instance: 0,
+            instances: Vec::new(),
         }
     }
 }
@@ -57,7 +59,7 @@ pub const TOGGLE_HELP: &str = concat!(
 );
 */
 pub const TOGGLE_HELP: &str = concat!(
-    " (f)dinfo se(n)sor (m)etrics (h)igh_freq (q)uit \n",
+    " (g)rbm g(r)bm2 (v)ram_usage (f)dinfo\n se(n)sor (m)etrics (h)igh_freq (q)uit \n",
     " (P): sort_by_pid (V): sort_by_vram (G): sort_by_gfx\n (M): sort_by_media (R): reverse"
 );
 
@@ -101,13 +103,14 @@ pub fn run(
         vec_app.push(app);
     }
 
+    toggle_opt.instances = vec_app.iter().map(|app| app.instance).collect();
+
     let mut siv = cursive::default();
 
     {
-        // TODO: update for multi-layers
-        // siv.add_global_callback('g', pc_type_cb(&PCType::GRBM));
-        // siv.add_global_callback('r', pc_type_cb(&PCType::GRBM2));
-        // siv.add_global_callback('v', VramUsageView::cb);
+        siv.add_global_callback('g', pc_type_cb(PCType::GRBM));
+        siv.add_global_callback('r', pc_type_cb(PCType::GRBM2));
+        siv.add_global_callback('v', VramUsageView::cb);
         siv.add_global_callback('f', FdInfoView::cb);
         siv.add_global_callback('R', FdInfoView::cb_reverse_sort);
         siv.add_global_callback('P', FdInfoView::cb_sort_by_pid);

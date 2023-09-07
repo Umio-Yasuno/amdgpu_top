@@ -43,8 +43,6 @@ impl Default for Text {
 
 pub type TopView = Panel<NamedView<HideableView<LinearLayout>>>;
 
-/*
 pub fn toggle_view(view: &mut HideableView<LinearLayout>) {
     view.set_visible(!view.is_visible());
 }
-*/
