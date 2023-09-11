@@ -2,7 +2,11 @@ use libamdgpu_top::{DevicePath, PCI};
 use libamdgpu_top::AMDGPU::DeviceHandle;
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
-const TITLE: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"));
+const TITLE: &str = if cfg!(debug_assertions) {
+    concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"), " (debug build)")
+} else {
+    concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"))
+};
 
 mod args;
 use args::{AppMode, MainOpt};
