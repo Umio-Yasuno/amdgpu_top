@@ -192,7 +192,7 @@ impl Sensors {
 
         let mut tmp = gpu_pci.get_sysfs_path().join("../"); // pcie port
 
-        loop {
+        for _ in 0..2 {
             let Ok(did) = std::fs::read_to_string(&tmp.join("device")) else { break };
 
             if &did == NAVI10_UPSTREAM_PORT || &did == NAVI10_DOWNSTREAM_PORT {

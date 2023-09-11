@@ -233,10 +233,10 @@ impl SmiDeviceInfo {
             .title_position(HAlign::Left)
     }
 
-    fn update(&mut self, sample: &Sampling, opt: &ToggleOptions) {
+    fn update(&mut self, sample: &Sampling, _opt: &ToggleOptions) {
         self.sensors.update(&self.amdgpu_dev);
 
-        if opt.fdinfo {
+        {
             let lock = self.arc_proc_index.try_lock();
             if let Ok(vec_info) = lock {
                 self.fdinfo.print(&vec_info, &FdInfoSortType::default(), false).unwrap();
@@ -244,8 +244,6 @@ impl SmiDeviceInfo {
             } else {
                 self.fdinfo.stat.interval += sample.to_duration();
             }
-        } else {
-            self.fdinfo.text.clear();
         }
 
         self.update_info_text().unwrap();
@@ -302,9 +300,10 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
             (app.device_path.clone(), app.arc_proc_index.clone())
         }).collect();
         let mut buf_index: Vec<ProcInfo> = Vec::new();
+        let interval = Duration::from_secs(interval);
 
         std::thread::spawn(move || loop {
-            std::thread::sleep(Duration::from_secs(interval));
+            std::thread::sleep(interval);
 
             let all_proc = stat::get_all_processes();
 
