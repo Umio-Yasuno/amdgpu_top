@@ -53,6 +53,15 @@ OPTIONS:
 | M   | sort fdinfo by MediaEngine usage    |
 | R   | reverse sort                        |
 
+### Example of using JSON mode
+```
+$ amdgpu_top -i 0 --json | jq -c -r '([.Sensors | to_entries[] | .key + ": " + (.value.value|tostring) + .value.unit] | join(", ")) + ", " + ([.gpu_activity | to_entries[] | .key + ": " + (.value.value|tostring) + .value.unit] | join(", "))'
+Fan: 0RPM, GFX Power: 11W, GFX_MCLK: 96MHz, GFX_SCLK: 32MHz, VDDGFX: 750mV, GFX: 3%, MediaEngine: 0%, Memory: 2%
+Fan: 0RPM, GFX Power: 10W, GFX_MCLK: 96MHz, GFX_SCLK: 113MHz, VDDGFX: 750mV, GFX: 12%, MediaEngine: 0%, Memory: 3%
+Fan: 0RPM, GFX Power: 9W, GFX_MCLK: 96MHz, GFX_SCLK: 36MHz, VDDGFX: 750mV, GFX: 3%, MediaEngine: 0%, Memory: 2%
+...
+```
+
 ## Installation
 ### Packages
  * [Releases](https://github.com/Umio-Yasuno/amdgpu_top/releases/latest)
