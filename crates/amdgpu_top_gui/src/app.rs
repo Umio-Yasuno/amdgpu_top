@@ -539,7 +539,7 @@ impl MyApp {
                     "VDDGFX",
                     500, // "500 mV" is not an exact value
                     1500, // "1500 mV" is not an exact value
-                    fl!("mw"),
+                    fl!("mv"),
                 ),
                 (
                     &self.buf_data.sensors_history.power,
