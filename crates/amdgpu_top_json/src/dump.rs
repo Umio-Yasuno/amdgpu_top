@@ -27,16 +27,6 @@ pub fn json_info(amdgpu_dev: &DeviceHandle) -> Value {
 
     let info = AppDeviceInfo::new(amdgpu_dev, &ext_info, &memory_info, &sensors);
 
-    let drm = if let Ok(drm) = amdgpu_dev.get_drm_version_struct() {
-        json!({
-            "major": drm.version_major,
-            "minor": drm.version_minor,
-            "patchlevel": drm.version_patchlevel,
-        })
-    } else {
-        Value::Null
-    };
-
     let gpu_clk = json!({
         "min": info.min_gpu_clk,
         "max": info.max_gpu_clk,
@@ -45,25 +35,22 @@ pub fn json_info(amdgpu_dev: &DeviceHandle) -> Value {
         "min": info.min_mem_clk,
         "max": info.max_mem_clk,
     });
-    let power_cap = if let Some(cap) = info.power_cap {
-        json!({
-            "current": cap.current,
-            "min": cap.min,
-            "max": cap.max,
-        })
-    } else {
-        Value::Null
-    };
-    let vbios = if let Some(vbios) = info.vbios {
-        json!({
-            "name": vbios.name,
-            "pn": vbios.pn,
-            "ver_str": vbios.ver,
-            "date": vbios.date,
-        })
-    } else {
-        Value::Null
-    };
+    let drm = amdgpu_dev.get_drm_version_struct().map_or(Value::Null, |drm| json!({
+        "major": drm.version_major,
+        "minor": drm.version_minor,
+        "patchlevel": drm.version_patchlevel,
+    }));
+    let power_cap = info.power_cap.map_or(Value::Null, |cap| json!({
+        "current": cap.current,
+        "min": cap.min,
+        "max": cap.max,
+    }));
+    let vbios = info.vbios.map_or(Value::Null, |vbios| json!({
+        "name": vbios.name,
+        "pn": vbios.pn,
+        "ver_str": vbios.ver,
+        "date": vbios.date,
+    }));
     let video_caps = if let [Some(decode), Some(encode)] = [info.decode, info.encode] {
         let mut m = Map::new();
 
@@ -78,14 +65,10 @@ pub fn json_info(amdgpu_dev: &DeviceHandle) -> Value {
             (CODEC::AV1, decode.av1, encode.av1),
         ] {
             let [dec, enc] = [dec_cap, enc_cap].map(|cap| {
-                if let Some(cap) = cap {
-                    json!({
-                        "width": cap.max_width,
-                        "height": cap.max_height,
-                    })
-                } else {
-                    Value::Null
-                }
+                cap.map_or(Value::Null, |cap| json!({
+                    "width": cap.max_width,
+                    "height": cap.max_height,
+                }))
             });
 
             m.insert(
