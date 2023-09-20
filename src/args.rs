@@ -3,6 +3,7 @@ pub struct MainOpt {
     pub pid: Option<i32>,
     pub update_process_index: u64, // sec
     pub pci_path: Option<String>,
+    pub dump: bool,
     pub list: bool,
     pub app_mode: AppMode,
 }
@@ -14,6 +15,7 @@ impl Default for MainOpt {
             pid: None,
             update_process_index: 5, // sec
             pci_path: None,
+            dump: false,
             list: false,
             app_mode: AppMode::TUI,
         }
@@ -31,7 +33,6 @@ pub enum AppMode {
     JSON,
     #[cfg(feature = "tui")]
     SMI,
-    Dump,
 }
 
 const HELP_MSG: &str = concat!(
@@ -44,6 +45,7 @@ const HELP_MSG: &str = concat!(
     "FLAGS:\n",
     "   -d, --dump\n",
     "       Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)\n",
+    "       (can be combined with \"-J\" option)\n",
     "   --list\n",
     "       Display a list of AMDGPU devices (can be combined with \"-d\" option)\n",
     "   -J, --json\n",
@@ -94,7 +96,7 @@ impl MainOpt {
                     }
                 },
                 "-d" | "--dump" => {
-                    opt.app_mode = AppMode::Dump;
+                    opt.dump = true;
                 },
                 "-J" | "--json" => {
                     #[cfg(feature = "json")]
@@ -143,7 +145,7 @@ impl MainOpt {
                     opt.pci_path = args.get(idx+1).map(|v| v.to_string());
                     skip = true;
                 },
-                "--list" => {
+                "-l" | "--list" => {
                     opt.list = true;
                 },
                 "-h" | "--help" => {

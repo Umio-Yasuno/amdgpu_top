@@ -49,7 +49,7 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 : Update interval in seconds of the process index for fdinfo (default: 5s)
 
 **\-d**, **\-\-dump**
-:   Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)
+:   Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps) (can be combined with "-J" option)
 
 **\-\-list**
 :   Display a list of AMDGPU devices (can be combined with "-d" option)

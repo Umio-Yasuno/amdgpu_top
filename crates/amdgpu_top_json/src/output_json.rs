@@ -5,10 +5,7 @@ use libamdgpu_top::{
 };
 use stat::{FdInfoStat, GpuActivity, Sensors, PerfCounter};
 use serde_json::{json, Map, Value};
-
-pub trait OutputJson {
-    fn json(&self) -> Value;
-}
+use crate::OutputJson;
 
 impl OutputJson for VramUsage {
     fn json(&self) -> Value {

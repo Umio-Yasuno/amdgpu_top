@@ -21,12 +21,23 @@ fn main() {
         panic!();
     }
 
+    #[cfg(feature = "json")]
+    if main_opt.app_mode == AppMode::JSON && main_opt.dump {
+        amdgpu_top_json::dump_json(&device_path_list);
+        return;
+    }
+
     if main_opt.list {
-        device_list(AppMode::Dump == main_opt.app_mode, &device_path_list);
+        device_list(main_opt.dump, &device_path_list);
         return;
     }
 
     let (device_path, amdgpu_dev) = from_main_opt(&main_opt, &device_path_list);
+
+    if main_opt.dump {
+        dump_info::dump(&amdgpu_dev);
+        return;
+    }
 
     match main_opt.app_mode {
         AppMode::TUI => {
@@ -68,7 +79,6 @@ fn main() {
             &device_path_list,
             main_opt.update_process_index,
         ),
-        AppMode::Dump => dump_info::dump(&amdgpu_dev),
     }
 }
 

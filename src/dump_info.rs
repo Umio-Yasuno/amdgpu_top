@@ -163,7 +163,7 @@ impl DumpInfo for AppDeviceInfo {
         println!("GPU Type  : {}", if self.ext_info.is_apu() { "APU" } else { "dGPU" });
         println!("Family    : {}", self.ext_info.get_family_name());
         println!("ASIC Name : {asic}");
-        println!("Chip class: {}", self.ext_info.get_chip_class());
+        println!("Chip Class: {}", self.ext_info.get_chip_class());
 
         let max_good_cu_per_sa = self.ext_info.get_max_good_cu_per_sa();
         let min_good_cu_per_sa = self.ext_info.get_min_good_cu_per_sa();

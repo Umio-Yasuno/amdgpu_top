@@ -1,12 +1,17 @@
 use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO};
 use libamdgpu_top::{DevicePath, stat, VramUsage};
 use stat::{FdInfoStat, GpuActivity, Sensors, PerfCounter};
-use serde_json::json;
+use serde_json::{json, Value};
 use std::time::{Duration, Instant};
 use std::sync::{Arc, Mutex};
 
 mod output_json;
-use output_json::OutputJson;
+mod dump;
+pub use dump::dump_json;
+
+pub trait OutputJson {
+    fn json(&self) -> Value;
+}
 
 pub fn run(
     device_path: DevicePath,

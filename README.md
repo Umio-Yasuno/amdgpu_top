@@ -16,6 +16,7 @@ cargo run -- [options ..]
 FLAGS:
    -d, --dump
        Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)
+       (can be combined with "-J" option)
    --list
        Display a list of AMDGPU devices (can be combined with "-d" option)
    -J, --json
