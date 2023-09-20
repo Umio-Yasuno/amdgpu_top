@@ -139,6 +139,10 @@ Please refer to [pop-os/popsicle](https://github.com/pop-os/popsicle#translators
 ## Alternatives
 If `amdgpu_top` is not enough for you or you don't like it, try the following applications.
 
+ * `AMD_DEBUG=info <opengl application>` or `RADV_DEBUG=info <vulkan application>`
+    * Print AMDGPU-related information
+    * <https://docs.mesa3d.org/envvars.html#envvar-AMD_DEBUG>
+    * <https://docs.mesa3d.org/envvars.html#envvar-RADV_DEBUG>
  * [clbr/radeontop](https://github.com/clbr/radeontop)
     * View your GPU utilization, both for the total activity percent and individual blocks.
  * [Syllo/nvtop](https://github.com/Syllo/nvtop)
