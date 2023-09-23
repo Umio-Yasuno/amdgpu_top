@@ -75,6 +75,7 @@ Fan: 0RPM, GFX Power: 9W, GFX_MCLK: 96MHz, GFX_SCLK: 36MHz, VDDGFX: 750mV, GFX: 
    * [amdgpu_top-git](https://aur.archlinux.org/packages/amdgpu_top-git)
  * [OpenMandriva](https://github.com/OpenMandrivaAssociation/amdgpu_top) to install run `sudo dnf install amdgpu_top`
  * [Nix](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/system/amdgpu_top/default.nix)
+ * [Solus](https://github.com/getsolus/packages/tree/main/packages/a/amdgpu_top) to install run `sudo eopkg it amdgpu_top`
 
 ### Build from source
 Dependencies:
