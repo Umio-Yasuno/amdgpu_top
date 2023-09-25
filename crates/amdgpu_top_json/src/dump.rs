@@ -40,6 +40,7 @@ pub fn json_info(amdgpu_dev: &DeviceHandle) -> Value {
         "minor": drm.version_minor,
         "patchlevel": drm.version_patchlevel,
     }));
+    let power_avg = sensors.power.map_or(Value::Null, |avg| Value::from(avg));
     let power_cap = info.power_cap.map_or(Value::Null, |cap| json!({
         "current": cap.current,
         "min": cap.min,
@@ -111,6 +112,7 @@ pub fn json_info(amdgpu_dev: &DeviceHandle) -> Value {
         "GL1 Cache per Shader Array": info.gl1_cache_size_kib_per_sa << 10,
         "L2 Cache": info.total_l2_cache_size_kib << 10,
         "L3 Cache": info.total_l3_cache_size_mib << 20,
+        "Power Average": power_avg,
         "Power Cap": power_cap,
         "VBIOS": vbios,
         "Video Caps": video_caps,
