@@ -51,6 +51,9 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 **-u** *`<u64>`*, **--update-process-index** *`<u64>`*
 : Update interval in seconds of the process index for fdinfo (default: 5s)
 
+**\--apu**, **\-\-select-apu**
+:   Select APU instance
+
 **\-d**, **\-\-dump**
 :   Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps) (can be combined with "-J" option)
 

@@ -6,6 +6,7 @@ pub struct MainOpt {
     pub pci_path: Option<String>,
     pub dump: bool,
     pub list: bool,
+    pub select_apu: bool,
     pub app_mode: AppMode,
 }
 
@@ -19,6 +20,7 @@ impl Default for MainOpt {
             pci_path: None,
             dump: false,
             list: false,
+            select_apu: false,
             app_mode: AppMode::TUI,
         }
     }
@@ -56,6 +58,8 @@ const HELP_MSG: &str = concat!(
     "       Launch GUI mode\n",
     "   --smi\n",
     "       Launch Simple TUI mode (like nvidia-smi, rocm-smi)\n",
+    "   --apu, --select-apu\n",
+    "       Select APU instance\n",
     "   -h, --help\n",
     "       Print help information\n",
     "\n",
@@ -174,6 +178,9 @@ impl MainOpt {
                 },
                 "-l" | "--list" => {
                     opt.list = true;
+                },
+                "--apu" | "--select-apu" => {
+                    opt.select_apu = true;
                 },
                 "-h" | "--help" => {
                     println!("{HELP_MSG}");

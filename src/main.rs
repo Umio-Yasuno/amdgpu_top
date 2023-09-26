@@ -17,7 +17,7 @@ fn main() {
     let device_path_list = DevicePath::get_device_path_list();
 
     if device_path_list.is_empty() {
-        eprintln!("There are no AMD GPU devices found.");
+        eprintln!("There are no the AMD GPU devices found.");
         panic!();
     }
 
@@ -32,7 +32,11 @@ fn main() {
         return;
     }
 
-    let (device_path, amdgpu_dev) = from_main_opt(&main_opt, &device_path_list);
+    let (device_path, amdgpu_dev) = if main_opt.select_apu {
+        select_apu(&device_path_list)
+    } else {
+        from_main_opt(&main_opt, &device_path_list)
+    };
 
     if main_opt.dump {
         dump_info::dump(&amdgpu_dev);
@@ -129,4 +133,20 @@ pub fn from_main_opt(main_opt: &MainOpt, list: &[DevicePath]) -> (DevicePath, De
     });
 
     (device_path, amdgpu_dev)
+}
+
+fn select_apu(list: &[DevicePath]) -> (DevicePath, DeviceHandle) {
+    use libamdgpu_top::AMDGPU::GPU_INFO;
+
+    for device_path in list {
+        let Ok(amdgpu_dev) = device_path.init() else { continue };
+        let Ok(ext_info) = amdgpu_dev.device_info() else { continue };
+
+        if ext_info.is_apu() {
+            return (device_path.clone(), amdgpu_dev);
+        }
+    }
+
+    eprintln!("The APU device is not installed or disabled.");
+    panic!();
 }

@@ -27,6 +27,8 @@ FLAGS:
        Launch GUI mode
    --smi
        Launch Simple TUI mode (like nvidia-smi, rocm-smi)
+   --apu, --select-apu
+       Select APU instance
    -h, --help
        Print help information
 
