@@ -92,6 +92,11 @@ pub fn run(
         period = now.duration_since(base);
 
         let json = json!({
+            "version": json!({
+                "major": env!("CARGO_PKG_VERSION_MAJOR").parse::<f64>().unwrap_or(0.0),
+                "minor": env!("CARGO_PKG_VERSION_MINOR").parse::<f64>().unwrap_or(0.0),
+                "patch": env!("CARGO_PKG_VERSION_PATCH").parse::<f64>().unwrap_or(0.0),
+            }),
             "Info": info,
             "period": {
                 "duration": period.as_millis(),
