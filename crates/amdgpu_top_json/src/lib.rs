@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 
 mod output_json;
 mod dump;
-pub use dump::dump_json;
+pub use dump::{dump_json, json_info};
 
 pub trait OutputJson {
     fn json(&self) -> Value;
@@ -22,10 +22,10 @@ pub fn run(
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let chip_class = ext_info.get_chip_class();
-    let mark_name = amdgpu_dev.get_marketing_name_or_default();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
     let sysfs_path = pci_bus.get_sysfs_path();
     let family = ext_info.get_family_name();
+    let info = json_info(&amdgpu_dev);
 
     let mut grbm = PerfCounter::new_with_chip_class(stat::PCType::GRBM, chip_class);
     let mut grbm2 = PerfCounter::new_with_chip_class(stat::PCType::GRBM2, chip_class);
@@ -92,7 +92,7 @@ pub fn run(
         period = now.duration_since(base);
 
         let json = json!({
-            "DeviceName": mark_name,
+            "Info": info,
             "period": {
                 "duration": period.as_millis(),
                 "unit": "ms",
