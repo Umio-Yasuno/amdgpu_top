@@ -1,6 +1,7 @@
 pub struct MainOpt {
     pub instance: u32,
     pub pid: Option<i32>,
+    pub refresh_period: u64, // ms
     pub update_process_index: u64, // sec
     pub pci_path: Option<String>,
     pub dump: bool,
@@ -13,6 +14,7 @@ impl Default for MainOpt {
         Self {
             instance: 0,
             pid: None,
+            refresh_period: 1000, // 1000ms, 1s
             update_process_index: 5, // sec
             pci_path: None,
             dump: false,
@@ -62,6 +64,8 @@ const HELP_MSG: &str = concat!(
     "       Select GPU instance\n",
     "   --pci <String>\n",
     "       Specifying PCI path (domain:bus:dev.func)\n",
+    "   -s <u64>, -s <u64>ms\n",
+    "       Refresh period in milliseconds for JSON mode. (default: 1000ms)\n",
     "   -u <u64>, --update-process-index <u64>\n",
     "       Update interval in seconds of the process index for fdinfo (default: 5s)\n",
 );
@@ -109,10 +113,33 @@ impl MainOpt {
                         std::process::exit(1);
                     }
                 },
+                "-s" => {
+                    if let Some(val_str) = args.get(idx+1) {
+                        let tmp = if val_str.ends_with("ms") {
+                            let len = val_str.len();
+                            val_str[..len-2].parse::<u64>().unwrap()
+                        } else {
+                            val_str.parse::<u64>().unwrap()
+                        };
+
+                        if tmp != 0 {
+                            opt.refresh_period = tmp;
+                        }
+
+                        skip = true;
+                    } else {
+                        eprintln!("missing argument: \"-s <u64>\"");
+                        std::process::exit(1);
+                    }
+                },
                 "-u" | "--update-process-index" => {
                     if let Some(val_str) = args.get(idx+1) {
                         let tmp = val_str.parse::<u64>().unwrap();
-                        opt.update_process_index = if tmp == 0 { 1 } else { tmp };
+
+                        if tmp != 0 {
+                            opt.update_process_index = tmp;
+                        }
+
                         skip = true;
                     } else {
                         eprintln!("missing argument: \"-u <u64>\"");

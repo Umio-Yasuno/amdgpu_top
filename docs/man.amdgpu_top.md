@@ -1,5 +1,5 @@
 % AMDGPU_TOP(1)
-% Umio Yasuno <coelacanth_dream@proton.me>
+% Umio Yasuno <coelacanth_dream@protonmail.com>
 % 2023-07-16
 
 <!-- $ pandoc docs/man.amdgpu_top.md -s -t man -o docs/amdgpu_top.1 -->
@@ -44,6 +44,9 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 
 **\-\-pci** *`<String>`*
 :   Specifying PCI path (domain:bus:dev.func)
+
+**-s** *`<u64>`*, **-s** *`<u64>ms`*
+: Refresh period in milliseconds for JSON mode (default: 1000ms)
 
 **-u** *`<u64>`*, **--update-process-index** *`<u64>`*
 : Update interval in seconds of the process index for fdinfo (default: 5s)

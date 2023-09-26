@@ -70,7 +70,7 @@ fn main() {
         AppMode::JSON => amdgpu_top_json::run(
             device_path,
             amdgpu_dev,
-            1000, // 1s
+            main_opt.refresh_period,
             main_opt.update_process_index,
         ),
         #[cfg(feature = "tui")]
