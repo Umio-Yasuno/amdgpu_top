@@ -39,15 +39,20 @@ impl GpuActivity {
             metrics.get_average_gfx_activity(),
             metrics.get_average_umc_activity(),
             metrics.get_average_mm_activity(),
-        ].map(|activity| activity.map(|v| {
-            if header.format_revision == 2 {
-                /* for APU (gpu_metrics v2.x) */
-                v.saturating_div(100)
-            } else {
-                v
+        ].map(|activity| -> Option<u16> {
+            match activity {
+                Some(v) => if v == u16::MAX {
+                    /* not supported */
+                    None
+                } else if header.format_revision == 2 {
+                    /* for APU (gpu_metrics v2.x) */
+                    Some(v.saturating_div(100))
+                } else {
+                    Some(v)
+                },
+                None => None,
             }
-        }));
-
+        });
         Self { gfx, umc, media }
     }
 
