@@ -6,7 +6,7 @@ use cursive::align::HAlign;
 use cursive::view::{Nameable, Scrollable};
 use cursive::views::{HideableView, LinearLayout, TextContent, TextView, Panel};
 
-use libamdgpu_top::AMDGPU::{DeviceHandle, FAMILY_NAME, GPU_INFO, MetricsInfo};
+use libamdgpu_top::AMDGPU::{ASIC_NAME, DeviceHandle, GPU_INFO, MetricsInfo};
 use libamdgpu_top::{stat, DevicePath, PCI, Sampling, VramUsage};
 use stat::{GfxoffStatus, GpuActivity, Sensors, ProcInfo};
 
@@ -28,7 +28,7 @@ pub(crate) struct SmiDeviceInfo {
     pub vram_usage: VramUsage,
     pub sensors: Sensors,
     pub check_gfxoff: bool,
-    pub family_name: FAMILY_NAME,
+    pub asic_name: ASIC_NAME,
     pub fdinfo: FdInfoView,
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
     pub info_text: Text,
@@ -48,7 +48,7 @@ impl SmiDeviceInfo {
         let vram_usage = VramUsage(memory_info);
         let sensors = Sensors::new(&amdgpu_dev, &pci_bus, &ext_info);
         let check_gfxoff = GfxoffStatus::get(instance).is_ok();
-        let family_name = ext_info.get_family_name();
+        let asic_name = ext_info.get_asic_name();
 
         let mut fdinfo = FdInfoView::new(
             Sampling::default().to_duration(),
@@ -76,7 +76,7 @@ impl SmiDeviceInfo {
             vram_usage,
             sensors,
             check_gfxoff,
-            family_name,
+            asic_name,
             fdinfo,
             arc_proc_index,
             info_text: Default::default(),
@@ -170,13 +170,15 @@ impl SmiDeviceInfo {
         let metrics = self.amdgpu_dev.get_gpu_metrics_from_sysfs_path(&self.sysfs_path).ok();
         let activity = if let Some(metrics) = &metrics {
             GpuActivity::from_gpu_metrics(metrics)
-        } else if let FAMILY_NAME::RV = self.family_name {
+        } else {
             // Some Raven/Picasso/Raven2 APU always report gpu_busy_percent as 100.
             // ref: https://gitlab.freedesktop.org/drm/amd/-/issues/1932
             // gpu_metrics is supported from Renoir APU.
-            GpuActivity { gfx: None, umc: None, media: None }
-        } else {
-            GpuActivity::get_from_sysfs(&self.sysfs_path)
+            match self.asic_name {
+                ASIC_NAME::CHIP_RAVEN |
+                ASIC_NAME::CHIP_RAVEN2 => GpuActivity { gfx: None, umc: None, media: None },
+                _ => GpuActivity::get_from_sysfs(&self.sysfs_path),
+            }
         };
 
         for usage in [activity.gfx, activity.umc, activity.media] {

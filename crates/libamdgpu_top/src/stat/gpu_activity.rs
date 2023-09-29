@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use crate::AMDGPU::{DeviceHandle, FAMILY_NAME, GpuMetrics, MetricsInfo};
+use crate::AMDGPU::{ASIC_NAME, DeviceHandle, GpuMetrics, MetricsInfo};
 
 #[derive(Debug, Clone)]
 pub struct GpuActivity {
@@ -12,7 +12,7 @@ impl GpuActivity {
     pub fn get<P: Into<PathBuf>>(
         amdgpu_dev: &DeviceHandle,
         sysfs_path: P,
-        family_name: FAMILY_NAME,
+        asic_name: ASIC_NAME,
     ) -> Option<Self> {
         let path = sysfs_path.into();
 
@@ -22,10 +22,10 @@ impl GpuActivity {
             // Some Raven/Picasso/Raven2 APU always report gpu_busy_percent as 100.
             // ref: https://gitlab.freedesktop.org/drm/amd/-/issues/1932
             // gpu_metrics is supported from Renoir APU.
-            if let FAMILY_NAME::RV = family_name {
-                None
-            } else {
-                Some(Self::get_from_sysfs(&path))
+            match asic_name {
+                ASIC_NAME::CHIP_RAVEN |
+                ASIC_NAME::CHIP_RAVEN2 => None,
+                _ => Some(Self::get_from_sysfs(&path)),
             }
         }
     }
