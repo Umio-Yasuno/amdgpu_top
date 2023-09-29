@@ -13,19 +13,19 @@ impl GpuActivity {
         amdgpu_dev: &DeviceHandle,
         sysfs_path: P,
         asic_name: ASIC_NAME,
-    ) -> Option<Self> {
+    ) -> Self {
         let path = sysfs_path.into();
 
         if let Ok(metrics) = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&path) {
-            Some(Self::from_gpu_metrics(&metrics))
+            Self::from_gpu_metrics(&metrics)
         } else {
             // Some Raven/Picasso/Raven2 APU always report gpu_busy_percent as 100.
             // ref: https://gitlab.freedesktop.org/drm/amd/-/issues/1932
             // gpu_metrics is supported from Renoir APU.
             match asic_name {
                 ASIC_NAME::CHIP_RAVEN |
-                ASIC_NAME::CHIP_RAVEN2 => None,
-                _ => Some(Self::get_from_sysfs(&path)),
+                ASIC_NAME::CHIP_RAVEN2 => Self { gfx: None, umc: None, media: None },
+                _ => Self::get_from_sysfs(&path),
             }
         }
     }
