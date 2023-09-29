@@ -32,6 +32,20 @@ fn main() {
         return;
     }
 
+    #[cfg(feature = "json")]
+    if let AppMode::JSON = main_opt.app_mode {
+        let mut j = amdgpu_top_json::JsonApp::new(
+            &device_path_list,
+            main_opt.refresh_period,
+            main_opt.update_process_index,
+            main_opt.json_iterations,
+        );
+
+        j.run();
+
+        return;
+    }
+
     let (device_path, amdgpu_dev) = if main_opt.select_apu {
         select_apu(&device_path_list)
     } else {
@@ -71,12 +85,7 @@ fn main() {
             main_opt.update_process_index,
         ),
         #[cfg(feature = "json")]
-        AppMode::JSON => amdgpu_top_json::run(
-            device_path,
-            amdgpu_dev,
-            main_opt.refresh_period,
-            main_opt.update_process_index,
-        ),
+        AppMode::JSON => unreachable!(),
         #[cfg(feature = "tui")]
         AppMode::SMI => amdgpu_top_tui::run_smi(
             TITLE,

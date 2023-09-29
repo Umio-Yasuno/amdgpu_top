@@ -1,4 +1,5 @@
 use libamdgpu_top::{
+    PCI,
     AMDGPU::{
         VIDEO_CAPS::CODEC,
         DeviceHandle,
@@ -8,25 +9,36 @@ use libamdgpu_top::{
     DevicePath,
     stat::Sensors,
 };
+use libamdgpu_top::AMDGPU::{drm_amdgpu_info_device, drm_amdgpu_memory_info};
 use serde_json::{json, Map, Value};
 
 pub fn dump_json(device_path_list: &[DevicePath]) {
     let vec_json_info: Vec<Value> = device_path_list.iter().map(|device_path| {
         let Ok(amdgpu_dev) = device_path.init() else { return Value::Null };
-        json_info(&amdgpu_dev)
+        let Ok(pci_bus) = amdgpu_dev.get_pci_bus_info() else { return Value::Null };
+        let Ok(ext_info) = amdgpu_dev.device_info() else { return Value::Null };
+        let Ok(memory_info) = amdgpu_dev.memory_info() else { return Value::Null };
+
+        json_info(&amdgpu_dev, &pci_bus, &ext_info, &memory_info)
     }).collect();
 
     println!("{}", Value::Array(vec_json_info));
 }
 
-pub fn json_info(amdgpu_dev: &DeviceHandle) -> Value {
-    let ext_info = amdgpu_dev.device_info().unwrap();
-    let memory_info = amdgpu_dev.memory_info().unwrap();
-    let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
+pub fn json_info(
+    amdgpu_dev: &DeviceHandle,
+    pci_bus: &PCI::BUS_INFO,
+    ext_info: &drm_amdgpu_info_device,
+    memory_info: &drm_amdgpu_memory_info,
+) -> Value {
     let sensors = Sensors::new(amdgpu_dev, &pci_bus, &ext_info);
 
+    let amdgpu_top_version = json!({
+        "major": env!("CARGO_PKG_VERSION_MAJOR").parse::<f64>().unwrap_or(0.0),
+        "minor": env!("CARGO_PKG_VERSION_MINOR").parse::<f64>().unwrap_or(0.0),
+        "patch": env!("CARGO_PKG_VERSION_PATCH").parse::<f64>().unwrap_or(0.0),
+    });
     let info = AppDeviceInfo::new(amdgpu_dev, &ext_info, &memory_info, &sensors);
-
     let gpu_clk = json!({
         "min": info.min_gpu_clk,
         "max": info.max_gpu_clk,
@@ -86,6 +98,7 @@ pub fn json_info(amdgpu_dev: &DeviceHandle) -> Value {
     };
 
     let json = json!({
+        "amdgpu_top_version": amdgpu_top_version,
         "drm_version": drm,
         "DeviceName": info.marketing_name,
         "PCI": info.pci_bus.to_string(),

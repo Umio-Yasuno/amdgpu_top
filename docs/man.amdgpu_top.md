@@ -48,6 +48,9 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 **-s** *`<u64>`*, **-s** *`<u64>ms`*
 : Refresh period in milliseconds for JSON mode (default: 1000ms)
 
+**-n** *`<u32>`*
+: Specifies the maximum number of iteration for JSON mode (default: 0 [loop])
+
 **-u** *`<u64>`*, **--update-process-index** *`<u64>`*
 : Update interval in seconds of the process index for fdinfo (default: 5s)
 

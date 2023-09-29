@@ -7,6 +7,7 @@ pub struct MainOpt {
     pub dump: bool,
     pub list: bool,
     pub select_apu: bool,
+    pub json_iterations: u32,
     pub app_mode: AppMode,
 }
 
@@ -22,6 +23,7 @@ impl Default for MainOpt {
             list: false,
             select_apu: false,
             app_mode: AppMode::TUI,
+            json_iterations: 0,
         }
     }
 }
@@ -69,7 +71,9 @@ const HELP_MSG: &str = concat!(
     "   --pci <String>\n",
     "       Specifying PCI path (domain:bus:dev.func)\n",
     "   -s <u64>, -s <u64>ms\n",
-    "       Refresh period in milliseconds for JSON mode. (default: 1000ms)\n",
+    "       Refresh period in milliseconds for JSON mode (default: 1000ms)\n",
+    "   -n <u32>\n",
+    "       Specifies the maximum number of iteration for JSON mode (default: 0 [loop])\n",
     "   -u <u64>, --update-process-index <u64>\n",
     "       Update interval in seconds of the process index for fdinfo (default: 5s)\n",
 );
@@ -181,6 +185,15 @@ impl MainOpt {
                 },
                 "--apu" | "--select-apu" => {
                     opt.select_apu = true;
+                },
+                "-n" => {
+                    if let Some(val_str) = args.get(idx+1) {
+                        opt.json_iterations = val_str.parse::<u32>().unwrap();
+                        skip = true;
+                    } else {
+                        eprintln!("missing argument: \"-n <u32>\"");
+                        std::process::exit(1);
+                    }
                 },
                 "-h" | "--help" => {
                     println!("{HELP_MSG}");
