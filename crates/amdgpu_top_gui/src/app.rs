@@ -426,7 +426,7 @@ impl MyApp {
                 }
 
                 if self.has_vcn_unified {
-                    plot_ui.line(Line::new(PlotPoints::new(enc)).name(fl!("vcn")));
+                    plot_ui.line(Line::new(PlotPoints::new(enc)).name(fl!("media")));
                 } else {
                     plot_ui.line(Line::new(PlotPoints::new(dec)).name(fl!("decode")));
                     plot_ui.line(Line::new(PlotPoints::new(enc)).name(fl!("encode")));
@@ -460,7 +460,7 @@ impl MyApp {
                 self.set_fdinfo_sort_type(FdInfoSortType::DMA);
             }
             if self.has_vcn_unified {
-                if ui.button(rt_base(format!("{:^5}", fl!("vcn")))).clicked() {
+                if ui.button(rt_base(format!("{:^5}", fl!("media")))).clicked() {
                     self.set_fdinfo_sort_type(FdInfoSortType::Encode);
                 }
             } else {
@@ -495,12 +495,8 @@ impl MyApp {
                     ui.label(format!("{usage:3} %"));
                 }
 
-        /*
-            From VCN4, the encoding queue and decoding queue have been unified.
-            The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.
-        */
                 if self.has_vcn_unified {
-                    ui.label(format!("{:3} %", pu.usage.enc));
+                    ui.label(format!("{:3} %", pu.usage.media));
                 } else {
                     let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
                     let enc_usage = pu.usage.enc + pu.usage.uvd_enc;

@@ -30,7 +30,8 @@ pub struct FdInfoView {
 
 impl FdInfoView {
     pub fn new(interval: Duration, has_vcn_unified: bool) -> Self {
-        let stat = FdInfoStat::new(interval);
+        let stat = FdInfoStat { interval, has_vcn_unified, ..Default::default() };
+
         Self {
             stat,
             has_vcn_unified,
@@ -94,12 +95,8 @@ impl FdInfoView {
                 write!(self.text.buf, "{usage:>label_len$}%|")?;
             }
 
-        /*
-            From VCN4, the encoding queue and decoding queue have been unified.
-            The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.
-        */
             if self.has_vcn_unified {
-                write!(self.text.buf, "{:>3}%|", pu.usage.enc)?;
+                write!(self.text.buf, "{:>3}%|", pu.usage.media)?;
             } else {
                 let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg; // UVD/VCN/VCN_JPEG
                 let enc_usage = pu.usage.enc + pu.usage.uvd_enc; // UVD/VCN

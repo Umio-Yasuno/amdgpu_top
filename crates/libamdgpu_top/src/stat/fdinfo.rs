@@ -26,6 +26,7 @@ pub struct FdInfoUsage {
     pub enc: i64,
     pub uvd_enc: i64,
     pub vcn_jpeg: i64,
+    pub media: i64,
 }
 
 impl std::ops::AddAssign for FdInfoUsage {
@@ -53,11 +54,12 @@ pub struct ProcUsage {
 
 #[derive(Clone, Default)]
 pub struct FdInfoStat {
-    pid_map: HashMap<i32, FdInfoUsage>,
+    pub pid_map: HashMap<i32, FdInfoUsage>,
     pub drm_client_ids: HashSet<usize>,
     pub proc_usage: Vec<ProcUsage>,
     pub interval: Duration,
-    cpu_time_map: HashMap<i32, f32>, // sec
+    pub cpu_time_map: HashMap<i32, f32>, // sec
+    pub has_vcn_unified: bool,
 }
 
 impl FdInfoStat {
@@ -134,7 +136,7 @@ impl FdInfoStat {
             }
         }
 
-        let diff = if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
+        let mut diff = if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
             let tmp = stat.calc_usage(pre_stat, &self.interval);
             *pre_stat = stat;
 
@@ -157,6 +159,16 @@ impl FdInfoStat {
         };
 
         let cpu_usage = self.get_cpu_usage(pid, &name);
+
+        /*
+            From VCN4, the encoding queue and decoding queue have been unified.
+            The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.
+        */
+        diff.media = if self.has_vcn_unified {
+            (diff.vcn_jpeg + diff.enc) / 2
+        } else {
+            (diff.dec + diff.vcn_jpeg + diff.enc + diff.uvd_enc) / 4
+        };
 
         self.proc_usage.push(ProcUsage {
             pid,
@@ -320,6 +332,7 @@ impl FdInfoUsage {
             enc,
             uvd_enc,
             vcn_jpeg,
+            media: 0,
         }
     }
 }

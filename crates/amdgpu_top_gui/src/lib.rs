@@ -64,6 +64,7 @@ pub fn run(
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
     let chip_class = ext_info.get_chip_class();
     let sysfs_path = pci_bus.get_sysfs_path();
+    let has_vcn_unified = libamdgpu_top::has_vcn_unified(&amdgpu_dev);
 
     let mut grbm = PerfCounter::new_with_chip_class(stat::PCType::GRBM, chip_class);
     let mut grbm2 = PerfCounter::new_with_chip_class(stat::PCType::GRBM2, chip_class);
@@ -72,7 +73,11 @@ pub fn run(
 
     let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
     let sample = Sampling::low();
-    let mut fdinfo = FdInfoStat::new(sample.to_duration());
+    let mut fdinfo = FdInfoStat {
+        interval: sample.to_duration(),
+        has_vcn_unified,
+        ..Default::default()
+    };
     {
         stat::update_index(&mut proc_index, &device_path);
         for pu in &proc_index {
@@ -120,7 +125,7 @@ pub fn run(
         app_device_info,
         device_list,
         command_path,
-        has_vcn_unified: libamdgpu_top::has_vcn_unified(&amdgpu_dev),
+        has_vcn_unified,
         support_pcie_bw: share_pcie_bw.is_some(),
         fdinfo_sort: Default::default(),
         reverse_sort: false,

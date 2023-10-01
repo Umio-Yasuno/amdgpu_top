@@ -173,7 +173,10 @@ impl JsonDeviceInfo {
 
             Arc::new(Mutex::new(proc_index))
         };
-        let fdinfo = FdInfoStat::new(Default::default());
+        let fdinfo = FdInfoStat {
+            has_vcn_unified: libamdgpu_top::has_vcn_unified(&amdgpu_dev),
+            ..Default::default()
+        };
 
         Some(Self {
             amdgpu_dev,
