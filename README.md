@@ -66,10 +66,13 @@ OPTIONS:
 
 ### Example of using JSON mode
 ```
-$ amdgpu_top -i 0 --json | jq -c -r '([.Sensors | to_entries[] | .key + ": " + (.value.value|tostring) + .value.unit] | join(", ")) + ", " + ([.gpu_activity | to_entries[] | .key + ": " + (.value.value|tostring) + .value.unit] | join(", "))'
-Fan: 0RPM, GFX Power: 11W, GFX_MCLK: 96MHz, GFX_SCLK: 32MHz, VDDGFX: 750mV, GFX: 3%, MediaEngine: 0%, Memory: 2%
-Fan: 0RPM, GFX Power: 10W, GFX_MCLK: 96MHz, GFX_SCLK: 113MHz, VDDGFX: 750mV, GFX: 12%, MediaEngine: 0%, Memory: 3%
-Fan: 0RPM, GFX Power: 9W, GFX_MCLK: 96MHz, GFX_SCLK: 36MHz, VDDGFX: 750mV, GFX: 3%, MediaEngine: 0%, Memory: 2%
+$ amdgpu_top --json | --json | jq -c -r '(.devices[] | (.Info | .DeviceName + " (" + .PCI + "): ") + ([.gpu_activity | to_entries[] | .key + ": " + (.value.value|tostring) + .value.unit] | join(", ")))'
+AMD Radeon RX 6600 (0000:03:00.0): GFX: 13%, MediaEngine: 0%, Memory: 4%
+AMD Radeon Graphics (0000:08:00.0): GFX: 0%, MediaEngine: 0%, Memory: null%
+AMD Radeon RX 6600 (0000:03:00.0): GFX: 15%, MediaEngine: 0%, Memory: 5%
+AMD Radeon Graphics (0000:08:00.0): GFX: 0%, MediaEngine: 0%, Memory: null%
+AMD Radeon RX 6600 (0000:03:00.0): GFX: 3%, MediaEngine: 0%, Memory: 2%
+AMD Radeon Graphics (0000:08:00.0): GFX: 0%, MediaEngine: 0%, Memory: null%
 ...
 ```
 
