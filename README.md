@@ -17,32 +17,34 @@ amdgpu_top [options ..]
 ```
 FLAGS:
    -d, --dump
-       Dump AMDGPU info (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)
-       (can be combined with "-J" option)
+       Dump AMDGPU info. (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps)
+       This option can be combined with the "-J" option.
    --list
-       Display a list of AMDGPU devices (can be combined with "-d" option)
+       Display a list of AMDGPU devices.
+       This option can be combined with the "-d" option.
    -J, --json
-       Output JSON formatted data
+       Output JSON formatted data.
    --gui
-       Launch GUI mode
+       Launch GUI mode.
    --smi
-       Launch Simple TUI mode (like nvidia-smi, rocm-smi)
+       Launch Simple TUI mode. (like nvidia-smi, rocm-smi)
    --apu, --select-apu
-       Select APU instance
+       Select APU instance.
    -h, --help
-       Print help information
+       Print help information.
 
 OPTIONS:
    -i <u32>
-       Select GPU instance
+       Select GPU instance.
    --pci <String>
-       Specifying PCI path (domain:bus:dev.func)
+       Specifying PCI path. (domain:bus:dev.func)
    -s <u64>, -s <u64>ms
-       Refresh period in milliseconds for JSON mode (default: 1000ms)
+       Refresh period (interval) in milliseconds for JSON mode. (default: 1000ms)
    -n <u32>
-       Specifies the maximum number of iteration for JSON mode (default: 0 [loop])
+       Specifies the maximum number of iteration for JSON mode.
+       If 0 is specified, it will be an infinite loop. (default: 0)
    -u <u64>, --update-process-index <u64>
-       Update interval in seconds of the process index for fdinfo (default: 5s)
+       Update interval in seconds of the process index for fdinfo. (default: 5s)
 ```
 
 ### Commands for TUI
