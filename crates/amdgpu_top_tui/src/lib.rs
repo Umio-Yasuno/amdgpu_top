@@ -1,5 +1,4 @@
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 use cursive::view::{Nameable, Scrollable};
 use cursive::{event::Key, menu, traits::With};
 
@@ -171,22 +170,7 @@ pub fn run(
         let t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)> = vec_app.iter().map(|app| {
             (app.device_path.clone(), app.arc_proc_index.clone())
         }).collect();
-        let mut buf_index: Vec<ProcInfo> = Vec::new();
-
-        std::thread::spawn(move || loop {
-            std::thread::sleep(Duration::from_secs(interval));
-
-            let all_proc = stat::get_all_processes();
-
-            for (device_path, index) in &t_index {
-                stat::update_index_by_all_proc(&mut buf_index, device_path, &all_proc);
-
-                let lock = index.lock();
-                if let Ok(mut index) = lock {
-                    *index = buf_index.clone();
-                }
-            }
-        });
+        stat::spawn_update_index_thread(t_index, interval);
     }
 
     let mut flags = toggle_opt.clone();

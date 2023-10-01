@@ -1,6 +1,5 @@
 use std::fmt::Write;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 use std::path::PathBuf;
 use cursive::align::HAlign;
 use cursive::view::{Nameable, Scrollable};
@@ -297,27 +296,13 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
                 .scroll_y(true)
         );
     }
+
     {
-        let t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)> = vec_app.iter().map(|app| {
-            (app.device_path.clone(), app.arc_proc_index.clone())
-        }).collect();
-        let mut buf_index: Vec<ProcInfo> = Vec::new();
-        let interval = Duration::from_secs(interval);
-
-        std::thread::spawn(move || loop {
-            std::thread::sleep(interval);
-
-            let all_proc = stat::get_all_processes();
-
-            for (device_path, index) in &t_index {
-                stat::update_index_by_all_proc(&mut buf_index, device_path, &all_proc);
-
-                let lock = index.lock();
-                if let Ok(mut index) = lock {
-                    *index = buf_index.clone();
-                }
-            }
-        });
+        let t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)> = vec_app
+            .iter()
+            .map(|app| (app.device_path.clone(), app.arc_proc_index.clone()))
+            .collect();
+        stat::spawn_update_index_thread(t_index, interval);
     }
 
     siv.add_global_callback('q', cursive::Cursive::quit);

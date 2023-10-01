@@ -1,6 +1,7 @@
 use std::fs;
 use std::io::Read;
 use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use crate::DevicePath;
 
@@ -412,4 +413,27 @@ pub fn update_index_by_all_proc(
 
 pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath) {
     update_index_by_all_proc(vec_info, device_path, &get_all_processes());
+}
+
+pub fn spawn_update_index_thread(
+    t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)>,
+    interval: u64,
+) {
+    let mut buf_index: Vec<ProcInfo> = Vec::new();
+    let interval = Duration::from_secs(interval);
+
+    std::thread::spawn(move || loop {
+        std::thread::sleep(interval);
+
+        let all_proc = get_all_processes();
+
+        for (device_path, index) in &t_index {
+            update_index_by_all_proc(&mut buf_index, device_path, &all_proc);
+
+            let lock = index.lock();
+            if let Ok(mut index) = lock {
+                *index = buf_index.clone();
+            }
+        }
+    });
 }

@@ -35,7 +35,7 @@ impl JsonApp {
     pub fn new(
         device_path_list: &[DevicePath],
         refresh_period: u64,
-        update_process_index: u64,
+        update_process_index_interval: u64,
         iterations: u32,
     ) -> Self {
         let period = Duration::from_millis(refresh_period);
@@ -54,22 +54,7 @@ impl JsonApp {
                 .iter()
                 .map(|device| (device.device_path.clone(), device.arc_proc_index.clone()))
                 .collect();
-            let mut buf_index: Vec<ProcInfo> = Vec::new();
-
-            std::thread::spawn(move || loop {
-                std::thread::sleep(Duration::from_secs(update_process_index));
-
-                let all_proc = stat::get_all_processes();
-
-                for (device_path, index) in &t_index {
-                    stat::update_index_by_all_proc(&mut buf_index, device_path, &all_proc);
-
-                    let lock = index.lock();
-                    if let Ok(mut index) = lock {
-                        *index = buf_index.clone();
-                    }
-                }
-            });
+            stat::spawn_update_index_thread(t_index, update_process_index_interval);
         }
 
         Self {
