@@ -11,6 +11,7 @@ use libamdgpu_top::{
 };
 use libamdgpu_top::AMDGPU::{drm_amdgpu_info_device, drm_amdgpu_memory_info};
 use serde_json::{json, Map, Value};
+use crate::amdgpu_top_version;
 
 pub fn dump_json(device_path_list: &[DevicePath]) {
     let vec_json_info: Vec<Value> = device_path_list.iter().map(|device_path| {
@@ -33,11 +34,6 @@ pub fn json_info(
 ) -> Value {
     let sensors = Sensors::new(amdgpu_dev, &pci_bus, &ext_info);
 
-    let amdgpu_top_version = json!({
-        "major": env!("CARGO_PKG_VERSION_MAJOR").parse::<f64>().unwrap_or(0.0),
-        "minor": env!("CARGO_PKG_VERSION_MINOR").parse::<f64>().unwrap_or(0.0),
-        "patch": env!("CARGO_PKG_VERSION_PATCH").parse::<f64>().unwrap_or(0.0),
-    });
     let info = AppDeviceInfo::new(amdgpu_dev, &ext_info, &memory_info, &sensors);
     let gpu_clk = json!({
         "min": info.min_gpu_clk,
@@ -98,7 +94,7 @@ pub fn json_info(
     };
 
     let json = json!({
-        "amdgpu_top_version": amdgpu_top_version,
+        "amdgpu_top_version": amdgpu_top_version(),
         "drm_version": drm,
         "DeviceName": info.marketing_name,
         "PCI": info.pci_bus.to_string(),

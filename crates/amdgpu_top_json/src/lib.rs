@@ -14,6 +14,14 @@ pub trait OutputJson {
     fn json(&self) -> Value;
 }
 
+pub fn amdgpu_top_version() -> Value {
+    json!({
+        "major": env!("CARGO_PKG_VERSION_MAJOR").parse::<f64>().unwrap_or(0.0),
+        "minor": env!("CARGO_PKG_VERSION_MINOR").parse::<f64>().unwrap_or(0.0),
+        "patch": env!("CARGO_PKG_VERSION_PATCH").parse::<f64>().unwrap_or(0.0),
+    })
+}
+
 pub struct JsonApp {
     pub vec_device_info: Vec<JsonDeviceInfo>,
     pub base_time: Instant,
@@ -104,6 +112,7 @@ impl JsonApp {
                 },
                 "devices": Value::Array(buf_json.clone()),
                 "devices_len": devices_len,
+                "amdgpu_top_version": amdgpu_top_version(),
             }));
 
             buf_json.clear();
