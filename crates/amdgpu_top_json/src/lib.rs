@@ -168,6 +168,7 @@ impl JsonDeviceInfo {
             Arc::new(Mutex::new(proc_index))
         };
         let fdinfo = FdInfoStat {
+            has_vcn: libamdgpu_top::has_vcn(&amdgpu_dev),
             has_vcn_unified: libamdgpu_top::has_vcn_unified(&amdgpu_dev),
             ..Default::default()
         };
@@ -203,6 +204,10 @@ impl JsonDeviceInfo {
             } else {
                 self.fdinfo.interval += interval;
             }
+        }
+
+        if self.activity.media.is_none() || self.activity.media == Some(0) {
+            self.activity.media = self.fdinfo.fold_fdinfo_usage().media.try_into().ok();
         }
     }
 

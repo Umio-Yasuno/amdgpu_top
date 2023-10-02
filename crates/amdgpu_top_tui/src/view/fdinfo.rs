@@ -29,8 +29,8 @@ pub struct FdInfoView {
 }
 
 impl FdInfoView {
-    pub fn new(interval: Duration, has_vcn_unified: bool) -> Self {
-        let stat = FdInfoStat { interval, has_vcn_unified, ..Default::default() };
+    pub fn new(interval: Duration, has_vcn: bool, has_vcn_unified: bool) -> Self {
+        let stat = FdInfoStat { interval, has_vcn, has_vcn_unified, ..Default::default() };
 
         Self {
             stat,

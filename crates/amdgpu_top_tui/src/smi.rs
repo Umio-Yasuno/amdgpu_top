@@ -51,6 +51,7 @@ impl SmiDeviceInfo {
 
         let mut fdinfo = FdInfoView::new(
             Sampling::default().to_duration(),
+            libamdgpu_top::has_vcn(&amdgpu_dev),
             libamdgpu_top::has_vcn_unified(&amdgpu_dev),
         );
 
@@ -167,7 +168,7 @@ impl SmiDeviceInfo {
         }
 
         let metrics = self.amdgpu_dev.get_gpu_metrics_from_sysfs_path(&self.sysfs_path).ok();
-        let activity = if let Some(metrics) = &metrics {
+        let mut activity = if let Some(metrics) = &metrics {
             GpuActivity::from_gpu_metrics(metrics)
         } else {
             // Some Raven/Picasso/Raven2 APU always report gpu_busy_percent as 100.
@@ -179,6 +180,10 @@ impl SmiDeviceInfo {
                 _ => GpuActivity::get_from_sysfs(&self.sysfs_path),
             }
         };
+
+        if activity.media.is_none() || activity.media == Some(0) {
+            activity.media = self.fdinfo.stat.fold_fdinfo_usage().media.try_into().ok();
+        }
 
         for usage in [activity.gfx, activity.umc, activity.media] {
             if let Some(usage) = usage {

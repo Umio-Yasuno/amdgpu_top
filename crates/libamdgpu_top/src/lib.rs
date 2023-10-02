@@ -66,6 +66,10 @@ impl VramUsage {
     }
 }
 
+pub fn has_vcn(amdgpu_dev: &DeviceHandle) -> bool {
+    amdgpu_dev.get_hw_ip_info(HW_IP_TYPE::VCN_DEC).is_ok()
+}
+
 pub fn has_vcn_unified(amdgpu_dev: &DeviceHandle) -> bool {
     let Ok(ip) = amdgpu_dev.get_hw_ip_info(HW_IP_TYPE::VCN_ENC) else { return false };
 

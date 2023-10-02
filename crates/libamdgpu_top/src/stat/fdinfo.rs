@@ -42,6 +42,7 @@ impl std::ops::AddAssign for FdInfoUsage {
         self.enc += other.enc;
         self.uvd_enc += other.uvd_enc;
         self.vcn_jpeg += other.vcn_jpeg;
+        self.media += other.media;
     }
 }
 
@@ -60,17 +61,19 @@ pub struct FdInfoStat {
     pub proc_usage: Vec<ProcUsage>,
     pub interval: Duration,
     pub cpu_time_map: HashMap<i32, f32>, // sec
+    pub has_vcn: bool,
     pub has_vcn_unified: bool,
 }
 
 impl FdInfoStat {
+/*
     pub fn new(interval: Duration) -> Self {
         Self {
             interval,
             ..Default::default()
         }
     }
-
+*/
     pub fn get_cpu_usage(&mut self, pid: i32, name: &str) -> f32 {
         const OFFSET: usize = 3;
         const HZ: f32 = 100.0;
@@ -137,8 +140,8 @@ impl FdInfoStat {
             }
         }
 
-        let mut diff = if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
-            let tmp = stat.calc_usage(pre_stat, &self.interval);
+        let diff = if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
+            let tmp = stat.calc_usage(pre_stat, &self.interval, self.has_vcn, self.has_vcn_unified);
             *pre_stat = stat;
 
             tmp
@@ -160,16 +163,6 @@ impl FdInfoStat {
         };
 
         let cpu_usage = self.get_cpu_usage(pid, &name);
-
-        /*
-            From VCN4, the encoding queue and decoding queue have been unified.
-            The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.
-        */
-        diff.media = if self.has_vcn_unified {
-            (diff.vcn_jpeg + diff.enc) / 2
-        } else {
-            (diff.dec + diff.vcn_jpeg + diff.enc + diff.uvd_enc) / 4
-        };
 
         self.proc_usage.push(ProcUsage {
             pid,
@@ -298,7 +291,13 @@ impl FdInfoUsage {
         };
     }
 
-    pub fn calc_usage(&self, pre_stat: &Self, interval: &Duration) -> Self {
+    pub fn calc_usage(
+        &self,
+        pre_stat: &Self,
+        interval: &Duration,
+        has_vcn: bool,
+        has_vcn_unified: bool,
+    ) -> Self {
         let [gfx, compute, dma, dec, enc, uvd_enc, vcn_jpeg] = {
             [
                 (pre_stat.gfx, self.gfx),
@@ -322,6 +321,18 @@ impl FdInfoUsage {
             })
         };
 
+        /*
+            From VCN4, the encoding queue and decoding queue have been unified.
+            The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.
+        */
+        let media = if has_vcn_unified {
+            (vcn_jpeg + enc) / 2
+        } else if has_vcn {
+            (dec + vcn_jpeg + enc) / 3
+        } else {
+            (dec + vcn_jpeg + enc + uvd_enc) / 4
+        };
+
         Self {
             vram_usage: self.vram_usage,
             gtt_usage: self.gtt_usage,
@@ -333,7 +344,7 @@ impl FdInfoUsage {
             enc,
             uvd_enc,
             vcn_jpeg,
-            media: 0,
+            media,
         }
     }
 }

@@ -64,6 +64,7 @@ pub fn run(
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
     let chip_class = ext_info.get_chip_class();
     let sysfs_path = pci_bus.get_sysfs_path();
+    let has_vcn = libamdgpu_top::has_vcn(&amdgpu_dev);
     let has_vcn_unified = libamdgpu_top::has_vcn_unified(&amdgpu_dev);
 
     let mut grbm = PerfCounter::new_with_chip_class(stat::PCType::GRBM, chip_class);
@@ -75,6 +76,7 @@ pub fn run(
     let sample = Sampling::low();
     let mut fdinfo = FdInfoStat {
         interval: sample.to_duration(),
+        has_vcn,
         has_vcn_unified,
         ..Default::default()
     };

@@ -51,6 +51,7 @@ impl TuiApp {
 
         let mut fdinfo = FdInfoView::new(
             Sampling::default().to_duration(),
+            libamdgpu_top::has_vcn(&amdgpu_dev),
             libamdgpu_top::has_vcn_unified(&amdgpu_dev),
         );
 
