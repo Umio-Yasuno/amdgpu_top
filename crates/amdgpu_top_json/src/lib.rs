@@ -45,6 +45,7 @@ impl JsonApp {
 
         for device in vec_device_info.iter_mut() {
             device.fdinfo.interval = interval;
+            device.update(interval);
         }
 
         let base_time = Instant::now();
