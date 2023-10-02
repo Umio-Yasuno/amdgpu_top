@@ -11,7 +11,7 @@ use libamdgpu_top::{
 };
 use libamdgpu_top::AMDGPU::{drm_amdgpu_info_device, drm_amdgpu_memory_info};
 use serde_json::{json, Map, Value};
-use crate::amdgpu_top_version;
+use crate::{amdgpu_top_version, OutputJson};
 
 pub fn dump_json(device_path_list: &[DevicePath]) {
     let vec_json_info: Vec<Value> = device_path_list.iter().map(|device_path| {
@@ -59,6 +59,18 @@ pub fn json_info(
         "ver_str": vbios.ver,
         "date": vbios.date,
     }));
+
+    let link_speed_width = if sensors.is_apu {
+        Value::Null
+    } else {
+        json!({
+            "min_dpm_link": sensors.min_dpm_link.map_or(Value::Null, |link| link.json()),
+            "max_dpm_link": sensors.max_dpm_link.map_or(Value::Null, |link| link.json()),
+            "max_gpu_link": sensors.max_gpu_link.map_or(Value::Null, |link| link.json()),
+            "max_system_link": sensors.max_system_link.map_or(Value::Null, |link| link.json()),
+        })
+    };
+
     let video_caps = if let [Some(decode), Some(encode)] = [info.decode, info.encode] {
         let mut m = Map::new();
 
@@ -123,7 +135,17 @@ pub fn json_info(
         "Power Cap": power_cap,
         "VBIOS": vbios,
         "Video Caps": video_caps,
+        "PCIe Link": link_speed_width,
     });
 
     json
+}
+
+impl OutputJson for PCI::LINK {
+    fn json(&self) -> Value {
+        json!({
+            "gen": self.gen,
+            "width": self.width,
+        })
+    }
 }
