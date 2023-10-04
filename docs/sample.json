@@ -1,0 +1,643 @@
+{
+  "amdgpu_top_version": {
+    "major": 0.0,
+    "minor": 2.0,
+    "patch": 0.0
+  },
+  "devices": [
+    {
+      "GRBM": {
+        "Color Block": {
+          "unit": "%",
+          "value": 9
+        },
+        "Depth Block": {
+          "unit": "%",
+          "value": 9
+        },
+        "Geometry Engine": {
+          "unit": "%",
+          "value": 9
+        },
+        "Graphics Pipe": {
+          "unit": "%",
+          "value": 12
+        },
+        "Primitive Assembly": {
+          "unit": "%",
+          "value": 1
+        },
+        "Shader Export": {
+          "unit": "%",
+          "value": 10
+        },
+        "Shader Processor Interpolator": {
+          "unit": "%",
+          "value": 10
+        },
+        "Texture Pipe": {
+          "unit": "%",
+          "value": 10
+        }
+      },
+      "GRBM2": {
+        "Command Processor -  Compute": {
+          "unit": "%",
+          "value": 0
+        },
+        "Command Processor -  Fetcher": {
+          "unit": "%",
+          "value": 12
+        },
+        "Command Processor - Graphics": {
+          "unit": "%",
+          "value": 11
+        },
+        "Efficiency Arbiter": {
+          "unit": "%",
+          "value": 9
+        },
+        "Render Backend Memory Interface": {
+          "unit": "%",
+          "value": 10
+        },
+        "RunList Controller": {
+          "unit": "%",
+          "value": 0
+        },
+        "SDMA": {
+          "unit": "%",
+          "value": 0
+        },
+        "Unified Translation Cache Level-2": {
+          "unit": "%",
+          "value": 0
+        }
+      },
+      "Info": {
+        "ASIC Name": "Dimgrey Cavefish/Navi23",
+        "Chip Class": "GFX10_3",
+        "DeviceID": 29695,
+        "DeviceName": "AMD Radeon RX 6600",
+        "GL1 Cache per Shader Array": 131072,
+        "GPU Clock": {
+          "max": 2750,
+          "min": 500
+        },
+        "GPU Family": "Navi (NV)",
+        "GPU Type": "dGPU",
+        "GTT Size": 8058241024,
+        "L1 Cache per CU": 16384,
+        "L2 Cache": 2097152,
+        "L3 Cache": 33554432,
+        "Memory Clock": {
+          "max": 875,
+          "min": 96
+        },
+        "PCI": "0000:03:00.0",
+        "PCIe Link": {
+          "max_dpm_link": null,
+          "max_gpu_link": {
+            "gen": 4,
+            "width": 8
+          },
+          "max_system_link": {
+            "gen": 3,
+            "width": 16
+          },
+          "min_dpm_link": null
+        },
+        "Power Cap": {
+          "current": 100,
+          "max": 120,
+          "min": 0
+        },
+        "RenderBackend": 8,
+        "ResizableBAR": true,
+        "RevisionID": 199,
+        "Shader Array per Shader Engine": 2,
+        "Shader Engine": 2,
+        "Total Compute Unit": 28,
+        "Total ROP": 64,
+        "VBIOS": {
+          "date": "2022/02/17 22:31",
+          "name": "E451 N23 XL A0 8GB 500e/500m 0.9V/1.35V",
+          "pn": "113-2451LMH-U03",
+          "ver_str": "020.003.000.030.000000"
+        },
+        "VRAM Bit width": 128,
+        "VRAM Size": 8573157376,
+        "VRAM Type": "GDDR6",
+        "Video Caps": {
+          "AV1": {
+            "Decode": {
+              "height": 4352,
+              "width": 8192
+            },
+            "Encode": null
+          },
+          "HEVC": {
+            "Decode": {
+              "height": 4352,
+              "width": 8192
+            },
+            "Encode": {
+              "height": 4352,
+              "width": 7680
+            }
+          },
+          "JPEG": {
+            "Decode": {
+              "height": 4096,
+              "width": 4096
+            },
+            "Encode": null
+          },
+          "MPEG2": {
+            "Decode": {
+              "height": 4096,
+              "width": 4096
+            },
+            "Encode": null
+          },
+          "MPEG4": {
+            "Decode": {
+              "height": 4096,
+              "width": 4096
+            },
+            "Encode": null
+          },
+          "MPEG4_AVC": {
+            "Decode": {
+              "height": 4096,
+              "width": 4096
+            },
+            "Encode": {
+              "height": 2160,
+              "width": 4096
+            }
+          },
+          "VC1": {
+            "Decode": {
+              "height": 4096,
+              "width": 4096
+            },
+            "Encode": null
+          },
+          "VP9": {
+            "Decode": {
+              "height": 4352,
+              "width": 8192
+            },
+            "Encode": null
+          }
+        },
+        "amdgpu_top_version": {
+          "major": 0.0,
+          "minor": 2.0,
+          "patch": 0.0
+        },
+        "drm_version": {
+          "major": 3,
+          "minor": 54,
+          "patchlevel": 0
+        }
+      },
+      "Sensors": {
+        "Fan": {
+          "unit": "RPM",
+          "value": 0
+        },
+        "GFX Power": {
+          "unit": "W",
+          "value": 10
+        },
+        "GFX_MCLK": {
+          "unit": "MHz",
+          "value": 96
+        },
+        "GFX_SCLK": {
+          "unit": "MHz",
+          "value": 101
+        },
+        "VDDGFX": {
+          "unit": "mV",
+          "value": 775
+        }
+      },
+      "VRAM": {
+        "Total GTT": {
+          "unit": "MiB",
+          "value": 7684
+        },
+        "Total GTT Usage": {
+          "unit": "MiB",
+          "value": 37
+        },
+        "Total VRAM": {
+          "unit": "MiB",
+          "value": 8176
+        },
+        "Total VRAM Usage": {
+          "unit": "MiB",
+          "value": 376
+        }
+      },
+      "fdinfo": {
+        "3252": {
+          "name": "firefox",
+          "usage": {
+            "CPU": {
+              "unit": "%",
+              "value": 10
+            },
+            "Compute": {
+              "unit": "%",
+              "value": 0
+            },
+            "DMA": {
+              "unit": "%",
+              "value": 0
+            },
+            "Decode": {
+              "unit": "%",
+              "value": 0
+            },
+            "Encode": {
+              "unit": "%",
+              "value": 0
+            },
+            "GFX": {
+              "unit": "%",
+              "value": 2
+            },
+            "GTT": {
+              "unit": "MiB",
+              "value": 19
+            },
+            "Media": {
+              "unit": "%",
+              "value": 0
+            },
+            "VRAM": {
+              "unit": "MiB",
+              "value": 149
+            }
+          }
+        },
+        "6348": {
+          "name": "amdgpu_top",
+          "usage": {
+            "CPU": {
+              "unit": "%",
+              "value": 0
+            },
+            "Compute": {
+              "unit": "%",
+              "value": 0
+            },
+            "DMA": {
+              "unit": "%",
+              "value": 0
+            },
+            "Decode": {
+              "unit": "%",
+              "value": 0
+            },
+            "Encode": {
+              "unit": "%",
+              "value": 0
+            },
+            "GFX": {
+              "unit": "%",
+              "value": 0
+            },
+            "GTT": {
+              "unit": "MiB",
+              "value": 0
+            },
+            "Media": {
+              "unit": "%",
+              "value": 0
+            },
+            "VRAM": {
+              "unit": "MiB",
+              "value": 0
+            }
+          }
+        }
+      },
+      "gpu_activity": {
+        "GFX": {
+          "unit": "%",
+          "value": 13
+        },
+        "MediaEngine": {
+          "unit": "%",
+          "value": 0
+        },
+        "Memory": {
+          "unit": "%",
+          "value": 4
+        }
+      },
+      "gpu_metrics": {
+        "Throttle Status": []
+      }
+    },
+    {
+      "GRBM": {
+        "Color Block": {
+          "unit": "%",
+          "value": 0
+        },
+        "Depth Block": {
+          "unit": "%",
+          "value": 0
+        },
+        "Graphics Pipe": {
+          "unit": "%",
+          "value": 0
+        },
+        "Input Assembly": {
+          "unit": "%",
+          "value": 0
+        },
+        "Primitive Assembly": {
+          "unit": "%",
+          "value": 0
+        },
+        "Shader Export": {
+          "unit": "%",
+          "value": 0
+        },
+        "Shader Processor Interpolator": {
+          "unit": "%",
+          "value": 0
+        },
+        "Texture Pipe": {
+          "unit": "%",
+          "value": 0
+        },
+        "Vertex Grouper / Tessellator": {
+          "unit": "%",
+          "value": 0
+        },
+        "Work Distributor": {
+          "unit": "%",
+          "value": 0
+        }
+      },
+      "GRBM2": {
+        "Command Processor -  Compute": {
+          "unit": "%",
+          "value": 0
+        },
+        "Command Processor -  Fetcher": {
+          "unit": "%",
+          "value": 0
+        },
+        "Command Processor - Graphics": {
+          "unit": "%",
+          "value": 0
+        },
+        "Efficiency Arbiter": {
+          "unit": "%",
+          "value": 0
+        },
+        "Render Backend Memory Interface": {
+          "unit": "%",
+          "value": 0
+        },
+        "RunList Controller": {
+          "unit": "%",
+          "value": 0
+        },
+        "Texture Cache": {
+          "unit": "%",
+          "value": 0
+        },
+        "Unified Translation Cache Level-2": {
+          "unit": "%",
+          "value": 0
+        }
+      },
+      "Info": {
+        "ASIC Name": "Renoir",
+        "Chip Class": "GFX9",
+        "DeviceID": 5688,
+        "DeviceName": "AMD Radeon Graphics",
+        "GL1 Cache per Shader Array": 0,
+        "GPU Clock": {
+          "max": 1900,
+          "min": 200
+        },
+        "GPU Family": "Raven (RV)",
+        "GPU Type": "APU",
+        "GTT Size": 8058241024,
+        "L1 Cache per CU": 16384,
+        "L2 Cache": 1048576,
+        "L3 Cache": 0,
+        "Memory Clock": {
+          "max": 1600,
+          "min": 1600
+        },
+        "PCI": "0000:08:00.0",
+        "PCIe Link": null,
+        "Power Cap": null,
+        "RenderBackend": 2,
+        "ResizableBAR": true,
+        "RevisionID": 201,
+        "Shader Array per Shader Engine": 1,
+        "Shader Engine": 1,
+        "Total Compute Unit": 7,
+        "Total ROP": 16,
+        "VBIOS": {
+          "date": "2021/09/24 11:21",
+          "name": "Cezanne Generic VBIOS",
+          "pn": "13-CEZANNE-019",
+          "ver_str": "017.010.000.030.000000"
+        },
+        "VRAM Bit width": 128,
+        "VRAM Size": 536870912,
+        "VRAM Type": "DDR4",
+        "Video Caps": {
+          "AV1": {
+            "Decode": null,
+            "Encode": null
+          },
+          "HEVC": {
+            "Decode": {
+              "height": 4352,
+              "width": 8192
+            },
+            "Encode": {
+              "height": 2304,
+              "width": 4096
+            }
+          },
+          "JPEG": {
+            "Decode": {
+              "height": 4096,
+              "width": 4096
+            },
+            "Encode": null
+          },
+          "MPEG2": {
+            "Decode": {
+              "height": 4096,
+              "width": 4096
+            },
+            "Encode": null
+          },
+          "MPEG4": {
+            "Decode": {
+              "height": 4096,
+              "width": 4096
+            },
+            "Encode": null
+          },
+          "MPEG4_AVC": {
+            "Decode": {
+              "height": 4096,
+              "width": 4096
+            },
+            "Encode": {
+              "height": 2304,
+              "width": 4096
+            }
+          },
+          "VC1": {
+            "Decode": {
+              "height": 4096,
+              "width": 4096
+            },
+            "Encode": null
+          },
+          "VP9": {
+            "Decode": {
+              "height": 4352,
+              "width": 8192
+            },
+            "Encode": null
+          }
+        },
+        "amdgpu_top_version": {
+          "major": 0.0,
+          "minor": 2.0,
+          "patch": 0.0
+        },
+        "drm_version": {
+          "major": 3,
+          "minor": 54,
+          "patchlevel": 0
+        }
+      },
+      "Sensors": {
+        "GFX Power": {
+          "unit": "W",
+          "value": 9
+        },
+        "GFX_MCLK": {
+          "unit": "MHz",
+          "value": 1600
+        },
+        "GFX_SCLK": {
+          "unit": "MHz",
+          "value": 400
+        },
+        "VDDGFX": {
+          "unit": "mV",
+          "value": 1087
+        },
+        "VDDNB": {
+          "unit": "mV",
+          "value": 999
+        }
+      },
+      "VRAM": {
+        "Total GTT": {
+          "unit": "MiB",
+          "value": 7684
+        },
+        "Total GTT Usage": {
+          "unit": "MiB",
+          "value": 14
+        },
+        "Total VRAM": {
+          "unit": "MiB",
+          "value": 512
+        },
+        "Total VRAM Usage": {
+          "unit": "MiB",
+          "value": 29
+        }
+      },
+      "fdinfo": {
+        "6348": {
+          "name": "amdgpu_top",
+          "usage": {
+            "CPU": {
+              "unit": "%",
+              "value": 0
+            },
+            "Compute": {
+              "unit": "%",
+              "value": 0
+            },
+            "DMA": {
+              "unit": "%",
+              "value": 0
+            },
+            "Decode": {
+              "unit": "%",
+              "value": 0
+            },
+            "Encode": {
+              "unit": "%",
+              "value": 0
+            },
+            "GFX": {
+              "unit": "%",
+              "value": 0
+            },
+            "GTT": {
+              "unit": "MiB",
+              "value": 0
+            },
+            "Media": {
+              "unit": "%",
+              "value": 0
+            },
+            "VRAM": {
+              "unit": "MiB",
+              "value": 0
+            }
+          }
+        }
+      },
+      "gpu_activity": {
+        "GFX": {
+          "unit": "%",
+          "value": 0
+        },
+        "MediaEngine": {
+          "unit": "%",
+          "value": 0
+        },
+        "Memory": {
+          "unit": "%",
+          "value": null
+        }
+      },
+      "gpu_metrics": {
+        "Throttle Status": []
+      }
+    }
+  ],
+  "devices_len": 2,
+  "period": {
+    "duration": 1011,
+    "unit": "ms"
+  }
+}
