@@ -54,7 +54,8 @@ impl GpuMetricsView {
             GpuMetrics::V2_0(_) |
             GpuMetrics::V2_1(_) |
             GpuMetrics::V2_2(_) |
-            GpuMetrics::V2_3(_) => self.for_v2()?,
+            GpuMetrics::V2_3(_) |
+            GpuMetrics::V2_4(_) => self.for_v2()?,
             _ => {},
         };
 
@@ -222,9 +223,20 @@ impl GpuMetricsView {
             let Some(val) = val else { continue };
             write!(self.text.buf, " {label:<20} => [")?;
             for v in &val {
-                write!(self.text.buf, "{v:5},")?;
+                write!(self.text.buf, "{v:>5},")?;
             }
             writeln!(self.text.buf, "]")?;
+        }
+
+        for (label, voltage, current) in [
+            ("CPU", self.metrics.get_average_cpu_voltage(), self.metrics.get_average_cpu_current()),
+            ("SoC", self.metrics.get_average_soc_voltage(), self.metrics.get_average_soc_current()),
+            ("GFX", self.metrics.get_average_gfx_voltage(), self.metrics.get_average_gfx_current()),
+        ] {
+            let Some(voltage) = voltage else { continue };
+            let Some(current) = current else { continue };
+
+            writeln!(self.text.buf, " {label} => {voltage:>5} mV, {current:>5} mA")?;
         }
 
         Ok(())

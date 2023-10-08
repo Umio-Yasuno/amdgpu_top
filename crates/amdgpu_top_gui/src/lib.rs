@@ -390,7 +390,8 @@ impl MyApp {
                 GpuMetrics::V2_0(_) |
                 GpuMetrics::V2_1(_) |
                 GpuMetrics::V2_2(_) |
-                GpuMetrics::V2_3(_) => {
+                GpuMetrics::V2_3(_) |
+                GpuMetrics::V2_4(_) => {
                     ui.add_space(SPACE);
                     collapsing(ui, &header, true, |ui| self.egui_gpu_metrics_v2(ui));
                 },

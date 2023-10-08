@@ -49,6 +49,7 @@ mhz = MHz
 mw = mW
 w = W
 mv = mV
+ma = mA
 rpm = RPM
 # Temp.
 c = C

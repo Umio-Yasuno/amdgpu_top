@@ -878,6 +878,33 @@ impl MyApp {
                 ui.label("]");
                 ui.end_row();
             }
+
+            for (label, voltage, current) in [
+                (
+                    fl!("cpu"),
+                    gpu_metrics.get_average_cpu_voltage(),
+                    gpu_metrics.get_average_cpu_current(),
+                ),
+                (
+                    fl!("soc"),
+                    gpu_metrics.get_average_soc_voltage(),
+                    gpu_metrics.get_average_soc_current(),
+                ),
+                (
+                    fl!("gfx"),
+                    gpu_metrics.get_average_gfx_voltage(),
+                    gpu_metrics.get_average_gfx_current(),
+                ),
+            ] {
+                let Some(voltage) = voltage else { continue };
+                let Some(current) = current else { continue };
+
+                ui.label(format!(
+                    "{label} => {voltage:>5} {mv}, {current:>5} {ma}",
+                    mv = fl!("mv"),
+                    ma = fl!("ma"),
+                ));
+            }
         });
 
         throttle_status(ui, gpu_metrics);
