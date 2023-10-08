@@ -608,12 +608,6 @@ impl MyApp {
                 cur.width,
             ));
         }
-
-        if let Ok(s) = sensors.print_pcie_link() {
-            if !s.is_empty() {
-                ui.label(s);
-            }
-        }
     }
 
     pub fn egui_temp_plot(&self, ui: &mut egui::Ui) {
