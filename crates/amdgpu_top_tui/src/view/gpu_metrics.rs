@@ -55,7 +55,7 @@ impl GpuMetricsView {
             GpuMetrics::V2_1(_) |
             GpuMetrics::V2_2(_) |
             GpuMetrics::V2_3(_) => self.for_v2()?,
-            GpuMetrics::Unknown => {},
+            _ => {},
         };
 
         if let Some(thr) = self.metrics.get_throttle_status_info() {

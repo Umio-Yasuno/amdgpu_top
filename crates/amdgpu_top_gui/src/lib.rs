@@ -394,7 +394,7 @@ impl MyApp {
                     ui.add_space(SPACE);
                     collapsing(ui, &header, true, |ui| self.egui_gpu_metrics_v2(ui));
                 },
-                GpuMetrics::Unknown => {},
+                _ => {},
             }
             ui.add_space(SPACE);
         });
