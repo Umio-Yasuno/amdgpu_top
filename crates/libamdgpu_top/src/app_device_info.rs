@@ -6,6 +6,7 @@ use crate::AMDGPU::{
     HwmonTemp,
     IpDieEntry,
     PowerCap,
+    PowerProfile,
     VBIOS::VbiosInfo,
     VIDEO_CAPS::{CAP_TYPE, VideoCapsInfo},
 };
@@ -40,6 +41,7 @@ pub struct AppDeviceInfo {
     pub total_l2_cache_size_kib: u32,
     pub total_l3_cache_size_mib: u32,
     pub ip_die_entries: Vec<IpDieEntry>,
+    pub power_profiles: Vec<PowerProfile>,
 }
 
 impl AppDeviceInfo {
@@ -57,6 +59,7 @@ impl AppDeviceInfo {
         let marketing_name = amdgpu_dev.get_marketing_name_or_default();
         let sysfs_path = sensors.bus_info.get_sysfs_path();
         let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);
+        let power_profiles = amdgpu_dev.get_all_supported_profiles_from_sysfs(&sysfs_path);
 
         Self {
             ext_info: *ext_info,
@@ -86,6 +89,7 @@ impl AppDeviceInfo {
             total_l2_cache_size_kib: ext_info.calc_l2_cache_size() >> 10,
             total_l3_cache_size_mib: ext_info.calc_l3_cache_size_mb(),
             ip_die_entries,
+            power_profiles,
         }
     }
 }

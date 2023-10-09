@@ -26,6 +26,10 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
     info.gfx_info();
     info.memory_info();
     sensors_info(&sensors);
+    {
+        let profiles: Vec<String> = info.power_profiles.iter().map(|p| p.to_string()).collect();
+        println!("Supported Power Profiles: {profiles:?}");
+    }
     info.cache_info();
     if !info.ip_die_entries.is_empty() {
         info.ip_discovery_table();

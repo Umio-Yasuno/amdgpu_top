@@ -59,6 +59,7 @@ pub fn json_info(
         "ver_str": vbios.ver,
         "date": vbios.date,
     }));
+    let power_profiles: Vec<String> = info.power_profiles.iter().map(|p| p.to_string()).collect();
 
     let link_speed_width = if sensors.is_apu {
         Value::Null
@@ -136,6 +137,7 @@ pub fn json_info(
         "VBIOS": vbios,
         "Video Caps": video_caps,
         "PCIe Link": link_speed_width,
+        "Power Profiles": power_profiles,
     });
 
     json
