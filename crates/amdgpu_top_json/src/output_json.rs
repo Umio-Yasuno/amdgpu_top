@@ -57,20 +57,36 @@ impl OutputJson for Sensors {
             ("GFX_MCLK", self.mclk, "MHz"),
             ("VDDNB", self.vddnb, "mV"),
             ("VDDGFX", self.vddgfx, "mV"),
-            // ("GFX Temp.", self.temp, "C"),
             ("GFX Power", self.power, "W"),
             ("Fan", self.fan_rpm, "RPM"),
         ] {
-            let Some(val) = val else { continue };
-
             m.insert(
                 label.to_string(),
-                json!({
+                val.map_or(Value::Null, |val| json!({
                     "value": val,
                     "unit": unit,
-                }),
+                })),
             );
         }
+
+        for (label, temp, unit) in [
+            ("Edge Temperature", &self.edge_temp, "C"),
+            ("Junction Temperature", &self.junction_temp, "C"),
+            ("Memory Temperature", &self.memory_temp, "C"),
+        ] {
+            m.insert(
+                label.to_string(),
+                temp.as_ref().map_or(Value::Null, |temp| json!({
+                    "value": temp.current,
+                    "unit": unit,
+                })),
+            );
+        }
+
+        m.insert(
+            "PCIe Link Speed".to_string(),
+            self.current_link.map_or(Value::Null, |link| link.json()),
+        );
 
         m.into()
     }
