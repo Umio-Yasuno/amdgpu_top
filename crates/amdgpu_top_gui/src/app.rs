@@ -237,6 +237,12 @@ impl MyApp {
             self.app_device_info.temp_info(ui);
             self.app_device_info.fan_info(ui);
             self.app_device_info.link_info(ui);
+
+            let profiles: Vec<String> = self.app_device_info.power_profiles.iter().map(|p| p.to_string()).collect();
+
+            ui.label(format!("{}", fl!("supported_power_profiles")));
+            ui.label(format!("{profiles:#?}"));
+            ui.end_row();
         });
     }
 

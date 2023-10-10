@@ -65,6 +65,8 @@ max = Max
 gpu = GPU
 system = System
 
+supported_power_profiles = Supported Power Profiles
+
 ip_discovery_table = IP Discovery table
 gpu_die = Die
 ip_hw = IP HW
