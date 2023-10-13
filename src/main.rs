@@ -24,6 +24,14 @@ fn main() {
     if main_opt.app_mode == AppMode::JSON && main_opt.dump {
         amdgpu_top_json::dump_json(&device_path_list);
         return;
+    } else if main_opt.app_mode == AppMode::JSON && main_opt.version {
+        amdgpu_top_json::version_json(TITLE);
+        return;
+    }
+
+    if main_opt.version {
+        println!("{TITLE}");
+        return;
     }
 
     if main_opt.list {

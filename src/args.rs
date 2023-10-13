@@ -5,6 +5,7 @@ pub struct MainOpt {
     pub update_process_index: u64, // sec
     pub pci_path: Option<String>,
     pub dump: bool,
+    pub version: bool,
     pub list: bool,
     pub select_apu: bool,
     pub json_iterations: u32,
@@ -20,6 +21,7 @@ impl Default for MainOpt {
             update_process_index: 5, // sec
             pci_path: None,
             dump: false,
+            version: false,
             list: false,
             select_apu: false,
             app_mode: AppMode::TUI,
@@ -196,6 +198,9 @@ impl MainOpt {
                         eprintln!("missing argument: \"-n <u32>\"");
                         std::process::exit(1);
                     }
+                },
+                "-V" | "--version" => {
+                    opt.version = true;
                 },
                 "-h" | "--help" => {
                     println!("{HELP_MSG}");

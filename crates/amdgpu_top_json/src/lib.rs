@@ -10,15 +10,23 @@ mod output_json;
 mod dump;
 pub use dump::{dump_json, json_info};
 
+pub fn version_json(title: &str) {
+    let version = json!({
+        "version": amdgpu_top_version(),
+        "title": title,
+    });
+    println!("{version}");
+}
+
 pub trait OutputJson {
     fn json(&self) -> Value;
 }
 
 pub fn amdgpu_top_version() -> Value {
     json!({
-        "major": env!("CARGO_PKG_VERSION_MAJOR").parse::<f64>().unwrap_or(0.0),
-        "minor": env!("CARGO_PKG_VERSION_MINOR").parse::<f64>().unwrap_or(0.0),
-        "patch": env!("CARGO_PKG_VERSION_PATCH").parse::<f64>().unwrap_or(0.0),
+        "major": env!("CARGO_PKG_VERSION_MAJOR").parse::<u32>().unwrap_or(0),
+        "minor": env!("CARGO_PKG_VERSION_MINOR").parse::<u32>().unwrap_or(0),
+        "patch": env!("CARGO_PKG_VERSION_PATCH").parse::<u32>().unwrap_or(0),
     })
 }
 
