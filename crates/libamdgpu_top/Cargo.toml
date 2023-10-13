@@ -4,6 +4,8 @@ version = "0.2.1"
 edition = "2021"
 license = "MIT"
 homepage = "https://github.com/Umio-Yasuno/amdgpu_top"
+authors = ["Umio Yasuno <coelacanth_dream@protonmail.com>"]
+description = "A library for amdgpu_top"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
