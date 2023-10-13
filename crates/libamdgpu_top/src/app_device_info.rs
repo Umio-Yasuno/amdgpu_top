@@ -59,7 +59,7 @@ impl AppDeviceInfo {
         let marketing_name = amdgpu_dev.get_marketing_name_or_default();
         let sysfs_path = sensors.bus_info.get_sysfs_path();
         let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);
-        let power_profiles = amdgpu_dev.get_all_supported_profiles_from_sysfs(&sysfs_path);
+        let power_profiles = PowerProfile::get_all_supported_profiles_from_sysfs(&sysfs_path);
 
         Self {
             ext_info: *ext_info,
