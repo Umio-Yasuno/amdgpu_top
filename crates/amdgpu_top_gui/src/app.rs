@@ -3,7 +3,7 @@ use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use eframe::egui;
 use egui::{RichText, util::History};
-use egui::plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
+use egui_plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
 use crate::{BASE, MEDIUM, HISTORY_LENGTH};
 
 use libamdgpu_top::AMDGPU::{
@@ -917,7 +917,7 @@ impl MyApp {
     }
 }
 
-fn empty_y_fmt(_y: f64, _range: &RangeInclusive<f64>) -> String {
+fn empty_y_fmt(_y: f64, _max_len: usize, _range: &RangeInclusive<f64>) -> String {
     String::new()
 }
 
