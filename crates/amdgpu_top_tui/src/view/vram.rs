@@ -71,9 +71,9 @@ impl VramUsageView {
 
         Panel::new(
             HideableView::new(sub_layout)
-                .with_name(&vram_view_name(self.instance))
+                .with_name(vram_view_name(self.instance))
         )
-        .title(&title)
+        .title(title)
         .title_position(HAlign::Left)
     }
 

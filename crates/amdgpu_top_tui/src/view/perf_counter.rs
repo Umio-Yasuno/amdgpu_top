@@ -61,9 +61,9 @@ impl PerfCounterView {
         Panel::new(
             HideableView::new(sub_layout)
                 .visible(visible)
-                .with_name(&pc_view_name(self.pc.pc_type, self.instance))
+                .with_name(pc_view_name(self.pc.pc_type, self.instance))
         )
-        .title(&title)
+        .title(title)
         .title_position(HAlign::Left)
     }
 
