@@ -2,11 +2,10 @@ use libamdgpu_top::{DevicePath, PCI};
 use libamdgpu_top::AMDGPU::DeviceHandle;
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
-const TITLE: &str = if cfg!(debug_assertions) {
-    concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"), " (debug build)")
-} else {
-    concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"))
-};
+#[cfg(feature = "git_version")]
+const TITLE: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"), " (git-", env!("HEAD_ID"), ")");
+#[cfg(not(feature = "git_version"))]
+const TITLE: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"));
 
 mod args;
 use args::{AppMode, MainOpt};
@@ -41,7 +40,7 @@ fn main() {
             main_opt.json_iterations,
         );
 
-        j.run();
+        j.run(TITLE);
 
         return;
     }
@@ -53,7 +52,7 @@ fn main() {
     };
 
     if main_opt.dump {
-        dump_info::dump(&amdgpu_dev);
+        dump_info::dump(TITLE, &amdgpu_dev);
         return;
     }
 
@@ -72,7 +71,7 @@ fn main() {
             #[cfg(not(feature = "tui"))]
             {
                 eprintln!("\"tui\" feature is not enabled for this build.");
-                dump_info::dump(&amdgpu_dev);
+                dump_info::dump(TITLE, &amdgpu_dev);
             }
         },
         #[cfg(feature = "gui")]
@@ -103,7 +102,7 @@ pub fn device_list(dump_info: bool, list: &[DevicePath]) {
         println!("#{instance}");
 
         if dump_info {
-            dump_info::dump(&amdgpu_dev);
+            dump_info::dump(TITLE, &amdgpu_dev);
         } else {
             println!("Marketing Name = {:?}", amdgpu_dev.get_marketing_name_or_default());
         }

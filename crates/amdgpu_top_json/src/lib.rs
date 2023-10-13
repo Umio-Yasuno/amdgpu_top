@@ -68,7 +68,7 @@ impl JsonApp {
         }
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self, title: &str) {
         let mut n = 0;
         let mut buf_json: Vec<Value> = Vec::with_capacity(self.vec_device_info.len());
         let devices_len = self.vec_device_info.len();
@@ -99,6 +99,7 @@ impl JsonApp {
                 "devices": Value::Array(buf_json.clone()),
                 "devices_len": devices_len,
                 "amdgpu_top_version": amdgpu_top_version(),
+                "title": title,
             }));
 
             buf_json.clear();

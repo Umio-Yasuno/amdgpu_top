@@ -13,12 +13,14 @@ exclude = [
     "docs/",
     "assets/"
 ]
+build = "build.rs"
 
 [features]
-default = [ "tui", "gui", "json" ]
+default = [ "tui", "gui", "json", "git_version" ]
 gui = ["dep:amdgpu_top_gui"]
 tui = ["dep:amdgpu_top_tui"]
 json = ["dep:amdgpu_top_json"]
+git_version = ["gix"]
 
 [[bin]]
 name = "amdgpu_top"
@@ -31,6 +33,9 @@ libamdgpu_top = { path = "crates/libamdgpu_top" }
 amdgpu_top_tui = { path = "crates/amdgpu_top_tui/", optional = true }
 amdgpu_top_gui = { path = "crates/amdgpu_top_gui/", optional = true }
 amdgpu_top_json = { path = "crates/amdgpu_top_json/", optional = true }
+
+[build-dependencies]
+gix = { version = "^0.55", default-features = false, optional = true }
 
 [profile.release]
 opt-level = 2

@@ -9,7 +9,7 @@ use libamdgpu_top::{
     stat::Sensors,
 };
 
-pub fn dump(amdgpu_dev: &DeviceHandle) {
+pub fn dump(title: &str, amdgpu_dev: &DeviceHandle) {
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
@@ -17,6 +17,7 @@ pub fn dump(amdgpu_dev: &DeviceHandle) {
 
     let info = AppDeviceInfo::new(amdgpu_dev, &ext_info, &memory_info, &sensors);
 
+    println!("{title}\n");
     println!("--- AMDGPU info dump ---");
     if let Ok(drm) = amdgpu_dev.get_drm_version_struct() {
         println!("drm version: {}.{}.{}", drm.version_major, drm.version_minor, drm.version_patchlevel);
