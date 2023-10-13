@@ -4,7 +4,7 @@ version = "0.2.0"
 edition = "2021"
 license = "MIT"
 homepage = "https://github.com/Umio-Yasuno/amdgpu_top"
-authors = ["Umio Yasuno <coelacanth_dream@proton.me>"]
+authors = ["Umio Yasuno <coelacanth_dream@protonmail.com>"]
 description = """
 Tool to displays AMDGPU usage.
 The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, gpu_metrics and AMDGPU driver.
