@@ -65,6 +65,8 @@ const HELP_MSG: &str = concat!(
     "       Launch Simple TUI mode. (like nvidia-smi, rocm-smi)\n",
     "   --apu, --select-apu\n",
     "       Select APU instance.\n",
+    "   -V, --version\n",
+    "       Print version information.\n",
     "   -h, --help\n",
     "       Print help information.\n",
     "\n",

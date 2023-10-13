@@ -30,6 +30,8 @@ FLAGS:
        Launch Simple TUI mode. (like nvidia-smi, rocm-smi)
    --apu, --select-apu
        Select APU instance.
+   -V, --version
+       Print version information.
    -h, --help
        Print help information.
 

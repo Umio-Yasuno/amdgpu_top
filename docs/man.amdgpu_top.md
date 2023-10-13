@@ -72,6 +72,9 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 **\-\-smi**
 :   Launch Simple TUI mode. (like nvidia-smi, rocm-smi)
 
+**\-V**, **\-\-version**
+:   Print version information.
+
 **\-h**, **\-\-help**
 :   Print help information.
 
