@@ -240,7 +240,7 @@ impl MyApp {
 
             let profiles: Vec<String> = self.app_device_info.power_profiles.iter().map(|p| p.to_string()).collect();
 
-            ui.label(format!("{}", fl!("supported_power_profiles")));
+            ui.label(fl!("supported_power_profiles").to_string());
             ui.label(format!("{profiles:#?}"));
             ui.end_row();
         });
