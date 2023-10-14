@@ -81,9 +81,11 @@ impl FdInfoStat {
         // for process names with spaces
         let len = format!("{pid} ({name}) ").len();
 
-        if s.len() < len { return 0.0 }
-
-        let split: Vec<&str> = s[len..].split(" ").collect();
+        let split: Vec<&str> = if let Some(s) = s.get(len..) {
+            s.split(" ").collect()
+        } else {
+            return 0.0;
+        };
 
         // ref: https://man7.org/linux/man-pages/man5/proc.5.html
         let [utime, stime] = [
@@ -245,7 +247,7 @@ pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reve
 impl FdInfoUsage {
     pub fn id_parse(s: &str) -> Option<usize> {
         const LEN: usize = "drm-client-id:\t".len();
-        s[LEN..].parse().ok()
+        s.get(LEN..)?.parse().ok()
     }
 
     pub fn mem_usage_parse(&mut self, s: &str) {
@@ -259,7 +261,7 @@ impl FdInfoUsage {
             PRE_LEN..(PRE_LEN+5)
         };
 
-        let usage = s[PRE..(len-KIB)].parse().unwrap_or(0);
+        let usage = s.get(PRE..len-KIB).and_then(|s| s.parse().ok()).unwrap_or(0);
 
         match &s[MEM_TYPE] {
             "vram:" => self.vram_usage += usage,
@@ -276,10 +278,11 @@ impl FdInfoUsage {
 
         let ns: i64 = {
             let len = s.len();
-            s[pos+1..(len-NS)].parse().unwrap_or(0)
+            s.get(pos+1..len-NS).and_then(|s| s.parse().ok()).unwrap_or(0)
         };
+        let Some(s) = s.get(PRE..pos) else { return };
 
-        match &s[PRE..pos] {
+        match s {
             "gfx:" => self.gfx += ns,
             "compute:" => self.compute += ns,
             "dma:" => self.dma += ns,
