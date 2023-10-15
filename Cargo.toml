@@ -17,6 +17,7 @@ build = "build.rs"
 
 [features]
 default = [ "tui", "gui", "json", "git_version" ]
+package = [ "tui", "gui", "json" ]
 gui = ["dep:amdgpu_top_gui"]
 tui = ["dep:amdgpu_top_tui"]
 json = ["dep:amdgpu_top_json"]
