@@ -210,6 +210,7 @@ impl MainOpt {
                 },
                 _ => {
                     eprintln!("Unknown option: {arg}")
+                    std::process::exit(1);
                 },
             }
         }
