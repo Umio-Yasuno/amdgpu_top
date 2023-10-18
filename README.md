@@ -89,7 +89,7 @@ AMD Radeon Graphics (0000:08:00.0): GFX: 0%, MediaEngine: 0%, Memory: null%
    * [amdgpu_top-bin](https://aur.archlinux.org/packages/amdgpu_top-bin)
    * [amdgpu_top-git](https://aur.archlinux.org/packages/amdgpu_top-git)
  * [OpenMandriva](https://github.com/OpenMandrivaAssociation/amdgpu_top) to install run `sudo dnf install amdgpu_top`
- * [Nix](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/system/amdgpu_top/default.nix)
+ * [Nix](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/system/amdgpu_top/default.nix) (v0.1.11, 2023-07-28)
  * [Solus](https://github.com/getsolus/packages/tree/main/packages/a/amdgpu_top) to install run `sudo eopkg it amdgpu_top`
 
 ### Build from source
