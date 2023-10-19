@@ -33,7 +33,8 @@ pub struct Sensors {
     pub edge_temp: Option<HwmonTemp>,
     pub junction_temp: Option<HwmonTemp>,
     pub memory_temp: Option<HwmonTemp>,
-    pub power: Option<u32>,
+    /* TODO: support both "Average" and "Input" */
+    pub hwmon_power: Option<HwmonPower>,
     pub power_cap: Option<PowerCap>,
     pub fan_rpm: Option<u32>,
     pub fan_max_rpm: Option<u32>,
@@ -88,17 +89,17 @@ impl Sensors {
             ]
         };
 
-        let [sclk, mclk, vddnb, vddgfx, power] = [
+        let [sclk, mclk, vddnb, vddgfx] = [
             amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_SCLK).ok(),
             amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_MCLK).ok(),
             amdgpu_dev.sensor_info(SENSOR_TYPE::VDDNB).ok(),
             amdgpu_dev.sensor_info(SENSOR_TYPE::VDDGFX).ok(),
-            amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok(),
         ];
         let edge_temp = HwmonTemp::from_hwmon_path(&hwmon_path, HwmonTempType::Edge);
         let junction_temp = HwmonTemp::from_hwmon_path(&hwmon_path, HwmonTempType::Junction);
         let memory_temp = HwmonTemp::from_hwmon_path(&hwmon_path, HwmonTempType::Memory);
         let power_cap = PowerCap::from_hwmon_path(&hwmon_path);
+        let hwmon_power = HwmonPower::from_hwmon_path(&hwmon_path);
 
         let fan_rpm = parse_hwmon(hwmon_path.join("fan1_input"));
         let fan_max_rpm = parse_hwmon(hwmon_path.join("fan1_max"));
@@ -120,7 +121,7 @@ impl Sensors {
             edge_temp,
             junction_temp,
             memory_temp,
-            power,
+            hwmon_power,
             power_cap,
             fan_rpm,
             fan_max_rpm,
@@ -145,7 +146,7 @@ impl Sensors {
             temp.update(&self.hwmon_path);
         }
 
-        self.power = amdgpu_dev.sensor_info(SENSOR_TYPE::GPU_AVG_POWER).ok();
+        self.hwmon_power = HwmonPower::from_hwmon_path(&self.hwmon_path);
         self.fan_rpm = parse_hwmon(self.hwmon_path.join("fan1_input"));
     }
 
@@ -225,5 +226,44 @@ impl Sensors {
         let width = s_width?.parse::<u8>().ok()?;
 
         Some(PCI::LINK { gen, width })
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
+pub enum PowerType {
+    Input,
+    Average,
+}
+
+impl fmt::Display for PowerType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct HwmonPower {
+    pub type_: PowerType,
+    pub value: u32, // W
+}
+
+const POWER1_AVG: &str = "power1_average";
+const POWER1_INPUT: &str = "power1_input";
+
+impl HwmonPower {
+    pub fn from_hwmon_path<P: Into<PathBuf>>(path: P) -> Option<Self> {
+        let path = path.into();
+
+        let (type_, s) = match std::fs::read_to_string(path.join(POWER1_AVG)) {
+            Ok(v) => (PowerType::Average, v),
+            Err(_) => {
+                let v = std::fs::read_to_string(path.join(POWER1_INPUT)).ok()?;
+
+                (PowerType::Input, v)
+            },
+        };
+        let value = s.trim_end().parse::<u32>().ok()?.saturating_div(1_000_000);
+
+        Some(Self { type_, value })
     }
 }

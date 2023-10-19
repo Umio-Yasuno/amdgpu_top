@@ -57,7 +57,6 @@ impl OutputJson for Sensors {
             ("GFX_MCLK", self.mclk, "MHz"),
             ("VDDNB", self.vddnb, "mV"),
             ("VDDGFX", self.vddgfx, "mV"),
-            ("GFX Power", self.power, "W"),
             ("Fan", self.fan_rpm, "RPM"),
         ] {
             m.insert(
@@ -68,6 +67,14 @@ impl OutputJson for Sensors {
                 })),
             );
         }
+
+        m.insert(
+            "GFX Power".to_string(),
+            self.hwmon_power.as_ref().map_or(Value::Null, |power| json!({
+                "value": power.value,
+                "unit": "W",
+            })),
+        );
 
         for (label, temp, unit) in [
             ("Edge Temperature", &self.edge_temp, "C"),

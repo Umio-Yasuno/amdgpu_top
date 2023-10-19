@@ -58,8 +58,9 @@ fn sensors_info(sensors: &Sensors) {
         println!();
     }
     println!();
-    if let Some(power) = &sensors.power {
-        println!("Power Avg.          : {power:3} W");
+    if let Some(power) = &sensors.hwmon_power {
+        println!("Power ({:<7})     : {:3} W", "Average", power.value);
+        println!("Power ({:<7})     : {:3} W", power.type_.to_string(), power.value);
     }
     if let Some(cap) = &sensors.power_cap {
         println!("Power Cap.          : {:3} W ({}-{} W)", cap.current, cap.min, cap.max);

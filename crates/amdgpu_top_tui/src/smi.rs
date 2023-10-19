@@ -144,14 +144,11 @@ impl SmiDeviceInfo {
             write!(self.info_text.buf, "____mV ")?;
         }
 
-        if let Some(power) = &self.sensors.power {
-            if let Some(cap) = &self.sensors.power_cap {
-                write!(self.info_text.buf, " {power:>3}/{:>3}W ", cap.current)?;
-            } else {
-                write!(self.info_text.buf, " {power:>3}/___W ")?;
-            }
-        } else {
-            write!(self.info_text.buf, " ___/___W ")?;
+        match (&self.sensors.hwmon_power, &self.sensors.power_cap) {
+            (Some(power), Some(cap)) =>
+                write!(self.info_text.buf, " {:>3}/{:>3}W ", power.value, cap.current)?,
+            (Some(power), None) => write!(self.info_text.buf, " {:>3}/___W ", power.value)?,
+            _ => write!(self.info_text.buf, " ___/___W ")?,
         }
 
         if self.check_gfxoff {

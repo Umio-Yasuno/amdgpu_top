@@ -50,7 +50,7 @@ impl SensorsHistory {
             (&mut self.mclk, sensors.mclk),
             (&mut self.vddgfx, sensors.vddgfx),
             (&mut self.vddnb, sensors.vddnb),
-            (&mut self.power, sensors.power),
+            (&mut self.power, sensors.hwmon_power.as_ref().map(|power| power.value)),
             (&mut self.fan_rpm, sensors.fan_rpm),
         ] {
             let Some(val) = val else { continue };

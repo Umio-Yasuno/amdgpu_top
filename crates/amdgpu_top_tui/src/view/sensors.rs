@@ -50,8 +50,13 @@ impl SensorsView {
         }
         if (c % 2) == 1 { writeln!(self.text.buf)?; }
 
-        if let Some(power) = sensors.power {
-            write!(self.text.buf, " GPU Power  => {power:3} W")?;
+        if let Some(power) = &sensors.hwmon_power {
+            write!(
+                self.text.buf,
+                " GPU {:<7} Power  => {:3} W",
+                power.type_.to_string(),
+                power.value,
+            )?;
             if let Some(ref cap) = sensors.power_cap {
                 write!(
                     self.text.buf,
