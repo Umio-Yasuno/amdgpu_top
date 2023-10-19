@@ -209,7 +209,7 @@ impl MainOpt {
                     std::process::exit(0);
                 },
                 _ => {
-                    eprintln!("Unknown option: {arg}")
+                    eprintln!("Unknown option: {arg}");
                     std::process::exit(1);
                 },
             }
