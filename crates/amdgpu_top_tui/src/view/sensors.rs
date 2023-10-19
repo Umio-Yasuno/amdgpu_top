@@ -50,14 +50,20 @@ impl SensorsView {
         }
         if (c % 2) == 1 { writeln!(self.text.buf)?; }
 
-        if let Some(power) = &sensors.hwmon_power {
-            write!(
-                self.text.buf,
-                " GPU {:<7} Power  => {:3} W",
-                power.type_.to_string(),
-                power.value,
-            )?;
-            if let Some(ref cap) = sensors.power_cap {
+        if sensors.average_power.is_some() || sensors.input_power.is_some() {
+            write!(self.text.buf, " GPU Power  =>")?;
+
+            for power in [&sensors.average_power, &sensors.input_power] {
+                let Some(power) = power else { continue };
+                write!(
+                    self.text.buf,
+                    " {:3} W ({})",
+                    power.value,
+                    power.type_,
+                )?;
+            }
+
+            if let Some(cap) = &sensors.power_cap {
                 write!(
                     self.text.buf,
                     " (Cap. {} W, {}-{} W)", cap.current, cap.min, cap.max,

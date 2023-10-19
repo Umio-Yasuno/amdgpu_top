@@ -68,13 +68,19 @@ impl OutputJson for Sensors {
             );
         }
 
-        m.insert(
-            "GFX Power".to_string(),
-            self.hwmon_power.as_ref().map_or(Value::Null, |power| json!({
-                "value": power.value,
-                "unit": "W",
-            })),
-        );
+        for (label, val) in [
+            ("GFX Power", &self.any_hwmon_power()),
+            ("Average Power", &self.average_power),
+            ("Input Power", &self.input_power),
+        ] {
+            m.insert(
+                label.to_string(),
+                val.as_ref().map_or(Value::Null, |power| json!({
+                    "value": power.value,
+                    "unit": "W",
+                })),
+            );
+        }
 
         for (label, temp, unit) in [
             ("Edge Temperature", &self.edge_temp, "C"),

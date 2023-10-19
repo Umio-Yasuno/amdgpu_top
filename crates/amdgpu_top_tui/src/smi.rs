@@ -144,7 +144,7 @@ impl SmiDeviceInfo {
             write!(self.info_text.buf, "____mV ")?;
         }
 
-        match (&self.sensors.hwmon_power, &self.sensors.power_cap) {
+        match (&self.sensors.any_hwmon_power(), &self.sensors.power_cap) {
             (Some(power), Some(cap)) =>
                 write!(self.info_text.buf, " {:>3}/{:>3}W ", power.value, cap.current)?,
             (Some(power), None) => write!(self.info_text.buf, " {:>3}/___W ", power.value)?,

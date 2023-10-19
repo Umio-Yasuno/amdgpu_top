@@ -517,11 +517,7 @@ impl MyApp {
     pub fn egui_sensors(&self, ui: &mut egui::Ui) {
         ui.style_mut().override_font_id = Some(MEDIUM);
         let sensors = &self.buf_data.sensors;
-        let power_label = if let Some(power) = &self.buf_data.sensors.hwmon_power {
-            format!("GPU {} Power", power.type_)
-        } else {
-            format!("GPU Power")
-        };
+
         egui::Grid::new("Sensors").show(ui, |ui| {
             for (history, val, label, min, max, unit) in [
                 (
@@ -549,11 +545,19 @@ impl MyApp {
                     fl!("mv"),
                 ),
                 (
-                    &self.buf_data.sensors_history.power,
-                    sensors.hwmon_power.as_ref().map(|power| power.value),
-                    &power_label,
+                    &self.buf_data.sensors_history.average_power,
+                    sensors.average_power.as_ref().map(|power| power.value),
+                    "Average Power",
                     0,
-                    if let Some(ref cap) = sensors.power_cap { cap.current } else { 350 }, // "350 W" is not an exact value
+                    if let Some(cap) = &sensors.power_cap { cap.current } else { 350 }, // "350 W" is not an exact value
+                    fl!("w"),
+                ),
+                (
+                    &self.buf_data.sensors_history.input_power,
+                    sensors.input_power.as_ref().map(|power| power.value),
+                    "Input Power",
+                    0,
+                    if let Some(cap) = &sensors.power_cap { cap.current } else { 350 }, // "350 W" is not an exact value
                     fl!("w"),
                 ),
                 (
