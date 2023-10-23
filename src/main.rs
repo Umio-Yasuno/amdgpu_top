@@ -120,11 +120,6 @@ pub fn device_list(dump_info: bool, list: &[DevicePath]) {
 }
 
 pub fn from_main_opt(main_opt: &MainOpt, list: &[DevicePath]) -> (DevicePath, DeviceHandle) {
-    // default
-    if main_opt.instance == 0 && main_opt.pci_path.is_none() {
-        return DevicePath::init_with_fallback(main_opt.instance, list);
-    }
-
     let device_path = if let Some(pci_path) = &main_opt.pci_path {
         let pci = pci_path.parse::<PCI::BUS_INFO>().unwrap_or_else(|_| {
             eprintln!("Failed to parse from {pci_path:?} to `PCI::BUS_INFO`");

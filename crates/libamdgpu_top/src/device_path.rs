@@ -38,34 +38,6 @@ impl DevicePath {
         Ok(amdgpu_dev)
     }
 
-    fn fallback(instance: u32) -> anyhow::Result<(Self, DeviceHandle)> {
-        let device_path = Self::new(instance);
-        let amdgpu_dev = match device_path.init() {
-            Ok(amdgpu_dev) => amdgpu_dev,
-            Err(err) => {
-                eprintln!("{err}");
-                return Err(err).with_context(|| format!("Error: {device_path:?}"));
-            },
-        };
-
-        Ok((device_path, amdgpu_dev))
-    }
-
-    pub fn init_with_fallback(
-        instance: u32,
-        list: &[Self],
-    ) -> (Self, DeviceHandle) {
-        Self::fallback(instance).unwrap_or_else(|err| {
-            eprintln!("{err}");
-            eprintln!("Fallback: list: {list:#?}");
-            let device_path = list[0].clone();
-            let amdgpu_dev = device_path.init().unwrap();
-            eprintln!("Fallback: to: {device_path:?}");
-
-            (device_path, amdgpu_dev)
-        })
-    }
-
     pub fn get_instance_number(&self) -> Option<u32> {
         self.card
             .to_str()?
