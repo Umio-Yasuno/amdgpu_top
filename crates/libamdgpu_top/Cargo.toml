@@ -1,6 +1,6 @@
 [package]
 name = "libamdgpu_top"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 license = "MIT"
 homepage = "https://github.com/Umio-Yasuno/amdgpu_top"
