@@ -73,6 +73,9 @@ pub use fdinfo::*;
 mod sensors;
 pub use sensors::*;
 
+mod hwmon_power;
+pub(crate) use hwmon_power::*;
+
 mod pcie_bw;
 pub use pcie_bw::*;
 
