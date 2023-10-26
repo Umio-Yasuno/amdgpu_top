@@ -78,13 +78,13 @@ impl Sensors {
                 Some([min, _]) => Some(min),
                 None => None,
             };
-            let max = pci_bus.get_link_info(PCI::STATUS::Max);
+            let max = pci_bus.get_max_link_info();
 
             [
-                Some(pci_bus.get_link_info(PCI::STATUS::Current)),
+                pci_bus.get_current_link_info(),
                 min,
-                Some(max.clone()),
-                Some(max.clone()),
+                max,
+                max,
                 Self::get_max_system_link(pci_bus),
             ]
         };
@@ -136,7 +136,7 @@ impl Sensors {
         } else if self.vega10_and_later {
             self.bus_info.get_current_link_info_from_dpm()
         } else {
-            Some(self.bus_info.get_link_info(PCI::STATUS::Current))
+            self.bus_info.get_current_link_info()
         };
         self.sclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_SCLK).ok();
         self.mclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_MCLK).ok();
