@@ -19,7 +19,7 @@ pub struct FdInfoUsage {
     // client_id: usize,
     pub vram_usage: u64, // KiB
     pub gtt_usage: u64, // KiB
-    pub cpu_accessible_usage: u64, // KiB
+    pub system_cpu_usage: u64, // KiB, from Linux Kernel v6.4
     pub gfx: i64,
     pub compute: i64,
     pub dma: i64,
@@ -34,7 +34,7 @@ impl std::ops::AddAssign for FdInfoUsage {
     fn add_assign(&mut self, other: Self) {
         self.vram_usage += other.vram_usage;
         self.gtt_usage += other.gtt_usage;
-        self.cpu_accessible_usage += other.cpu_accessible_usage;
+        self.system_cpu_usage += other.system_cpu_usage;
         self.gfx += other.gfx;
         self.compute += other.compute;
         self.dma += other.dma;
@@ -148,10 +148,10 @@ impl FdInfoStat {
 
             tmp
         } else {
-            let [vram_usage, gtt_usage, cpu_accessible_usage] = [
+            let [vram_usage, gtt_usage, system_cpu_usage] = [
                 stat.vram_usage,
                 stat.gtt_usage,
-                stat.cpu_accessible_usage,
+                stat.system_cpu_usage,
             ];
 
             self.pid_map.insert(pid, stat);
@@ -159,7 +159,7 @@ impl FdInfoStat {
             FdInfoUsage {
                 vram_usage,
                 gtt_usage,
-                cpu_accessible_usage,
+                system_cpu_usage,
                 ..Default::default()
             }
         };
@@ -266,7 +266,7 @@ impl FdInfoUsage {
         match &s[MEM_TYPE] {
             "vram:" => self.vram_usage += usage,
             "gtt: " => self.gtt_usage += usage,
-            "cpu: " => self.cpu_accessible_usage += usage,
+            "cpu: " => self.system_cpu_usage += usage, // from Linux Kernel v6.4
             _ => {},
         };
     }
@@ -339,7 +339,7 @@ impl FdInfoUsage {
         Self {
             vram_usage: self.vram_usage,
             gtt_usage: self.gtt_usage,
-            cpu_accessible_usage: self.cpu_accessible_usage,
+            system_cpu_usage: self.system_cpu_usage,
             gfx,
             compute,
             dma,
