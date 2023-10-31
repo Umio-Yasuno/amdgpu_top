@@ -73,10 +73,7 @@ impl Sensors {
                 pci_bus.get_max_system_link(),
             ]
         } else {
-            let min = match pci_bus.get_min_max_link_info_from_dpm() {
-                Some([min, _]) => Some(min),
-                None => None,
-            };
+            let min = pci_bus.get_min_max_link_info_from_dpm().map(|[min, _]| min);
             let max = pci_bus.get_max_link_info();
 
             [

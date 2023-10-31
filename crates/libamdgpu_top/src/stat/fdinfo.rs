@@ -82,7 +82,7 @@ impl FdInfoStat {
         let len = format!("{pid} ({name}) ").len();
 
         let split: Vec<&str> = if let Some(s) = s.get(len..) {
-            s.split(" ").collect()
+            s.split(' ').collect()
         } else {
             return 0.0;
         };
@@ -124,7 +124,7 @@ impl FdInfoStat {
             if f.read_to_string(&mut buf).is_err() { continue }
 
             let mut lines = buf.lines().skip_while(|l| !l.starts_with("drm-client-id"));
-            if let Some(id) = lines.next().and_then(|l| FdInfoUsage::id_parse(l)) {
+            if let Some(id) = lines.next().and_then(FdInfoUsage::id_parse) {
                 if !self.drm_client_ids.insert(id) { continue }
             } else {
                 continue;
@@ -164,7 +164,7 @@ impl FdInfoStat {
             }
         };
 
-        let cpu_usage = self.get_cpu_usage(pid, &name);
+        let cpu_usage = self.get_cpu_usage(pid, name);
 
         self.proc_usage.push(ProcUsage {
             pid,
@@ -191,9 +191,40 @@ impl FdInfoStat {
 
         fold
     }
+
+    pub fn sort_proc_usage(&mut self, sort: FdInfoSortType, reverse: bool) {
+        self.proc_usage.sort_by(|a, b|
+            match (sort, reverse) {
+                (FdInfoSortType::PID, false) => b.pid.cmp(&a.pid),
+                (FdInfoSortType::PID, true) => a.pid.cmp(&b.pid),
+                (FdInfoSortType::VRAM, false) => b.usage.vram_usage.cmp(&a.usage.vram_usage),
+                (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
+                (FdInfoSortType::GTT, false) => b.usage.gtt_usage.cmp(&a.usage.gtt_usage),
+                (FdInfoSortType::GTT, true) => a.usage.gtt_usage.cmp(&b.usage.gtt_usage),
+                (FdInfoSortType::CPU, false) => b.cpu_usage.cmp(&a.cpu_usage),
+                (FdInfoSortType::CPU, true) => a.cpu_usage.cmp(&b.cpu_usage),
+                (FdInfoSortType::GFX, false) => b.usage.gfx.cmp(&a.usage.gfx),
+                (FdInfoSortType::GFX, true) => a.usage.gfx.cmp(&b.usage.gfx),
+                (FdInfoSortType::Compute, false) => b.usage.gfx.cmp(&a.usage.compute),
+                (FdInfoSortType::Compute, true) => a.usage.gfx.cmp(&b.usage.compute),
+                (FdInfoSortType::DMA, false) => b.usage.gfx.cmp(&a.usage.dma),
+                (FdInfoSortType::DMA, true) => a.usage.gfx.cmp(&b.usage.dma),
+                (FdInfoSortType::Decode, false) =>
+                    (b.usage.dec + b.usage.vcn_jpeg).cmp(&(a.usage.dec + a.usage.vcn_jpeg)),
+                (FdInfoSortType::Decode, true) =>
+                    (a.usage.dec + a.usage.vcn_jpeg).cmp(&(b.usage.dec + b.usage.vcn_jpeg)),
+                (FdInfoSortType::Encode, false) =>
+                    (b.usage.enc + b.usage.uvd_enc).cmp(&(a.usage.enc + a.usage.uvd_enc)),
+                (FdInfoSortType::Encode, true) =>
+                    (a.usage.enc + a.usage.uvd_enc).cmp(&(b.usage.enc + b.usage.uvd_enc)),
+                (FdInfoSortType::MediaEngine, false) => b.usage.media.cmp(&a.usage.media),
+                (FdInfoSortType::MediaEngine, true) => a.usage.media.cmp(&b.usage.media),
+            }
+        );
+    }
 }
 
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum FdInfoSortType {
     PID,

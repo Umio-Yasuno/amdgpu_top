@@ -1,4 +1,5 @@
 use crate::AMDGPU::{
+    ASIC_NAME,
     DeviceHandle,
     drm_amdgpu_info_device,
     drm_amdgpu_memory_info,
@@ -11,8 +12,9 @@ use crate::AMDGPU::{
     VIDEO_CAPS::{CAP_TYPE, VideoCapsInfo},
 };
 use crate::{PCI, stat::Sensors};
+use std::path::PathBuf;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AppDeviceInfo {
     pub ext_info: drm_amdgpu_info_device,
     pub memory_info: drm_amdgpu_memory_info,
@@ -26,7 +28,9 @@ pub struct AppDeviceInfo {
     pub min_mem_clk: u32,
     pub max_mem_clk: u32,
     pub marketing_name: String,
+    pub asic_name: ASIC_NAME,
     pub pci_bus: PCI::BUS_INFO,
+    pub sysfs_path: PathBuf,
     pub edge_temp: Option<HwmonTemp>,
     pub junction_temp: Option<HwmonTemp>,
     pub memory_temp: Option<HwmonTemp>,
@@ -60,6 +64,7 @@ impl AppDeviceInfo {
         let sysfs_path = sensors.bus_info.get_sysfs_path();
         let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);
         let power_profiles = PowerProfile::get_all_supported_profiles_from_sysfs(&sysfs_path);
+        let asic_name = ext_info.get_asic_name();
 
         Self {
             ext_info: *ext_info,
@@ -74,7 +79,9 @@ impl AppDeviceInfo {
             min_mem_clk,
             max_mem_clk,
             marketing_name,
+            asic_name,
             pci_bus: sensors.bus_info,
+            sysfs_path,
             edge_temp: sensors.edge_temp.clone(),
             junction_temp: sensors.junction_temp.clone(),
             memory_temp: sensors.memory_temp.clone(),
