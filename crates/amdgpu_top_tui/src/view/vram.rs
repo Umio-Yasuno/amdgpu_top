@@ -1,4 +1,3 @@
-use libamdgpu_top::AMDGPU::{DeviceHandle, drm_amdgpu_memory_info};
 use cursive::views::{
     FixedLayout,
     HideableView,
@@ -16,7 +15,6 @@ use libamdgpu_top::VramUsage;
 
 #[derive(Clone, Debug)]
 pub struct VramUsageView {
-    memory_info: VramUsage,
     vram_counter: Counter,
     gtt_counter: Counter,
     instance: u32,
@@ -25,20 +23,15 @@ pub struct VramUsageView {
 impl VramUsageView {
     const TITLE: &str = "Memory Usage";
 
-    pub fn new(info: &drm_amdgpu_memory_info, instance: u32) -> Self {
+    pub fn new(instance: u32) -> Self {
         Self {
-            memory_info: VramUsage::new(info),
             vram_counter: Counter::new(0),
             gtt_counter: Counter::new(0),
             instance,
         }
     }
 
-    pub fn update_usage(&mut self, amdgpu_dev: &DeviceHandle) {
-        self.memory_info.update_usage(amdgpu_dev);
-    }
-
-    pub fn view(&self) -> TopView {
+    pub fn view(&self, usage: &VramUsage) -> TopView {
         const BAR_WIDTH: usize = PANEL_WIDTH / 2 - VRAM_LABEL_WIDTH;
 
         let title = Self::TITLE.to_string();
@@ -49,8 +42,8 @@ impl VramUsageView {
         let mut sub_layout = LinearLayout::horizontal();
 
         for (memory, counter, name) in [
-            (&self.memory_info.0.vram, &self.vram_counter, "VRAM"),
-            (&self.memory_info.0.gtt, &self.gtt_counter, "GTT"),
+            (&usage.0.vram, &self.vram_counter, "VRAM"),
+            (&usage.0.gtt, &self.gtt_counter, "GTT"),
         ] {
             sub_layout.add_child(
                 FixedLayout::new()
@@ -71,15 +64,19 @@ impl VramUsageView {
 
         Panel::new(
             HideableView::new(sub_layout)
-                .with_name(vram_view_name(self.instance))
+                .with_name(Self::vram_view_name(self.instance))
         )
         .title(title)
         .title_position(HAlign::Left)
     }
 
-    pub fn set_value(&self) {
-        self.vram_counter.set(self.memory_info.0.vram.heap_usage as usize);
-        self.gtt_counter.set(self.memory_info.0.gtt.heap_usage as usize);
+    pub fn set_value(&self, usage: &VramUsage) {
+        self.vram_counter.set(usage.0.vram.heap_usage as usize);
+        self.gtt_counter.set(usage.0.gtt.heap_usage as usize);
+    }
+
+    fn vram_view_name(instance: u32) -> String {
+        format!("VRAM {instance}")
     }
 
     pub fn cb(siv: &mut cursive::Cursive) {
@@ -93,12 +90,8 @@ impl VramUsageView {
         };
 
         for i in &instances {
-            let name = vram_view_name(*i);
+            let name = Self::vram_view_name(*i);
             siv.call_on_name(&name, toggle_view);
         }
     }
-}
-
-fn vram_view_name(instance: u32) -> String {
-    format!("VRAM {instance}")
 }

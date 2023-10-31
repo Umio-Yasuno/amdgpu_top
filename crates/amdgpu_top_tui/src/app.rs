@@ -1,233 +1,175 @@
-use std::sync::{Arc, Mutex};
 use cursive::align::HAlign;
 use cursive::views::{LinearLayout, TextView, Panel, ResizedView};
 use cursive::view::SizeConstraint;
 
-use libamdgpu_top::AMDGPU::{DeviceHandle, drm_amdgpu_info_device, drm_amdgpu_memory_info, GPU_INFO};
-use libamdgpu_top::{DevicePath, PCI, Sampling};
-use libamdgpu_top::stat::{self, PcieBw, ProcInfo, Sensors};
+use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO, MetricsInfo};
+use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling};
 
 use crate::{TOGGLE_HELP, ToggleOptions, view::*};
 
-pub(crate) struct TuiApp {
-    pub amdgpu_dev: DeviceHandle,
-    pub device_path: DevicePath,
+use libamdgpu_top::app::{AppAmdgpuTop, AppOption};
+
+pub(crate) struct NewTuiApp {
+    pub app_amdgpu_top: AppAmdgpuTop,
     pub instance: u32,
-    pub list_name: String,
-    pub device_info: String,
-    pub grbm: PerfCounterView,
-    pub grbm2: PerfCounterView,
-    pub fdinfo: FdInfoView,
-    pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
-    pub gpu_metrics: GpuMetricsView,
-    pub vram_usage: VramUsageView,
-    pub sensors: SensorsView,
-    pub arc_pcie_bw: Option<Arc<Mutex<PcieBw>>>,
+    pub grbm_view: PerfCounterView,
+    pub grbm2_view: PerfCounterView,
+    pub vram_usage_view: VramUsageView,
+    pub fdinfo_view: AppTextView,
+    pub sensors_view: AppTextView,
+    pub gpu_metrics_view: AppTextView,
 }
 
-impl TuiApp {
-    pub fn new(
-        amdgpu_dev: DeviceHandle,
-        device_path: &DevicePath,
-        ext_info: &drm_amdgpu_info_device,
-        memory_info: &drm_amdgpu_memory_info,
-    ) -> Self {
-        let instance = device_path.get_instance_number().unwrap();
-        let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
-        let sensors = Sensors::new(&amdgpu_dev, &pci_bus, ext_info);
-        let device_info = info_bar(
-            &amdgpu_dev,
-            ext_info,
-            &pci_bus,
-            memory_info.vram.total_heap_size,
-        );
-        let sensors_view = SensorsView::new_with_sensors(sensors);
-        let list_name = format!("{} ({pci_bus})", amdgpu_dev.get_marketing_name_or_default());
-        let chip_class = ext_info.get_chip_class();
-
-        let grbm = PerfCounterView::new_with_chip_class(stat::PCType::GRBM, chip_class, instance);
-        let grbm2 = PerfCounterView::new_with_chip_class(stat::PCType::GRBM2, chip_class, instance);
-        let vram_usage = VramUsageView::new(memory_info, instance);
-
-        let mut fdinfo = FdInfoView::new(
-            Sampling::default().to_duration(),
-            libamdgpu_top::has_vcn(&amdgpu_dev),
-            libamdgpu_top::has_vcn_unified(&amdgpu_dev),
-        );
-
-        let arc_proc_index = {
-            let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
-            stat::update_index(&mut proc_index, device_path);
-
-            fdinfo.print(&proc_index, &Default::default(), false).unwrap();
-            fdinfo.text.set();
-
-            Arc::new(Mutex::new(proc_index))
-        };
-
-        let gpu_metrics = GpuMetricsView::new(&amdgpu_dev);
-        let arc_pcie_bw = {
-            let pcie_bw = PcieBw::new(pci_bus.get_sysfs_path());
-
-            if pcie_bw.check_pcie_bw_support(ext_info) {
-                Some(pcie_bw.spawn_update_thread())
-            } else {
-                None
-            }
-        };
-
-        Self {
+impl NewTuiApp {
+    pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath) -> Option<Self> {
+        let instance = device_path.get_instance_number()?;
+        let app_amdgpu_top = AppAmdgpuTop::new(
             amdgpu_dev,
-            device_path: device_path.clone(),
+            device_path,
+            &AppOption { pcie_bw: true },
+        )?;
+
+        let grbm_view = PerfCounterView::new(&app_amdgpu_top.stat.grbm, instance);
+        let grbm2_view = PerfCounterView::new(&app_amdgpu_top.stat.grbm2, instance);
+
+        Some(Self {
+            app_amdgpu_top,
             instance,
-            list_name,
-            device_info,
-            grbm,
-            grbm2,
-            arc_proc_index,
-            fdinfo,
-            vram_usage,
-            sensors: sensors_view,
-            arc_pcie_bw,
-            gpu_metrics,
-        }
+            grbm_view,
+            grbm2_view,
+            vram_usage_view: VramUsageView::new(instance),
+            fdinfo_view: Default::default(),
+            sensors_view: Default::default(),
+            gpu_metrics_view: Default::default(),
+        })
     }
 
-    pub fn fill(&mut self, toggle_opt: &mut ToggleOptions) {
-        if self.gpu_metrics.update_metrics(&self.amdgpu_dev).is_ok() {
-            toggle_opt.gpu_metrics = true;
-            self.gpu_metrics.print().unwrap();
-            self.gpu_metrics.text.set();
-        }
-
-        self.vram_usage.set_value();
-
-        self.sensors.update(&self.amdgpu_dev);
-        self.sensors.print().unwrap();
-
-        self.sensors.text.set();
-    }
-
-    pub fn layout(&self, title: &str, toggle_opt: &ToggleOptions) -> ResizedView<LinearLayout> {
+    pub fn layout(&self, title: &str) -> ResizedView<LinearLayout> {
         let mut layout = LinearLayout::vertical()
             .child(
                 Panel::new(
-                    TextView::new(&self.device_info).center()
+                    TextView::new(self.app_amdgpu_top.device_info.info_bar()).center()
                 )
                 .title(title)
                 .title_position(HAlign::Center)
             );
 
-        layout.add_child(self.grbm.top_view(toggle_opt.grbm));
-        layout.add_child(self.grbm2.top_view(toggle_opt.grbm2));
-        layout.add_child(self.vram_usage.view());
-        layout.add_child(self.fdinfo.text.panel("fdinfo"));
-        layout.add_child(self.sensors.text.panel("Sensors"));
+        layout.add_child(self.grbm_view.top_view(&self.app_amdgpu_top.stat.grbm, true));
+        layout.add_child(self.grbm2_view.top_view(&self.app_amdgpu_top.stat.grbm2, true));
+        layout.add_child(self.vram_usage_view.view(&self.app_amdgpu_top.stat.vram_usage));
+        layout.add_child(self.fdinfo_view.text.panel("fdinfo"));
+        layout.add_child(self.sensors_view.text.panel("Sensors"));
 
-        if toggle_opt.gpu_metrics {
-            let title = match self.gpu_metrics.version() {
-                Some(v) => format!("GPU Metrics v{}.{}", v.0, v.1),
+        if let Some(metrics) = &self.app_amdgpu_top.stat.metrics {
+            let title = match metrics.get_header() {
+                Some(v) => format!("GPU Metrics v{}.{}", v.format_revision, v.content_revision),
                 None => "GPU Metrics".to_string(),
             };
 
-            layout.add_child(self.gpu_metrics.text.panel(&title));
+            layout.add_child(self.gpu_metrics_view.text.panel(&title));
         }
+
         layout.add_child(TextView::new(TOGGLE_HELP));
 
-        ResizedView::new(SizeConstraint::Free, SizeConstraint::Full, layout)
-    }
-
-    pub fn update_pc(&mut self, flags: &ToggleOptions) {
-        // high frequency accesses to registers can cause high GPU clocks
-        if flags.grbm {
-            self.grbm.pc.read_reg(&self.amdgpu_dev);
-        }
-        if flags.grbm2 {
-            self.grbm2.pc.read_reg(&self.amdgpu_dev);
-        }
+        ResizedView::new(SizeConstraint::AtLeast(80), SizeConstraint::Full, layout)
     }
 
     pub fn update(&mut self, flags: &ToggleOptions, sample: &Sampling) {
-        if flags.vram {
-            self.vram_usage.update_usage(&self.amdgpu_dev);
+        self.app_amdgpu_top.update(sample.to_duration());
+
+        if flags.fdinfo {
+            let lock = self.app_amdgpu_top.stat.arc_proc_index.try_lock();
+            if let Ok(vec_info) = lock {
+                let _ = self.fdinfo_view.print_fdinfo(
+                    &vec_info,
+                    &mut self.app_amdgpu_top.stat.fdinfo,
+                    flags.fdinfo_sort,
+                    flags.reverse_sort,
+                );
+                self.app_amdgpu_top.stat.fdinfo.interval = sample.to_duration();
+            }
+        } else {
+            self.fdinfo_view.text.clear();
         }
 
-        if flags.sensor {
-            self.sensors.update(&self.amdgpu_dev);
-            self.sensors.print().unwrap();
+        self.vram_usage_view.set_value(&self.app_amdgpu_top.stat.vram_usage);
 
-            if let Some(arc_pcie_bw) = &self.arc_pcie_bw {
-                let lock = arc_pcie_bw.try_lock();
-                if let Ok(ref pcie_bw) = lock {
-                    self.sensors.print_pcie_bw(pcie_bw).unwrap();
+        if flags.sensor {
+            let _ = self.sensors_view.print_sensors(&self.app_amdgpu_top.stat.sensors);
+
+            {
+                if let Some(arc_pcie_bw) = &self.app_amdgpu_top.stat.arc_pcie_bw {
+                    let lock = arc_pcie_bw.try_lock();
+                    if let Ok(pcie_bw) = &lock {
+                        let _ = self.sensors_view.print_pcie_bw(pcie_bw);
+                    }
                 }
             }
         } else {
-            self.sensors.text.clear();
-        }
-
-        if flags.fdinfo {
-            let lock = self.arc_proc_index.try_lock();
-            if let Ok(vec_info) = lock {
-                self.fdinfo.print(&vec_info, &flags.fdinfo_sort, flags.reverse_sort).unwrap();
-                self.fdinfo.stat.interval = sample.to_duration();
-            } else {
-                self.fdinfo.stat.interval += sample.to_duration();
-            }
-        } else {
-            self.fdinfo.text.clear();
+            self.sensors_view.text.clear();
         }
 
         if flags.gpu_metrics {
-            if self.gpu_metrics.update_metrics(&self.amdgpu_dev).is_ok() {
-                self.gpu_metrics.print().unwrap();
+            if let Some(metrics) = &self.app_amdgpu_top.stat.metrics {
+                let _ = self.gpu_metrics_view.print_gpu_metrics(metrics);
+            } else {
+                self.gpu_metrics_view.text.clear();
             }
         } else {
-            self.gpu_metrics.text.clear();
+            self.gpu_metrics_view.text.clear();
         }
 
-        self.grbm.dump();
-        self.grbm2.dump();
+        self.grbm_view.set_value(&self.app_amdgpu_top.stat.grbm);
+        self.grbm2_view.set_value(&self.app_amdgpu_top.stat.grbm2);
+        self.sensors_view.text.set();
+        self.fdinfo_view.text.set();
+        self.gpu_metrics_view.text.set();
 
-        self.vram_usage.set_value();
-        self.fdinfo.text.set();
-        self.sensors.text.set();
-        self.gpu_metrics.text.set();
+        self.clear();
+    }
+
+    pub fn update_pc(&mut self) {
+        self.app_amdgpu_top.update_pc();
+    }
+
+    pub fn clear(&mut self) {
+        self.app_amdgpu_top.clear_pc();
     }
 }
 
-fn info_bar(
-    amdgpu_dev: &DeviceHandle,
-    ext_info: &drm_amdgpu_info_device,
-    pci_bus: &PCI::BUS_INFO,
-    total_vram_size: u64,
-) -> String {
-    let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock()
-        .unwrap_or_else(|| (0, (ext_info.max_engine_clock() / 1000) as u32));
-    let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock()
-        .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
+pub trait ListNameInfoBar {
+    fn list_name(&self) -> String;
+    fn info_bar(&self) -> String;
+}
 
-    format!(
-        concat!(
-            "{mark_name} ({pci}, {did:#06X}:{rid:#04X})\n",
-            "{asic}, {gpu_type}, {chip_class}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
-            "{vram_type} {vram_bus_width}-bit, {vram_size} MiB, ",
-            "{min_memory_clk}-{max_memory_clk} MHz",
-        ),
-        mark_name = amdgpu_dev.get_marketing_name_or_default(),
-        pci = pci_bus,
-        did = ext_info.device_id(),
-        rid = ext_info.pci_rev_id(),
-        asic = ext_info.get_asic_name(),
-        gpu_type = if ext_info.is_apu() { "APU" } else { "dGPU" },
-        chip_class = ext_info.get_chip_class(),
-        num_cu = ext_info.cu_active_number(),
-        min_gpu_clk = min_gpu_clk,
-        max_gpu_clk = max_gpu_clk,
-        vram_type = ext_info.get_vram_type(),
-        vram_bus_width = ext_info.vram_bit_width,
-        vram_size = total_vram_size >> 20,
-        min_memory_clk = min_mem_clk,
-        max_memory_clk = max_mem_clk,
-    )
+impl ListNameInfoBar for AppDeviceInfo {
+    fn list_name(&self) -> String {
+        format!("{} ({})", self.marketing_name, self.pci_bus)
+    }
+
+    fn info_bar(&self) -> String {
+        format!(
+            concat!(
+                "{mark_name} ({pci}, {did:#06X}:{rid:#04X})\n",
+                "{asic}, {gpu_type}, {chip_class}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
+                "{vram_type} {vram_bus_width}-bit, {vram_size} MiB, ",
+                "{min_memory_clk}-{max_memory_clk} MHz",
+            ),
+            mark_name = self.marketing_name,
+            pci = self.pci_bus,
+            did = self.ext_info.device_id(),
+            rid = self.ext_info.pci_rev_id(),
+            asic = self.ext_info.get_asic_name(),
+            gpu_type = if self.ext_info.is_apu() { "APU" } else { "dGPU" },
+            chip_class = self.ext_info.get_chip_class(),
+            num_cu = self.ext_info.cu_active_number(),
+            min_gpu_clk = self.min_gpu_clk,
+            max_gpu_clk = self.max_gpu_clk,
+            vram_type = self.ext_info.get_vram_type(),
+            vram_bus_width = self.ext_info.vram_bit_width,
+            vram_size = self.memory_info.vram.total_heap_size >> 20,
+            min_memory_clk = self.min_mem_clk,
+            max_memory_clk = self.max_mem_clk,
+        )
+    }
 }

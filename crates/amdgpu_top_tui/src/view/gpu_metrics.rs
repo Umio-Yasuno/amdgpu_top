@@ -1,9 +1,9 @@
 use std::fmt::{self, Write};
-use super::Text;
 use crate::Opt;
-use libamdgpu_top::AMDGPU::{DeviceHandle, GpuMetrics, MetricsInfo};
+use libamdgpu_top::AMDGPU::{GpuMetrics, MetricsInfo};
 use libamdgpu_top::stat::{gpu_metrics_util::*, GpuActivity};
-use std::path::PathBuf;
+
+use crate::AppTextView;
 
 const CORE_TEMP_LABEL: &str = "Core Temp (C)";
 const CORE_POWER_LABEL: &str = "Core Power (mW)";
@@ -11,55 +11,24 @@ const CORE_CLOCK_LABEL: &str = "Core Clock (MHz)";
 const L3_TEMP_LABEL: &str = "L3 Cache Temp (C)";
 const L3_CLOCK_LABEL: &str = "L3 Cache Clock (MHz)";
 
-#[derive(Clone)]
-pub struct GpuMetricsView {
-    sysfs_path: PathBuf,
-    metrics: GpuMetrics,
-    pub text: Text,
-}
-
-impl GpuMetricsView {
-    pub fn new(amdgpu_dev: &DeviceHandle) -> Self {
-
-        Self {
-            sysfs_path: amdgpu_dev.get_sysfs_path().unwrap(),
-            metrics: GpuMetrics::Unknown,
-            text: Text::default(),
-        }
-    }
-
-    pub fn version(&self) -> Option<(u8, u8)> {
-        let header = self.metrics.get_header()?;
-
-        Some((header.format_revision, header.content_revision))
-    }
-
-    pub fn update_metrics(&mut self, amdgpu_dev: &DeviceHandle) -> Result<(), ()> {
-        if let Ok(metrics) = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&self.sysfs_path) {
-            self.metrics = metrics;
-            Ok(())
-        } else {
-            Err(())
-        }
-    }
-
-    pub fn print(&mut self) -> Result<(), fmt::Error> {
+impl AppTextView {
+    pub fn print_gpu_metrics(&mut self, metrics: &GpuMetrics) -> Result<(), fmt::Error> {
         self.text.clear();
 
-        match self.metrics {
+        match metrics {
             GpuMetrics::V1_0(_) |
             GpuMetrics::V1_1(_) |
             GpuMetrics::V1_2(_) |
-            GpuMetrics::V1_3(_) => self.for_v1()?,
+            GpuMetrics::V1_3(_) => self.gpu_metrics_v1_x(metrics)?,
             GpuMetrics::V2_0(_) |
             GpuMetrics::V2_1(_) |
             GpuMetrics::V2_2(_) |
             GpuMetrics::V2_3(_) |
-            GpuMetrics::V2_4(_) => self.for_v2()?,
+            GpuMetrics::V2_4(_) => self.gpu_metrics_v2_x(metrics)?,
             _ => {},
         };
 
-        if let Some(thr) = self.metrics.get_throttle_status_info() {
+        if let Some(thr) = metrics.get_throttle_status_info() {
             writeln!(
                 self.text.buf,
                 " Throttle Status: {:?}",
@@ -71,56 +40,56 @@ impl GpuMetricsView {
     }
 
     // AMDGPU always returns `u16::MAX` for some values it doesn't actually support.
-    fn for_v1(&mut self) -> Result<(), fmt::Error> {
-        socket_power(&mut self.text.buf, &self.metrics)?;
-        avg_activity(&mut self.text.buf, &self.metrics)?;
+    fn gpu_metrics_v1_x(&mut self, metrics: &GpuMetrics) -> Result<(), fmt::Error> {
+        socket_power(&mut self.text.buf, metrics)?;
+        avg_activity(&mut self.text.buf, metrics)?;
 
         v1_helper(&mut self.text.buf, "C", &[
-            (self.metrics.get_temperature_vrgfx(), "VRGFX"),
-            (self.metrics.get_temperature_vrsoc(), "VRSOC"),
-            (self.metrics.get_temperature_vrmem(), "VRMEM"),
+            (metrics.get_temperature_vrgfx(), "VRGFX"),
+            (metrics.get_temperature_vrsoc(), "VRSOC"),
+            (metrics.get_temperature_vrmem(), "VRMEM"),
         ])?;
 
         v1_helper(&mut self.text.buf, "mV", &[
-            (self.metrics.get_voltage_soc(), "SoC"),
-            (self.metrics.get_voltage_gfx(), "GFX"),
-            (self.metrics.get_voltage_mem(), "Mem"),
+            (metrics.get_voltage_soc(), "SoC"),
+            (metrics.get_voltage_gfx(), "GFX"),
+            (metrics.get_voltage_mem(), "Mem"),
         ])?;
 
         for (avg, cur, name) in [
             (
-                self.metrics.get_average_gfxclk_frequency(),
-                self.metrics.get_current_gfxclk(),
+                metrics.get_average_gfxclk_frequency(),
+                metrics.get_current_gfxclk(),
                 "GFXCLK",
             ),
             (
-                self.metrics.get_average_socclk_frequency(),
-                self.metrics.get_current_socclk(),
+                metrics.get_average_socclk_frequency(),
+                metrics.get_current_socclk(),
                 "SOCCLK",
             ),
             (
-                self.metrics.get_average_uclk_frequency(),
-                self.metrics.get_current_uclk(),
+                metrics.get_average_uclk_frequency(),
+                metrics.get_current_uclk(),
                 "UMCCLK",
             ),
             (
-                self.metrics.get_average_vclk_frequency(),
-                self.metrics.get_current_vclk(),
+                metrics.get_average_vclk_frequency(),
+                metrics.get_current_vclk(),
                 "VCLK",
             ),
             (
-                self.metrics.get_average_dclk_frequency(),
-                self.metrics.get_current_dclk(),
+                metrics.get_average_dclk_frequency(),
+                metrics.get_current_dclk(),
                 "DCLK",
             ),
             (
-                self.metrics.get_average_vclk1_frequency(),
-                self.metrics.get_current_vclk1(),
+                metrics.get_average_vclk1_frequency(),
+                metrics.get_current_vclk1(),
                 "VCLK1",
             ),
             (
-                self.metrics.get_average_dclk1_frequency(),
-                self.metrics.get_current_dclk1(),
+                metrics.get_average_dclk1_frequency(),
+                metrics.get_current_dclk1(),
                 "DCLK1",
             ),
         ] {
@@ -129,7 +98,7 @@ impl GpuMetricsView {
         }
 
         // Only Aldebaran (MI200) supports it.
-        if let Some(hbm_temp) = check_hbm_temp(self.metrics.get_temperature_hbm()) {
+        if let Some(hbm_temp) = check_hbm_temp(metrics.get_temperature_hbm()) {
             write!(self.text.buf, "HBM Temp (C) => [")?;
             for v in &hbm_temp {
                 write!(self.text.buf, "{v:5},")?;
@@ -140,22 +109,22 @@ impl GpuMetricsView {
         Ok(())
     }
 
-    fn for_v2(&mut self) -> Result<(), fmt::Error> {
-        let temp_gfx = self.metrics.get_temperature_gfx().map(|v| v.saturating_div(100));
-        let temp_soc = self.metrics.get_temperature_soc().map(|v| v.saturating_div(100));
+    fn gpu_metrics_v2_x(&mut self, metrics: &GpuMetrics) -> Result<(), fmt::Error> {
+        let temp_gfx = metrics.get_temperature_gfx().map(|v| v.saturating_div(100));
+        let temp_soc = metrics.get_temperature_soc().map(|v| v.saturating_div(100));
 
         write!(self.text.buf, " GFX => ")?;
         v2_helper(&mut self.text.buf, &[
             (temp_gfx, "C"),
-            (self.metrics.get_average_gfx_power(), "mW"),
-            (self.metrics.get_current_gfxclk(), "MHz"),
+            (metrics.get_average_gfx_power(), "mW"),
+            (metrics.get_current_gfxclk(), "MHz"),
         ])?;
 
         write!(self.text.buf, " SoC => ")?;
         v2_helper(&mut self.text.buf, &[
             (temp_soc, "C"),
-            (self.metrics.get_average_soc_power(), "mW"),
-            (self.metrics.get_current_socclk(), "MHz"),
+            (metrics.get_average_soc_power(), "mW"),
+            (metrics.get_current_socclk(), "MHz"),
         ])?;
 
         /*
@@ -166,28 +135,28 @@ impl GpuMetricsView {
             ref: drivers/gpu/drm/amd/pm/swsmu/smu12/renoir_ppt.c
             ref: https://gitlab.freedesktop.org/drm/amd/-/issues/2321
         */
-        // socket_power(&mut self.text.buf, &self.metrics)?;
-        avg_activity(&mut self.text.buf, &self.metrics)?;
+        // socket_power(&mut self.text.buf, metrics)?;
+        avg_activity(&mut self.text.buf, metrics)?;
 
         for (avg, cur, name) in [
             (
-                self.metrics.get_average_uclk_frequency(),
-                self.metrics.get_current_uclk(),
+                metrics.get_average_uclk_frequency(),
+                metrics.get_current_uclk(),
                 "UMCCLK",
             ),
             (
-                self.metrics.get_average_fclk_frequency(),
-                self.metrics.get_current_fclk(),
+                metrics.get_average_fclk_frequency(),
+                metrics.get_current_fclk(),
                 "FCLK",
             ),
             (
-                self.metrics.get_average_vclk_frequency(),
-                self.metrics.get_current_vclk(),
+                metrics.get_average_vclk_frequency(),
+                metrics.get_current_vclk(),
                 "VCLK",
             ),
             (
-                self.metrics.get_average_dclk_frequency(),
-                self.metrics.get_current_dclk(),
+                metrics.get_average_dclk_frequency(),
+                metrics.get_current_dclk(),
                 "DCLK",
             ),
         ] {
@@ -195,13 +164,13 @@ impl GpuMetricsView {
             writeln!(self.text.buf, " {name:<6} => Avg. {avg:>4} MHz, Cur. {cur:>4} MHz")?;
         }
 
-        let core_temp = check_temp_array(self.metrics.get_temperature_core());
-        let l3_temp = check_temp_array(self.metrics.get_temperature_l3());
+        let core_temp = check_temp_array(metrics.get_temperature_core());
+        let l3_temp = check_temp_array(metrics.get_temperature_l3());
         let [core_power, core_clk] = [
-            self.metrics.get_average_core_power(),
-            self.metrics.get_current_coreclk(),
+            metrics.get_average_core_power(),
+            metrics.get_current_coreclk(),
         ].map(check_power_clock_array);
-        let l3_clk = check_power_clock_array(self.metrics.get_current_l3clk());
+        let l3_clk = check_power_clock_array(metrics.get_current_l3clk());
 
         for (val, label) in [
             (core_temp, CORE_TEMP_LABEL),
@@ -229,9 +198,9 @@ impl GpuMetricsView {
         }
 
         for (label, voltage, current) in [
-            ("CPU", self.metrics.get_average_cpu_voltage(), self.metrics.get_average_cpu_current()),
-            ("SoC", self.metrics.get_average_soc_voltage(), self.metrics.get_average_soc_current()),
-            ("GFX", self.metrics.get_average_gfx_voltage(), self.metrics.get_average_gfx_current()),
+            ("CPU", metrics.get_average_cpu_voltage(), metrics.get_average_cpu_current()),
+            ("SoC", metrics.get_average_soc_voltage(), metrics.get_average_soc_current()),
+            ("GFX", metrics.get_average_gfx_voltage(), metrics.get_average_gfx_current()),
         ] {
             let Some(voltage) = voltage else { continue };
             let Some(current) = current else { continue };
@@ -242,7 +211,7 @@ impl GpuMetricsView {
         Ok(())
     }
 
-    pub fn cb(siv: &mut cursive::Cursive) {
+    pub fn cb_gpu_metrics(siv: &mut cursive::Cursive) {
         {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.gpu_metrics ^= true;

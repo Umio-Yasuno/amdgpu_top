@@ -1,9 +1,7 @@
 use std::fmt::{self, Write};
-use super::Text;
 use crate::Opt;
-use std::time::Duration;
 
-use libamdgpu_top::stat::{sort_proc_usage, ProcInfo, FdInfoStat, FdInfoSortType};
+use libamdgpu_top::stat::{ProcInfo, FdInfoStat, FdInfoSortType};
 
 /// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
 
@@ -21,29 +19,15 @@ const VCN_LABEL: &str = "VCN";
 // const UVD_ENC_LABEL: &str = "UVD (ENC)";
 // const JPEG_LABEL: &str = "JPEG";
 
-#[derive(Clone, Default)]
-pub struct FdInfoView {
-    pub stat: FdInfoStat,
-    pub has_vcn_unified: bool,
-    pub text: Text,
-}
+use crate::AppTextView;
 
-impl FdInfoView {
-    pub fn new(interval: Duration, has_vcn: bool, has_vcn_unified: bool) -> Self {
-        let stat = FdInfoStat { interval, has_vcn, has_vcn_unified, ..Default::default() };
-
-        Self {
-            stat,
-            has_vcn_unified,
-            ..Default::default()
-        }
-    }
-
-    pub fn print(
+impl AppTextView {
+    pub fn print_fdinfo(
         &mut self,
-        proc_index: &[ProcInfo],
-        sort: &FdInfoSortType,
-        reverse: bool
+        _proc_index: &[ProcInfo],
+        stat: &mut FdInfoStat,
+        sort: FdInfoSortType,
+        reverse: bool,
     ) -> Result<(), fmt::Error> {
         self.text.clear();
 
@@ -53,23 +37,21 @@ impl FdInfoView {
             pad = "",
         )?;
 
-        if self.has_vcn_unified {
+        if stat.has_vcn_unified {
             writeln!(self.text.buf, "|{VCN_LABEL:^4}|")?;
         } else {
             writeln!(self.text.buf, "|{DEC_LABEL:^4}|{ENC_LABEL:^4}|")?;
         }
 
-        self.stat.get_all_proc_usage(proc_index);
+        stat.sort_proc_usage(sort, reverse);
 
-        sort_proc_usage(&mut self.stat.proc_usage, sort, reverse);
-
-        self.print_usage()?;
+        self.print_fdinfo_usage(stat)?;
 
         Ok(())
     }
 
-    pub fn print_usage(&mut self) -> Result<(), fmt::Error> {
-        for pu in &self.stat.proc_usage {
+    pub fn print_fdinfo_usage(&mut self, stat: &FdInfoStat) -> Result<(), fmt::Error> {
+        for pu in &stat.proc_usage {
             let utf16_count = pu.name.encode_utf16().count();
             let name_len = if pu.name.len() != utf16_count {
                 PROC_NAME_LEN - utf16_count
@@ -95,7 +77,7 @@ impl FdInfoView {
                 write!(self.text.buf, "{usage:>label_len$}%|")?;
             }
 
-            if self.has_vcn_unified {
+            if stat.has_vcn_unified {
                 write!(self.text.buf, "{:>3}%|", pu.usage.media)?;
             } else {
                 let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg; // UVD/VCN/VCN_JPEG
@@ -158,4 +140,5 @@ impl FdInfoView {
             opt.fdinfo_sort = FdInfoSortType::MediaEngine;
         }
     }
+
 }

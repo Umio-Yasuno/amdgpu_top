@@ -1,86 +1,47 @@
 use std::fmt::Write;
 use std::sync::{Arc, Mutex};
-use std::path::PathBuf;
 use cursive::align::HAlign;
 use cursive::view::{Nameable, Scrollable};
 use cursive::views::{HideableView, LinearLayout, TextContent, TextView, Panel};
 
-use libamdgpu_top::AMDGPU::{ASIC_NAME, DeviceHandle, GPU_INFO, MetricsInfo};
-use libamdgpu_top::{stat, DevicePath, PCI, Sampling, VramUsage};
-use stat::{GfxoffStatus, GpuActivity, Sensors, ProcInfo};
+use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO, MetricsInfo};
+use libamdgpu_top::{stat, DevicePath, Sampling};
+use stat::{GfxoffStatus, FdInfoSortType};
 
-use crate::{FdInfoView, Text, ToggleOptions, stat::FdInfoSortType};
+use crate::{Text, AppTextView};
 
 const GPU_NAME_LEN: usize = 25;
 const LINE_LEN: usize = 150;
 const THR_LEN: usize = 60;
 const PROC_TITLE: &str = "Processes";
 
-pub(crate) struct SmiDeviceInfo {
-    pub amdgpu_dev: DeviceHandle,
-    pub device_path: DevicePath,
+use libamdgpu_top::app::AppAmdgpuTop;
+
+pub(crate) struct SmiApp {
+    pub app_amdgpu_top: AppAmdgpuTop,
     pub instance: u32,
-    pub marketing_name: String,
-    pub pci_bus: PCI::BUS_INFO,
-    pub sysfs_path: PathBuf,
-    pub cu_number: u32,
-    pub vram_usage: VramUsage,
-    pub sensors: Sensors,
     pub check_gfxoff: bool,
-    pub asic_name: ASIC_NAME,
-    pub fdinfo: FdInfoView,
-    pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
+    pub fdinfo_view: AppTextView,
     pub info_text: Text,
 }
 
-impl SmiDeviceInfo {
-    pub fn new(amdgpu_dev: DeviceHandle, device_path: &DevicePath, instance: u32) -> Self {
-        let marketing_name = amdgpu_dev.get_marketing_name_or_default();
-        let pci_bus = match device_path.pci {
-            Some(pci_bus) => pci_bus,
-            None => amdgpu_dev.get_pci_bus_info().unwrap(),
-        };
-        let sysfs_path = pci_bus.get_sysfs_path();
-        let ext_info = amdgpu_dev.device_info().unwrap();
-        let cu_number = ext_info.cu_active_number();
-        let memory_info = amdgpu_dev.memory_info().unwrap();
-        let vram_usage = VramUsage(memory_info);
-        let sensors = Sensors::new(&amdgpu_dev, &pci_bus, &ext_info);
+impl SmiApp {
+    pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath) -> Option<Self> {
+        let instance = device_path.get_instance_number()?;
         let check_gfxoff = GfxoffStatus::get(instance).is_ok();
-        let asic_name = ext_info.get_asic_name();
-
-        let mut fdinfo = FdInfoView::new(
-            Sampling::default().to_duration(),
-            libamdgpu_top::has_vcn(&amdgpu_dev),
-            libamdgpu_top::has_vcn_unified(&amdgpu_dev),
-        );
-
-        let arc_proc_index = {
-            let mut proc_index: Vec<stat::ProcInfo> = Vec::new();
-            stat::update_index(&mut proc_index, device_path);
-
-            fdinfo.print(&proc_index, &FdInfoSortType::VRAM, false).unwrap();
-            fdinfo.text.set();
-
-            Arc::new(Mutex::new(proc_index))
-        };
-
-        Self {
+        let app_amdgpu_top = AppAmdgpuTop::new(
             amdgpu_dev,
-            device_path: device_path.clone(),
+            device_path,
+            &Default::default(),
+        )?;
+
+        Some(Self {
+            app_amdgpu_top,
             instance,
-            marketing_name,
-            pci_bus,
-            sysfs_path,
-            cu_number,
-            vram_usage,
-            sensors,
             check_gfxoff,
-            asic_name,
-            fdinfo,
-            arc_proc_index,
+            fdinfo_view: Default::default(),
             info_text: Default::default(),
-        }
+        })
     }
 
     fn info_header() -> TextView {
@@ -107,44 +68,53 @@ impl SmiDeviceInfo {
         TextView::new_with_content(self.info_text.content.clone()).no_wrap()
     }
 
+    fn fdinfo_panel(&self) -> Panel<TextView> {
+        let text = TextView::new_with_content(self.fdinfo_view.text.content.clone());
+        Panel::new(text)
+            .title(format!(
+                "#{:<2} {}",
+                self.instance,
+                self.app_amdgpu_top.device_info.marketing_name,
+            ))
+            .title_position(HAlign::Left)
+    }
+
     fn update_info_text(&mut self) -> Result<(), std::fmt::Error> {
         self.info_text.clear();
-        self.vram_usage.update_usage(&self.amdgpu_dev);
 
         writeln!(
             self.info_text.buf,
             " #{i:<2} [{name:GPU_NAME_LEN$}]({cu:3}CU) | {pci}   |{vu:6}/{vt:6} MiB |",
             i = self.instance,
-            name = if GPU_NAME_LEN < self.marketing_name.len() {
-                &self.marketing_name[..GPU_NAME_LEN]
+            name = if GPU_NAME_LEN < self.app_amdgpu_top.device_info.marketing_name.len() {
+                &self.app_amdgpu_top.device_info.marketing_name[..GPU_NAME_LEN]
             } else {
-                &self.marketing_name
+                &self.app_amdgpu_top.device_info.marketing_name
             },
-            cu = self.cu_number,
-            pci = self.pci_bus,
-            vu = self.vram_usage.0.vram.heap_usage >> 20,
-            vt = self.vram_usage.0.vram.total_heap_size >> 20,
+            cu = self.app_amdgpu_top.device_info.ext_info.cu_active_number(),
+            pci = self.app_amdgpu_top.device_info.pci_bus,
+            vu = self.app_amdgpu_top.stat.vram_usage.0.vram.heap_usage >> 20,
+            vt = self.app_amdgpu_top.stat.vram_usage.0.vram.total_heap_size >> 20,
         )?;
 
-        if let Some(sclk) = &self.sensors.sclk {
+        if let Some(sclk) = &self.app_amdgpu_top.stat.sensors.sclk {
             write!(self.info_text.buf, "{sclk:4}MHz ")?;
         } else {
             write!(self.info_text.buf, "____MHz ")?;
         }
-
-        if let Some(mclk) = &self.sensors.mclk {
+        if let Some(mclk) = &self.app_amdgpu_top.stat.sensors.mclk {
             write!(self.info_text.buf, "{mclk:4}MHz ")?;
         } else {
             write!(self.info_text.buf, "____MHz ")?;
         }
 
-        if let Some(vddgfx) = &self.sensors.vddgfx {
+        if let Some(vddgfx) = &self.app_amdgpu_top.stat.sensors.vddgfx {
             write!(self.info_text.buf, "{vddgfx:4}mV ")?;
         } else {
             write!(self.info_text.buf, "____mV ")?;
         }
 
-        match (&self.sensors.any_hwmon_power(), &self.sensors.power_cap) {
+        match (&self.app_amdgpu_top.stat.sensors.any_hwmon_power(), &self.app_amdgpu_top.stat.sensors.power_cap) {
             (Some(power), Some(cap)) =>
                 write!(self.info_text.buf, " {:>3}/{:>3}W ", power.value, cap.current)?,
             (Some(power), None) => write!(self.info_text.buf, " {:>3}/___W ", power.value)?,
@@ -164,25 +134,11 @@ impl SmiDeviceInfo {
             write!(self.info_text.buf, "       |")?;
         }
 
-        let metrics = self.amdgpu_dev.get_gpu_metrics_from_sysfs_path(&self.sysfs_path).ok();
-        let mut activity = if let Some(metrics) = &metrics {
-            GpuActivity::from_gpu_metrics(metrics)
-        } else {
-            // Some Raven/Picasso/Raven2 APU always report gpu_busy_percent as 100.
-            // ref: https://gitlab.freedesktop.org/drm/amd/-/issues/1932
-            // gpu_metrics is supported from Renoir APU.
-            match self.asic_name {
-                ASIC_NAME::CHIP_RAVEN |
-                ASIC_NAME::CHIP_RAVEN2 => GpuActivity { gfx: None, umc: None, media: None },
-                _ => GpuActivity::get_from_sysfs(&self.sysfs_path),
-            }
-        };
-
-        if activity.media.is_none() || activity.media == Some(0) {
-            activity.media = self.fdinfo.stat.fold_fdinfo_usage().media.try_into().ok();
-        }
-
-        for usage in [activity.gfx, activity.umc, activity.media] {
+        for usage in [
+            self.app_amdgpu_top.stat.activity.gfx,
+            self.app_amdgpu_top.stat.activity.umc,
+            self.app_amdgpu_top.stat.activity.media,
+        ] {
             if let Some(usage) = usage {
                 write!(self.info_text.buf, " {usage:>3}%")?;
             } else {
@@ -193,23 +149,23 @@ impl SmiDeviceInfo {
         writeln!(
             self.info_text.buf,
             " |{gu:>6}/{gt:>6} MiB |",
-            gu = self.vram_usage.0.gtt.heap_usage >> 20,
-            gt = self.vram_usage.0.gtt.total_heap_size >> 20,
+            gu = self.app_amdgpu_top.stat.vram_usage.0.gtt.heap_usage >> 20,
+            gt = self.app_amdgpu_top.stat.vram_usage.0.gtt.total_heap_size >> 20,
         )?;
 
-        if let Some(temp) = &self.sensors.edge_temp {
+        if let Some(temp) = &self.app_amdgpu_top.stat.sensors.edge_temp {
             write!(self.info_text.buf, " {:>3}C ", temp.current)?;
         } else {
             write!(self.info_text.buf, " ___C ")?;
         }
 
-        if let Some(fan_rpm) = &self.sensors.fan_rpm {
+        if let Some(fan_rpm) = &self.app_amdgpu_top.stat.sensors.fan_rpm {
             write!(self.info_text.buf, "  {fan_rpm:4}RPM ")?;
         } else {
             write!(self.info_text.buf, "  ____RPM ")?;
         }
 
-        if let Some(thr) = metrics.and_then(|m| m.get_throttle_status_info()) {
+        if let Some(thr) = self.app_amdgpu_top.stat.metrics.as_ref().and_then(|m| m.get_throttle_status_info()) {
             let thr = format!("{:?}", thr.get_all_throttler());
             write!(
                 self.info_text.buf,
@@ -229,39 +185,35 @@ impl SmiDeviceInfo {
         Ok(())
     }
 
-    fn fdinfo_panel(&self) -> Panel<TextView> {
-        let text = TextView::new_with_content(self.fdinfo.text.content.clone());
-        Panel::new(text)
-            .title(format!("#{:<2} {}", self.instance, self.marketing_name))
-            .title_position(HAlign::Left)
-    }
 
-    fn update(&mut self, sample: &Sampling, _opt: &ToggleOptions) {
-        self.sensors.update(&self.amdgpu_dev);
+    fn update(&mut self, sample: &Sampling) {
+        self.app_amdgpu_top.update(sample.to_duration());
 
         {
-            let lock = self.arc_proc_index.try_lock();
+            let lock = self.app_amdgpu_top.stat.arc_proc_index.try_lock();
             if let Ok(vec_info) = lock {
-                self.fdinfo.print(&vec_info, &FdInfoSortType::default(), false).unwrap();
-                self.fdinfo.stat.interval = sample.to_duration();
-            } else {
-                self.fdinfo.stat.interval += sample.to_duration();
+                let _ = self.fdinfo_view.print_fdinfo(
+                    &vec_info,
+                    &mut self.app_amdgpu_top.stat.fdinfo,
+                    FdInfoSortType::default(),
+                    false,
+                );
+                self.app_amdgpu_top.stat.fdinfo.interval = sample.to_duration();
             }
         }
 
-        self.update_info_text().unwrap();
-        self.fdinfo.text.set();
+        let _ = self.update_info_text();
+        self.fdinfo_view.text.set();
     }
+
 }
 
 pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
     let sample = Sampling::low();
-    let mut opt = ToggleOptions::default();
-    let mut vec_app: Vec<SmiDeviceInfo> = device_path_list.iter().filter_map(|device_path| {
+    let mut vec_app: Vec<_> = device_path_list.iter().filter_map(|device_path| {
         let amdgpu_dev = device_path.init().ok()?;
-        let instance = device_path.get_instance_number()?;
 
-        Some(SmiDeviceInfo::new(amdgpu_dev, device_path, instance))
+        SmiApp::new(amdgpu_dev, device_path.clone())
     }).collect();
 
     vec_app.sort_by(|a, b| a.instance.cmp(&b.instance));
@@ -272,10 +224,10 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
         let line = TextContent::new(format!("{:->LINE_LEN$}", ""));
         {
             let mut info = LinearLayout::vertical()
-                .child(SmiDeviceInfo::info_header())
+                .child(SmiApp::info_header())
                 .child(TextView::new_with_content(line.clone()).no_wrap());
             for app in vec_app.iter_mut() {
-                app.update(&sample, &opt);
+                app.update(&sample);
                 info.add_child(app.info_text());
                 info.add_child(TextView::new_with_content(line.clone()).no_wrap());
             }
@@ -300,10 +252,12 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
     }
 
     {
-        let t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)> = vec_app
-            .iter()
-            .map(|app| (app.device_path.clone(), app.arc_proc_index.clone()))
-            .collect();
+        let t_index: Vec<(_, Arc<Mutex<Vec<_>>>)> = vec_app.iter().map(|app|
+            (
+                app.app_amdgpu_top.device_path.clone(),
+                app.app_amdgpu_top.stat.arc_proc_index.clone(),
+            )
+        ).collect();
         stat::spawn_update_index_thread(t_index, interval);
     }
 
@@ -315,28 +269,17 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
     });
     siv.set_theme(cursive::theme::Theme::terminal_default());
 
-    let toggle_opt = Arc::new(Mutex::new(opt.clone()));
-    siv.set_user_data(toggle_opt.clone());
-
     let cb_sink = siv.cb_sink().clone();
 
-    std::thread::spawn(move ||
-        loop {
-            std::thread::sleep(sample.to_duration()); // 1s
+    std::thread::spawn(move || loop {
+        std::thread::sleep(sample.to_duration()); // 1s
 
-            {
-                if let Ok(toggle_opt) = toggle_opt.try_lock() {
-                    opt = toggle_opt.clone();
-                }
-            }
-
-            for app in vec_app.iter_mut() {
-                app.update(&sample, &opt);
-            }
-
-            cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
+        for app in vec_app.iter_mut() {
+            app.update(&sample);
         }
-    );
+
+        cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
+    });
 
     siv.run();
 }

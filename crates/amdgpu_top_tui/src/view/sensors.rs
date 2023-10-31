@@ -1,5 +1,4 @@
-use libamdgpu_top::AMDGPU::{DeviceHandle};
-use super::{PANEL_WIDTH, Text};
+use super::PANEL_WIDTH;
 use std::fmt::{self, Write};
 use crate::Opt;
 
@@ -7,26 +6,10 @@ use libamdgpu_top::stat::{Sensors, PcieBw};
 
 const WIDTH: usize = PANEL_WIDTH / 2;
 
-#[derive(Clone)]
-pub struct SensorsView {
-    sensors: Sensors,
-    pub text: Text,
-}
+use crate::AppTextView;
 
-impl SensorsView {
-    pub fn new_with_sensors(sensors: Sensors) -> Self {
-        Self {
-            sensors,
-            text: Text::default(),
-        }
-    }
-
-    pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
-        self.sensors.update(amdgpu_dev);
-    }
-
-    pub fn print(&mut self) -> Result<(), fmt::Error> {
-        let sensors = &self.sensors;
+impl AppTextView {
+    pub fn print_sensors(&mut self, sensors: &Sensors) -> Result<(), fmt::Error> {
         const NAME_LEN: usize = 10;
         const VAL_LEN: usize = 5;
         self.text.clear();
@@ -126,7 +109,7 @@ impl SensorsView {
         Ok(())
     }
 
-    pub fn cb(siv: &mut cursive::Cursive) {
+    pub fn cb_sensors(siv: &mut cursive::Cursive) {
         {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.sensor ^= true;
