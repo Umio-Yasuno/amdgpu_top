@@ -13,7 +13,7 @@ use libamdgpu_top::AMDGPU::{
     GPU_INFO,
 };
 use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling, VramUsage};
-use libamdgpu_top::stat::{self, FdInfoUsage, Sensors, FdInfoStat, PerfCounter, PcieBw};
+use libamdgpu_top::stat::{self, FdInfoUsage, Sensors, FdInfoStat, PerfCounter, PcieBw, ProcInfo};
 
 mod app;
 use app::MyApp;
@@ -50,7 +50,7 @@ pub fn run(
     device_path: DevicePath,
     amdgpu_dev: DeviceHandle,
     device_path_list: &[DevicePath],
-    interval: u64,
+    update_process_index_interval: u64,
 ) {
     let localizer = localizer();
     let requested_languages = DesktopLanguageRequester::requested_languages();
@@ -145,19 +145,8 @@ pub fn run(
 
     let share_proc_index = Arc::new(Mutex::new(proc_index));
     {
-        let index = share_proc_index.clone();
-        let mut buf_index: Vec<stat::ProcInfo> = Vec::new();
-
-        std::thread::spawn(move || loop {
-            std::thread::sleep(Duration::from_secs(interval));
-
-            stat::update_index(&mut buf_index, &device_path);
-
-            let lock = index.lock();
-            if let Ok(mut index) = lock {
-                *index = buf_index.clone();
-            }
-        });
+        let t_index = vec![(device_path.clone(), share_proc_index.clone())];
+        stat::spawn_update_index_thread(t_index, update_process_index_interval);
     }
 
     {
