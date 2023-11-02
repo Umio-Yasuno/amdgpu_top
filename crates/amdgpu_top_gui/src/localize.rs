@@ -36,4 +36,3 @@ macro_rules! fl {
         i18n_embed_fl::fl!($crate::LANGUAGE_LOADER, $message_id, $($args), *)
     }};
 }
-

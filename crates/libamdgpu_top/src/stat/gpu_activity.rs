@@ -62,7 +62,6 @@ impl GpuActivity {
             std::fs::read_to_string(path.join(name)).ok().and_then(|s| s.trim_end().parse().ok())
         });
 
-
         Self { gfx, umc, media: None }
     }
 }

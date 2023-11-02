@@ -313,5 +313,3 @@ impl GuiInfo for AppDeviceInfo {
         }
     }
 }
-
-
