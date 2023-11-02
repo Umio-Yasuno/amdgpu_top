@@ -185,27 +185,18 @@ impl SmiApp {
         Ok(())
     }
 
-
     fn update(&mut self, sample: &Sampling) {
         self.app_amdgpu_top.update(sample.to_duration());
 
-        {
-            let lock = self.app_amdgpu_top.stat.arc_proc_index.try_lock();
-            if let Ok(vec_info) = lock {
-                let _ = self.fdinfo_view.print_fdinfo(
-                    &vec_info,
-                    &mut self.app_amdgpu_top.stat.fdinfo,
-                    FdInfoSortType::default(),
-                    false,
-                );
-                self.app_amdgpu_top.stat.fdinfo.interval = sample.to_duration();
-            }
-        }
+        let _ = self.fdinfo_view.print_fdinfo(
+            &mut self.app_amdgpu_top.stat.fdinfo,
+            FdInfoSortType::default(),
+            false,
+        );
 
         let _ = self.update_info_text();
         self.fdinfo_view.text.set();
     }
-
 }
 
 pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {

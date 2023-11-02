@@ -78,16 +78,11 @@ impl NewTuiApp {
         self.app_amdgpu_top.update(sample.to_duration());
 
         if flags.fdinfo {
-            let lock = self.app_amdgpu_top.stat.arc_proc_index.try_lock();
-            if let Ok(vec_info) = lock {
-                let _ = self.fdinfo_view.print_fdinfo(
-                    &vec_info,
-                    &mut self.app_amdgpu_top.stat.fdinfo,
-                    flags.fdinfo_sort,
-                    flags.reverse_sort,
-                );
-                self.app_amdgpu_top.stat.fdinfo.interval = sample.to_duration();
-            }
+            let _ = self.fdinfo_view.print_fdinfo(
+                &mut self.app_amdgpu_top.stat.fdinfo,
+                flags.fdinfo_sort,
+                flags.reverse_sort,
+            );
         } else {
             self.fdinfo_view.text.clear();
         }

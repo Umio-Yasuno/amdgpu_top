@@ -1,7 +1,7 @@
 use std::fmt::{self, Write};
 use crate::Opt;
 
-use libamdgpu_top::stat::{ProcInfo, FdInfoStat, FdInfoSortType};
+use libamdgpu_top::stat::{FdInfoStat, FdInfoSortType};
 
 /// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
 
@@ -24,7 +24,6 @@ use crate::AppTextView;
 impl AppTextView {
     pub fn print_fdinfo(
         &mut self,
-        _proc_index: &[ProcInfo],
         stat: &mut FdInfoStat,
         sort: FdInfoSortType,
         reverse: bool,
