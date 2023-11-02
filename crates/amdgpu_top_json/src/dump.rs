@@ -32,9 +32,9 @@ pub fn json_info(
     ext_info: &drm_amdgpu_info_device,
     memory_info: &drm_amdgpu_memory_info,
 ) -> Value {
-    let sensors = Sensors::new(amdgpu_dev, &pci_bus, &ext_info);
+    let sensors = Sensors::new(amdgpu_dev, pci_bus, ext_info);
+    let info = AppDeviceInfo::new(amdgpu_dev, ext_info, memory_info, &sensors);
 
-    let info = AppDeviceInfo::new(amdgpu_dev, &ext_info, &memory_info, &sensors);
     let gpu_clk = json!({
         "min": info.min_gpu_clk,
         "max": info.max_gpu_clk,
