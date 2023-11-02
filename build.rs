@@ -14,6 +14,6 @@ fn get_head_id() -> Option<String> {
 }
 
 fn main() {
-    let head_id = get_head_id().unwrap_or(String::new());
+    let head_id = get_head_id().unwrap_or_default();
     println!("cargo:rustc-env=HEAD_ID={head_id}");
 }
