@@ -21,13 +21,15 @@ FLAGS:
        This option can be combined with the "-J" option.
    --list
        Display a list of AMDGPU devices.
-       This option can be combined with the "-d" option.
    -J, --json
        Output JSON formatted data.
+       This option can be combined with the "-d" option.
    --gui
        Launch GUI mode.
    --smi
        Launch Simple TUI mode. (like nvidia-smi, rocm-smi)
+   -p, --process
+       Dump All GPU processes and memory usage per process.
    --apu, --select-apu
        Select APU instance.
    -V, --version

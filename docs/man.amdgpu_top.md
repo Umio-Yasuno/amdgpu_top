@@ -26,9 +26,9 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 
     $ amdgpu_top --list
 
-**Dump info for all AMDGPU devices**
+**Dump All GPU processes and memory usage per process**
 
-    $ amdgpu_top --list -d
+    $ amdgpu_top -p
 
 **Specifies */dev/dri/renderD129* **
 
@@ -61,10 +61,13 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 :   Dump AMDGPU info. (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps) This option can be combined with the "-J" option.
 
 **\-\-list**
-:   Display a list of AMDGPU devices. This option can be combined with the "-d" option.
+:   Display a list of AMDGPU devices.
+
+**\-p**, **\-\-process**
+:   Dump All GPU processes and memory usage per process.
 
 **\-J**, **\-\-json**
-:   Output JSON formatted data.
+:   Output JSON formatted data.  This option can be combined with the "-d" option.
 
 **\-\-gui**
 :   Launch GUI mode.

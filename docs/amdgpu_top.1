@@ -43,11 +43,11 @@ $ amdgpu_top --list
 \f[R]
 .fi
 .PP
-\f[B]Dump info for all AMDGPU devices\f[R]
+\f[B]Dump All GPU processes and memory usage per process\f[R]
 .IP
 .nf
 \f[C]
-$ amdgpu_top --list -d
+$ amdgpu_top -p
 \f[R]
 .fi
 .PP
@@ -98,10 +98,13 @@ can be combined with the \[lq]-J\[rq] option.
 .TP
 \f[B]--list\f[R]
 Display a list of AMDGPU devices.
-This option can be combined with the \[lq]-d\[rq] option.
+.TP
+\f[B]-p\f[R], \f[B]--process\f[R]
+Dump All GPU processes and memory usage per process.
 .TP
 \f[B]-J\f[R], \f[B]--json\f[R]
 Output JSON formatted data.
+This option can be combined with the \[lq]-d\[rq] option.
 .TP
 \f[B]--gui\f[R]
 Launch GUI mode.
@@ -109,6 +112,9 @@ Launch GUI mode.
 \f[B]--smi\f[R]
 Launch Simple TUI mode.
 (like nvidia-smi, rocm-smi)
+.TP
+\f[B]-V\f[R], \f[B]--version\f[R]
+Print version information.
 .TP
 \f[B]-h\f[R], \f[B]--help\f[R]
 Print help information.
