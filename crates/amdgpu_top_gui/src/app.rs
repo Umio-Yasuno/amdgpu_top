@@ -1,5 +1,4 @@
 use std::sync::{Arc, Mutex};
-use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use eframe::egui;
 use egui::{RichText, util::History};
@@ -332,13 +331,10 @@ impl MyApp {
                 let points: PlotPoints = history.iter()
                     .map(|(i, val)| [i, val as f64]).collect();
                 let line = Line::new(points).fill(1.0);
-                Plot::new(name)
-                    .allow_drag(false)
-                    .allow_zoom(false)
+
+                default_plot(name)
                     .allow_scroll(false)
-                    .include_y(0.0)
                     .include_y(100.0)
-                    .y_axis_formatter(empty_y_fmt)
                     .label_formatter(label_fmt)
                     .auto_bounds_x()
                     .height(PLOT_HEIGHT)
@@ -396,13 +392,9 @@ impl MyApp {
             enc.push([i, usage_enc as f64]);
         }
 
-        Plot::new(fl!("fdinfo_plot"))
-            .allow_drag(false)
-            .allow_zoom(false)
+        default_plot(&fl!("fdinfo_plot"))
             .allow_scroll(false)
-            .include_y(0.0)
             .include_y(100.0)
-            .y_axis_formatter(empty_y_fmt)
             .label_formatter(label_fmt)
             .auto_bounds_x()
             .height(ui.available_width() / 4.0)
@@ -570,12 +562,13 @@ impl MyApp {
                 let points: PlotPoints = history.iter()
                     .map(|(i, val)| [i, val as f64]).collect();
                 let line = Line::new(points).fill(1.0);
+
                 Plot::new(label)
                     .allow_zoom(false)
                     .allow_scroll(false)
                     .include_y(min)
                     .include_y(max)
-                    .y_axis_formatter(empty_y_fmt)
+                    .show_axes(false)
                     .label_formatter(label_fmt)
                     .auto_bounds_x()
                     .height(PLOT_HEIGHT * 1.5)
@@ -633,12 +626,9 @@ impl MyApp {
                 let points: PlotPoints = temp_history.iter()
                     .map(|(i, val)| [i, val as f64]).collect();
                 let line = Line::new(points).fill(1.0);
-                Plot::new(label)
-                    .allow_zoom(false)
-                    .allow_scroll(false)
-                    .include_y(0.0)
+
+                default_plot(label)
                     .include_y(max)
-                    .y_axis_formatter(empty_y_fmt)
                     .label_formatter(label_fmt)
                     .auto_bounds_x()
                     .auto_bounds_y()
@@ -673,11 +663,7 @@ impl MyApp {
             ]
         };
 
-        Plot::new("pcie_bw plot")
-            .allow_zoom(false)
-            .allow_scroll(false)
-            .include_y(0.0)
-            .y_axis_formatter(empty_y_fmt)
+        default_plot("pcie_bw plot")
             .label_formatter(label_fmt)
             .auto_bounds_x()
             .auto_bounds_y()
@@ -697,6 +683,10 @@ impl MyApp {
     }
 }
 
-fn empty_y_fmt(_y: f64, _max_len: usize, _range: &RangeInclusive<f64>) -> String {
-    String::new()
+fn default_plot(id: &str) -> Plot {
+    Plot::new(id)
+        .allow_zoom(false)
+        .allow_scroll(false)
+        .include_y(0.0)
+        .show_axes(false)
 }
