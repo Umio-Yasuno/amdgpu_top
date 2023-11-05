@@ -4,12 +4,10 @@ pub struct MainOpt {
     pub refresh_period: u64, // ms
     pub update_process_index: u64, // sec
     pub pci_path: Option<String>,
-    pub dump: bool,
-    pub version: bool,
-    pub list: bool,
     pub select_apu: bool,
     pub json_iterations: u32,
     pub app_mode: AppMode,
+    pub dump_mode: DumpMode,
 }
 
 impl Default for MainOpt {
@@ -20,9 +18,7 @@ impl Default for MainOpt {
             refresh_period: 1000, // 1000ms, 1s
             update_process_index: 5, // sec
             pci_path: None,
-            dump: false,
-            version: false,
-            list: false,
+            dump_mode: DumpMode::NoDump,
             select_apu: false,
             app_mode: AppMode::TUI,
             json_iterations: 0,
@@ -30,7 +26,7 @@ impl Default for MainOpt {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[allow(non_camel_case_types)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum AppMode {
@@ -41,6 +37,15 @@ pub enum AppMode {
     JSON,
     #[cfg(feature = "tui")]
     SMI,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum DumpMode {
+    Info,
+    List,
+    Process,
+    Version,
+    NoDump,
 }
 
 const HELP_MSG: &str = concat!(
@@ -56,13 +61,15 @@ const HELP_MSG: &str = concat!(
     "       This option can be combined with the \"-J\" option.\n",
     "   --list\n",
     "       Display a list of AMDGPU devices.\n",
-    "       This option can be combined with the \"-d\" option.\n",
     "   -J, --json\n",
     "       Output JSON formatted data.\n",
+    "       This option can be combined with the \"-d\" option.\n",
     "   --gui\n",
     "       Launch GUI mode.\n",
     "   --smi\n",
     "       Launch Simple TUI mode. (like nvidia-smi, rocm-smi)\n",
+    "   -p, --process\n",
+    "       Dump All GPU processes and memory usage per process.\n",
     "   --apu, --select-apu\n",
     "       Select APU instance.\n",
     "   -V, --version\n",
@@ -114,7 +121,7 @@ impl MainOpt {
                     }
                 },
                 "-d" | "--dump" => {
-                    opt.dump = true;
+                    opt.dump_mode = DumpMode::Info;
                 },
                 "-J" | "--json" => {
                     #[cfg(feature = "json")]
@@ -187,7 +194,7 @@ impl MainOpt {
                     skip = true;
                 },
                 "-l" | "--list" => {
-                    opt.list = true;
+                    opt.dump_mode = DumpMode::List;
                 },
                 "--apu" | "--select-apu" => {
                     opt.select_apu = true;
@@ -202,11 +209,14 @@ impl MainOpt {
                     }
                 },
                 "-V" | "--version" => {
-                    opt.version = true;
+                    opt.dump_mode = DumpMode::Version;
                 },
                 "-h" | "--help" => {
                     println!("{HELP_MSG}");
                     std::process::exit(0);
+                },
+                "-p" | "--process" => {
+                    opt.dump_mode = DumpMode::Process;
                 },
                 _ => {
                     eprintln!("Unknown option: {arg}");

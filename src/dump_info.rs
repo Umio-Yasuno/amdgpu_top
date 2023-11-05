@@ -6,8 +6,68 @@ use libamdgpu_top::{
         GPU_INFO,
     },
     AppDeviceInfo,
+    // DeviceHandle,
+    DevicePath,
     stat::Sensors,
 };
+
+pub fn dump_process(title: &str, list: &[DevicePath]) {
+    use libamdgpu_top::{
+        has_vcn,
+        has_vcn_unified,
+        stat::{self, FdInfoStat, ProcInfo},
+    };
+
+    println!("{title}\n");
+
+    for device_path in list {
+        let Ok(amdgpu_dev) = device_path.init() else { continue };
+        let Ok(memory_info) = amdgpu_dev.memory_info() else { continue };
+
+        let mut proc_index: Vec<ProcInfo> = Vec::new();
+        stat::update_index(&mut proc_index, &device_path);
+
+        let mut fdinfo = FdInfoStat {
+            has_vcn: has_vcn(&amdgpu_dev),
+            has_vcn_unified: has_vcn_unified(&amdgpu_dev),
+            ..Default::default()
+        };
+
+        fdinfo.get_all_proc_usage(&proc_index);
+        fdinfo.sort_proc_usage(Default::default(), false);
+
+        let total_vram_mib = memory_info.vram.total_heap_size >> 20;
+        let total_gtt_mib = memory_info.gtt.total_heap_size >> 20;
+
+        if let Some(pci) = device_path.pci {
+            println!(
+                "{} ({pci}), VRAM {:5}/{:5} MiB, GTT {:5}/{:5} MiB",
+                amdgpu_dev.get_marketing_name_or_default(),
+                memory_info.vram.heap_usage >> 20,
+                total_vram_mib,
+                memory_info.gtt.heap_usage >> 20,
+                total_gtt_mib,
+            );
+        }
+
+        for pu in fdinfo.proc_usage {
+            let usage_vram_mib = pu.usage.vram_usage >> 10; // KiB -> MiB
+            let usage_gtt_mib = pu.usage.gtt_usage >> 10; // KiB -> MiB
+
+            println!(
+                "    {:15} ({:7}), VRAM {:5} MiB ({:3}%), GTT {:5} MiB ({:3}%)",
+                pu.name,
+                pu.pid,
+                usage_vram_mib,
+                (usage_vram_mib * 100) / total_vram_mib,
+                usage_gtt_mib,
+                (usage_gtt_mib * 100) / total_gtt_mib,
+            );
+        }
+
+        println!();
+    }
+}
 
 pub fn dump(title: &str, amdgpu_dev: &DeviceHandle) {
     let ext_info = amdgpu_dev.device_info().unwrap();

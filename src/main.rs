@@ -8,7 +8,7 @@ const TITLE: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSIO
 const TITLE: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"));
 
 mod args;
-use args::{AppMode, MainOpt};
+use args::{AppMode, DumpMode, MainOpt};
 mod dump_info;
 
 fn main() {
@@ -21,36 +21,28 @@ fn main() {
     }
 
     #[cfg(feature = "json")]
-    if main_opt.app_mode == AppMode::JSON && main_opt.dump {
-        amdgpu_top_json::dump_json(&device_path_list);
-        return;
-    } else if main_opt.app_mode == AppMode::JSON && main_opt.version {
-        amdgpu_top_json::version_json(TITLE);
-        return;
-    }
+    match (main_opt.app_mode, main_opt.dump_mode) {
+        (AppMode::JSON, DumpMode::Info) => {
+            amdgpu_top_json::dump_json(&device_path_list);
+            return;
+        },
+        (AppMode::JSON, DumpMode::Version) => {
+            amdgpu_top_json::version_json(TITLE);
+            return;
+        },
+        (AppMode::JSON, DumpMode::NoDump) => {
+            let mut j = amdgpu_top_json::JsonApp::new(
+                &device_path_list,
+                main_opt.refresh_period,
+                main_opt.update_process_index,
+                main_opt.json_iterations,
+            );
 
-    if main_opt.version {
-        println!("{TITLE}");
-        return;
-    }
+            j.run(TITLE);
 
-    if main_opt.list {
-        device_list(main_opt.dump, &device_path_list);
-        return;
-    }
-
-    #[cfg(feature = "json")]
-    if let AppMode::JSON = main_opt.app_mode {
-        let mut j = amdgpu_top_json::JsonApp::new(
-            &device_path_list,
-            main_opt.refresh_period,
-            main_opt.update_process_index,
-            main_opt.json_iterations,
-        );
-
-        j.run(TITLE);
-
-        return;
+            return;
+        },
+        (_, _) => {},
     }
 
     let (device_path, amdgpu_dev) = if main_opt.select_apu {
@@ -59,9 +51,24 @@ fn main() {
         from_main_opt(&main_opt, &device_path_list)
     };
 
-    if main_opt.dump {
-        dump_info::dump(TITLE, &amdgpu_dev);
-        return;
+    match main_opt.dump_mode {
+        DumpMode::Info => {
+            dump_info::dump(TITLE, &amdgpu_dev);
+            return;
+        },
+        DumpMode::List => {
+            device_list(&device_path_list);
+            return;
+        },
+        DumpMode::Process => {
+            dump_info::dump_process(TITLE, &device_path_list);
+            return;
+        },
+        DumpMode::Version => {
+            println!("{TITLE}");
+            return;
+        },
+        DumpMode::NoDump => {},
     }
 
     match main_opt.app_mode {
@@ -102,20 +109,16 @@ fn main() {
     }
 }
 
-pub fn device_list(dump_info: bool, list: &[DevicePath]) {
+pub fn device_list(list: &[DevicePath]) {
     for device_path in list {
         let Ok(amdgpu_dev) = device_path.init() else { continue };
         let Some(instance) = device_path.get_instance_number() else { continue };
 
         println!("#{instance}");
 
-        if dump_info {
-            dump_info::dump(TITLE, &amdgpu_dev);
-        } else {
-            println!("Marketing Name = {:?}", amdgpu_dev.get_marketing_name_or_default());
-        }
-        println!("{device_path:?}");
-        println!();
+        dump_info::dump(TITLE, &amdgpu_dev);
+
+        println!("{device_path:?}\n");
     }
 }
 
