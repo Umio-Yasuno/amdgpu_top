@@ -3,6 +3,7 @@ use std::io::Read;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use std::path::Path;
 use crate::DevicePath;
 
 /// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
@@ -70,6 +71,7 @@ pub struct ProcUsage {
     pub name: String,
     pub usage: FdInfoUsage,
     pub cpu_usage: i64, // %
+    pub is_kfd_process: bool,
 }
 
 #[derive(Clone, Default)]
@@ -207,12 +209,14 @@ impl FdInfoStat {
         };
 
         let cpu_usage = self.get_cpu_usage(pid, name);
+        let is_kfd_process = Path::new("/sys/class/kfd/kfd/proc/").join(pid.to_string()).exists();
 
         self.proc_usage.push(ProcUsage {
             pid,
             name: name.to_string(),
             usage: diff,
             cpu_usage: cpu_usage as i64,
+            is_kfd_process,
         });
     }
 
