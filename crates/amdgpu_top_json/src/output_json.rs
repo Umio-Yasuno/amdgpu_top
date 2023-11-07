@@ -126,15 +126,12 @@ impl OutputJson for FdInfoStat {
                 }),
             );
 
-            let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
-            let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
-
             for (label, val) in [
                 ("GFX", pu.usage.gfx),
                 ("Compute", pu.usage.compute),
                 ("DMA", pu.usage.dma),
-                ("Decode", dec_usage),
-                ("Encode", enc_usage),
+                ("Decode", pu.usage.total_dec),
+                ("Encode", pu.usage.total_enc),
                 ("CPU", pu.cpu_usage),
                 ("Media", pu.usage.media),
             ] {

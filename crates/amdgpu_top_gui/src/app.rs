@@ -382,14 +382,11 @@ impl MyApp {
             .map(|_| Vec::<[f64; 2]>::with_capacity(HISTORY_LENGTH.end));
 
         for (i, usage) in self.buf_data.history.fdinfo_history.iter() {
-            let usage_dec = usage.dec + usage.vcn_jpeg;
-            let usage_enc = usage.enc + usage.uvd_enc;
-
             gfx.push([i, usage.gfx as f64]);
             compute.push([i, usage.compute as f64]);
             dma.push([i, usage.dma as f64]);
-            dec.push([i, usage_dec as f64]);
-            enc.push([i, usage_enc as f64]);
+            dec.push([i, usage.total_dec as f64]);
+            enc.push([i, usage.total_enc as f64]);
         }
 
         default_plot(&fl!("fdinfo_plot"))
@@ -482,10 +479,8 @@ impl MyApp {
                 if self.has_vcn_unified {
                     ui.label(format!("{:3} %", pu.usage.media));
                 } else {
-                    let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
-                    let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
-                    ui.label(format!("{dec_usage:3} %"));
-                    ui.label(format!("{enc_usage:3} %"));
+                    ui.label(format!("{:3} %", pu.usage.total_dec));
+                    ui.label(format!("{:3} %", pu.usage.total_enc));
                 }
                 ui.end_row();
             } // proc_usage

@@ -79,10 +79,8 @@ impl AppTextView {
             if stat.has_vcn_unified {
                 write!(self.text.buf, "{:>3}%|", pu.usage.media)?;
             } else {
-                let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg; // UVD/VCN/VCN_JPEG
-                let enc_usage = pu.usage.enc + pu.usage.uvd_enc; // UVD/VCN
-                write!(self.text.buf, "{dec_usage:>3}%|")?;
-                write!(self.text.buf, "{enc_usage:>3}%|")?;
+                write!(self.text.buf, "{:>3}%|", pu.usage.total_dec)?;
+                write!(self.text.buf, "{:>3}%|", pu.usage.total_enc)?;
             }
 
             writeln!(self.text.buf)?;
