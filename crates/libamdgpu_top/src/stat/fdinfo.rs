@@ -34,6 +34,8 @@ pub struct FdInfoUsage {
     pub uvd_enc: i64,
     pub vcn_jpeg: i64,
     pub media: i64,
+    pub total_dec: i64,
+    pub total_enc: i64,
 }
 
 impl std::ops::AddAssign for FdInfoUsage {
@@ -56,6 +58,8 @@ impl std::ops::AddAssign for FdInfoUsage {
             uvd_enc: self.uvd_enc + other.uvd_enc,
             vcn_jpeg: self.vcn_jpeg + other.vcn_jpeg,
             media: self.media + other.media,
+            total_dec: self.total_dec + other.total_dec,
+            total_enc: self.total_enc + other.total_enc,
         }
     }
 }
@@ -247,14 +251,10 @@ impl FdInfoStat {
                 (FdInfoSortType::Compute, true) => a.usage.gfx.cmp(&b.usage.compute),
                 (FdInfoSortType::DMA, false) => b.usage.gfx.cmp(&a.usage.dma),
                 (FdInfoSortType::DMA, true) => a.usage.gfx.cmp(&b.usage.dma),
-                (FdInfoSortType::Decode, false) =>
-                    (b.usage.dec + b.usage.vcn_jpeg).cmp(&(a.usage.dec + a.usage.vcn_jpeg)),
-                (FdInfoSortType::Decode, true) =>
-                    (a.usage.dec + a.usage.vcn_jpeg).cmp(&(b.usage.dec + b.usage.vcn_jpeg)),
-                (FdInfoSortType::Encode, false) =>
-                    (b.usage.enc + b.usage.uvd_enc).cmp(&(a.usage.enc + a.usage.uvd_enc)),
-                (FdInfoSortType::Encode, true) =>
-                    (a.usage.enc + a.usage.uvd_enc).cmp(&(b.usage.enc + b.usage.uvd_enc)),
+                (FdInfoSortType::Decode, false) => b.usage.total_dec.cmp(&a.usage.total_dec),
+                (FdInfoSortType::Decode, true) => a.usage.total_dec.cmp(&b.usage.total_dec),
+                (FdInfoSortType::Encode, false) => b.usage.total_enc.cmp(&a.usage.total_enc),
+                (FdInfoSortType::Encode, true) => a.usage.total_enc.cmp(&b.usage.total_enc),
                 (FdInfoSortType::MediaEngine, false) => b.usage.media.cmp(&a.usage.media),
                 (FdInfoSortType::MediaEngine, true) => a.usage.media.cmp(&b.usage.media),
             }
@@ -276,41 +276,6 @@ pub enum FdInfoSortType {
     Decode,
     Encode,
     MediaEngine,
-}
-
-pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reverse: bool) {
-    proc_usage.sort_by(|a, b|
-        match (sort, reverse) {
-            (FdInfoSortType::PID, false) => b.pid.cmp(&a.pid),
-            (FdInfoSortType::PID, true) => a.pid.cmp(&b.pid),
-            (FdInfoSortType::VRAM, false) => b.usage.vram_usage.cmp(&a.usage.vram_usage),
-            (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
-            (FdInfoSortType::GTT, false) => b.usage.gtt_usage.cmp(&a.usage.gtt_usage),
-            (FdInfoSortType::GTT, true) => a.usage.gtt_usage.cmp(&b.usage.gtt_usage),
-            (FdInfoSortType::CPU, false) => b.cpu_usage.cmp(&a.cpu_usage),
-            (FdInfoSortType::CPU, true) => a.cpu_usage.cmp(&b.cpu_usage),
-            (FdInfoSortType::GFX, false) => b.usage.gfx.cmp(&a.usage.gfx),
-            (FdInfoSortType::GFX, true) => a.usage.gfx.cmp(&b.usage.gfx),
-            (FdInfoSortType::Compute, false) => b.usage.gfx.cmp(&a.usage.compute),
-            (FdInfoSortType::Compute, true) => a.usage.gfx.cmp(&b.usage.compute),
-            (FdInfoSortType::DMA, false) => b.usage.gfx.cmp(&a.usage.dma),
-            (FdInfoSortType::DMA, true) => a.usage.gfx.cmp(&b.usage.dma),
-            (FdInfoSortType::Decode, false) =>
-                (b.usage.dec + b.usage.vcn_jpeg).cmp(&(a.usage.dec + a.usage.vcn_jpeg)),
-            (FdInfoSortType::Decode, true) =>
-                (a.usage.dec + a.usage.vcn_jpeg).cmp(&(b.usage.dec + b.usage.vcn_jpeg)),
-            (FdInfoSortType::Encode, false) =>
-                (b.usage.enc + b.usage.uvd_enc).cmp(&(a.usage.enc + a.usage.uvd_enc)),
-            (FdInfoSortType::Encode, true) =>
-                (a.usage.enc + a.usage.uvd_enc).cmp(&(b.usage.enc + b.usage.uvd_enc)),
-            (FdInfoSortType::MediaEngine, false) =>
-                (b.usage.dec + b.usage.vcn_jpeg + b.usage.enc + b.usage.uvd_enc)
-                    .cmp(&(a.usage.dec + a.usage.vcn_jpeg + a.usage.enc + a.usage.uvd_enc)),
-            (FdInfoSortType::MediaEngine, true) =>
-                (a.usage.dec + a.usage.vcn_jpeg + a.usage.enc + a.usage.uvd_enc)
-                    .cmp(&(b.usage.dec + b.usage.vcn_jpeg + b.usage.enc + b.usage.uvd_enc)),
-        }
-    );
 }
 
 impl FdInfoUsage {
@@ -479,12 +444,20 @@ impl FdInfoUsage {
             From VCN4, the encoding queue and decoding queue have been unified.
             The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.
         */
-        let media = if has_vcn_unified {
-            (vcn_jpeg + enc) / 2
+        let [total_dec, total_enc, media] = if has_vcn_unified {
+            let media = (vcn_jpeg + enc) / 2;
+
+            [0, 0, media]
         } else if has_vcn {
-            (dec + vcn_jpeg + enc) / 3
+            let total_dec = (dec + vcn_jpeg) / 2;
+            let media = (dec + vcn_jpeg + enc) / 3;
+
+            [total_dec, enc, media]
         } else {
-            (dec + vcn_jpeg + enc + uvd_enc) / 4
+            let total_enc = (enc + uvd_enc) / 2;
+            let media = (dec + enc + uvd_enc) / 3;
+
+            [dec, total_enc, media]
         };
 
         Self {
@@ -505,6 +478,8 @@ impl FdInfoUsage {
             uvd_enc,
             vcn_jpeg,
             media,
+            total_dec,
+            total_enc,
         }
     }
 }
