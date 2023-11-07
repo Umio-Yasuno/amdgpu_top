@@ -128,7 +128,6 @@ impl OutputJson for FdInfoStat {
 
             let dec_usage = pu.usage.dec + pu.usage.vcn_jpeg;
             let enc_usage = pu.usage.enc + pu.usage.uvd_enc;
-            let media_usage = (dec_usage + enc_usage) / 2;
 
             for (label, val) in [
                 ("GFX", pu.usage.gfx),
@@ -137,7 +136,7 @@ impl OutputJson for FdInfoStat {
                 ("Decode", dec_usage),
                 ("Encode", enc_usage),
                 ("CPU", pu.cpu_usage),
-                ("Media", media_usage),
+                ("Media", pu.usage.media),
             ] {
                 sub.insert(
                     label.to_string(),
