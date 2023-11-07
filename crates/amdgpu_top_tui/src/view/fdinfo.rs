@@ -5,7 +5,10 @@ use libamdgpu_top::stat::{FdInfoStat, FdInfoSortType};
 
 /// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
 
-const PROC_NAME_LEN: usize = 16;
+const PROC_NAME_LEN: usize = 16 + 4;
+const PID_MAX_LEN: usize = 7; // 2^22
+const KFD: &str = "(KFD)";
+const KFD_LEN: usize = KFD.len();
 
 const VRAM_LABEL: &str = "VRAM";
 const GTT_LABEL: &str = "GTT";
@@ -32,8 +35,9 @@ impl AppTextView {
 
         write!(
             self.text.buf,
-            " {pad:25} |{VRAM_LABEL:^6}|{GTT_LABEL:^6}|{CPU_LABEL:^4}|{GFX_LABEL:^4}|{COMPUTE_LABEL:^4}|{DMA_LABEL:^4}",
+            " {pad:PROC_NAME_LEN$}|{pid:^PID_MAX_LEN$}|{VRAM_LABEL:^6}|{GTT_LABEL:^6}|{CPU_LABEL:^4}|{GFX_LABEL:^4}|{COMPUTE_LABEL:^4}|{DMA_LABEL:^4}",
             pad = "",
+            pid = "PID",
         )?;
 
         if stat.has_vcn_unified {
@@ -51,16 +55,26 @@ impl AppTextView {
 
     pub fn print_fdinfo_usage(&mut self, stat: &FdInfoStat) -> Result<(), fmt::Error> {
         for pu in &stat.proc_usage {
-            let utf16_count = pu.name.encode_utf16().count();
-            let name_len = if pu.name.len() != utf16_count {
-                PROC_NAME_LEN - utf16_count
-            } else {
-                PROC_NAME_LEN
+            let name = {
+                let utf16_count = pu.name.encode_utf16().count();
+                let name_len = if pu.name.len() != utf16_count {
+                    PROC_NAME_LEN - utf16_count
+                } else {
+                    PROC_NAME_LEN
+                };
+                let mut name = format!("{:name_len$}", pu.name);
+
+                if pu.is_kfd_process {
+                    let r = (name_len-KFD_LEN)..(name_len);
+                    name.replace_range(r, KFD);
+                }
+
+                name
             };
+
             write!(
                 self.text.buf,
-                " {name:name_len$}({pid:>8})|{vram:>5}M|{gtt:>5}M|",
-                name = pu.name,
+                " {name}|{pid:>PID_MAX_LEN$}|{vram:>5}M|{gtt:>5}M|",
                 pid = pu.pid,
                 vram = pu.usage.vram_usage >> 10,
                 gtt = pu.usage.gtt_usage >> 10,
