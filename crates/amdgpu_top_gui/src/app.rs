@@ -454,11 +454,7 @@ impl MyApp {
             }
             ui.end_row();
 
-            stat::sort_proc_usage(
-                &mut self.buf_data.stat.fdinfo.proc_usage,
-                &self.fdinfo_sort,
-                self.reverse_sort,
-            );
+            self.buf_data.stat.fdinfo.sort_proc_usage(self.fdinfo_sort, self.reverse_sort);
 
             let mib = fl!("mib");
 
