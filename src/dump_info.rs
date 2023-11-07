@@ -63,6 +63,20 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
                 usage_gtt_mib,
                 (usage_gtt_mib * 100) / total_gtt_mib,
             );
+
+            println!(
+                "{:19} Requested: VRAM {:5} MiB, {:6} GTT {:5} MiB",
+                "",
+                pu.usage.amd_requested_vram >> 10,
+                "",
+                pu.usage.amd_requested_gtt >> 10,
+            );
+
+            println!(
+                "{:21} Evicted: VRAM {:5} MiB",
+                "",
+                pu.usage.amd_evicted_vram >> 10,
+            );
         }
 
         println!();
