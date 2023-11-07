@@ -14,13 +14,13 @@ use serde_json::{json, Map, Value};
 use crate::{amdgpu_top_version, OutputJson};
 
 pub fn dump_json(device_path_list: &[DevicePath]) {
-    let vec_json_info: Vec<Value> = device_path_list.iter().map(|device_path| {
-        let Ok(amdgpu_dev) = device_path.init() else { return Value::Null };
-        let Ok(pci_bus) = amdgpu_dev.get_pci_bus_info() else { return Value::Null };
-        let Ok(ext_info) = amdgpu_dev.device_info() else { return Value::Null };
-        let Ok(memory_info) = amdgpu_dev.memory_info() else { return Value::Null };
+    let vec_json_info: Vec<Value> = device_path_list.iter().filter_map(|device_path| {
+        let amdgpu_dev = device_path.init().ok()?;
+        let pci_bus = amdgpu_dev.get_pci_bus_info().ok()?;
+        let ext_info = amdgpu_dev.device_info().ok()?;
+        let memory_info = amdgpu_dev.memory_info().ok()?;
 
-        json_info(&amdgpu_dev, &pci_bus, &ext_info, &memory_info)
+        Some(json_info(&amdgpu_dev, &pci_bus, &ext_info, &memory_info))
     }).collect();
 
     println!("{}", Value::Array(vec_json_info));
