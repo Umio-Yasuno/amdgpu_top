@@ -20,6 +20,12 @@ pub struct FdInfoUsage {
     pub vram_usage: u64, // KiB
     pub gtt_usage: u64, // KiB
     pub system_cpu_memory_usage: u64, // KiB, from Linux Kernel v6.4
+    pub amd_visible_vram: u64, // KiB, from Linux Kernel v6.4
+    pub amd_evicted_vram: u64, // KiB, from Linux Kernel v6.4
+    pub amd_evicted_visible_vram: u64, // KiB, from Linux Kernel v6.4
+    pub amd_requested_vram: u64, // KiB, from Linux Kernel v6.4
+    pub amd_requested_gtt: u64, // KiB, from Linux Kernel v6.4
+    pub amd_requested_visible_vram: u64, // KiB, from Linux Kernel v6.4
     pub gfx: i64,
     pub compute: i64,
     pub dma: i64,
@@ -32,17 +38,25 @@ pub struct FdInfoUsage {
 
 impl std::ops::AddAssign for FdInfoUsage {
     fn add_assign(&mut self, other: Self) {
-        self.vram_usage += other.vram_usage;
-        self.gtt_usage += other.gtt_usage;
-        self.system_cpu_memory_usage += other.system_cpu_memory_usage;
-        self.gfx += other.gfx;
-        self.compute += other.compute;
-        self.dma += other.dma;
-        self.dec += other.dec;
-        self.enc += other.enc;
-        self.uvd_enc += other.uvd_enc;
-        self.vcn_jpeg += other.vcn_jpeg;
-        self.media += other.media;
+        *self = Self {
+            vram_usage: self.vram_usage + other.vram_usage,
+            gtt_usage: self.gtt_usage + other.gtt_usage,
+            system_cpu_memory_usage: self.system_cpu_memory_usage + other.system_cpu_memory_usage,
+            amd_visible_vram: self.amd_visible_vram + other.amd_visible_vram,
+            amd_evicted_vram: self.amd_evicted_vram + other.amd_evicted_vram,
+            amd_evicted_visible_vram: self.amd_evicted_visible_vram + other.amd_evicted_visible_vram,
+            amd_requested_vram: self.amd_requested_vram + other.amd_requested_vram,
+            amd_requested_gtt: self.amd_requested_gtt + other.amd_requested_gtt,
+            amd_requested_visible_vram: self.amd_requested_visible_vram + other.amd_requested_visible_vram,
+            gfx: self.gfx + other.gfx,
+            compute: self.compute + other.compute,
+            dma: self.dma + other.dma,
+            dec: self.dec + other.dec,
+            enc: self.enc + other.enc,
+            uvd_enc: self.uvd_enc + other.uvd_enc,
+            vcn_jpeg: self.vcn_jpeg + other.vcn_jpeg,
+            media: self.media + other.media,
+        }
     }
 }
 
@@ -130,14 +144,16 @@ impl FdInfoStat {
                 continue;
             }
 
-            'fdinfo: for l in lines {
-                if l.starts_with("drm-memory") {
-                    stat.mem_usage_parse(l);
-                    continue 'fdinfo;
-                }
-                if l.starts_with("drm-engine") {
-                    stat.engine_parse(l);
-                    continue 'fdinfo;
+            for l in lines {
+                let Some(s) = l.get(0..10) else { continue };
+
+                match s {
+                    "drm-memory" => stat.mem_usage_parse(l),
+                    "drm-engine" => stat.engine_parse(l),
+                    "amd-memory" => stat.visible_vram_parse(l),
+                    "amd-evicte" => stat.evicted_vram_parse(l),
+                    "amd-reques" => stat.requested_vram_parse(l),
+                    _ => {},
                 }
             }
         }
@@ -148,10 +164,26 @@ impl FdInfoStat {
 
             tmp
         } else {
-            let [vram_usage, gtt_usage, system_cpu_memory_usage] = [
+            let [
+                vram_usage,
+                gtt_usage,
+                system_cpu_memory_usage,
+                amd_visible_vram,
+                amd_evicted_vram,
+                amd_evicted_visible_vram,
+                amd_requested_vram,
+                amd_requested_visible_vram,
+                amd_requested_gtt,
+            ] = [
                 stat.vram_usage,
                 stat.gtt_usage,
                 stat.system_cpu_memory_usage,
+                stat.amd_visible_vram,
+                stat.amd_evicted_vram,
+                stat.amd_evicted_visible_vram,
+                stat.amd_requested_vram,
+                stat.amd_requested_visible_vram,
+                stat.amd_requested_gtt,
             ];
 
             self.pid_map.insert(pid, stat);
@@ -160,6 +192,12 @@ impl FdInfoStat {
                 vram_usage,
                 gtt_usage,
                 system_cpu_memory_usage,
+                amd_visible_vram,
+                amd_evicted_vram,
+                amd_evicted_visible_vram,
+                amd_requested_vram,
+                amd_requested_visible_vram,
+                amd_requested_gtt,
                 ..Default::default()
             }
         };
@@ -276,6 +314,8 @@ pub fn sort_proc_usage(proc_usage: &mut [ProcUsage], sort: &FdInfoSortType, reve
 }
 
 impl FdInfoUsage {
+    const KIB: usize = " KiB".len();
+
     pub fn id_parse(s: &str) -> Option<usize> {
         const LEN: usize = "drm-client-id:\t".len();
         s.get(LEN..)?.parse().ok()
@@ -284,17 +324,16 @@ impl FdInfoUsage {
     pub fn mem_usage_parse(&mut self, s: &str) {
         const PRE: usize = "drm-memory-xxxx:\t".len(); // "vram:" or "gtt: " or "cpu: "
         const KIB: usize = " KiB".len();
-        let len = s.len();
-
         const MEM_TYPE: std::ops::Range<usize> = {
             const PRE_LEN: usize = "drm-memory-".len();
 
             PRE_LEN..(PRE_LEN+5)
         };
 
-        let usage = s.get(PRE..len-KIB).and_then(|s| s.parse().ok()).unwrap_or(0);
+        let Some(usage) = s.get(PRE..s.len()-KIB).and_then(|s| s.parse::<u64>().ok()) else { return };
+        let Some(mem_type) = s.get(MEM_TYPE) else { return };
 
-        match &s[MEM_TYPE] {
+        match mem_type {
             "vram:" => self.vram_usage += usage,
             "gtt: " => self.gtt_usage += usage,
             "cpu: " => self.system_cpu_memory_usage += usage, // from Linux Kernel v6.4
@@ -307,10 +346,7 @@ impl FdInfoUsage {
         const NS: usize = " ns".len();
         let Some(pos) = s.find('\t') else { return };
 
-        let ns: i64 = {
-            let len = s.len();
-            s.get(pos+1..len-NS).and_then(|s| s.parse().ok()).unwrap_or(0)
-        };
+        let Some(ns) = s.get(pos+1..s.len()-NS).and_then(|s| s.parse::<i64>().ok()) else { return };
         let Some(s) = s.get(PRE..pos) else { return };
 
         match s {
@@ -323,6 +359,90 @@ impl FdInfoUsage {
             "jpeg:" => self.vcn_jpeg += ns,
             _ => {},
         };
+    }
+
+    pub fn visible_vram_parse(&mut self, s: &str) {
+        const PRE_LEN: usize = "amd-memory-visible-vram:\t".len();
+        let Some(m) = s.get(PRE_LEN..s.len()-Self::KIB)
+            .and_then(|m| m.parse::<u64>().ok()) else { return };
+
+        self.amd_visible_vram += m;
+    }
+
+    pub fn evicted_vram_parse(&mut self, s: &str) {
+        enum EvictedVramType {
+            Vram,
+            VisibleVram,
+        }
+
+        impl EvictedVramType {
+            const PRE_LEN: usize = "amd-evicted-".len();
+            const VRAM_TYPE: std::ops::Range<usize> = Self::PRE_LEN..(Self::PRE_LEN+4);
+
+            fn from_line(s: &str) -> Option<Self> {
+                match s.get(Self::VRAM_TYPE)? {
+                    "vram" => Some(Self::Vram),
+                    "visi" => Some(Self::VisibleVram),
+                    _ => None
+                }
+            }
+
+            const fn vram_pos(&self) -> usize {
+                match self {
+                    Self::Vram => Self::PRE_LEN + "vram:\t".len(),
+                    Self::VisibleVram => Self::PRE_LEN + "visible-vram:\t".len(),
+                }
+            }
+        }
+
+        let Some(vram_type) = EvictedVramType::from_line(s) else { return };
+        let Some(m) = s.get(vram_type.vram_pos()..s.len()-Self::KIB)
+            .and_then(|m| m.parse::<u64>().ok()) else { return };
+
+        match vram_type {
+            EvictedVramType::Vram => self.amd_evicted_vram += m,
+            EvictedVramType::VisibleVram => self.amd_evicted_visible_vram += m,
+        }
+    }
+
+    pub fn requested_vram_parse(&mut self, s: &str) {
+        enum RequestedVramType {
+            Vram,
+            VisibleVram,
+            Gtt,
+        }
+
+        impl RequestedVramType {
+            const PRE_LEN: usize = "amd-requested-".len();
+            const VRAM_TYPE: std::ops::Range<usize> = Self::PRE_LEN..(Self::PRE_LEN+4);
+
+            fn from_line(s: &str) -> Option<Self> {
+                match s.get(Self::VRAM_TYPE)? {
+                    "vram" => Some(Self::Vram),
+                    "visi" => Some(Self::VisibleVram),
+                    "gtt:" => Some(Self::Gtt),
+                    _ => None
+                }
+            }
+
+            const fn vram_pos(&self) -> usize {
+                match self {
+                    Self::Vram => Self::PRE_LEN + "vram:\t".len(),
+                    Self::VisibleVram => Self::PRE_LEN + "visible-vram:\t".len(),
+                    Self::Gtt => Self::PRE_LEN + "gtt:\t".len(),
+                }
+            }
+        }
+
+        let Some(vram_type) = RequestedVramType::from_line(s) else { return };
+        let Some(m) = s.get(vram_type.vram_pos()..s.len()-Self::KIB)
+            .and_then(|m| m.parse::<u64>().ok()) else { return };
+
+        match vram_type {
+            RequestedVramType::Vram => self.amd_requested_vram += m,
+            RequestedVramType::VisibleVram => self.amd_requested_visible_vram += m,
+            RequestedVramType::Gtt => self.amd_requested_gtt += m,
+        }
     }
 
     pub fn calc_usage(
@@ -371,6 +491,12 @@ impl FdInfoUsage {
             vram_usage: self.vram_usage,
             gtt_usage: self.gtt_usage,
             system_cpu_memory_usage: self.system_cpu_memory_usage,
+            amd_visible_vram: self.amd_visible_vram,
+            amd_evicted_vram: self.amd_evicted_vram,
+            amd_evicted_visible_vram: self.amd_evicted_visible_vram,
+            amd_requested_vram: self.amd_requested_vram,
+            amd_requested_gtt: self.amd_requested_gtt,
+            amd_requested_visible_vram: self.amd_requested_visible_vram,
             gfx,
             compute,
             dma,
