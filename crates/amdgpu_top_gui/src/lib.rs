@@ -107,13 +107,19 @@ pub fn run(
         app.stat.grbm.get_i18n_index(&LANGUAGE_LOADER);
         app.stat.grbm2.get_i18n_index(&LANGUAGE_LOADER);
 
-        {
-            let t_index = vec![(device_path.clone(), app.stat.arc_proc_index.clone())];
-            stat::spawn_update_index_thread(t_index, update_process_index_interval);
-        }
-
         Some(app)
     }).collect();
+
+    {
+        let t_index: Vec<(_, Arc<Mutex<Vec<_>>>)> = vec_app.iter().map(|app|
+            (
+                app.device_path.clone(),
+                app.stat.arc_proc_index.clone(),
+            )
+        ).collect();
+
+        stat::spawn_update_index_thread(t_index, update_process_index_interval);
+    }
 
     let mut vec_data: Vec<_> = vec_app.iter().map(|app| {
         let fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
