@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 
 mod output_json;
 mod dump;
-pub use dump::{dump_json, json_info};
+pub use dump::{dump_json, JsonInfo};
 
 pub fn version_json(title: &str) {
     let version = json!({
@@ -131,13 +131,7 @@ impl JsonDeviceInfo {
         let vec_json_device: Vec<Self> = device_path_list.iter().filter_map(|device_path| {
             let amdgpu_dev = device_path.init().ok()?;
             let app = AppAmdgpuTop::new(amdgpu_dev, device_path.clone(), &Default::default())?;
-            let info = json_info(
-                &app.amdgpu_dev,
-                &app.device_info.pci_bus,
-                &app.device_info.ext_info,
-                &app.device_info.memory_info,
-                app.device_info.instance_number,
-            );
+            let info = app.json_info();
 
             Some(Self { app, info })
         }).collect();

@@ -2,6 +2,7 @@ use libamdgpu_top::{
     stat,
     AMDGPU::{GpuMetrics, MetricsInfo},
     VramUsage,
+    PCI,
 };
 use stat::{FdInfoStat, GpuActivity, Sensors, PerfCounter};
 use serde_json::{json, Map, Value};
@@ -191,5 +192,14 @@ impl OutputJson for GpuActivity {
         }
 
         m.into()
+    }
+}
+
+impl OutputJson for PCI::LINK {
+    fn json(&self) -> Value {
+        json!({
+            "gen": self.gen,
+            "width": self.width,
+        })
     }
 }
