@@ -43,10 +43,6 @@ impl DevicePath {
         Ok(amdgpu_dev)
     }
 
-    pub fn get_instance_number(&self) -> Option<u32> {
-        Some(self.instance_number)
-    }
-
     pub fn get_device_path_list() -> Vec<Self> {
         let amdgpu_devices = fs::read_dir("/sys/bus/pci/drivers/amdgpu").unwrap_or_else(|_| {
             eprintln!("The AMDGPU driver is not loaded.");
