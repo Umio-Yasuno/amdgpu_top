@@ -8,23 +8,21 @@ use crate::{BASE, MEDIUM, HISTORY_LENGTH};
 use libamdgpu_top::AMDGPU::MetricsInfo;
 use libamdgpu_top::stat::{self, gpu_metrics_util::*, FdInfoSortType, PerfCounter};
 
-use crate::{AppDeviceInfo, GuiAppData, GpuMetrics, util::*, fl};
+use crate::{GuiAppData, GpuMetrics, util::*, fl};
 
 const PLOT_HEIGHT: f32 = 32.0;
 const PLOT_WIDTH: f32 = 240.0;
 
 pub struct MyApp {
     pub command_path: PathBuf,
-    pub app_device_info: AppDeviceInfo,
     pub device_list: Vec<DeviceListMenu>,
-    pub has_vcn_unified: bool,
-    pub support_pcie_bw: bool,
     pub fdinfo_sort: FdInfoSortType,
     pub reverse_sort: bool,
     pub buf_data: GuiAppData,
-    pub arc_data: Arc<Mutex<GuiAppData>>,
+    pub arc_data: Arc<Mutex<Vec<GuiAppData>>>,
     pub show_sidepanel: bool,
     pub gl_vendor_info: Option<String>,
+    pub selected_instance_number: u32,
 }
 
 pub fn grid(ui: &mut egui::Ui, v: &[(&str, &str)]) {
@@ -373,7 +371,7 @@ impl MyApp {
         self.fdinfo_sort = sort_type;
     }
 
-    pub fn egui_fdinfo_plot(&self, ui: &mut egui::Ui) {
+    pub fn egui_fdinfo_plot(&self, ui: &mut egui::Ui, has_vcn_unified: bool) {
         let label_fmt = |name: &str, val: &PlotPoint| {
             format!("{:.1}s : {name} {:.0}%", val.x, val.y)
         };
@@ -406,7 +404,7 @@ impl MyApp {
                     plot_ui.line(Line::new(PlotPoints::new(usage)).name(name));
                 }
 
-                if self.has_vcn_unified {
+                if has_vcn_unified {
                     plot_ui.line(Line::new(PlotPoints::new(enc)).name(fl!("media")));
                 } else {
                     plot_ui.line(Line::new(PlotPoints::new(dec)).name(fl!("decode")));
@@ -416,7 +414,8 @@ impl MyApp {
     }
 
     pub fn egui_grid_fdinfo(&mut self, ui: &mut egui::Ui) {
-        collapsing_plot(ui, "fdinfo Plot", true, |ui| self.egui_fdinfo_plot(ui));
+        let has_vcn_unified = self.buf_data.stat.fdinfo.has_vcn_unified;
+        collapsing_plot(ui, "fdinfo Plot", true, |ui| self.egui_fdinfo_plot(ui, has_vcn_unified));
 
         egui::Grid::new("fdinfo").show(ui, |ui| {
             ui.style_mut().override_font_id = Some(MEDIUM);
@@ -440,7 +439,7 @@ impl MyApp {
             if ui.button(rt_base(format!("{:^5}", fl!("dma")))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::DMA);
             }
-            if self.has_vcn_unified {
+            if has_vcn_unified {
                 if ui.button(rt_base(format!("{:^5}", fl!("media")))).clicked() {
                     self.set_fdinfo_sort_type(FdInfoSortType::Encode);
                 }
@@ -472,7 +471,7 @@ impl MyApp {
                     ui.label(format!("{usage:3} %"));
                 }
 
-                if self.has_vcn_unified {
+                if has_vcn_unified {
                     ui.label(format!("{:3} %", pu.usage.media));
                 } else {
                     ui.label(format!("{:3} %", pu.usage.total_dec));
@@ -493,16 +492,16 @@ impl MyApp {
                     &self.buf_data.history.sensors_history.sclk,
                     sensors.sclk,
                     "GFX_SCLK",
-                    self.app_device_info.min_gpu_clk,
-                    self.app_device_info.max_gpu_clk,
+                    self.buf_data.device_info.min_gpu_clk,
+                    self.buf_data.device_info.max_gpu_clk,
                     fl!("mhz"),
                 ),
                 (
                     &self.buf_data.history.sensors_history.mclk,
                     sensors.mclk,
                     "GFX_MCLK",
-                    self.app_device_info.min_mem_clk,
-                    self.app_device_info.max_mem_clk,
+                    self.buf_data.device_info.min_mem_clk,
+                    self.buf_data.device_info.max_mem_clk,
                     fl!("mhz"),
                 ),
                 (

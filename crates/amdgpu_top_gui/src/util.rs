@@ -1,6 +1,7 @@
 use crate::{BASE, HEADING, HISTORY_LENGTH};
 use eframe::egui::{self, collapsing_header::CollapsingState, FontId, util::History, Id, RichText};
 use libamdgpu_top::{DevicePath, PCI, stat::Sensors};
+use std::fmt;
 
 pub struct DeviceListMenu {
     pub instance: u32,
@@ -18,6 +19,12 @@ impl DeviceListMenu {
         };
 
         Some(Self { instance, pci, name })
+    }
+}
+
+impl fmt::Display for DeviceListMenu {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "#{} {} ({})", self.instance, self.name, self.pci)
     }
 }
 

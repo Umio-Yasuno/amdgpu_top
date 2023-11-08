@@ -7,7 +7,6 @@ use egui::{FontFamily, FontId, RichText, util::History};
 use i18n_embed::DesktopLanguageRequester;
 
 use libamdgpu_top::AMDGPU::{
-    DeviceHandle,
     GpuMetrics,
     MetricsInfo,
 };
@@ -35,8 +34,19 @@ const HEADING: FontId = FontId::new(16.0, FontFamily::Monospace);
 const HISTORY_LENGTH: Range<usize> = 0..30; // seconds
 
 #[derive(Clone)]
+pub struct HistoryData {
+    pub grbm_history: Vec<History<u8>>,
+    pub grbm2_history: Vec<History<u8>>,
+    pub fdinfo_history: History<FdInfoUsage>,
+    pub sensors_history: SensorsHistory,
+    pub pcie_bw_history: History<(u64, u64)>,
+}
+
+#[derive(Clone)]
 pub struct GuiAppData {
     pub stat: AppAmdgpuTopStat,
+    pub device_info: AppDeviceInfo,
+    pub support_pcie_bw: bool,
     pub history: HistoryData,
 }
 
@@ -71,21 +81,11 @@ impl GuiAppData {
     }
 }
 
-#[derive(Clone)]
-pub struct HistoryData {
-    pub grbm_history: Vec<History<u8>>,
-    pub grbm2_history: Vec<History<u8>>,
-    pub fdinfo_history: History<FdInfoUsage>,
-    pub sensors_history: SensorsHistory,
-    pub pcie_bw_history: History<(u64, u64)>,
-}
-
 pub fn run(
     app_name: &str,
     title_with_version: &str,
-    device_path: DevicePath,
-    amdgpu_dev: DeviceHandle,
     device_path_list: &[DevicePath],
+    selected_instance_number: u32,
     update_process_index_interval: u64,
 ) {
     let localizer = localizer();
@@ -95,52 +95,64 @@ pub fn run(
         eprintln!("Error while loading languages for library_fluent {error}");
     }
 
-    let has_vcn_unified = libamdgpu_top::has_vcn_unified(&amdgpu_dev);
+    let mut vec_app: Vec<_> = device_path_list.iter().filter_map(|device_path| {
+        let amdgpu_dev = device_path.init().ok()?;
 
-    let mut app_amdgpu_top = AppAmdgpuTop::new(amdgpu_dev, device_path.clone(), &AppOption { pcie_bw: true }).unwrap();
-    app_amdgpu_top.stat.grbm.get_i18n_index(&LANGUAGE_LOADER);
-    app_amdgpu_top.stat.grbm2.get_i18n_index(&LANGUAGE_LOADER);
+        let mut app = AppAmdgpuTop::new(
+            amdgpu_dev,
+            device_path.clone(),
+            &AppOption { pcie_bw: true },
+        )?;
+
+        app.stat.grbm.get_i18n_index(&LANGUAGE_LOADER);
+        app.stat.grbm2.get_i18n_index(&LANGUAGE_LOADER);
+
+        {
+            let t_index = vec![(device_path.clone(), app.stat.arc_proc_index.clone())];
+            stat::spawn_update_index_thread(t_index, update_process_index_interval);
+        }
+
+        Some(app)
+    }).collect();
+
+    let mut vec_data: Vec<_> = vec_app.iter().map(|app| {
+        let fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let sensors_history = SensorsHistory::default();
+        let pcie_bw_history: History<(u64, u64)> = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let [grbm_history, grbm2_history] = [&app.stat.grbm, &app.stat.grbm2].map(|pc| {
+            vec![History::<u8>::new(HISTORY_LENGTH, f32::INFINITY); pc.index.len()]
+        });
+
+        GuiAppData {
+            stat: app.stat.clone(),
+            device_info: app.device_info.clone(),
+            support_pcie_bw: app.stat.arc_pcie_bw.is_some(),
+            history: HistoryData {
+                grbm_history,
+                grbm2_history,
+                fdinfo_history,
+                sensors_history,
+                pcie_bw_history,
+            },
+        }
+    }).collect();
 
     let sample = Sampling::low();
-
-    let fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
-    let sensors_history = SensorsHistory::default();
-    let pcie_bw_history: History<(u64, u64)> = History::new(HISTORY_LENGTH, f32::INFINITY);
-    let [grbm_history, grbm2_history] = [&app_amdgpu_top.stat.grbm, &app_amdgpu_top.stat.grbm2].map(|pc| {
-        vec![History::<u8>::new(HISTORY_LENGTH, f32::INFINITY); pc.index.len()]
-    });
-
     let device_list = device_path_list.iter().flat_map(DeviceListMenu::new).collect();
     let command_path = std::fs::read_link("/proc/self/exe").unwrap_or(PathBuf::from(app_name));
 
-    {
-        let t_index = vec![(device_path.clone(), app_amdgpu_top.stat.arc_proc_index.clone())];
-        stat::spawn_update_index_thread(t_index, update_process_index_interval);
-    }
-
-    let mut data = GuiAppData {
-        stat: app_amdgpu_top.stat.clone(),
-        history: HistoryData {
-            grbm_history: grbm_history.clone(),
-            grbm2_history: grbm2_history.clone(),
-            fdinfo_history: fdinfo_history.clone(),
-            sensors_history: sensors_history.clone(),
-            pcie_bw_history: pcie_bw_history.clone(),
-        },
-    };
+    let Some(data) = vec_data.iter().find(|&d| selected_instance_number == d.device_info.instance_number) else { return };
 
     let mut app = MyApp {
-        app_device_info: app_amdgpu_top.device_info.clone(),
         device_list,
         command_path,
-        has_vcn_unified,
-        support_pcie_bw: app_amdgpu_top.stat.arc_pcie_bw.is_some(),
         fdinfo_sort: Default::default(),
         reverse_sort: false,
         buf_data: data.clone(),
-        arc_data: Arc::new(Mutex::new(data.clone())),
+        arc_data: Arc::new(Mutex::new(vec_data.clone())),
         show_sidepanel: true,
         gl_vendor_info: None,
+        selected_instance_number,
     };
 
     let options = eframe::NativeOptions {
@@ -154,16 +166,28 @@ pub fn run(
         let share_data = app.arc_data.clone();
 
         std::thread::spawn(move || loop {
-            app_amdgpu_top.update_pc_with_sampling(&sample);
+            for _ in 0..sample.count {
+                for app in vec_app.iter_mut() {
+                    app.update_pc();
+                }
 
-            app_amdgpu_top.update(sample.to_duration());
-            data.stat = app_amdgpu_top.stat.clone();
-            data.update_history(now.elapsed().as_secs_f64());
+                std::thread::sleep(sample.delay);
+            }
+
+            for app in vec_app.iter_mut() {
+                app.update(sample.to_duration());
+            }
+
+            for (app, data) in vec_app.iter_mut().zip(vec_data.iter_mut()) {
+                data.stat = app.stat.clone();
+                data.update_history(now.elapsed().as_secs_f64());
+                app.clear_pc();
+            }
 
             {
                 let lock = share_data.lock();
                 if let Ok(mut share_data) = lock {
-                    *share_data = data.clone();
+                    *share_data = vec_data.clone();
                 }
             }
         });
@@ -206,33 +230,24 @@ pub fn run(
 }
 
 impl MyApp {
-    fn egui_device_list(&self, ui: &mut egui::Ui) {
-        ui.menu_button(RichText::new("Device List").font(BASE), |ui| {
-            ui.set_width(360.0);
-            for device in &self.device_list {
-                ui.horizontal(|ui| {
-                    let text = RichText::new(format!(
-                        "#{instance} {name} ({pci})",
-                        instance = device.instance,
-                        name = device.name,
-                        pci = device.pci,
-                    )).font(BASE);
+    fn egui_device_list(&mut self, ui: &mut egui::Ui) {
+        let Some(selected) = self.device_list
+            .iter()
+            .find(|&device| self.selected_instance_number == device.instance) else { return };
 
-                    if self.app_device_info.pci_bus == device.pci {
-                        ui.add_enabled(false, egui::Button::new(text));
-                    } else {
-                        ui.menu_button(text, |ui| {
-                            if ui.button(&fl!("launch_new_process")).clicked() {
-                                std::process::Command::new(&self.command_path)
-                                    .args(["--gui", "--pci", &device.pci.to_string()])
-                                    .spawn()
-                                    .unwrap();
-                            }
-                        });
-                    }
-                });
-            }
-        });
+        egui::ComboBox::from_id_source("Device List Senpai")
+            .selected_text(selected.to_string())
+            .show_ui(ui, |ui| {
+                for device in &self.device_list {
+                    if selected.instance == device.instance { continue }
+
+                    ui.selectable_value(
+                        &mut self.selected_instance_number,
+                        device.instance,
+                        device.to_string(),
+                    );
+                }
+            });
     }
 
     fn egui_side_panel(&self, ui: &mut egui::Ui) {
@@ -242,25 +257,25 @@ impl MyApp {
                 ui,
                 &fl!("device_info"),
                 true,
-                |ui| self.app_device_info.ui(ui, &self.gl_vendor_info),
+                |ui| self.buf_data.device_info.ui(ui, &self.gl_vendor_info),
             );
 
-            if !self.app_device_info.ip_die_entries.is_empty() {
+            if !self.buf_data.device_info.ip_die_entries.is_empty() {
                 ui.add_space(SPACE);
                 collapsing(
                     ui,
                     &fl!("ip_discovery_table"),
                     false,
-                    |ui| self.app_device_info.ip_die_entries.ui(ui),
+                    |ui| self.buf_data.device_info.ip_die_entries.ui(ui),
                 );
             }
 
-            if let (Some(dec), Some(enc)) = (&self.app_device_info.decode, &self.app_device_info.encode) {
+            if let (Some(dec), Some(enc)) = (&self.buf_data.device_info.decode, &self.buf_data.device_info.encode) {
                 ui.add_space(SPACE);
                 collapsing(ui, &fl!("video_caps_info"), false, |ui| (dec, enc).ui(ui));
             }
 
-            if let Some(vbios) = &self.app_device_info.vbios {
+            if let Some(vbios) = &self.buf_data.device_info.vbios {
                 ui.add_space(SPACE);
                 collapsing(ui, &fl!("vbios_info"), false, |ui| vbios.ui(ui));
             }
@@ -292,7 +307,7 @@ impl MyApp {
             ui.add_space(SPACE);
             collapsing(ui, &fl!("sensor"), true, |ui| self.egui_sensors(ui));
 
-            if self.support_pcie_bw {
+            if self.buf_data.support_pcie_bw {
                 ui.add_space(SPACE);
                 collapsing(ui, &fl!("pcie_bw"), true, |ui| self.egui_pcie_bw(ui));
             }
@@ -339,7 +354,9 @@ impl eframe::App for MyApp {
         {
             let lock = self.arc_data.try_lock();
             if let Ok(data) = lock {
-                self.buf_data = data.clone();
+                if let Some(v) = data.get(self.selected_instance_number as usize) {
+                    self.buf_data = v.clone();
+                }
             }
         }
         {

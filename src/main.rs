@@ -93,9 +93,8 @@ fn main() {
         AppMode::GUI => amdgpu_top_gui::run(
             APP_NAME,
             TITLE,
-            device_path,
-            amdgpu_dev,
             &device_path_list,
+            instance,
             main_opt.update_process_index,
         ),
         #[cfg(feature = "json")]
