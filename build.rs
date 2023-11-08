@@ -14,6 +14,11 @@ fn get_head_id() -> Option<String> {
 }
 
 fn main() {
-    let head_id = get_head_id().unwrap_or_default();
+    let head_id = if let Some(head_id) = get_head_id() {
+        format!(" (git-{head_id})")
+    } else {
+        String::new()
+    };
+
     println!("cargo:rustc-env=HEAD_ID={head_id}");
 }

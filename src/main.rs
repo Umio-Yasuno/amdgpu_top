@@ -3,7 +3,7 @@ use libamdgpu_top::AMDGPU::DeviceHandle;
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
 #[cfg(feature = "git_version")]
-const TITLE: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"), " (git-", env!("HEAD_ID"), ")");
+const TITLE: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"), env!("HEAD_ID"));
 #[cfg(not(feature = "git_version"))]
 const TITLE: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"));
 
