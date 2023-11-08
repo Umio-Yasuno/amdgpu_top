@@ -50,10 +50,11 @@ fn main() {
     } else {
         from_main_opt(&main_opt, &device_path_list)
     };
+    let instance = device_path.get_instance_number().unwrap_or_default();
 
     match main_opt.dump_mode {
         DumpMode::Info => {
-            dump_info::dump(TITLE, &amdgpu_dev);
+            dump_info::dump(TITLE, &amdgpu_dev, instance);
             return;
         },
         DumpMode::List => {
@@ -86,7 +87,7 @@ fn main() {
             #[cfg(not(feature = "tui"))]
             {
                 eprintln!("\"tui\" feature is not enabled for this build.");
-                dump_info::dump(TITLE, &amdgpu_dev);
+                dump_info::dump(TITLE, &amdgpu_dev, instance);
             }
         },
         #[cfg(feature = "gui")]
@@ -115,7 +116,7 @@ pub fn device_list(list: &[DevicePath]) {
 
         println!("#{instance}");
 
-        dump_info::dump(TITLE, &amdgpu_dev);
+        dump_info::dump(TITLE, &amdgpu_dev, instance);
 
         println!("{device_path:?}\n");
     }

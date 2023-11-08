@@ -46,6 +46,7 @@ pub struct AppDeviceInfo {
     pub total_l3_cache_size_mib: u32,
     pub ip_die_entries: Vec<IpDieEntry>,
     pub power_profiles: Vec<PowerProfile>,
+    pub instance_number: u32,
 }
 
 impl AppDeviceInfo {
@@ -54,6 +55,7 @@ impl AppDeviceInfo {
         ext_info: &drm_amdgpu_info_device,
         memory_info: &drm_amdgpu_memory_info,
         sensors: &Sensors,
+        instance_number: u32,
     ) -> Self {
         let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock()
             .unwrap_or_else(|| (0, (ext_info.max_engine_clock() / 1000) as u32));
@@ -97,6 +99,7 @@ impl AppDeviceInfo {
             total_l3_cache_size_mib: ext_info.calc_l3_cache_size_mb(),
             ip_die_entries,
             power_profiles,
+            instance_number,
         }
     }
 }

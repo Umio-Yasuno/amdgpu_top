@@ -136,6 +136,7 @@ impl JsonDeviceInfo {
                 &app.device_info.pci_bus,
                 &app.device_info.ext_info,
                 &app.device_info.memory_info,
+                app.device_info.instance_number,
             );
 
             Some(Self { app, info })

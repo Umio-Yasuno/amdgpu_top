@@ -83,13 +83,13 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
     }
 }
 
-pub fn dump(title: &str, amdgpu_dev: &DeviceHandle) {
+pub fn dump(title: &str, amdgpu_dev: &DeviceHandle, instance_number: u32) {
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
     let sensors = Sensors::new(amdgpu_dev, &pci_bus, &ext_info);
 
-    let info = AppDeviceInfo::new(amdgpu_dev, &ext_info, &memory_info, &sensors);
+    let info = AppDeviceInfo::new(amdgpu_dev, &ext_info, &memory_info, &sensors, instance_number);
 
     println!("{title}\n");
     println!("--- AMDGPU info dump ---");
