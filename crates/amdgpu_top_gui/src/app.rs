@@ -541,6 +541,7 @@ impl MyApp {
 
                 ui.label(format!("{label}\n({val:4} {unit})"));
 
+                /* for APU with DDR4 */
                 if min == max {
                     ui.end_row();
                     continue;

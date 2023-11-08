@@ -16,7 +16,7 @@ use crate::{amdgpu_top_version, OutputJson};
 pub fn dump_json(device_path_list: &[DevicePath]) {
     let vec_json_info: Vec<Value> = device_path_list.iter().filter_map(|device_path| {
         let amdgpu_dev = device_path.init().ok()?;
-        let instance_number = device_path.get_instance_number()?;
+        let instance_number = device_path.instance_number;
         let pci_bus = amdgpu_dev.get_pci_bus_info().ok()?;
         let ext_info = amdgpu_dev.device_info().ok()?;
         let memory_info = amdgpu_dev.memory_info().ok()?;

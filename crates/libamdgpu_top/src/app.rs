@@ -57,7 +57,6 @@ impl AppAmdgpuTop {
         let asic_name = ext_info.get_asic_name();
         let memory_info = amdgpu_dev.memory_info().ok()?;
         let sysfs_path = pci_bus.get_sysfs_path();
-        let instance_number = device_path.get_instance_number()?;
 
         let [grbm, grbm2] = {
             let chip_class = ext_info.get_chip_class();
@@ -99,7 +98,13 @@ impl AppAmdgpuTop {
             ..Default::default()
         };
 
-        let device_info = AppDeviceInfo::new(&amdgpu_dev, &ext_info, &memory_info, &sensors, instance_number);
+        let device_info = AppDeviceInfo::new(
+            &amdgpu_dev,
+            &ext_info,
+            &memory_info,
+            &sensors,
+            device_path.instance_number,
+        );
 
         Some(Self {
             amdgpu_dev,

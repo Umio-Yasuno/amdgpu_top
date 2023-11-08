@@ -11,7 +11,7 @@ pub struct DeviceListMenu {
 
 impl DeviceListMenu {
     pub fn new(device_path: &DevicePath) -> Option<Self> {
-        let instance = device_path.get_instance_number()?;
+        let instance = device_path.instance_number;
         let pci = device_path.pci?;
         let name = {
             let amdgpu_dev = device_path.init().ok()?;

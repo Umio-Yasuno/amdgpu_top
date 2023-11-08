@@ -22,7 +22,7 @@ pub(crate) struct NewTuiApp {
 
 impl NewTuiApp {
     pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath) -> Option<Self> {
-        let instance = device_path.get_instance_number()?;
+        let instance = device_path.instance_number;
         let app_amdgpu_top = AppAmdgpuTop::new(
             amdgpu_dev,
             device_path,

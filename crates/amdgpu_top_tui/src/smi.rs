@@ -27,7 +27,7 @@ pub(crate) struct SmiApp {
 
 impl SmiApp {
     pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath) -> Option<Self> {
-        let instance = device_path.get_instance_number()?;
+        let instance = device_path.instance_number;
         let check_gfxoff = GfxoffStatus::get(instance).is_ok();
         let app_amdgpu_top = AppAmdgpuTop::new(
             amdgpu_dev,

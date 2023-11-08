@@ -353,10 +353,16 @@ impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         {
             let lock = self.arc_data.try_lock();
-            if let Ok(data) = lock {
-                if let Some(v) = data.get(self.selected_instance_number as usize) {
-                    self.buf_data = v.clone();
-                }
+            if let Ok(vec_data) = lock {
+                let data = vec_data
+                    .iter()
+                    .find(|&d| self.selected_instance_number == d.device_info.instance_number)
+                    .unwrap_or_else(|| {
+                        eprintln!("invalid instance number: {}", self.selected_instance_number);
+                        panic!();
+                    });
+
+                self.buf_data = data.clone();
             }
         }
         {

@@ -50,7 +50,7 @@ fn main() {
     } else {
         from_main_opt(&main_opt, &device_path_list)
     };
-    let instance = device_path.get_instance_number().unwrap_or_default();
+    let instance = device_path.instance_number;
 
     match main_opt.dump_mode {
         DumpMode::Info => {
@@ -112,7 +112,7 @@ fn main() {
 pub fn device_list(list: &[DevicePath]) {
     for device_path in list {
         let Ok(amdgpu_dev) = device_path.init() else { continue };
-        let Some(instance) = device_path.get_instance_number() else { continue };
+        let instance = device_path.instance_number;
 
         println!("#{instance}");
 
