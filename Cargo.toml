@@ -1,6 +1,6 @@
 [package]
 name = "amdgpu_top"
-version = "0.2.3"
+version = "0.3.0"
 edition = "2021"
 license = "MIT"
 homepage = "https://github.com/Umio-Yasuno/amdgpu_top"
@@ -30,10 +30,10 @@ path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libamdgpu_top = { path = "crates/libamdgpu_top", version = "0.2.3" }
-amdgpu_top_tui = { path = "crates/amdgpu_top_tui/", version = "0.2.3", optional = true }
-amdgpu_top_gui = { path = "crates/amdgpu_top_gui/", version = "0.2.3", optional = true }
-amdgpu_top_json = { path = "crates/amdgpu_top_json/", version = "0.2.3", optional = true }
+libamdgpu_top = { path = "crates/libamdgpu_top", version = "0.3.0" }
+amdgpu_top_tui = { path = "crates/amdgpu_top_tui/", version = "0.3.0", optional = true }
+amdgpu_top_gui = { path = "crates/amdgpu_top_gui/", version = "0.3.0", optional = true }
+amdgpu_top_json = { path = "crates/amdgpu_top_json/", version = "0.3.0", optional = true }
 
 [build-dependencies]
 gix = { version = "^0.55", default-features = false, optional = true }
