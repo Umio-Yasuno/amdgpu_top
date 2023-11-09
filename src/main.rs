@@ -130,7 +130,16 @@ pub fn from_main_opt(main_opt: &MainOpt, list: &[DevicePath]) -> (DevicePath, De
             panic!();
         })
     } else if let Some(i) = main_opt.instance {
-        list.get(i).unwrap().clone()
+        list
+            .get(i)
+            .unwrap_or_else(|| {
+                eprintln!("index out of bounds: {i}");
+                for (i, device) in list.iter().enumerate() {
+                    eprintln!("#{i}: {device:#?}");
+                }
+                panic!();
+            })
+            .clone()
     } else {
         list.iter().next().unwrap().clone()
     };
