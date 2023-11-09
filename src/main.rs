@@ -1,4 +1,4 @@
-use libamdgpu_top::{DevicePath, PCI};
+use libamdgpu_top::DevicePath;
 use libamdgpu_top::AMDGPU::DeviceHandle;
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
@@ -123,20 +123,17 @@ pub fn device_list(list: &[DevicePath]) {
 }
 
 pub fn from_main_opt(main_opt: &MainOpt, list: &[DevicePath]) -> (DevicePath, DeviceHandle) {
-    let device_path = if let Some(pci_path) = &main_opt.pci_path {
-        let pci = pci_path.parse::<PCI::BUS_INFO>().unwrap_or_else(|_| {
-            eprintln!("Failed to parse from {pci_path:?} to `PCI::BUS_INFO`");
-            panic!();
-        });
-
+    let device_path = if let Some(pci) = main_opt.pci {
         DevicePath::try_from(pci).unwrap_or_else(|err| {
             eprintln!("{err}");
-            eprintln!("pci_path: {pci_path:?}");
+            eprintln!("pci_path: {pci:?}");
             eprintln!("Device list: {list:#?}");
             panic!();
         })
+    } else if let Some(i) = main_opt.instance {
+        list.get(i).unwrap().clone()
     } else {
-        DevicePath::new(main_opt.instance)
+        list.iter().next().unwrap().clone()
     };
 
     let amdgpu_dev = device_path.init().unwrap_or_else(|err| {

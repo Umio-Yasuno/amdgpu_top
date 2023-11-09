@@ -1,9 +1,10 @@
+use libamdgpu_top::PCI;
+
 pub struct MainOpt {
-    pub instance: u32,
-    pub pid: Option<i32>,
+    pub instance: Option<usize>, // index
     pub refresh_period: u64, // ms
     pub update_process_index: u64, // sec
-    pub pci_path: Option<String>,
+    pub pci: Option<PCI::BUS_INFO>,
     pub select_apu: bool,
     pub json_iterations: u32,
     pub app_mode: AppMode,
@@ -13,11 +14,10 @@ pub struct MainOpt {
 impl Default for MainOpt {
     fn default() -> Self {
         Self {
-            instance: 0,
-            pid: None,
+            instance: None,
             refresh_period: 1000, // 1000ms, 1s
             update_process_index: 5, // sec
-            pci_path: None,
+            pci: None,
             dump_mode: DumpMode::NoDump,
             select_apu: false,
             app_mode: AppMode::TUI,
@@ -78,7 +78,7 @@ const HELP_MSG: &str = concat!(
     "       Print help information.\n",
     "\n",
     "OPTIONS:\n",
-    "   -i <u32>\n",
+    "   -i <usize>\n",
     "       Select GPU instance.\n",
     "   --pci <String>\n",
     "       Specifying PCI path. (domain:bus:dev.func)\n",
@@ -113,10 +113,10 @@ impl MainOpt {
             match arg.as_str() {
                 "-i" => {
                     if let Some(val_str) = args.get(idx+1) {
-                        opt.instance = val_str.parse::<u32>().unwrap();
+                        opt.instance = Some(val_str.parse::<usize>().unwrap());
                         skip = true;
                     } else {
-                        eprintln!("missing argument: \"-i <u32>\"");
+                        eprintln!("missing argument: \"-i <usize>\"");
                         std::process::exit(1);
                     }
                 },
@@ -190,7 +190,13 @@ impl MainOpt {
                     }
                 },
                 "--pci" => {
-                    opt.pci_path = args.get(idx+1).map(|v| v.to_string());
+                    opt.pci = args.get(idx+1).and_then(|s| {
+                        let pci = s.parse::<PCI::BUS_INFO>().unwrap_or_else(|_| {
+                            eprintln!("Failed to parse from {s:?} to `PCI::BUS_INFO`");
+                            panic!();
+                        });
+                        Some(pci)
+                    });
                     skip = true;
                 },
                 "-l" | "--list" => {
