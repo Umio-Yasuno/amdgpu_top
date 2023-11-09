@@ -39,16 +39,15 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
         let total_vram_mib = memory_info.vram.total_heap_size >> 20;
         let total_gtt_mib = memory_info.gtt.total_heap_size >> 20;
 
-        if let Some(pci) = device_path.pci {
-            println!(
-                "{} ({pci}), VRAM {:5}/{:5} MiB, GTT {:5}/{:5} MiB",
-                amdgpu_dev.get_marketing_name_or_default(),
-                memory_info.vram.heap_usage >> 20,
-                total_vram_mib,
-                memory_info.gtt.heap_usage >> 20,
-                total_gtt_mib,
-            );
-        }
+        println!(
+            "{} ({}), VRAM {:5}/{:5} MiB, GTT {:5}/{:5} MiB",
+            device_path.pci,
+            amdgpu_dev.get_marketing_name_or_default(),
+            memory_info.vram.heap_usage >> 20,
+            total_vram_mib,
+            memory_info.gtt.heap_usage >> 20,
+            total_gtt_mib,
+        );
 
         for pu in fdinfo.proc_usage {
             let usage_vram_mib = pu.usage.vram_usage >> 10; // KiB -> MiB

@@ -4,17 +4,18 @@ use std::path::PathBuf;
 use std::fs;
 use std::fmt;
 
-const DRM_RENDER: u32 = 128;
+// const DRM_RENDER: u32 = 128;
 
 #[derive(Clone)]
 pub struct DevicePath {
     pub render: PathBuf,
     pub card: PathBuf,
-    pub pci: Option<PCI::BUS_INFO>,
+    pub pci: PCI::BUS_INFO,
     pub instance_number: u32,
 }
 
 impl DevicePath {
+/*
     pub fn new(instance: u32) -> Self {
         let card = format!("/dev/dri/card{}", instance);
         let instance_number = card_to_instance_number(&card).unwrap();
@@ -26,7 +27,7 @@ impl DevicePath {
             instance_number,
         }
     }
-
+*/
     pub fn init(&self) -> anyhow::Result<DeviceHandle> {
         let (amdgpu_dev, _major, _minor) = {
             use std::os::unix::io::IntoRawFd;
@@ -85,7 +86,7 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
         Ok(Self {
             render: render?,
             card: card?,
-            pci: Some(pci),
+            pci,
             instance_number,
         })
     }
@@ -96,7 +97,7 @@ impl fmt::Debug for DevicePath {
         fmt.debug_struct("DevicePath")
             .field("render", &self.render)
             .field("card", &self.card)
-            .field("pci", &self.pci.map(|pci| pci.to_string()))
+            .field("pci", &self.pci.to_string())
             .finish()
     }
 }

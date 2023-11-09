@@ -4,27 +4,25 @@ use libamdgpu_top::{DevicePath, PCI, stat::Sensors};
 use std::fmt;
 
 pub struct DeviceListMenu {
-    pub instance: u32,
     pub name: String,
     pub pci: PCI::BUS_INFO,
 }
 
 impl DeviceListMenu {
     pub fn new(device_path: &DevicePath) -> Option<Self> {
-        let instance = device_path.instance_number;
-        let pci = device_path.pci?;
+        let pci = device_path.pci;
         let name = {
             let amdgpu_dev = device_path.init().ok()?;
             amdgpu_dev.get_marketing_name_or_default()
         };
 
-        Some(Self { instance, pci, name })
+        Some(Self { pci, name })
     }
 }
 
 impl fmt::Display for DeviceListMenu {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "#{} {} ({})", self.instance, self.name, self.pci)
+        write!(f, "{} ({})", self.name, self.pci)
     }
 }
 

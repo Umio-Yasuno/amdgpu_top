@@ -95,7 +95,7 @@ fn main() {
             APP_NAME,
             TITLE,
             &device_path_list,
-            device_path.pci.unwrap(),
+            device_path.pci,
             main_opt.update_process_index,
         ),
         #[cfg(feature = "json")]
