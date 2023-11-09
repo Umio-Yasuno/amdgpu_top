@@ -82,13 +82,20 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
     }
 }
 
-pub fn dump(title: &str, amdgpu_dev: &DeviceHandle, instance_number: u32) {
+pub fn dump(title: &str, device_path: &DevicePath) {
+    let amdgpu_dev = device_path.init().unwrap();
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
     let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
-    let sensors = Sensors::new(amdgpu_dev, &pci_bus, &ext_info);
+    let sensors = Sensors::new(&amdgpu_dev, &pci_bus, &ext_info);
 
-    let info = AppDeviceInfo::new(amdgpu_dev, &ext_info, &memory_info, &sensors, instance_number);
+    let info = AppDeviceInfo::new(
+        &amdgpu_dev,
+        &ext_info,
+        &memory_info,
+        &sensors,
+        device_path.instance_number,
+    );
 
     println!("{title}\n");
     println!("--- AMDGPU info dump ---");
@@ -108,7 +115,7 @@ pub fn dump(title: &str, amdgpu_dev: &DeviceHandle, instance_number: u32) {
     if !info.ip_die_entries.is_empty() {
         info.ip_discovery_table();
     }
-    fw_info(amdgpu_dev);
+    fw_info(&amdgpu_dev);
     info.codec_info();
     info.vbios_info();
     if let Ok(metrics) = amdgpu_dev.get_gpu_metrics() {

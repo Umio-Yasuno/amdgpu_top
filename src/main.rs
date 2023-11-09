@@ -1,5 +1,4 @@
 use libamdgpu_top::DevicePath;
-use libamdgpu_top::AMDGPU::DeviceHandle;
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
 #[cfg(feature = "git_version")]
@@ -45,16 +44,15 @@ fn main() {
         (_, _) => {},
     }
 
-    let (device_path, amdgpu_dev) = if main_opt.select_apu {
+    let device_path = if main_opt.select_apu {
         select_apu(&device_path_list)
     } else {
         from_main_opt(&main_opt, &device_path_list)
     };
-    let instance = device_path.instance_number;
 
     match main_opt.dump_mode {
         DumpMode::Info => {
-            dump_info::dump(TITLE, &amdgpu_dev, instance);
+            dump_info::dump(TITLE, &device_path);
             return;
         },
         DumpMode::List => {
@@ -86,7 +84,7 @@ fn main() {
             #[cfg(not(feature = "tui"))]
             {
                 eprintln!("\"tui\" feature is not enabled for this build.");
-                dump_info::dump(TITLE, &amdgpu_dev, instance);
+                dump_info::dump(TITLE, &device_path);
             }
         },
         #[cfg(feature = "gui")]
@@ -109,20 +107,17 @@ fn main() {
 }
 
 pub fn device_list(list: &[DevicePath]) {
-    for device_path in list {
-        let Ok(amdgpu_dev) = device_path.init() else { continue };
-        let instance = device_path.instance_number;
+    for (i, device_path) in list.iter().enumerate() {
+        println!("#{i}");
 
-        println!("#{instance}");
-
-        dump_info::dump(TITLE, &amdgpu_dev, instance);
+        dump_info::dump(TITLE, &device_path);
 
         println!("{device_path:?}\n");
     }
 }
 
-pub fn from_main_opt(main_opt: &MainOpt, list: &[DevicePath]) -> (DevicePath, DeviceHandle) {
-    let device_path = if let Some(pci) = main_opt.pci {
+pub fn from_main_opt(main_opt: &MainOpt, list: &[DevicePath]) -> DevicePath {
+    if let Some(pci) = main_opt.pci {
         DevicePath::try_from(pci).unwrap_or_else(|err| {
             eprintln!("{err}");
             eprintln!("pci_path: {pci:?}");
@@ -142,30 +137,19 @@ pub fn from_main_opt(main_opt: &MainOpt, list: &[DevicePath]) -> (DevicePath, De
             .clone()
     } else {
         list.iter().next().unwrap().clone()
-    };
-
-    let amdgpu_dev = device_path.init().unwrap_or_else(|err| {
-        eprintln!("{err}");
-        eprintln!("{:?}", device_path);
-        eprintln!("Device list: {list:#?}");
-        panic!();
-    });
-
-    (device_path, amdgpu_dev)
+    }
 }
 
-fn select_apu(list: &[DevicePath]) -> (DevicePath, DeviceHandle) {
+fn select_apu(list: &[DevicePath]) -> DevicePath {
     use libamdgpu_top::AMDGPU::GPU_INFO;
 
-    for device_path in list {
-        let Ok(amdgpu_dev) = device_path.init() else { continue };
-        let Ok(ext_info) = amdgpu_dev.device_info() else { continue };
+    list.iter().find(|&device_path| {
+        let Ok(amdgpu_dev) = device_path.init() else { return false };
+        let Ok(ext_info) = amdgpu_dev.device_info() else { return false };
 
-        if ext_info.is_apu() {
-            return (device_path.clone(), amdgpu_dev);
-        }
-    }
-
-    eprintln!("The APU device is not installed or disabled.");
-    panic!();
+        ext_info.is_apu()
+    }).unwrap_or_else(|| {
+        eprintln!("The APU device is not installed or disabled.");
+        panic!();
+    }).clone()
 }
