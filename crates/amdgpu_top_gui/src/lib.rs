@@ -10,7 +10,7 @@ use libamdgpu_top::AMDGPU::{
     GpuMetrics,
     MetricsInfo,
 };
-use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling};
+use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling, PCI};
 use libamdgpu_top::app::{AppAmdgpuTop, AppAmdgpuTopStat, AppOption};
 use libamdgpu_top::stat::{self, FdInfoUsage, PerfCounter};
 
@@ -85,7 +85,7 @@ pub fn run(
     app_name: &str,
     title_with_version: &str,
     device_path_list: &[DevicePath],
-    selected_instance_number: u32,
+    selected_pci_bus: PCI::BUS_INFO,
     update_process_index_interval: u64,
 ) {
     let localizer = localizer();
@@ -147,7 +147,12 @@ pub fn run(
     let device_list = device_path_list.iter().flat_map(DeviceListMenu::new).collect();
     let command_path = std::fs::read_link("/proc/self/exe").unwrap_or(PathBuf::from(app_name));
 
-    let Some(data) = vec_data.iter().find(|&d| selected_instance_number == d.device_info.instance_number) else { return };
+    let data = vec_data
+        .iter()
+        .find(|&d| selected_pci_bus == d.device_info.pci_bus).unwrap_or_else(|| {
+            eprintln!("invalid PCI bus: {selected_pci_bus}");
+            panic!();
+        });
 
     let mut app = MyApp {
         device_list,
@@ -158,7 +163,7 @@ pub fn run(
         arc_data: Arc::new(Mutex::new(vec_data.clone())),
         show_sidepanel: true,
         gl_vendor_info: None,
-        selected_instance_number,
+        selected_pci_bus,
     };
 
     let options = eframe::NativeOptions {
@@ -239,17 +244,17 @@ impl MyApp {
     fn egui_device_list(&mut self, ui: &mut egui::Ui) {
         let Some(selected) = self.device_list
             .iter()
-            .find(|&device| self.selected_instance_number == device.instance) else { return };
+            .find(|&device| self.selected_pci_bus == device.pci) else { return };
 
-        egui::ComboBox::from_id_source("Device List Senpai")
+        egui::ComboBox::from_id_source("Device List")
             .selected_text(selected.to_string())
             .show_ui(ui, |ui| {
                 for device in &self.device_list {
-                    if selected.instance == device.instance { continue }
+                    if selected.pci == device.pci { continue }
 
                     ui.selectable_value(
-                        &mut self.selected_instance_number,
-                        device.instance,
+                        &mut self.selected_pci_bus,
+                        device.pci,
                         device.to_string(),
                     );
                 }
@@ -362,9 +367,9 @@ impl eframe::App for MyApp {
             if let Ok(vec_data) = lock {
                 let data = vec_data
                     .iter()
-                    .find(|&d| self.selected_instance_number == d.device_info.instance_number)
+                    .find(|&d| self.selected_pci_bus == d.device_info.pci_bus)
                     .unwrap_or_else(|| {
-                        eprintln!("invalid instance number: {}", self.selected_instance_number);
+                        eprintln!("invalid PCI bus: {}", self.selected_pci_bus);
                         panic!();
                     });
 

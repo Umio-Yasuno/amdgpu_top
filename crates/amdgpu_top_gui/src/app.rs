@@ -5,6 +5,7 @@ use egui::{RichText, util::History};
 use egui_plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
 use crate::{BASE, MEDIUM, HISTORY_LENGTH};
 
+use libamdgpu_top::PCI;
 use libamdgpu_top::AMDGPU::MetricsInfo;
 use libamdgpu_top::stat::{self, gpu_metrics_util::*, FdInfoSortType, PerfCounter};
 
@@ -22,7 +23,7 @@ pub struct MyApp {
     pub arc_data: Arc<Mutex<Vec<GuiAppData>>>,
     pub show_sidepanel: bool,
     pub gl_vendor_info: Option<String>,
-    pub selected_instance_number: u32,
+    pub selected_pci_bus: PCI::BUS_INFO,
 }
 
 pub fn grid(ui: &mut egui::Ui, v: &[(&str, &str)]) {
