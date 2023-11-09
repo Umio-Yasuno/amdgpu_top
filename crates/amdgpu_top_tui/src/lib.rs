@@ -2,15 +2,14 @@ use std::sync::{Arc, Mutex};
 use cursive::view::{Nameable, Scrollable};
 use cursive::{event::Key, menu, traits::With};
 
-use libamdgpu_top::AMDGPU::DeviceHandle;
 use libamdgpu_top::{DevicePath, Sampling};
-use libamdgpu_top::stat::{FdInfoSortType, PCType, ProcInfo, spawn_update_index_thread};
+use libamdgpu_top::stat::{self, FdInfoSortType, PCType, ProcInfo};
 
 mod view;
 use view::*;
 
 mod app;
-use app::{NewTuiApp, ListNameInfoBar};
+use app::ListNameInfoBar;
 
 mod smi;
 pub use smi::run_smi;
@@ -64,32 +63,16 @@ pub const TOGGLE_HELP: &str = concat!(
 
 pub fn run(
     title: &str,
-    select_device_path: DevicePath,
-    select_amdgpu_dev: DeviceHandle,
+    selected_device_path: DevicePath,
     device_path_list: &[DevicePath],
     interval: u64,
 ) {
     let mut toggle_opt = ToggleOptions::default();
-    let mut vec_app: Vec<NewTuiApp> = Vec::new();
 
-    for device_path in device_path_list {
-        if select_device_path.render == device_path.render { continue }
-
-        let Ok(amdgpu_dev) = device_path.init() else { continue };
-
-        let Some(app) = app::NewTuiApp::new(amdgpu_dev, device_path.clone()) else { continue };
-        // app.fill(&mut toggle_opt);
-
-        vec_app.push(app);
-    }
-
-    {
-        let app = app::NewTuiApp::new(select_amdgpu_dev, select_device_path.clone()).unwrap();
-
-        toggle_opt.select_instance = app.instance;
-
-        vec_app.push(app);
-    }
+    let mut vec_app: Vec<_> = device_path_list.iter().filter_map(|device_path| {
+        let amdgpu_dev = device_path.init().ok()?;
+        app::NewTuiApp::new(amdgpu_dev, device_path.clone())
+    }).collect();
 
     for app in vec_app.iter_mut() {
         app.update(&toggle_opt, &Sampling::low());
@@ -104,7 +87,7 @@ pub fn run(
                 app.app_amdgpu_top.stat.arc_proc_index.clone(),
             )
         ).collect();
-        spawn_update_index_thread(t_index, interval);
+        stat::spawn_update_index_thread(t_index, interval);
     }
 
     let mut siv = cursive::default();
@@ -135,6 +118,7 @@ pub fn run(
                 .leaf("Quit", cursive::Cursive::quit),
         );
     }
+
     {
         let screen = siv.screen_mut();
         for app in &vec_app {
@@ -145,8 +129,17 @@ pub fn run(
                     .scroll_y(true)
                     .with_name(&app.instance.to_string())
             );
+
+            if app.app_amdgpu_top.device_path.pci == selected_device_path.pci {
+                toggle_opt.select_instance = app.instance;
+            }
+        }
+
+        if let Some(pos) = screen.find_layer_from_name(&toggle_opt.select_instance.to_string()) {
+            screen.move_to_front(pos);
         }
     }
+
     let mut flags = toggle_opt.clone();
     let toggle_opt = Arc::new(Mutex::new(toggle_opt));
 
