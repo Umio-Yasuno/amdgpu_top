@@ -1,6 +1,6 @@
 % AMDGPU_TOP(1)
 % Umio Yasuno <coelacanth_dream@protonmail.com>
-% 2023-07-16
+% 2023-11-10
 
 <!-- $ pandoc docs/man.amdgpu_top.md -s -t man -o docs/amdgpu_top.1 -->
 
@@ -39,7 +39,7 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
     $ amdgpu_top --pci "0000:01:00.0"
 
 # OPTIONS
-**\-i** *`<u32>`*
+**\-i** *`<usize>`*
 :   Select GPU instance.
 
 **\-\-pci** *`<String>`*
@@ -54,8 +54,11 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 **-u** *`<u64>`*, **--update-process-index** *`<u64>`*
 :   Update interval in seconds of the process index for fdinfo. (default: 5s)
 
-**\--apu**, **\-\-select-apu**
+**\-\-apu**, **\-\-select-apu**
 :   Select APU instance.
+
+**\-\-single**, **\-\-single-gpu**
+:   Display only the selected GPU/APU.
 
 **\-d**, **\-\-dump**
 :   Dump AMDGPU info. (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps) This option can be combined with the "-J" option.

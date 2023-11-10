@@ -15,7 +15,7 @@
 . ftr VB CB
 . ftr VBI CBI
 .\}
-.TH "AMDGPU_TOP" "1" "2023-07-16" "" ""
+.TH "AMDGPU_TOP" "1" "2023-11-10" "" ""
 .hy
 .SH NAME
 .PP
@@ -68,7 +68,7 @@ $ amdgpu_top --pci \[dq]0000:01:00.0\[dq]
 .fi
 .SH OPTIONS
 .TP
-\f[B]-i\f[R] \f[I]\f[VI]<u32>\f[I]\f[R]
+\f[B]-i\f[R] \f[I]\f[VI]<usize>\f[I]\f[R]
 Select GPU instance.
 .TP
 \f[B]--pci\f[R] \f[I]\f[VI]<String>\f[I]\f[R]
@@ -90,6 +90,9 @@ Update interval in seconds of the process index for fdinfo.
 .TP
 \f[B]--apu\f[R], \f[B]--select-apu\f[R]
 Select APU instance.
+.TP
+\f[B]--single\f[R], \f[B]--single-gpu\f[R]
+Display only the selected GPU/APU.
 .TP
 \f[B]-d\f[R], \f[B]--dump\f[R]
 Dump AMDGPU info.

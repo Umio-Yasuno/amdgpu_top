@@ -32,13 +32,15 @@ FLAGS:
        Dump All GPU processes and memory usage per process.
    --apu, --select-apu
        Select APU instance.
+   --single, --single-gpu
+       Display only the selected GPU/APU
    -V, --version
        Print version information.
    -h, --help
        Print help information.
 
 OPTIONS:
-   -i <u32>
+   -i <usize>
        Select GPU instance.
    --pci <String>
        Specifying PCI path. (domain:bus:dev.func)
