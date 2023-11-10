@@ -9,6 +9,7 @@ pub struct MainOpt {
     pub json_iterations: u32,
     pub app_mode: AppMode,
     pub dump_mode: DumpMode,
+    pub single_gpu: bool,
 }
 
 impl Default for MainOpt {
@@ -22,6 +23,7 @@ impl Default for MainOpt {
             select_apu: false,
             app_mode: AppMode::TUI,
             json_iterations: 0,
+            single_gpu: false,
         }
     }
 }
@@ -72,6 +74,8 @@ const HELP_MSG: &str = concat!(
     "       Dump All GPU processes and memory usage per process.\n",
     "   --apu, --select-apu\n",
     "       Select APU instance.\n",
+    "   --single, --single-gpu\n",
+    "       Display only the selected GPU/APU\n",
     "   -V, --version\n",
     "       Print version information.\n",
     "   -h, --help\n",
@@ -227,6 +231,9 @@ impl MainOpt {
                 },
                 "-p" | "--process" => {
                     opt.dump_mode = DumpMode::Process;
+                },
+                "--single" | "--single-gpu" => {
+                    opt.single_gpu = true;
                 },
                 _ => {
                     eprintln!("Unknown option: {arg}");

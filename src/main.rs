@@ -12,12 +12,26 @@ mod dump_info;
 
 fn main() {
     let main_opt = MainOpt::parse();
-    let device_path_list = DevicePath::get_device_path_list();
+    let (device_path_list, device_path) = {
+        let list = DevicePath::get_device_path_list();
 
-    if device_path_list.is_empty() {
-        eprintln!("There are no the AMD GPU devices found.");
-        panic!();
-    }
+        if list.is_empty() {
+            eprintln!("There are no the AMD GPU devices found.");
+            panic!();
+        }
+
+        let device_path = if main_opt.select_apu {
+            select_apu(&list)
+        } else {
+            from_main_opt(&main_opt, &list)
+        };
+
+        if main_opt.single_gpu {
+            (vec![device_path.clone()], device_path)
+        } else {
+            (list, device_path)
+        }
+    };
 
     #[cfg(feature = "json")]
     match (main_opt.app_mode, main_opt.dump_mode) {
@@ -43,12 +57,6 @@ fn main() {
         },
         (_, _) => {},
     }
-
-    let device_path = if main_opt.select_apu {
-        select_apu(&device_path_list)
-    } else {
-        from_main_opt(&main_opt, &device_path_list)
-    };
 
     match main_opt.dump_mode {
         DumpMode::Info => {
