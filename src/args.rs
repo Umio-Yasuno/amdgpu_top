@@ -190,13 +190,17 @@ impl MainOpt {
                     }
                 },
                 "--pci" => {
-                    opt.pci = args.get(idx+1).and_then(|s| {
+                    let s = args.get(idx+1).unwrap_or_else(|| {
+                        eprintln!("missing argument: \"--pci <String>\"");
+                        std::process::exit(1);
+                    });
+                    opt.pci = {
                         let pci = s.parse::<PCI::BUS_INFO>().unwrap_or_else(|_| {
                             eprintln!("Failed to parse from {s:?} to `PCI::BUS_INFO`");
-                            panic!();
+                            std::process::exit(1);
                         });
                         Some(pci)
-                    });
+                    };
                     skip = true;
                 },
                 "-l" | "--list" => {
