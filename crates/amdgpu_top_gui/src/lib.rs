@@ -250,7 +250,13 @@ impl MyApp {
             .selected_text(selected.to_string())
             .show_ui(ui, |ui| {
                 for device in &self.device_list {
-                    if selected.pci == device.pci { continue }
+                    if selected.pci == device.pci {
+                        let _ = ui.add_enabled(
+                            false,
+                            egui::SelectableLabel::new(true, device.to_string()),
+                        );
+                        continue;
+                    }
 
                     ui.selectable_value(
                         &mut self.selected_pci_bus,
