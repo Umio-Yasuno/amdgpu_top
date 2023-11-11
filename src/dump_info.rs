@@ -82,7 +82,16 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
     }
 }
 
-pub fn dump(title: &str, device_path: &DevicePath) {
+pub fn dump_all(title: &str, device_path_list: &[DevicePath]) {
+    println!("{title}");
+
+    for (i, device_path) in device_path_list.iter().enumerate() {
+        println!("\n--------\n#{i} {device_path:?}");
+        dump(device_path);
+    }
+}
+
+fn dump(device_path: &DevicePath) {
     let amdgpu_dev = device_path.init().unwrap();
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
@@ -97,8 +106,6 @@ pub fn dump(title: &str, device_path: &DevicePath) {
         device_path.instance_number,
     );
 
-    println!("{title}\n");
-    println!("--- AMDGPU info dump ---");
     if let Ok(drm) = amdgpu_dev.get_drm_version_struct() {
         println!("drm version: {}.{}.{}", drm.version_major, drm.version_minor, drm.version_patchlevel);
     }

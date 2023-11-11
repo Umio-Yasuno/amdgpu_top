@@ -60,7 +60,7 @@ fn main() {
 
     match main_opt.dump_mode {
         DumpMode::Info => {
-            dump_info::dump(TITLE, &device_path);
+            dump_info::dump_all(TITLE, &device_path_list);
             return;
         },
         DumpMode::List => {
@@ -115,12 +115,21 @@ fn main() {
 }
 
 pub fn device_list(list: &[DevicePath]) {
+    use libamdgpu_top::AMDGPU::GPU_INFO;
+
+    println!("{TITLE}\n");
     for (i, device_path) in list.iter().enumerate() {
-        println!("#{i}");
+        let Ok(amdgpu_dev) = device_path.init() else { continue };
+        let Ok(ext_info) = amdgpu_dev.device_info() else { continue };
 
-        dump_info::dump(TITLE, &device_path);
-
-        println!("{device_path:?}\n");
+        println!("#{i}:");
+        println!(
+            "    {} ({:#0X}.{:#0X})",
+            amdgpu_dev.get_marketing_name_or_default(),
+            ext_info.device_id(),
+            ext_info.pci_rev_id()
+        );
+        println!("    {device_path:?}");
     }
 }
 
