@@ -1,10 +1,7 @@
 use libamdgpu_top::DevicePath;
 
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
-#[cfg(feature = "git_version")]
-const TITLE: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"), env!("HEAD_ID"));
-#[cfg(not(feature = "git_version"))]
-const TITLE: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"));
+const TITLE: &str = env!("TITLE");
 
 mod args;
 use args::{AppMode, DumpMode, MainOpt};

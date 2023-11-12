@@ -14,11 +14,15 @@ fn get_head_id() -> Option<String> {
 }
 
 fn main() {
+    const BASE: &str = concat!(env!("CARGO_PKG_NAME"), " v", env!("CARGO_PKG_VERSION"));
+
     let head_id = if let Some(head_id) = get_head_id() {
         format!(" (git-{head_id})")
     } else {
         String::new()
     };
+    let debug = if cfg!(debug_assertions) { " (debug build)" } else { "" };
+    let title = format!("{BASE}{head_id}{debug}");
 
-    println!("cargo:rustc-env=HEAD_ID={head_id}");
+    println!("cargo:rustc-env=TITLE={title}");
 }
