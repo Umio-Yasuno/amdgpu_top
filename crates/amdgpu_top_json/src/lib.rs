@@ -36,6 +36,7 @@ pub struct JsonApp {
     pub interval: Duration,
     pub delay: Duration,
     pub iterations: u32,
+    pub no_pc: bool,
 }
 
 impl JsonApp {
@@ -44,6 +45,7 @@ impl JsonApp {
         refresh_period: u64,
         update_process_index_interval: u64,
         iterations: u32,
+        no_pc: bool,
     ) -> Self {
         let period = Duration::from_millis(refresh_period);
         let interval = period.clone();
@@ -60,7 +62,10 @@ impl JsonApp {
         {
             let t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)> = vec_device_info
                 .iter()
-                .map(|device| (device.app.device_path.clone(), device.app.stat.arc_proc_index.clone()))
+                .map(|device| (
+                    device.app.device_path.clone(),
+                    device.app.stat.arc_proc_index.clone(),
+                ))
                 .collect();
             stat::spawn_update_index_thread(t_index, update_process_index_interval);
         }
@@ -72,6 +77,7 @@ impl JsonApp {
             interval,
             delay,
             iterations,
+            no_pc,
         }
     }
 
@@ -81,21 +87,27 @@ impl JsonApp {
         let devices_len = self.vec_device_info.len();
 
         loop {
-            for device in self.vec_device_info.iter_mut() {
-                device.app.clear_pc();
+            if !self.no_pc {
+                for device in self.vec_device_info.iter_mut() {
+                    device.app.clear_pc();
+                }
             }
 
-            for _ in 0..100 {
-                for device in self.vec_device_info.iter_mut() {
-                    device.app.update_pc();
+            if !self.no_pc {
+                for _ in 0..100 {
+                    for device in self.vec_device_info.iter_mut() {
+                        device.app.update_pc();
+                    }
+                    std::thread::sleep(self.delay);
                 }
-                std::thread::sleep(self.delay);
+            } else {
+                std::thread::sleep(self.delay * 100);
             }
 
             for device in self.vec_device_info.iter_mut() {
                 device.app.update(self.interval);
 
-                buf_json.push(device.json());
+                buf_json.push(device.json(self.no_pc));
             }
 
             let now = Instant::now();
@@ -138,15 +150,13 @@ impl JsonDeviceInfo {
 
         vec_json_device
     }
-}
 
-impl OutputJson for JsonDeviceInfo {
-    fn json(&self) -> Value {
+    pub fn json(&self, no_pc: bool) -> Value {
         json!({
             "Info": self.info,
             "GRBM": self.app.stat.grbm.json(),
-            "GRBM2": self.app.stat.grbm2.json(),
-            "VRAM": self.app.stat.vram_usage.json(),
+            "GRBM2": if !no_pc { self.app.stat.grbm2.json() } else { Value::Null },
+            "VRAM": if !no_pc { self.app.stat.vram_usage.json() } else { Value::Null },
             "Sensors": self.app.stat.sensors.json(),
             "fdinfo": self.app.stat.fdinfo.json(),
             "gpu_metrics": self.app.stat.metrics.as_ref().map(|m| m.json()),

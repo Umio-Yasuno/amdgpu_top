@@ -46,6 +46,7 @@ fn main() {
                 main_opt.refresh_period,
                 main_opt.update_process_index,
                 main_opt.json_iterations,
+                main_opt.no_pc,
             );
 
             j.run(TITLE);
