@@ -30,10 +30,6 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 
     $ amdgpu_top -p
 
-**Specifies */dev/dri/renderD129* **
-
-    $ amdgpu_top -i 1
-
 **Specifies PCI bus**
 
     $ amdgpu_top --pci "0000:01:00.0"
@@ -59,6 +55,9 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 
 **\-\-single**, **\-\-single-gpu**
 :   Display only the selected GPU/APU.
+
+**\-\-no\-pc**
+:   The application does not read the performance counter (GRBM, GRBM2) if this flag is set. Reading the performance counter may deactivate the power saving feature of APU/GPU.
 
 **\-d**, **\-\-dump**
 :   Dump AMDGPU info. (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps) This option can be combined with the "-J" option.

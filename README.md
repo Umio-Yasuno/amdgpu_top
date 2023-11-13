@@ -33,7 +33,11 @@ FLAGS:
    --apu, --select-apu
        Select APU instance.
    --single, --single-gpu
-       Display only the selected GPU/APU
+       Display only the selected APU/GPU
+   --no-pc
+       The application does not read the performance counter (GRBM, GRBM2)
+       if this flag is set.
+       Reading the performance counter may deactivate the power saving feature of APU/GPU.
    -V, --version
        Print version information.
    -h, --help

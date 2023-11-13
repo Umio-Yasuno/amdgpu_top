@@ -51,14 +51,6 @@ $ amdgpu_top -p
 \f[R]
 .fi
 .PP
-\f[B]Specifies \f[BI]/dev/dri/renderD129\f[B] \f[R]
-.IP
-.nf
-\f[C]
-$ amdgpu_top -i 1
-\f[R]
-.fi
-.PP
 \f[B]Specifies PCI bus\f[R]
 .IP
 .nf
@@ -93,6 +85,12 @@ Select APU instance.
 .TP
 \f[B]--single\f[R], \f[B]--single-gpu\f[R]
 Display only the selected GPU/APU.
+.TP
+\f[B]--no-pc\f[R]
+The application does not read the performance counter (GRBM, GRBM2) if
+this flag is set.
+Reading the performance counter may deactivate the power saving feature
+of APU/GPU.
 .TP
 \f[B]-d\f[R], \f[B]--dump\f[R]
 Dump AMDGPU info.
