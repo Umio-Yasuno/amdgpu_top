@@ -8,12 +8,12 @@ pub fn check_metrics_val(val: Option<u16>) -> String {
     }
 }
 
-pub fn check_temp_array<const N: usize>(array: Option<[u16; N]>) -> Option<[u16; N]> {
-    Some(array?.map(|v| if v == u16::MAX { 0 } else { v.saturating_div(100) }))
+pub fn check_temp_array(array: Option<Vec<u16>>) -> Option<Vec<u16>> {
+    Some(array?.into_iter().map(|v| if v == u16::MAX { 0 } else { v.saturating_div(100) }).collect())
 }
 
-pub fn check_power_clock_array<const N: usize>(array: Option<[u16; N]>) -> Option<[u16; N]> {
-    Some(array?.map(|v| if v == u16::MAX { 0 } else { v }))
+pub fn check_power_clock_array(array: Option<Vec<u16>>) -> Option<Vec<u16>> {
+    Some(array?.into_iter().map(|v| if v == u16::MAX { 0 } else { v }).collect())
 }
 
 #[allow(non_camel_case_types)]
