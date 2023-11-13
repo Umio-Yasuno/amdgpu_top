@@ -10,6 +10,7 @@ pub struct MainOpt {
     pub app_mode: AppMode,
     pub dump_mode: DumpMode,
     pub single_gpu: bool,
+    pub no_pc: bool,
 }
 
 impl Default for MainOpt {
@@ -24,6 +25,7 @@ impl Default for MainOpt {
             app_mode: AppMode::TUI,
             json_iterations: 0,
             single_gpu: false,
+            no_pc: false,
         }
     }
 }
@@ -75,7 +77,10 @@ const HELP_MSG: &str = concat!(
     "   --apu, --select-apu\n",
     "       Select APU instance.\n",
     "   --single, --single-gpu\n",
-    "       Display only the selected GPU/APU\n",
+    "       Display only the selected APU/GPU\n",
+    "   --no-pc\n",
+    "       The application does not read the performance counter (GRBM, GRBM2).\n",
+    "       Reading the performance counter may deactivate the power saving feature of APU/GPU.\n",
     "   -V, --version\n",
     "       Print version information.\n",
     "   -h, --help\n",
@@ -234,6 +239,9 @@ impl MainOpt {
                 },
                 "--single" | "--single-gpu" => {
                     opt.single_gpu = true;
+                },
+                "--no-pc" => {
+                    opt.no_pc = true;
                 },
                 _ => {
                     eprintln!("Unknown option: {arg}");
