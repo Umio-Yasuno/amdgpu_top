@@ -66,12 +66,13 @@ pub fn run(
     selected_device_path: DevicePath,
     device_path_list: &[DevicePath],
     interval: u64,
+    no_pc: bool,
 ) {
     let mut toggle_opt = ToggleOptions::default();
 
     let mut vec_app: Vec<_> = device_path_list.iter().filter_map(|device_path| {
         let amdgpu_dev = device_path.init().ok()?;
-        app::NewTuiApp::new(amdgpu_dev, device_path.clone())
+        app::NewTuiApp::new(amdgpu_dev, device_path.clone(), no_pc)
     }).collect();
 
     for app in vec_app.iter_mut() {
@@ -147,8 +148,10 @@ pub fn run(
     siv.set_user_data(toggle_opt.clone());
 
     {
-        siv.add_global_callback('g', pc_type_cb(PCType::GRBM));
-        siv.add_global_callback('r', pc_type_cb(PCType::GRBM2));
+        if !no_pc {
+            siv.add_global_callback('g', pc_type_cb(PCType::GRBM));
+            siv.add_global_callback('r', pc_type_cb(PCType::GRBM2));
+        }
         siv.add_global_callback('v', VramUsageView::cb);
         siv.add_global_callback('f', AppTextView::cb);
         siv.add_global_callback('R', AppTextView::cb_reverse_sort);
@@ -179,18 +182,24 @@ pub fn run(
 
         let sample = if flags.high_freq { Sampling::high() } else { Sampling::low() };
 
-        for _ in 0..sample.count {
-            for app in vec_app.iter_mut() {
-                if flags.select_instance != app.instance { continue }
-                app.update_pc();
-            }
+        if !no_pc {
+            for _ in 0..sample.count {
+                for app in vec_app.iter_mut() {
+                    if flags.select_instance != app.instance { continue }
+                    app.app_amdgpu_top.update_pc();
+                }
 
-            std::thread::sleep(sample.delay);
+                std::thread::sleep(sample.delay);
+            }
+        } else {
+            std::thread::sleep(sample.to_duration());
         }
 
         for app in vec_app.iter_mut() {
             if flags.select_instance != app.instance { continue }
             app.update(&flags, &sample);
+
+            if !no_pc { app.app_amdgpu_top.clear_pc(); }
         }
 
         cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();

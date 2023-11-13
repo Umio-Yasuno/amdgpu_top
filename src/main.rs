@@ -83,7 +83,8 @@ fn main() {
                     TITLE,
                     device_path,
                     &device_path_list,
-                    main_opt.update_process_index
+                    main_opt.update_process_index,
+                    main_opt.no_pc,
                 )
             }
             #[cfg(not(feature = "tui"))]

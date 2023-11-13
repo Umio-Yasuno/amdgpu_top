@@ -18,10 +18,11 @@ pub(crate) struct NewTuiApp {
     pub fdinfo_view: AppTextView,
     pub sensors_view: AppTextView,
     pub gpu_metrics_view: AppTextView,
+    pub no_pc: bool,
 }
 
 impl NewTuiApp {
-    pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath) -> Option<Self> {
+    pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath, no_pc: bool) -> Option<Self> {
         let instance = device_path.instance_number;
         let app_amdgpu_top = AppAmdgpuTop::new(
             amdgpu_dev,
@@ -41,6 +42,7 @@ impl NewTuiApp {
             fdinfo_view: Default::default(),
             sensors_view: Default::default(),
             gpu_metrics_view: Default::default(),
+            no_pc,
         })
     }
 
@@ -54,8 +56,11 @@ impl NewTuiApp {
                 .title_position(HAlign::Center)
             );
 
-        layout.add_child(self.grbm_view.top_view(&self.app_amdgpu_top.stat.grbm, true));
-        layout.add_child(self.grbm2_view.top_view(&self.app_amdgpu_top.stat.grbm2, true));
+        if !self.no_pc {
+            layout.add_child(self.grbm_view.top_view(&self.app_amdgpu_top.stat.grbm, true));
+            layout.add_child(self.grbm2_view.top_view(&self.app_amdgpu_top.stat.grbm2, true));
+        }
+
         layout.add_child(self.vram_usage_view.view(&self.app_amdgpu_top.stat.vram_usage));
         layout.add_child(self.fdinfo_view.text.panel("fdinfo"));
         layout.add_child(self.sensors_view.text.panel("Sensors"));
@@ -114,21 +119,14 @@ impl NewTuiApp {
             self.gpu_metrics_view.text.clear();
         }
 
-        self.grbm_view.set_value(&self.app_amdgpu_top.stat.grbm);
-        self.grbm2_view.set_value(&self.app_amdgpu_top.stat.grbm2);
+        if !self.no_pc {
+            self.grbm_view.set_value(&self.app_amdgpu_top.stat.grbm);
+            self.grbm2_view.set_value(&self.app_amdgpu_top.stat.grbm2);
+        }
+
         self.sensors_view.text.set();
         self.fdinfo_view.text.set();
         self.gpu_metrics_view.text.set();
-
-        self.clear();
-    }
-
-    pub fn update_pc(&mut self) {
-        self.app_amdgpu_top.update_pc();
-    }
-
-    pub fn clear(&mut self) {
-        self.app_amdgpu_top.clear_pc();
     }
 }
 
