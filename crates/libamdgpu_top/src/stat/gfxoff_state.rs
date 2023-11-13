@@ -6,10 +6,39 @@
 use std::io::{self, Read};
 use std::path::PathBuf;
 use std::fs;
+use crate::PCI;
 
 const BASE: &str = "/sys/kernel/debug/dri";
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone)]
+pub struct GfxoffMonitor {
+    debug_dri_path: PathBuf,
+    pub mode: GfxoffMode,
+    pub status: GfxoffStatus,
+}
+
+impl GfxoffMonitor {
+    pub fn new(pci_bus: PCI::BUS_INFO) -> Option<Self> {
+        let debug_dri_path = pci_bus.get_debug_dri_path()?;
+        let mode = GfxoffMode::get_with_debug_dri_path(&debug_dri_path).ok()?;
+        let status = GfxoffStatus::get_with_debug_dri_path(&debug_dri_path).ok()?;
+
+        Some(Self { debug_dri_path, mode, status })
+    }
+
+    pub fn update(&mut self) -> io::Result<()> {
+        self.mode = GfxoffMode::get_with_debug_dri_path(&self.debug_dri_path)?;
+        self.status = if self.mode.is_disabled() {
+            GfxoffStatus::NotInGFXOFF
+        } else {
+            GfxoffStatus::get_with_debug_dri_path(&self.debug_dri_path)?
+        };
+
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u32)]
 pub enum GfxoffMode {
     Disable,
@@ -19,9 +48,13 @@ pub enum GfxoffMode {
 
 impl GfxoffMode {
     pub fn get(instance: u32) -> io::Result<Self> {
-        let state = read_gfxoff(format!("{BASE}/{instance}/amdgpu_gfxoff"))?;
+        Self::get_with_debug_dri_path(format!("{BASE}/{instance}/"))
+    }
 
-        Ok(Self::from(state))
+    pub fn get_with_debug_dri_path<P: Into<PathBuf>>(path: P) -> io::Result<Self> {
+        let mode = read_gfxoff(path.into().join("amdgpu_gfxoff"))?;
+
+        Ok(Self::from(mode))
     }
 
     pub fn is_disabled(&self) -> bool {
@@ -43,21 +76,25 @@ impl From<u32> for GfxoffMode {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u32)]
 pub enum GfxoffStatus {
-    InGFXOFF = 0,
-    OutGFXOFF = 1,
+    InGFXOFF = 0, // GPU is in GFXOFF state, the gfx engine is powered down.
+    OutGFXOFF = 1, // Transition out of GFXOFF state
     NotInGFXOFF = 2,
-    IntoGFXOFF = 3,
+    IntoGFXOFF = 3, // Transition into GFXOFF state
     Unknown(u32),
 }
 
 impl GfxoffStatus {
     pub fn get(instance: u32) -> io::Result<Self> {
-        let state = read_gfxoff(format!("{BASE}/{instance}/amdgpu_gfxoff_status"))?;
+        Self::get_with_debug_dri_path(format!("{BASE}/{instance}/"))
+    }
 
-        Ok(Self::from(state))
+    pub fn get_with_debug_dri_path<P: Into<PathBuf>>(path: P) -> io::Result<Self> {
+        let status= read_gfxoff(path.into().join("amdgpu_gfxoff_status"))?;
+
+        Ok(Self::from(status))
     }
 }
 

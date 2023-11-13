@@ -6,7 +6,7 @@ use cursive::views::{HideableView, LinearLayout, TextContent, TextView, Panel};
 
 use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO, MetricsInfo};
 use libamdgpu_top::{stat, DevicePath, Sampling};
-use stat::{GfxoffStatus, FdInfoSortType};
+use stat::{GfxoffMonitor, GfxoffStatus, FdInfoSortType};
 
 use crate::{Text, AppTextView};
 
@@ -20,7 +20,7 @@ use libamdgpu_top::app::AppAmdgpuTop;
 pub(crate) struct SmiApp {
     pub app_amdgpu_top: AppAmdgpuTop,
     pub instance: u32,
-    pub check_gfxoff: bool,
+    pub gfxoff_monitor: Option<GfxoffMonitor>,
     pub fdinfo_view: AppTextView,
     pub info_text: Text,
 }
@@ -28,7 +28,7 @@ pub(crate) struct SmiApp {
 impl SmiApp {
     pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath) -> Option<Self> {
         let instance = device_path.instance_number;
-        let check_gfxoff = GfxoffStatus::get(instance).is_ok();
+        let gfxoff_monitor = GfxoffMonitor::new(device_path.pci);
         let app_amdgpu_top = AppAmdgpuTop::new(
             amdgpu_dev,
             device_path,
@@ -38,7 +38,7 @@ impl SmiApp {
         Some(Self {
             app_amdgpu_top,
             instance,
-            check_gfxoff,
+            gfxoff_monitor,
             fdinfo_view: Default::default(),
             info_text: Default::default(),
         })
@@ -121,13 +121,11 @@ impl SmiApp {
             _ => write!(self.info_text.buf, " ___/___W ")?,
         }
 
-        if self.check_gfxoff {
-            match GfxoffStatus::get(self.instance) {
-                Ok(GfxoffStatus::InGFXOFF) =>
-                    write!(self.info_text.buf, "GFXOFF |")?,
-                /* for debug */
-                Ok(GfxoffStatus::Unknown(val)) =>
-                    write!(self.info_text.buf, "Unknown ({val})|")?,
+        if let Some(ref mut gfxoff_monitor) = self.gfxoff_monitor {
+            let _ = gfxoff_monitor.update();
+
+            match gfxoff_monitor.status {
+                GfxoffStatus::InGFXOFF => write!(self.info_text.buf, "GFXOFF |")?,
                 _ => write!(self.info_text.buf, "       |")?,
             }
         } else {
