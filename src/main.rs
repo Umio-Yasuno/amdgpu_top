@@ -31,16 +31,16 @@ fn main() {
     };
 
     #[cfg(feature = "json")]
-    match (main_opt.app_mode, main_opt.dump_mode) {
-        (AppMode::JSON, DumpMode::Info) => {
+    if let AppMode::JSON = main_opt.app_mode { match main_opt.dump_mode {
+        DumpMode::Info => {
             amdgpu_top_json::dump_json(&device_path_list);
             return;
         },
-        (AppMode::JSON, DumpMode::Version) => {
+        DumpMode::Version => {
             amdgpu_top_json::version_json(TITLE);
             return;
         },
-        (AppMode::JSON, DumpMode::NoDump) => {
+        DumpMode::NoDump => {
             let mut j = amdgpu_top_json::JsonApp::new(
                 &device_path_list,
                 main_opt.refresh_period,
@@ -52,8 +52,8 @@ fn main() {
 
             return;
         },
-        (_, _) => {},
-    }
+        _ => {},
+    }}
 
     match main_opt.dump_mode {
         DumpMode::Info => {
