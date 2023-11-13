@@ -100,6 +100,7 @@ fn main() {
             &device_path_list,
             device_path.pci,
             main_opt.update_process_index,
+            main_opt.no_pc,
         ),
         #[cfg(feature = "json")]
         AppMode::JSON => unreachable!(),

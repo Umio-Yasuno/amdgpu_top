@@ -51,7 +51,7 @@ pub struct GuiAppData {
 }
 
 impl GuiAppData {
-    fn update_history(&mut self, secs: f64) {
+    fn update_history(&mut self, secs: f64, no_pc: bool) {
         if let Some(arc_pcie_bw) = &self.stat.arc_pcie_bw {
             let lock = arc_pcie_bw.try_lock();
             if let Ok(pcie_bw) = lock {
@@ -67,12 +67,14 @@ impl GuiAppData {
             }
         }
 
-        for (pc, history) in [
-            (&self.stat.grbm, &mut self.history.grbm_history),
-            (&self.stat.grbm2, &mut self.history.grbm2_history),
-        ] {
-            for ((_name, pos), h) in pc.index.iter().zip(history.iter_mut()) {
-                h.add(secs, pc.bits.get(*pos));
+        if !no_pc {
+            for (pc, history) in [
+                (&self.stat.grbm, &mut self.history.grbm_history),
+                (&self.stat.grbm2, &mut self.history.grbm2_history),
+            ] {
+                for ((_name, pos), h) in pc.index.iter().zip(history.iter_mut()) {
+                    h.add(secs, pc.bits.get(*pos));
+                }
             }
         }
 
@@ -87,6 +89,7 @@ pub fn run(
     device_path_list: &[DevicePath],
     selected_pci_bus: PCI::BUS_INFO,
     update_process_index_interval: u64,
+    no_pc: bool,
 ) {
     let localizer = localizer();
     let requested_languages = DesktopLanguageRequester::requested_languages();
@@ -164,6 +167,7 @@ pub fn run(
         show_sidepanel: true,
         gl_vendor_info: None,
         selected_pci_bus,
+        no_pc,
     };
 
     let options = eframe::NativeOptions {
@@ -177,12 +181,16 @@ pub fn run(
         let share_data = app.arc_data.clone();
 
         std::thread::spawn(move || loop {
-            for _ in 0..sample.count {
-                for app in vec_app.iter_mut() {
-                    app.update_pc();
-                }
+            if !no_pc {
+                for _ in 0..sample.count {
+                    for app in vec_app.iter_mut() {
+                        app.update_pc();
+                    }
 
-                std::thread::sleep(sample.delay);
+                    std::thread::sleep(sample.delay);
+                }
+            } else {
+                std::thread::sleep(sample.to_duration());
             }
 
             for app in vec_app.iter_mut() {
@@ -191,8 +199,8 @@ pub fn run(
 
             for (app, data) in vec_app.iter_mut().zip(vec_data.iter_mut()) {
                 data.stat = app.stat.clone();
-                data.update_history(now.elapsed().as_secs_f64());
-                app.clear_pc();
+                data.update_history(now.elapsed().as_secs_f64(), no_pc);
+                if !no_pc { app.clear_pc(); }
             }
 
             {
@@ -304,20 +312,23 @@ impl MyApp {
     fn egui_central_panel(&mut self, ui: &mut egui::Ui) {
         // ui.set_min_width(540.0);
         egui::ScrollArea::both().show(ui, |ui| {
-            collapsing(ui, &fl!("grbm"), true, |ui| self.egui_perf_counter(
-                ui,
-                "GRBM",
-                &self.buf_data.stat.grbm,
-                &self.buf_data.history.grbm_history,
-            ));
-            ui.add_space(SPACE);
-            collapsing(ui, &fl!("grbm2"), true, |ui| self.egui_perf_counter(
-                ui,
-                "GRBM2",
-                &self.buf_data.stat.grbm2,
-                &self.buf_data.history.grbm2_history,
-            ));
-            ui.add_space(SPACE);
+            if !self.no_pc {
+                collapsing(ui, &fl!("grbm"), true, |ui| self.egui_perf_counter(
+                    ui,
+                    "GRBM",
+                    &self.buf_data.stat.grbm,
+                    &self.buf_data.history.grbm_history,
+                ));
+                ui.add_space(SPACE);
+                collapsing(ui, &fl!("grbm2"), true, |ui| self.egui_perf_counter(
+                    ui,
+                    "GRBM2",
+                    &self.buf_data.stat.grbm2,
+                    &self.buf_data.history.grbm2_history,
+                ));
+                ui.add_space(SPACE);
+            }
+
             collapsing(ui, &fl!("vram"), true, |ui| self.egui_vram(ui));
             ui.add_space(SPACE);
             collapsing(ui, &fl!("fdinfo"), true, |ui| self.egui_grid_fdinfo(ui));
