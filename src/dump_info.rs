@@ -95,7 +95,7 @@ fn dump(device_path: &DevicePath) {
     let amdgpu_dev = device_path.init().unwrap();
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
-    let pci_bus = amdgpu_dev.get_pci_bus_info().unwrap();
+    let pci_bus = device_path.pci;
     let sensors = Sensors::new(&amdgpu_dev, &pci_bus, &ext_info);
 
     let info = AppDeviceInfo::new(

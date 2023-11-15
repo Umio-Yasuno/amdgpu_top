@@ -52,7 +52,7 @@ impl AppAmdgpuTop {
     }
 
     pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath, opt: &AppOption) -> Option<Self> {
-        let pci_bus = amdgpu_dev.get_pci_bus_info().ok()?;
+        let pci_bus = device_path.pci;
         let ext_info = amdgpu_dev.device_info().ok()?;
         let asic_name = ext_info.get_asic_name();
         let memory_info = amdgpu_dev.memory_info().ok()?;
