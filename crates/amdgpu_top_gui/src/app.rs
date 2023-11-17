@@ -345,7 +345,44 @@ impl MyApp {
         });
     }
 
+    pub fn egui_vram_plot(&self, ui: &mut egui::Ui) {
+        let label_fmt = |name: &str, val: &PlotPoint| {
+            format!("{:.1}s : {name} {:.0} MiB", val.x, val.y)
+        };
+
+        let [vram, gtt] = [
+            &self.buf_data.history.vram_history,
+            &self.buf_data.history.gtt_history,
+        ].map(|history| {
+            history.iter().map(|(i, usage)| [i, (usage >> 20) as f64]).collect()
+        });
+
+        let max = std::cmp::max(
+          self.buf_data.stat.vram_usage.0.vram.total_heap_size >> 20,
+          self.buf_data.stat.vram_usage.0.gtt.total_heap_size >> 20,
+        );
+
+        default_plot("VRAM Plot")
+            .allow_scroll(false)
+            .include_y(max as f64)
+            .label_formatter(label_fmt)
+            .auto_bounds_x()
+            .height(ui.available_width() / 4.0)
+            .width(ui.available_width() - 36.0)
+            .legend(Legend::default().position(Corner::LeftTop))
+            .show(ui, |plot_ui| {
+                for (usage, name) in [
+                    (vram, fl!("vram")),
+                    (gtt, fl!("gtt"))
+                ] {
+                    plot_ui.line(Line::new(PlotPoints::new(usage)).name(name));
+                }
+            });
+    }
+
     pub fn egui_vram(&self, ui: &mut egui::Ui) {
+        collapsing_plot(ui, &fl!("vram_plot"), true, |ui| self.egui_vram_plot(ui));
+
         egui::Grid::new("VRAM").show(ui, |ui| {
             let mib = fl!("mib");
             for (v, name) in [
@@ -389,7 +426,7 @@ impl MyApp {
             enc.push([i, usage.total_enc as f64]);
         }
 
-        default_plot(&fl!("fdinfo_plot"))
+        default_plot("fdinfo Plot")
             .allow_scroll(false)
             .include_y(100.0)
             .label_formatter(label_fmt)
@@ -417,7 +454,13 @@ impl MyApp {
 
     pub fn egui_grid_fdinfo(&mut self, ui: &mut egui::Ui) {
         let has_vcn_unified = self.buf_data.stat.fdinfo.has_vcn_unified;
-        collapsing_plot(ui, "fdinfo Plot", true, |ui| self.egui_fdinfo_plot(ui, has_vcn_unified));
+
+        collapsing_plot(
+            ui,
+            &fl!("fdinfo_plot"),
+            true,
+            |ui| self.egui_fdinfo_plot(ui, has_vcn_unified),
+        );
 
         egui::Grid::new("fdinfo").show(ui, |ui| {
             ui.style_mut().override_font_id = Some(MEDIUM);

@@ -37,6 +37,8 @@ const HISTORY_LENGTH: Range<usize> = 0..30; // seconds
 pub struct HistoryData {
     pub grbm_history: Vec<History<u8>>,
     pub grbm2_history: Vec<History<u8>>,
+    pub vram_history: History<u64>,
+    pub gtt_history: History<u64>,
     pub fdinfo_history: History<FdInfoUsage>,
     pub sensors_history: SensorsHistory,
     pub pcie_bw_history: History<(u64, u64)>,
@@ -78,6 +80,8 @@ impl GuiAppData {
             }
         }
 
+        self.history.vram_history.add(secs, self.stat.vram_usage.0.vram.heap_usage);
+        self.history.gtt_history.add(secs, self.stat.vram_usage.0.gtt.heap_usage);
         self.history.sensors_history.add(secs, &self.stat.sensors);
         self.history.fdinfo_history.add(secs, self.stat.fdinfo.fold_fdinfo_usage());
     }
@@ -125,6 +129,8 @@ pub fn run(
     }
 
     let mut vec_data: Vec<_> = vec_app.iter().map(|app| {
+        let vram_history = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let gtt_history = History::new(HISTORY_LENGTH, f32::INFINITY);
         let fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
         let sensors_history = SensorsHistory::default();
         let pcie_bw_history: History<(u64, u64)> = History::new(HISTORY_LENGTH, f32::INFINITY);
@@ -139,6 +145,8 @@ pub fn run(
             history: HistoryData {
                 grbm_history,
                 grbm2_history,
+                vram_history,
+                gtt_history,
                 fdinfo_history,
                 sensors_history,
                 pcie_bw_history,

@@ -122,7 +122,8 @@ cpu_visible_vram = CPU-Visible VRAM
 gtt = GTT
 
 fdinfo = fdinfo
-fdinfo_plot = fdinfo plot
+fdinfo_plot = fdinfo Plot
+vram_plot = VRAM Plot
 cpu = CPU
 gfx = GFX
 compute = Compute
