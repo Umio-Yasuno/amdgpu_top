@@ -103,7 +103,6 @@ impl AppAmdgpuTop {
             &ext_info,
             &memory_info,
             &sensors,
-            device_path.instance_number,
         );
 
         Some(Self {

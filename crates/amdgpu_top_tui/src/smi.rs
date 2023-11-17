@@ -19,15 +19,14 @@ use libamdgpu_top::app::AppAmdgpuTop;
 
 pub(crate) struct SmiApp {
     pub app_amdgpu_top: AppAmdgpuTop,
-    pub instance: u32,
+    pub index: usize,
     pub gfxoff_monitor: Option<GfxoffMonitor>,
     pub fdinfo_view: AppTextView,
     pub info_text: Text,
 }
 
 impl SmiApp {
-    pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath) -> Option<Self> {
-        let instance = device_path.instance_number;
+    pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath, index: usize) -> Option<Self> {
         let gfxoff_monitor = GfxoffMonitor::new(device_path.pci);
         let app_amdgpu_top = AppAmdgpuTop::new(
             amdgpu_dev,
@@ -37,7 +36,7 @@ impl SmiApp {
 
         Some(Self {
             app_amdgpu_top,
-            instance,
+            index,
             gfxoff_monitor,
             fdinfo_view: Default::default(),
             info_text: Default::default(),
@@ -73,7 +72,7 @@ impl SmiApp {
         Panel::new(text)
             .title(format!(
                 "#{:<2} {}",
-                self.instance,
+                self.index,
                 self.app_amdgpu_top.device_info.marketing_name,
             ))
             .title_position(HAlign::Left)
@@ -85,7 +84,7 @@ impl SmiApp {
         writeln!(
             self.info_text.buf,
             " #{i:<2} [{name:GPU_NAME_LEN$}]({cu:3}CU) | {pci}   |{vu:6}/{vt:6} MiB |",
-            i = self.instance,
+            i = self.index,
             name = if GPU_NAME_LEN < self.app_amdgpu_top.device_info.marketing_name.len() {
                 &self.app_amdgpu_top.device_info.marketing_name[..GPU_NAME_LEN]
             } else {
@@ -199,13 +198,11 @@ impl SmiApp {
 
 pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
     let sample = Sampling::low();
-    let mut vec_app: Vec<_> = device_path_list.iter().filter_map(|device_path| {
+    let mut vec_app: Vec<_> = device_path_list.iter().enumerate().filter_map(|(i, device_path)| {
         let amdgpu_dev = device_path.init().ok()?;
 
-        SmiApp::new(amdgpu_dev, device_path.clone())
+        SmiApp::new(amdgpu_dev, device_path.clone(), i)
     }).collect();
-
-    vec_app.sort_by(|a, b| a.instance.cmp(&b.instance));
 
     let mut siv = cursive::default();
     {

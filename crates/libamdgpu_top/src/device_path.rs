@@ -11,23 +11,9 @@ pub struct DevicePath {
     pub render: PathBuf,
     pub card: PathBuf,
     pub pci: PCI::BUS_INFO,
-    pub instance_number: u32,
 }
 
 impl DevicePath {
-/*
-    pub fn new(instance: u32) -> Self {
-        let card = format!("/dev/dri/card{}", instance);
-        let instance_number = card_to_instance_number(&card).unwrap();
-
-        Self {
-            render: PathBuf::from(format!("/dev/dri/renderD{}", DRM_RENDER + instance)),
-            card: PathBuf::from(card),
-            pci: None,
-            instance_number,
-        }
-    }
-*/
     pub fn init(&self) -> anyhow::Result<DeviceHandle> {
         let (amdgpu_dev, _major, _minor) = {
             use std::os::unix::io::IntoRawFd;
@@ -59,10 +45,6 @@ impl DevicePath {
     }
 }
 
-fn card_to_instance_number(s: &str) -> Option<u32> {
-    s.trim_start_matches("/dev/dri/card").parse::<u32>().ok()
-}
-
 impl TryFrom<PCI::BUS_INFO> for DevicePath {
     type Error = std::io::Error;
 
@@ -76,18 +58,10 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
             fs::canonicalize(base.join(link))
         });
 
-        let instance_number = card.as_ref().ok().and_then(|path|
-            card_to_instance_number(path.to_str()?)
-        ).unwrap_or_else(|| {
-            eprintln!("invalid card path: {card:?}");
-            panic!();
-        });
-
         Ok(Self {
             render: render?,
             card: card?,
             pci,
-            instance_number,
         })
     }
 }

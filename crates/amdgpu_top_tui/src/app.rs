@@ -11,7 +11,7 @@ use libamdgpu_top::app::{AppAmdgpuTop, AppOption};
 
 pub(crate) struct NewTuiApp {
     pub app_amdgpu_top: AppAmdgpuTop,
-    pub instance: u32,
+    pub index: usize,
     pub grbm_view: PerfCounterView,
     pub grbm2_view: PerfCounterView,
     pub vram_usage_view: VramUsageView,
@@ -22,23 +22,27 @@ pub(crate) struct NewTuiApp {
 }
 
 impl NewTuiApp {
-    pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath, no_pc: bool) -> Option<Self> {
-        let instance = device_path.instance_number;
+    pub fn new(
+        amdgpu_dev: DeviceHandle,
+        device_path: DevicePath,
+        no_pc: bool,
+        index: usize,
+    ) -> Option<Self> {
         let app_amdgpu_top = AppAmdgpuTop::new(
             amdgpu_dev,
             device_path,
             &AppOption { pcie_bw: true },
         )?;
 
-        let grbm_view = PerfCounterView::new(&app_amdgpu_top.stat.grbm, instance);
-        let grbm2_view = PerfCounterView::new(&app_amdgpu_top.stat.grbm2, instance);
+        let grbm_view = PerfCounterView::new(&app_amdgpu_top.stat.grbm, index);
+        let grbm2_view = PerfCounterView::new(&app_amdgpu_top.stat.grbm2, index);
 
         Some(Self {
             app_amdgpu_top,
-            instance,
+            index,
             grbm_view,
             grbm2_view,
-            vram_usage_view: VramUsageView::new(instance),
+            vram_usage_view: VramUsageView::new(index),
             fdinfo_view: Default::default(),
             sensors_view: Default::default(),
             gpu_metrics_view: Default::default(),

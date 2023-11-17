@@ -17,17 +17,17 @@ use libamdgpu_top::VramUsage;
 pub struct VramUsageView {
     vram_counter: Counter,
     gtt_counter: Counter,
-    instance: u32,
+    index: usize,
 }
 
 impl VramUsageView {
     const TITLE: &str = "Memory Usage";
 
-    pub fn new(instance: u32) -> Self {
+    pub fn new(index: usize) -> Self {
         Self {
             vram_counter: Counter::new(0),
             gtt_counter: Counter::new(0),
-            instance,
+            index,
         }
     }
 
@@ -64,7 +64,7 @@ impl VramUsageView {
 
         Panel::new(
             HideableView::new(sub_layout)
-                .with_name(Self::vram_view_name(self.instance))
+                .with_name(Self::vram_view_name(self.index))
         )
         .title(title)
         .title_position(HAlign::Left)
@@ -75,21 +75,21 @@ impl VramUsageView {
         self.gtt_counter.set(usage.0.gtt.heap_usage as usize);
     }
 
-    fn vram_view_name(instance: u32) -> String {
-        format!("VRAM {instance}")
+    fn vram_view_name(index: usize) -> String {
+        format!("VRAM {index}")
     }
 
     pub fn cb(siv: &mut cursive::Cursive) {
         use crate::{toggle_view, Opt};
 
-        let instances = {
+        let indexes = {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.vram ^= true;
 
-            opt.instances.clone()
+            opt.indexes.clone()
         };
 
-        for i in &instances {
+        for i in &indexes {
             let name = Self::vram_view_name(*i);
             siv.call_on_name(&name, toggle_view);
         }

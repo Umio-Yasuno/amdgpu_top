@@ -17,14 +17,14 @@ use super::{PANEL_WIDTH, PC_BAR_WIDTH, TopView};
 #[derive(Clone, Debug)]
 pub struct PerfCounterView {
     pub counters: Vec<Counter>,
-    instance: u32,
+    index: usize,
 }
 
 impl PerfCounterView {
-    pub fn new(pc: &PerfCounter, instance: u32) -> Self {
+    pub fn new(pc: &PerfCounter, index: usize) -> Self {
         let counters = (0..pc.index.len()).map(|_| Counter::new(0)).collect();
 
-        Self { counters, instance }
+        Self { counters, index }
     }
 
     pub fn top_view(&self, pc: &PerfCounter, visible: bool) -> TopView {
@@ -55,7 +55,7 @@ impl PerfCounterView {
         Panel::new(
             HideableView::new(sub_layout)
                 .visible(visible)
-                .with_name(pc_view_name(pc.pc_type, self.instance))
+                .with_name(pc_view_name(pc.pc_type, self.index))
         )
         .title(title)
         .title_position(HAlign::Left)
@@ -68,8 +68,8 @@ impl PerfCounterView {
     }
 }
 
-pub fn pc_view_name(pc_type: PCType, instance: u32) -> String {
-    format!("{pc_type} {instance}")
+pub fn pc_view_name(pc_type: PCType, index: usize) -> String {
+    format!("{pc_type} {index}")
 }
 
 pub fn pc_type_cb(pc_type: PCType) -> impl Fn(&mut cursive::Cursive) {
@@ -85,16 +85,16 @@ pub fn pc_type_cb(pc_type: PCType) -> impl Fn(&mut cursive::Cursive) {
     };
 
     move |siv: &mut cursive::Cursive| {
-        let instances = {
+        let indexes = {
             let opt = siv.user_data::<Opt>().unwrap();
             let mut opt = opt.lock().unwrap();
 
             toggle(&mut opt);
 
-            opt.instances.clone()
+            opt.indexes.clone()
         };
 
-        for i in &instances {
+        for i in &indexes {
             let name = pc_view_name(pc_type, *i);
             siv.call_on_name(&name, toggle_view);
         }

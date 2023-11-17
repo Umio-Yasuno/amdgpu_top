@@ -103,7 +103,6 @@ fn dump(device_path: &DevicePath) {
         &ext_info,
         &memory_info,
         &sensors,
-        device_path.instance_number,
     );
 
     if let Ok(drm) = amdgpu_dev.get_drm_version_struct() {

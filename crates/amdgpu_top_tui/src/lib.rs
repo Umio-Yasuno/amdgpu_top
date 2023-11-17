@@ -25,8 +25,8 @@ struct ToggleOptions {
     fdinfo_sort: FdInfoSortType,
     reverse_sort: bool,
     gpu_metrics: bool,
-    select_instance: u32,
-    instances: Vec<u32>,
+    select_index: usize,
+    indexes: Vec<usize>,
 }
 
 impl Default for ToggleOptions {
@@ -41,8 +41,8 @@ impl Default for ToggleOptions {
             fdinfo_sort: Default::default(),
             reverse_sort: false,
             gpu_metrics: true,
-            select_instance: 0,
-            instances: Vec::new(),
+            select_index: 0,
+            indexes: Vec::new(),
         }
     }
 }
@@ -70,16 +70,16 @@ pub fn run(
 ) {
     let mut toggle_opt = ToggleOptions::default();
 
-    let mut vec_app: Vec<_> = device_path_list.iter().filter_map(|device_path| {
+    let mut vec_app: Vec<_> = device_path_list.iter().enumerate().filter_map(|(i, device_path)| {
         let amdgpu_dev = device_path.init().ok()?;
-        app::NewTuiApp::new(amdgpu_dev, device_path.clone(), no_pc)
+        app::NewTuiApp::new(amdgpu_dev, device_path.clone(), no_pc, i)
     }).collect();
 
     for app in vec_app.iter_mut() {
         app.update(&toggle_opt, &Sampling::low());
     }
 
-    toggle_opt.instances = vec_app.iter().map(|app| app.instance).collect();
+    toggle_opt.indexes = vec_app.iter().map(|app| app.index).collect();
 
     {
         let t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)> = vec_app.iter().map(|app|
@@ -100,18 +100,18 @@ pub fn run(
             menu::Tree::new()
                 .with(|tree| { for app in &vec_app {
                     let name = app.app_amdgpu_top.device_info.list_name();
-                    let instance = app.instance;
+                    let index = app.index;
 
                     tree.add_leaf(
                         name.clone(),
                         move |siv: &mut cursive::Cursive| {
                             let screen = siv.screen_mut();
-                            let Some(pos) = screen.find_layer_from_name(&instance.to_string())
+                            let Some(pos) = screen.find_layer_from_name(&index.to_string())
                                 else { return };
                             screen.move_to_front(pos);
 
                             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
-                            opt.select_instance = instance;
+                            opt.select_index = index;
                         },
                     );
                 }})
@@ -128,15 +128,15 @@ pub fn run(
                     .scrollable()
                     .scroll_x(true)
                     .scroll_y(true)
-                    .with_name(&app.instance.to_string())
+                    .with_name(&app.index.to_string())
             );
 
             if app.app_amdgpu_top.device_path.pci == selected_device_path.pci {
-                toggle_opt.select_instance = app.instance;
+                toggle_opt.select_index = app.index;
             }
         }
 
-        if let Some(pos) = screen.find_layer_from_name(&toggle_opt.select_instance.to_string()) {
+        if let Some(pos) = screen.find_layer_from_name(&toggle_opt.select_index.to_string()) {
             screen.move_to_front(pos);
         }
     }
@@ -185,7 +185,7 @@ pub fn run(
         if !no_pc {
             for _ in 0..sample.count {
                 for app in vec_app.iter_mut() {
-                    if flags.select_instance != app.instance { continue }
+                    if flags.select_index != app.index { continue }
                     app.app_amdgpu_top.update_pc();
                 }
 
@@ -196,7 +196,7 @@ pub fn run(
         }
 
         for app in vec_app.iter_mut() {
-            if flags.select_instance != app.instance { continue }
+            if flags.select_index != app.index { continue }
             app.update(&flags, &sample);
 
             if !no_pc { app.app_amdgpu_top.clear_pc(); }
