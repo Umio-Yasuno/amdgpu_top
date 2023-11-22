@@ -27,7 +27,7 @@ pub(crate) struct SmiApp {
 
 impl SmiApp {
     pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath, index: usize) -> Option<Self> {
-        let gfxoff_monitor = GfxoffMonitor::new(device_path.pci);
+        let gfxoff_monitor = GfxoffMonitor::new(device_path.pci).ok();
         let app_amdgpu_top = AppAmdgpuTop::new(
             amdgpu_dev,
             device_path,

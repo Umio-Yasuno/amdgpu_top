@@ -18,12 +18,12 @@ pub struct GfxoffMonitor {
 }
 
 impl GfxoffMonitor {
-    pub fn new(pci_bus: PCI::BUS_INFO) -> Option<Self> {
+    pub fn new(pci_bus: PCI::BUS_INFO) -> io::Result<Self> {
         let debug_dri_path = pci_bus.get_debug_dri_path()?;
-        let mode = GfxoffMode::get_with_debug_dri_path(&debug_dri_path).ok()?;
-        let status = GfxoffStatus::get_with_debug_dri_path(&debug_dri_path).ok()?;
+        let mode = GfxoffMode::get_with_debug_dri_path(&debug_dri_path)?;
+        let status = GfxoffStatus::get_with_debug_dri_path(&debug_dri_path)?;
 
-        Some(Self { debug_dri_path, mode, status })
+        Ok(Self { debug_dri_path, mode, status })
     }
 
     pub fn update(&mut self) -> io::Result<()> {
