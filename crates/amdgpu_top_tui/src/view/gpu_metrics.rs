@@ -113,6 +113,9 @@ impl AppTextView {
         let temp_gfx = metrics.get_temperature_gfx().map(|v| v.saturating_div(100));
         let temp_soc = metrics.get_temperature_soc().map(|v| v.saturating_div(100));
 
+        write!(self.text.buf, " CPU => {pad:9}", pad = "")?;
+        v2_helper(&mut self.text.buf, &[(metrics.get_average_cpu_power(), "mW")])?;
+
         write!(self.text.buf, " GFX => ")?;
         v2_helper(&mut self.text.buf, &[
             (temp_gfx, "C"),

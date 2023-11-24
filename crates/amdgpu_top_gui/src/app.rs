@@ -181,6 +181,13 @@ impl GuiGpuMetrics for GpuMetrics {
         let mw = fl!("mw");
 
         ui.horizontal(|ui| {
+            ui.label(format!("{} => {pad:9}", fl!("cpu"), pad = ""));
+            Self::v2_helper(ui, &[
+                (self.get_average_cpu_power(), &mw),
+            ]);
+        });
+
+        ui.horizontal(|ui| {
             ui.label(format!("{} =>", fl!("gfx")));
             let temp_gfx = self.get_temperature_gfx().map(|v| v.saturating_div(100));
             Self::v2_helper(ui, &[
