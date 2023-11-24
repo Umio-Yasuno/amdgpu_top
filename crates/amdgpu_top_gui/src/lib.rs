@@ -3,7 +3,7 @@ use std::time::Duration;
 use std::ops::Range;
 use std::path::PathBuf;
 use eframe::egui;
-use egui::{FontFamily, FontId, RichText, util::History};
+use egui::{FontFamily, FontId, RichText, util::History, ViewportBuilder};
 use i18n_embed::DesktopLanguageRequester;
 
 use libamdgpu_top::AMDGPU::{
@@ -179,8 +179,9 @@ pub fn run(
     };
 
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(1080.0, 840.0)),
-        app_id: Some(app_name.to_string()),
+        viewport: ViewportBuilder::default()
+            .with_inner_size(egui::vec2(1080.0, 840.0))
+            .with_app_id(app_name),
         ..Default::default()
     };
 
