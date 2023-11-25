@@ -4,6 +4,7 @@ use libamdgpu_top::{
         FW_VERSION::FW_TYPE,
         DeviceHandle,
         GPU_INFO,
+        MetricsInfo,
     },
     AppDeviceInfo,
     // DeviceHandle,
@@ -124,8 +125,9 @@ fn dump(device_path: &DevicePath) {
     fw_info(&amdgpu_dev);
     info.codec_info();
     info.vbios_info();
-    if let Ok(metrics) = amdgpu_dev.get_gpu_metrics() {
-        println!("\nGPU Metrics {metrics:#?}");
+
+    if let Some(h) = amdgpu_dev.get_gpu_metrics().ok().and_then(|m| m.get_header()) {
+        println!("\nGPU Metrics Version: v{}.{}", h.format_revision, h.content_revision);
     }
 }
 
