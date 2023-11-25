@@ -11,6 +11,7 @@ pub struct MainOpt {
     pub dump_mode: DumpMode,
     pub single_gpu: bool,
     pub no_pc: bool,
+    pub gpu_metrics: bool,
 }
 
 impl Default for MainOpt {
@@ -26,6 +27,7 @@ impl Default for MainOpt {
             json_iterations: 0,
             single_gpu: false,
             no_pc: false,
+            gpu_metrics: false,
         }
     }
 }
@@ -243,6 +245,9 @@ impl MainOpt {
                 },
                 "--no-pc" => {
                     opt.no_pc = true;
+                },
+                "-gm" | "--gpu-metrics" | "--gpu_metrics" => {
+                    opt.gpu_metrics = true;
                 },
                 _ => {
                     eprintln!("Unknown option: {arg}");

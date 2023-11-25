@@ -83,16 +83,34 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
     }
 }
 
-pub fn dump_all(title: &str, device_path_list: &[DevicePath]) {
+pub fn dump_gpu_metrics(title: &str, device_path_list: &[DevicePath]) {
     println!("{title}");
 
     for (i, device_path) in device_path_list.iter().enumerate() {
         println!("\n--------\n#{i} {device_path:?}");
-        dump(device_path);
+        let Ok(amdgpu_dev) = device_path.init() else { continue };
+        let Ok(ext_info) = amdgpu_dev.device_info() else { continue };
+        let mark_name = amdgpu_dev.get_marketing_name_or_default();
+        println!("{mark_name} ({:#0X}:{:#0X})", ext_info.device_id(), ext_info.pci_rev_id());
+
+        if let Ok(m) = amdgpu_dev.get_gpu_metrics() {
+            println!("\nGPU Metrics: {m:#?}");
+        } else {
+            println!("\nGPU Metrics: Not Supported");
+        }
     }
 }
 
-fn dump(device_path: &DevicePath) {
+pub fn dump_all(title: &str, device_path_list: &[DevicePath], gpu_metrics: bool) {
+    println!("{title}");
+
+    for (i, device_path) in device_path_list.iter().enumerate() {
+        println!("\n--------\n#{i} {device_path:?}");
+        dump(device_path, gpu_metrics);
+    }
+}
+
+fn dump(device_path: &DevicePath, gpu_metrics: bool) {
     let amdgpu_dev = device_path.init().unwrap();
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
@@ -126,8 +144,16 @@ fn dump(device_path: &DevicePath) {
     info.codec_info();
     info.vbios_info();
 
-    if let Some(h) = amdgpu_dev.get_gpu_metrics().ok().and_then(|m| m.get_header()) {
-        println!("\nGPU Metrics Version: v{}.{}", h.format_revision, h.content_revision);
+    if gpu_metrics {
+        if let Ok(m) = amdgpu_dev.get_gpu_metrics() {
+            println!("\nGPU Metrics: {m:#?}");
+        } else {
+            println!("\nGPU Metrics: Not Supported");
+        }
+    } else {
+        if let Some(h) = amdgpu_dev.get_gpu_metrics().ok().and_then(|m| m.get_header()) {
+            println!("\nGPU Metrics Version: v{}.{}", h.format_revision, h.content_revision);
+        }
     }
 }
 

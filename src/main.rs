@@ -58,7 +58,7 @@ fn main() {
 
     match main_opt.dump_mode {
         DumpMode::Info => {
-            dump_info::dump_all(TITLE, &device_path_list);
+            dump_info::dump_all(TITLE, &device_path_list, main_opt.gpu_metrics);
             return;
         },
         DumpMode::List => {
@@ -73,7 +73,10 @@ fn main() {
             println!("{TITLE}");
             return;
         },
-        DumpMode::NoDump => {},
+        DumpMode::NoDump => if main_opt.gpu_metrics {
+            dump_info::dump_gpu_metrics(TITLE, &device_path_list);
+            return;
+        },
     }
 
     match main_opt.app_mode {
