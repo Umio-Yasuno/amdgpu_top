@@ -94,6 +94,11 @@ pub trait GuiVbiosInfo {
 impl GuiVbiosInfo for VbiosInfo {
     fn ui(&self, ui: &mut egui::Ui) {
         egui::Grid::new("vbios_info").show(ui, |ui| {
+            if ui.button("Copy").clicked() {
+                ui.output_mut(|o| o.copied_text = format!("{:#?}", self));
+            }
+            ui.end_row();
+
             for (name, val) in [
                 (fl!("vbios_name"), &self.name),
                 (fl!("vbios_pn"), &self.pn),
