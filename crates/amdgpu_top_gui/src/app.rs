@@ -13,6 +13,8 @@ use crate::{GuiAppData, GpuMetrics, util::*, fl};
 
 const PLOT_HEIGHT: f32 = 32.0;
 const PLOT_WIDTH: f32 = 240.0;
+const SENSORS_HEIGHT: f32 = 96.0;
+const SENSORS_WIDTH: f32 = SENSORS_HEIGHT * 4.0;
 
 pub struct MyApp {
     pub command_path: PathBuf,
@@ -537,8 +539,9 @@ impl MyApp {
     pub fn egui_sensors(&self, ui: &mut egui::Ui) {
         ui.style_mut().override_font_id = Some(MEDIUM);
         let sensors = &self.buf_data.stat.sensors;
+        let mut n = 1;
 
-        egui::Grid::new("Sensors").show(ui, |ui| {
+        egui::Grid::new("Sensors").spacing([12.0; 2]).show(ui, |ui| {
             for (history, val, label, min, max, unit) in [
                 (
                     &self.buf_data.history.sensors_history.sclk,
@@ -591,37 +594,40 @@ impl MyApp {
             ] {
                 let Some(val) = val else { continue };
 
-                ui.label(format!("{label}\n({val:4} {unit})"));
-
-                /* for APU with DDR4 */
-                if min == max {
+                egui::Grid::new(&label).show(ui, |ui| {
+                    ui.label(format!("{label} ({val:4} {unit})"));
                     ui.end_row();
-                    continue;
-                }
 
-                let label_fmt = move |_name: &str, val: &PlotPoint| {
-                    format!("{:.1}s\n{:.0} {unit}", val.x, val.y)
-                };
-                let points: PlotPoints = history.iter()
-                    .map(|(i, val)| [i, val as f64]).collect();
-                let line = Line::new(points).fill(1.0);
+                    /* for APU with DDR4 */
+                    let min = if min == max { 0 } else { min };
 
-                Plot::new(label)
-                    .allow_zoom(false)
-                    .allow_scroll(false)
-                    .include_y(min)
-                    .include_y(max)
-                    .show_axes(false)
-                    .label_formatter(label_fmt)
-                    .auto_bounds_x()
-                    .height(PLOT_HEIGHT * 1.5)
-                    .width(PLOT_WIDTH)
-                    .show(ui, |plot_ui| plot_ui.line(line));
-                ui.end_row();
+                    let label_fmt = move |_name: &str, val: &PlotPoint| {
+                        format!("{:.1}s\n{:.0} {unit}", val.x, val.y)
+                    };
+                    let points: PlotPoints = history.iter()
+                        .map(|(i, val)| [i, val as f64]).collect();
+                    let line = Line::new(points).fill(1.0);
+
+                    Plot::new(label)
+                        .allow_zoom(false)
+                        .allow_scroll(false)
+                        .include_y(min)
+                        .include_y(max)
+                        .show_axes(false)
+                        .label_formatter(label_fmt)
+                        .auto_bounds_x()
+                        .height(SENSORS_HEIGHT)
+                        .width(SENSORS_WIDTH)
+                        .show(ui, |plot_ui| plot_ui.line(line));
+                });
+
+                n += 1;
+                if n % 2 == 1 { ui.end_row(); }
             }
-        });
 
-        self.egui_temp_plot(ui);
+            if n % 2 == 0 { ui.end_row(); }
+            self.egui_temp_plot(ui);
+        });
 
         if let Some(cur) = sensors.current_link {
             let min_max = if let [Some(min), Some(max)] = [sensors.min_dpm_link, sensors.max_dpm_link] {
@@ -653,18 +659,21 @@ impl MyApp {
         let label_fmt = |_name: &str, val: &PlotPoint| {
             format!("{:.1}s\n{:.0} C", val.x, val.y)
         };
+        let mut n = 1;
 
-        egui::Grid::new("Temp. Sensors").show(ui, |ui| {
-            for (label, temp, temp_history) in [
-                ("Edge", &sensors.edge_temp, &self.buf_data.history.sensors_history.edge_temp),
-                ("Junction", &sensors.junction_temp, &self.buf_data.history.sensors_history.junction_temp),
-                ("Memory", &sensors.memory_temp, &self.buf_data.history.sensors_history.memory_temp),
-            ] {
-                let Some(temp) = temp else { continue };
+        for (label, temp, temp_history) in [
+            ("Edge", &sensors.edge_temp, &self.buf_data.history.sensors_history.edge_temp),
+            ("Junction", &sensors.junction_temp, &self.buf_data.history.sensors_history.junction_temp),
+            ("Memory", &sensors.memory_temp, &self.buf_data.history.sensors_history.memory_temp),
+        ] {
+            let Some(temp) = temp else { continue };
+
+            egui::Grid::new(&label).show(ui, |ui| {
                 let val = temp.current;
                 let max = temp.critical.unwrap_or(105) as f64;
 
-                ui.label(format!("{label} Temp.\n({val:4} C)"));
+                ui.label(format!("{label} Temp. ({val:4} C)"));
+                ui.end_row();
 
                 let points: PlotPoints = temp_history.iter()
                     .map(|(i, val)| [i, val as f64]).collect();
@@ -675,12 +684,14 @@ impl MyApp {
                     .label_formatter(label_fmt)
                     .auto_bounds_x()
                     .auto_bounds_y()
-                    .height(PLOT_HEIGHT * 1.5)
-                    .width(PLOT_WIDTH)
+                    .height(SENSORS_HEIGHT)
+                    .width(SENSORS_WIDTH)
                     .show(ui, |plot_ui| plot_ui.line(line));
-                ui.end_row();
-            }
-        });
+            });
+
+            n += 1;
+            if n % 2 == 1 { ui.end_row(); }
+        }
     }
 
     pub fn egui_pcie_bw(&self, ui: &mut egui::Ui) {
