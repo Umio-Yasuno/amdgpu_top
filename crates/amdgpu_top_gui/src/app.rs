@@ -598,9 +598,6 @@ impl MyApp {
                     ui.label(format!("{label} ({val:4} {unit})"));
                     ui.end_row();
 
-                    /* for APU with DDR4 */
-                    let min = if min == max { 0 } else { min };
-
                     let label_fmt = move |_name: &str, val: &PlotPoint| {
                         format!("{:.1}s\n{:.0} {unit}", val.x, val.y)
                     };
