@@ -161,6 +161,90 @@ impl OutputJson for GpuMetrics {
     fn json(&self) -> Value {
         let mut m = Map::new();
 
+        if let Some(header) = self.get_header() {
+            m.insert(
+                "header".to_string(),
+                json!({
+                    "structure_size": header.structure_size,
+                    "format_revision": header.format_revision,
+                    "content_revision": header.content_revision,
+                }),
+            );
+        }
+
+        for (name, val) in [
+            ("temperature_edge", self.get_temperature_edge()),
+            ("temperature_hotspot", self.get_temperature_hotspot()),
+            ("temperature_mem", self.get_temperature_mem()),
+            ("temperature_gfx", self.get_temperature_gfx()),
+            ("temperature_soc", self.get_temperature_soc()),
+            ("temperature_vrgfx", self.get_temperature_vrgfx()),
+            ("temperature_vrsoc", self.get_temperature_vrsoc()),
+            ("temperature_vrmem", self.get_temperature_vrmem()),
+            ("average_socket_power", self.get_average_socket_power()),
+            ("average_cpu_power", self.get_average_cpu_power()),
+            ("average_soc_power", self.get_average_soc_power()),
+            ("average_gfx_power", self.get_average_gfx_power()),
+            // ("average_core_power", self.get_average_core_power()),
+            ("average_gfxclk_frequency", self.get_average_gfxclk_frequency()),
+            ("average_socclk_frequency", self.get_average_socclk_frequency()),
+            ("average_uclk_frequency", self.get_average_uclk_frequency()),
+            ("average_fclk_frequency", self.get_average_fclk_frequency()),
+            ("average_vclk_frequency", self.get_average_vclk_frequency()),
+            ("average_dclk_frequency", self.get_average_dclk_frequency()),
+            ("average_vclk1_frequency", self.get_average_vclk1_frequency()),
+            ("average_dclk1_frequency", self.get_average_dclk1_frequency()),
+            ("current_gfxclk", self.get_current_gfxclk()),
+            ("current_socclk", self.get_current_socclk()),
+            ("current_uclk", self.get_current_uclk()),
+            ("current_fclk", self.get_current_fclk()),
+            ("current_vclk", self.get_current_vclk()),
+            ("current_dclk", self.get_current_dclk()),
+            ("current_vclk1", self.get_current_vclk1()),
+            ("current_dclk1", self.get_current_dclk1()),
+            ("voltage_gfx", self.get_voltage_gfx()),
+            ("voltage_soc", self.get_voltage_soc()),
+            ("voltage_mem", self.get_voltage_mem()),
+            ("fan_pwm", self.get_fan_pwm()),
+            ("pcie_link_width", self.get_pcie_link_width()),
+            ("pcie_link_speed", self.get_pcie_link_speed()),
+            ("average_cpu_voltage", self.get_average_cpu_voltage()),
+            ("average_soc_voltage", self.get_average_soc_voltage()),
+            ("average_gfx_voltage", self.get_average_gfx_voltage()),
+            ("average_cpu_current", self.get_average_cpu_current()),
+            ("average_soc_current", self.get_average_soc_current()),
+            ("average_gfx_current", self.get_average_gfx_current()),
+        ] {
+            m.insert(
+                name.to_string(),
+                if val == Some(u16::MAX) {
+                    Value::Null
+                } else {
+                    Value::from(val)
+                }
+            );
+        }
+
+        for (name, array) in [
+            ("temperature_core", self.get_temperature_core()),
+            ("temperature_l3", self.get_temperature_l3()),
+            ("current_coreclk", self.get_current_coreclk()),
+            ("current_l3clk", self.get_current_l3clk()),
+            ("average_core_power", self.get_average_core_power()),
+            ("average_temperature_core", self.get_average_temperature_core()),
+            ("average_temperature_l3", self.get_average_temperature_l3()),
+        ] {
+            m.insert(
+                name.to_string(),
+                Value::from(array),
+            );
+        }
+
+        m.insert(
+            "system_clock_counter".to_string(),
+            Value::from(self.get_system_clock_counter()),
+        );
+
         m.insert(
             "Throttle Status".to_string(),
             json!(self.get_throttle_status_info().map(|thr|
