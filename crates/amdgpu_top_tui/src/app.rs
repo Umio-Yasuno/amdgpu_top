@@ -80,7 +80,7 @@ impl NewTuiApp {
 
         layout.add_child(TextView::new(TOGGLE_HELP));
 
-        ResizedView::new(SizeConstraint::AtLeast(80), SizeConstraint::Full, layout)
+        ResizedView::new(SizeConstraint::Full, SizeConstraint::Full, layout)
     }
 
     pub fn update(&mut self, flags: &ToggleOptions, sample: &Sampling) {
