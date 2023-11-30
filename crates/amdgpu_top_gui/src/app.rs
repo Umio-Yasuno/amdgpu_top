@@ -481,6 +481,7 @@ impl MyApp {
             ui.style_mut().override_font_id = Some(MEDIUM);
             ui.label(rt_base(format!("{:^15}", fl!("name")))).highlight();
             ui.label(rt_base(format!("{:^8}", fl!("pid")))).highlight();
+            ui.label("KFD").highlight();
             if ui.button(rt_base(format!("{:^10}", fl!("vram")))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::VRAM);
             }
@@ -520,6 +521,7 @@ impl MyApp {
             for pu in &self.buf_data.stat.fdinfo.proc_usage {
                 ui.label(pu.name.to_string());
                 ui.label(format!("{:>8}", pu.pid));
+                ui.label(if pu.is_kfd_process { " Y " } else { "" });
                 ui.label(format!("{:5} {mib}", pu.usage.vram_usage >> 10));
                 ui.label(format!("{:5} {mib}", pu.usage.gtt_usage >> 10));
                 for usage in [
