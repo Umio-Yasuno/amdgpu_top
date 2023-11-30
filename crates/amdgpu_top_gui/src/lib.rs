@@ -407,6 +407,17 @@ impl eframe::App for MyApp {
             style.override_font_id = Some(BASE);
             ctx.set_style(style);
         }
+        {
+            use crate::egui::{Key, KeyboardShortcut, Modifiers};
+            use crate::egui::gui_zoom::zoom_in;
+            // WA for the JIS keyboard
+            // Link: https://github.com/emilk/egui/issues/3626
+            pub const ZOOM_IN_WITH_SHIFT: KeyboardShortcut =
+                KeyboardShortcut::new(Modifiers::COMMAND.plus(Modifiers::SHIFT), Key::PlusEquals);
+            if ctx.input_mut(|i| i.consume_shortcut(&ZOOM_IN_WITH_SHIFT)) {
+                zoom_in(ctx);
+            }
+        }
         ctx.clear_animations();
 
         egui::TopBottomPanel::top("menu bar").show(ctx, |ui| {
