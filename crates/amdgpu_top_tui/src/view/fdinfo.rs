@@ -6,6 +6,7 @@ use libamdgpu_top::stat::{FdInfoStat, FdInfoSortType};
 /// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
 
 const PROC_NAME_LEN: usize = 16;
+const PID_MAX_LEN: usize = 7; // 2^22
 
 const VRAM_LABEL: &str = "VRAM";
 const GTT_LABEL: &str = "GTT";
@@ -32,8 +33,10 @@ impl AppTextView {
 
         write!(
             self.text.buf,
-            " {pad:25} |{VRAM_LABEL:^6}|{GTT_LABEL:^6}|{CPU_LABEL:^4}|{GFX_LABEL:^4}|{COMPUTE_LABEL:^4}|{DMA_LABEL:^4}",
-            pad = "",
+            " {proc_name:<PROC_NAME_LEN$}|{pid:^PID_MAX_LEN$}|{kfd}|{VRAM_LABEL:^6}|{GTT_LABEL:^6}|{CPU_LABEL:^4}|{GFX_LABEL:^4}|{COMPUTE_LABEL:^4}|{DMA_LABEL:^4}",
+            proc_name = "Name",
+            pid = "PID",
+            kfd = "KFD",
         )?;
 
         if stat.has_vcn_unified {
@@ -59,9 +62,10 @@ impl AppTextView {
             };
             write!(
                 self.text.buf,
-                " {name:name_len$}({pid:>8})|{vram:>5}M|{gtt:>5}M|",
+                " {name:name_len$}|{pid:>PID_MAX_LEN$}|{kfd:^3}|{vram:>5}M|{gtt:>5}M|",
                 name = pu.name,
                 pid = pu.pid,
+                kfd = if pu.is_kfd_process { "Y" } else { "" },
                 vram = pu.usage.vram_usage >> 10,
                 gtt = pu.usage.gtt_usage >> 10,
             )?;
@@ -82,6 +86,7 @@ impl AppTextView {
                 write!(self.text.buf, "{:>3}%|", pu.usage.total_dec)?;
                 write!(self.text.buf, "{:>3}%|", pu.usage.total_enc)?;
             }
+
 
             writeln!(self.text.buf)?;
         }
