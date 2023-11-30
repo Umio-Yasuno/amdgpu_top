@@ -4,7 +4,7 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 
 | Simple TUI<br>(like nvidia-smi, rocm-smi) | TUI | GUI |
 | :-: | :-: | :-: |
-| ![amdgpu_top Simple TUI](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/9889b861-92bb-409b-8742-645ccd9af794) | ![amdgpu_top TUI](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/43cf1696-7f57-4df0-a20d-78fe6ed5190e) | ![amdgpu_top GUI mode](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/63e0c78a-1047-478d-a607-7273f6d87c96) |
+| ![amdgpu_top Simple TUI](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/63413f31-1b5d-4ea0-92fd-c9ed9b752884) | ![amdgpu_top TUI](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/2fe07538-a4fc-49cd-bb72-58354e596a52) | ![amdgpu_top GUI mode](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/109e14ac-00c4-4911-9424-04394a9d758e) |
 
 ## Usage
 ```
