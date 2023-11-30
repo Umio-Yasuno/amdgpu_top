@@ -38,6 +38,9 @@ FLAGS:
        The application does not read the performance counter (GRBM, GRBM2)
        if this flag is set.
        Reading the performance counter may deactivate the power saving feature of APU/GPU.
+   -gm, --gpu_metrics, --gpu-metrics
+       Dump gpu_metrics for all AMD GPUs.
+       https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gpu-metrics
    -V, --version
        Print version information.
    -h, --help

@@ -76,7 +76,7 @@ Specifies the maximum number of iteration for JSON mode.
 If 0 is specified, it will be an infinite loop.
 (default: 0)
 .TP
-\f[B]-u\f[R] \f[I]\f[VI]<u64>\f[I]\f[R], \f[B]\[en]update-process-index\f[R] \f[I]\f[VI]<u64>\f[I]\f[R]
+\f[B]-u\f[R] \f[I]\f[VI]<u64>\f[I]\f[R], \f[B]--update-process-index\f[R] \f[I]\f[VI]<u64>\f[I]\f[R]
 Update interval in seconds of the process index for fdinfo.
 (default: 5s)
 .TP
@@ -91,6 +91,10 @@ The application does not read the performance counter (GRBM, GRBM2) if
 this flag is set.
 Reading the performance counter may deactivate the power saving feature
 of APU/GPU.
+.TP
+\f[B]-gm\f[R], \f[B]--gpu_metrics\f[R], \f[B]--gpu-metrics\f[R]
+Dump gpu_metrics for all AMD GPUs.
+https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gpu-metrics
 .TP
 \f[B]-d\f[R], \f[B]--dump\f[R]
 Dump AMDGPU info.

@@ -1,6 +1,6 @@
 % AMDGPU_TOP(1)
 % Umio Yasuno <coelacanth_dream@protonmail.com>
-% 2023-11-10
+% 2023-12-01
 
 <!-- $ pandoc docs/man.amdgpu_top.md -s -t man -o docs/amdgpu_top.1 -->
 
@@ -47,7 +47,7 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 **-n** *`<u32>`*
 :   Specifies the maximum number of iteration for JSON mode. If 0 is specified, it will be an infinite loop. (default: 0)
 
-**-u** *`<u64>`*, **--update-process-index** *`<u64>`*
+**-u** *`<u64>`*, **\-\-update-process-index** *`<u64>`*
 :   Update interval in seconds of the process index for fdinfo. (default: 5s)
 
 **\-\-apu**, **\-\-select-apu**
@@ -58,6 +58,9 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 
 **\-\-no\-pc**
 :   The application does not read the performance counter (GRBM, GRBM2) if this flag is set. Reading the performance counter may deactivate the power saving feature of APU/GPU.
+
+**\-gm**, **\-\-gpu_metrics**, **\-\-gpu-metrics**
+:   Dump gpu_metrics for all AMD GPUs. https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gpu-metrics
 
 **\-d**, **\-\-dump**
 :   Dump AMDGPU info. (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps) This option can be combined with the "-J" option.
