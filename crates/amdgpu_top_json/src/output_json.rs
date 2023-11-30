@@ -1,4 +1,5 @@
 use libamdgpu_top::{
+    DevicePath,
     stat,
     AMDGPU::{GpuMetrics, MetricsInfo},
     VramUsage,
@@ -284,6 +285,16 @@ impl OutputJson for PCI::LINK {
         json!({
             "gen": self.gen,
             "width": self.width,
+        })
+    }
+}
+
+impl OutputJson for DevicePath {
+    fn json(&self) -> Value {
+        json!({
+            "render": self.render,
+            "card": self.card,
+            "pci": self.pci.to_string(),
         })
     }
 }

@@ -41,6 +41,11 @@ fn main() {
             return;
         },
         DumpMode::NoDump => {
+            if main_opt.gpu_metrics {
+                amdgpu_top_json::gpu_metrics_json(TITLE, &device_path_list);
+                return;
+            }
+
             let mut j = amdgpu_top_json::JsonApp::new(
                 &device_path_list,
                 main_opt.refresh_period,

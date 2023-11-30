@@ -9,6 +9,20 @@ use libamdgpu_top::{
 use serde_json::{json, Map, Value};
 use crate::{amdgpu_top_version, OutputJson};
 
+pub fn gpu_metrics_json(_title: &str, device_path_list: &[DevicePath]) {
+    let vec_metrics_json: Vec<Value> = device_path_list.iter().filter_map(|device_path| {
+        let amdgpu_dev = device_path.init().ok()?;
+        let metrics = amdgpu_dev.get_gpu_metrics().ok()?.json();
+
+        Some(json!({
+            "device_path": device_path.json(),
+            "gpu_metrics": metrics,
+        }))
+    }).collect();
+
+    println!("{}", Value::Array(vec_metrics_json));
+}
+
 pub fn dump_json(device_path_list: &[DevicePath]) {
     let vec_json_info: Vec<Value> = device_path_list.iter().filter_map(|device_path| {
         let amdgpu_dev = device_path.init().ok()?;
