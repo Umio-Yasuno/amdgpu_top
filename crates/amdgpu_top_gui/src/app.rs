@@ -502,7 +502,7 @@ impl MyApp {
             }
             if has_vcn_unified {
                 if ui.button(rt_base(format!("{:^5}", fl!("media")))).clicked() {
-                    self.set_fdinfo_sort_type(FdInfoSortType::Encode);
+                    self.set_fdinfo_sort_type(FdInfoSortType::MediaEngine);
                 }
             } else {
                 if ui.button(rt_base(fl!("decode"))).clicked() {
