@@ -402,9 +402,11 @@ impl eframe::App for MyApp {
                 self.buf_data = data.clone();
             }
         }
+        let visuals;
         {
             let mut style = (*ctx.style()).clone();
             style.override_font_id = Some(BASE);
+            visuals = style.visuals.clone();
             ctx.set_style(style);
         }
         {
@@ -422,6 +424,9 @@ impl eframe::App for MyApp {
 
         egui::TopBottomPanel::top("menu bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
+                if let Some(theme) = visuals.light_dark_small_toggle_button(ui) {
+                    ctx.set_visuals(theme);
+                };
                 ui.toggle_value(&mut self.show_sidepanel, RichText::new(fl!("info"))
                     .font(BASE))
                     .on_hover_text(fl!("toggle_side_panel"));
