@@ -28,7 +28,14 @@ pub fn dump_json(device_path_list: &[DevicePath]) {
         let amdgpu_dev = device_path.init().ok()?;
         let app = AppAmdgpuTop::new(amdgpu_dev, device_path.clone(), &Default::default())?;
 
-        Some(app.json_info())
+        let mut m = Map::new();
+        let mut info = app.json_info();
+        let mut stat = app.stat();
+
+        m.append(info.as_object_mut()?);
+        m.append(stat.as_object_mut()?);
+
+        Some(m.into())
     }).collect();
 
     println!("{}", Value::Array(vec_json_info));
@@ -36,11 +43,11 @@ pub fn dump_json(device_path_list: &[DevicePath]) {
 
 pub trait JsonInfo {
     fn json_info(&self) -> Value;
+    fn stat(&self) -> Value;
 }
 
 impl JsonInfo for AppAmdgpuTop {
     fn json_info(&self) -> Value {
-
         let gpu_clk = json!({
             "min": self.device_info.min_gpu_clk,
             "max": self.device_info.max_gpu_clk,
@@ -157,5 +164,15 @@ impl JsonInfo for AppAmdgpuTop {
         });
 
         json
+    }
+
+    fn stat(&self) -> Value {
+        json!({
+            "VRAM": self.stat.vram_usage.json(),
+            "Sensors": self.stat.sensors.json(),
+            // "fdinfo": self.stat.fdinfo.json(),
+            "gpu_metrics": self.stat.metrics.as_ref().map(|m| m.json()),
+            "gpu_activity": self.stat.activity.json(),
+        })
     }
 }
