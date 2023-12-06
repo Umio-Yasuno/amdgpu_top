@@ -154,9 +154,9 @@ impl JsonDeviceInfo {
     pub fn json(&self, no_pc: bool) -> Value {
         json!({
             "Info": self.info,
-            "GRBM": self.app.stat.grbm.json(),
+            "GRBM": if !no_pc { self.app.stat.grbm.json() } else { Value::Null },
             "GRBM2": if !no_pc { self.app.stat.grbm2.json() } else { Value::Null },
-            "VRAM": if !no_pc { self.app.stat.vram_usage.json() } else { Value::Null },
+            "VRAM": self.app.stat.vram_usage.json(),
             "Sensors": self.app.stat.sensors.json(),
             "fdinfo": self.app.stat.fdinfo.json(),
             "gpu_metrics": self.app.stat.metrics.as_ref().map(|m| m.json()),
