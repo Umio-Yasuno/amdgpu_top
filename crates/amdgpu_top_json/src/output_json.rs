@@ -5,7 +5,6 @@ use libamdgpu_top::{
     VramUsage,
     PCI,
     ConnectorInfo,
-    ModeProp,
     drmModePropType,
 };
 use stat::{FdInfoStat, GpuActivity, Sensors, PerfCounter};
