@@ -4,6 +4,9 @@ use libamdgpu_top::{
     AMDGPU::{GpuMetrics, MetricsInfo},
     VramUsage,
     PCI,
+    ConnectorInfo,
+    ModeProp,
+    drmModePropType,
 };
 use stat::{FdInfoStat, GpuActivity, Sensors, PerfCounter};
 use serde_json::{json, Map, Value};
@@ -295,6 +298,49 @@ impl OutputJson for DevicePath {
             "render": self.render,
             "card": self.card,
             "pci": self.pci.to_string(),
+        })
+    }
+}
+
+impl OutputJson for ConnectorInfo {
+    fn json(&self) -> Value {
+        let mut props = Map::new();
+
+        for (prop, value) in &self.mode_props {
+            props.insert(
+                prop.name.clone(),
+                json!({
+                    "id": prop.prop_id,
+                    "flags": prop.flags,
+                    "value": value,
+                    "type": prop.prop_type.to_string(),
+                    "values": if let drmModePropType::RANGE = prop.prop_type {
+                        prop.values.clone()
+                    } else {
+                        Vec::new()
+                    },
+                    "enums": if let drmModePropType::ENUM = prop.prop_type {
+                        let enums: Vec<Value> = prop.enums.iter().map(|enum_| {
+                            json!({
+                                "name": enum_.name(),
+                                "value": enum_.value,
+                            })
+                        }).collect();
+
+                        enums
+                    } else {
+                        Vec::new()
+                    },
+                }),
+            );
+        }
+
+        json!({
+            "id": self.connector_id,
+            "type": self.connector_type.to_string(),
+            "type_id": self.connector_type_id,
+            "connection": self.connection.to_string(),
+            "Properties": Value::Object(props),
         })
     }
 }

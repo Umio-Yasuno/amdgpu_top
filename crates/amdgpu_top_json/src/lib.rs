@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 
 mod output_json;
 mod dump;
-pub use dump::{dump_json, gpu_metrics_json, JsonInfo};
+pub use dump::{dump_json, drm_info_json, gpu_metrics_json, JsonInfo};
 
 pub fn version_json(title: &str) {
     let version = json!({

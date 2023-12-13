@@ -48,6 +48,8 @@ fn main() {
                     return;
                 },
                 OptDumpMode::DrmInfo => {
+                    amdgpu_top_json::drm_info_json(&device_path_list);
+                    return;
                 },
                 _ => {},
             }
