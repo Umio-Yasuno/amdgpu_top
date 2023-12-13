@@ -6,6 +6,7 @@ use crate::{
     fl,
 };
 
+use libamdgpu_top::{ConnectorInfo, ModeProp, drmModePropType};
 use libamdgpu_top::AMDGPU::{
     GPU_INFO,
     IpDieEntry,
@@ -316,5 +317,66 @@ impl GuiInfo for AppDeviceInfo {
             ui.label(format!("Gen{}x{}", system.gen, system.width));
             ui.end_row();
         }
+    }
+}
+
+pub trait GuiConnectorInfo {
+    fn ui(&self, ui: &mut egui::Ui);
+}
+
+impl GuiConnectorInfo for ConnectorInfo {
+    fn ui(&self, ui: &mut egui::Ui) {
+        let title = format!(
+            "Connector {} ({}-{}), {}",
+            self.connector_id,
+            self.connector_type,
+            self.connector_type_id,
+            self.connection,
+        );
+        collapsing(ui, &title, false, |ui| for mode_prop in &self.mode_props {
+            mode_prop.ui(ui);
+        });
+    }
+}
+
+pub trait GuiModeProp {
+    fn ui(&self, ui: &mut egui::Ui);
+}
+
+impl GuiModeProp for &(ModeProp, u64) {
+    fn ui(&self, ui: &mut egui::Ui) {
+        collapsing(ui, &self.0.name, false, |ui| {
+            egui::Grid::new(&self.0.name).show(ui, |ui| {
+                ui.label("type");
+                ui.label(self.0.prop_type.to_string());
+                ui.end_row();
+
+                ui.label("id");
+                ui.label(self.0.prop_id.to_string());
+                ui.end_row();
+
+                ui.label("value");
+                ui.label(self.1.to_string());
+                ui.end_row();
+
+                match self.0.prop_type {
+                    drmModePropType::RANGE => {
+                        ui.label("values");
+                        ui.label(format!("{:?}", self.0.values));
+                        ui.end_row();
+                    },
+                    drmModePropType::ENUM => {
+                        let enums: String = self.0.enums.iter().map(|enum_| {
+                            format!("{:?}={}, ", enum_.name(), enum_.value)
+                        }).collect();
+                        let len = enums.len();
+                        ui.label("enums");
+                        ui.label(format!("[{}]", &enums[..len-2]));
+                        ui.end_row();
+                    },
+                    _ => {},
+                }
+            });
+        });
     }
 }

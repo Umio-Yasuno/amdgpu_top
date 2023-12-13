@@ -6,19 +6,33 @@ use eframe::egui;
 use egui::{FontFamily, FontId, RichText, util::History, ViewportBuilder};
 use i18n_embed::DesktopLanguageRequester;
 
-use libamdgpu_top::AMDGPU::{
-    GpuMetrics,
-    MetricsInfo,
+use libamdgpu_top::{
+    AMDGPU::{
+        GpuMetrics,
+        MetricsInfo,
+    },
+    app::{
+        AppAmdgpuTop,
+        AppAmdgpuTopStat,
+        AppOption,
+    },
+    stat::{
+        self,
+        FdInfoUsage,
+        PerfCounter,
+    },
+    AppDeviceInfo,
+    ConnectorInfo,
+    DevicePath,
+    Sampling,
+    PCI,
 };
-use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling, PCI};
-use libamdgpu_top::app::{AppAmdgpuTop, AppAmdgpuTopStat, AppOption};
-use libamdgpu_top::stat::{self, FdInfoUsage, PerfCounter};
 
 mod app;
 use app::{GuiGpuMetrics, MyApp};
 
 mod gui_device_info;
-use gui_device_info::{GuiInfo, GuiIpDiscovery, GuiVbiosInfo, GuiVideoCapsInfo};
+use gui_device_info::{GuiInfo, GuiConnectorInfo, GuiIpDiscovery, GuiVbiosInfo, GuiVideoCapsInfo};
 
 mod util;
 use util::*;
@@ -50,6 +64,7 @@ pub struct GuiAppData {
     pub device_info: AppDeviceInfo,
     pub support_pcie_bw: bool,
     pub history: HistoryData,
+    pub vec_connector_info: Vec<ConnectorInfo>,
 }
 
 impl GuiAppData {
@@ -151,6 +166,7 @@ pub fn run(
                 sensors_history,
                 pcie_bw_history,
             },
+            vec_connector_info: libamdgpu_top::connector_info(&app.device_path),
         }
     }).collect();
 
@@ -312,6 +328,16 @@ impl MyApp {
             if let Some(vbios) = &self.buf_data.device_info.vbios {
                 ui.add_space(SPACE);
                 collapsing(ui, &fl!("vbios_info"), false, |ui| vbios.ui(ui));
+            }
+
+            if !self.buf_data.vec_connector_info.is_empty() {
+                ui.add_space(SPACE);
+
+                collapsing(ui, &fl!("connector_info"), false, |ui| {
+                    for conn in &self.buf_data.vec_connector_info {
+                        conn.ui(ui);
+                    }
+                });
             }
 
             ui.add_space(SPACE);

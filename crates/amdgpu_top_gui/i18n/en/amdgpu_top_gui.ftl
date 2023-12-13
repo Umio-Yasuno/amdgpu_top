@@ -85,6 +85,8 @@ vbios_pn = PN
 vbios_version = Version
 vbios_date = Date
 
+connector_info = Connector Info
+
 # CentralPanel
 ## Graphics Register Bus Management (GRBM)
 grbm = GRBM

@@ -15,6 +15,9 @@ pub mod app;
 mod device_path;
 pub use device_path::DevicePath;
 
+mod drm_mode;
+pub use drm_mode::*;
+
 pub struct Sampling {
     pub count: usize,
     pub delay: Duration,
