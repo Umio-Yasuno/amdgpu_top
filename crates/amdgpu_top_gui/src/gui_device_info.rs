@@ -326,13 +326,7 @@ pub trait GuiConnectorInfo {
 
 impl GuiConnectorInfo for ConnectorInfo {
     fn ui(&self, ui: &mut egui::Ui) {
-        let title = format!(
-            "Connector {} ({}-{}), {}",
-            self.connector_id,
-            self.connector_type,
-            self.connector_type_id,
-            self.connection,
-        );
+        let title = self.name();
         collapsing(ui, &title, false, |ui| for mode_prop in &self.mode_props {
             mode_prop.ui(ui);
         });

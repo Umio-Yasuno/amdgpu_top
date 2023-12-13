@@ -17,6 +17,18 @@ pub struct ConnectorInfo {
     pub mode_props: Vec<(ModeProp, u64)>
 }
 
+impl ConnectorInfo {
+    pub fn name(&self) -> String {
+        format!(
+            "Connector {} ({}-{}), {}",
+            self.connector_id,
+            self.connector_type,
+            self.connector_type_id,
+            self.connection,
+        )
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ModeProp {
     pub prop_type: drmModePropType,

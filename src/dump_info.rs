@@ -11,6 +11,7 @@ use libamdgpu_top::{
     DevicePath,
     stat::Sensors,
 };
+use crate::{OptDumpMode, drm_info};
 
 pub fn dump_process(title: &str, list: &[DevicePath]) {
     use libamdgpu_top::{
@@ -101,16 +102,16 @@ pub fn dump_gpu_metrics(title: &str, device_path_list: &[DevicePath]) {
     }
 }
 
-pub fn dump_all(title: &str, device_path_list: &[DevicePath], gpu_metrics: bool) {
+pub fn dump_all(title: &str, device_path_list: &[DevicePath], opt_dump_mode: OptDumpMode) {
     println!("{title}");
 
     for (i, device_path) in device_path_list.iter().enumerate() {
         println!("\n--------\n#{i} {device_path:?}");
-        dump(device_path, gpu_metrics);
+        dump(device_path, opt_dump_mode);
     }
 }
 
-fn dump(device_path: &DevicePath, gpu_metrics: bool) {
+fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
     let amdgpu_dev = device_path.init().unwrap();
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
@@ -144,7 +145,7 @@ fn dump(device_path: &DevicePath, gpu_metrics: bool) {
     info.codec_info();
     info.vbios_info();
 
-    if gpu_metrics {
+    if let OptDumpMode::GpuMetrics = opt_dump_mode {
         if let Ok(m) = amdgpu_dev.get_gpu_metrics() {
             println!("\nGPU Metrics: {m:#?}");
         } else {
@@ -154,6 +155,10 @@ fn dump(device_path: &DevicePath, gpu_metrics: bool) {
         if let Some(h) = amdgpu_dev.get_gpu_metrics().ok().and_then(|m| m.get_header()) {
             println!("\nGPU Metrics Version: v{}.{}", h.format_revision, h.content_revision);
         }
+    }
+
+    if let OptDumpMode::DrmInfo = opt_dump_mode {
+        drm_info::dump_drm_info(device_path);
     }
 }
 

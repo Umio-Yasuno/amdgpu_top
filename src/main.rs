@@ -4,8 +4,9 @@ const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const TITLE: &str = env!("TITLE");
 
 mod args;
-use args::{AppMode, DumpMode, MainOpt};
+use args::{AppMode, DumpMode, OptDumpMode, MainOpt};
 mod dump_info;
+mod drm_info;
 
 fn main() {
     let main_opt = MainOpt::parse();
@@ -41,9 +42,14 @@ fn main() {
             return;
         },
         DumpMode::NoDump => {
-            if main_opt.gpu_metrics {
-                amdgpu_top_json::gpu_metrics_json(TITLE, &device_path_list);
-                return;
+            match main_opt.opt_dump_mode {
+                OptDumpMode::GpuMetrics => {
+                    amdgpu_top_json::gpu_metrics_json(TITLE, &device_path_list);
+                    return;
+                },
+                OptDumpMode::DrmInfo => {
+                },
+                _ => {},
             }
 
             let mut j = amdgpu_top_json::JsonApp::new(
@@ -63,7 +69,11 @@ fn main() {
 
     match main_opt.dump_mode {
         DumpMode::Info => {
-            dump_info::dump_all(TITLE, &device_path_list, main_opt.gpu_metrics);
+            dump_info::dump_all(
+                TITLE,
+                &device_path_list,
+                main_opt.opt_dump_mode,
+            );
             return;
         },
         DumpMode::List => {
@@ -78,9 +88,16 @@ fn main() {
             println!("{TITLE}");
             return;
         },
-        DumpMode::NoDump => if main_opt.gpu_metrics {
-            dump_info::dump_gpu_metrics(TITLE, &device_path_list);
-            return;
+        DumpMode::NoDump => match main_opt.opt_dump_mode {
+            OptDumpMode::GpuMetrics => {
+                dump_info::dump_gpu_metrics(TITLE, &device_path_list);
+                return;
+            },
+            OptDumpMode::DrmInfo => {
+                drm_info::dump_all_drm_info(&device_path_list);
+                return;
+            },
+            _ => {},
         },
     }
 

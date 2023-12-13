@@ -62,6 +62,9 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 **\-gm**, **\-\-gpu_metrics**, **\-\-gpu-metrics**
 :   Dump gpu_metrics for all AMD GPUs. https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gpu-metrics
 
+**\-\-drm_info**, **\-\-drm-info**
+:   Dump DRM info. Inspired by https://gitlab.freedesktop.org/emersion/drm_info
+
 **\-d**, **\-\-dump**
 :   Dump AMDGPU info. (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps) This option can be combined with the "-J" option.
 

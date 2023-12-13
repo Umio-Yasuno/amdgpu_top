@@ -9,9 +9,9 @@ pub struct MainOpt {
     pub json_iterations: u32,
     pub app_mode: AppMode,
     pub dump_mode: DumpMode,
+    pub opt_dump_mode: OptDumpMode,
     pub single_gpu: bool,
     pub no_pc: bool,
-    pub gpu_metrics: bool,
 }
 
 impl Default for MainOpt {
@@ -22,12 +22,12 @@ impl Default for MainOpt {
             update_process_index: 5, // sec
             pci: None,
             dump_mode: DumpMode::NoDump,
+            opt_dump_mode: OptDumpMode::NoOptDump,
             select_apu: false,
             app_mode: AppMode::TUI,
             json_iterations: 0,
             single_gpu: false,
             no_pc: false,
-            gpu_metrics: false,
         }
     }
 }
@@ -52,6 +52,13 @@ pub enum DumpMode {
     Process,
     Version,
     NoDump,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum OptDumpMode {
+    NoOptDump,
+    GpuMetrics,
+    DrmInfo,
 }
 
 const HELP_MSG: &str = concat!(
@@ -87,6 +94,9 @@ const HELP_MSG: &str = concat!(
     "   -gm, --gpu_metrics, --gpu-metrics\n",
     "       Dump gpu_metrics for all AMD GPUs.\n",
     "       https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gpu-metrics\n",
+    "   --drm_info, --drm-info\n",
+    "       Dump DRM info.\n",
+    "       Inspired by https://gitlab.freedesktop.org/emersion/drm_info\n",
     "   -V, --version\n",
     "       Print version information.\n",
     "   -h, --help\n",
@@ -250,7 +260,10 @@ impl MainOpt {
                     opt.no_pc = true;
                 },
                 "-gm" | "--gpu-metrics" | "--gpu_metrics" => {
-                    opt.gpu_metrics = true;
+                    opt.opt_dump_mode = OptDumpMode::GpuMetrics;
+                },
+                "--drm-info" | "--drm_info" => {
+                    opt.opt_dump_mode = OptDumpMode::DrmInfo;
                 },
                 _ => {
                     eprintln!("Unknown option: {arg}");

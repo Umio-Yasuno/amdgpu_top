@@ -41,6 +41,9 @@ FLAGS:
    -gm, --gpu_metrics, --gpu-metrics
        Dump gpu_metrics for all AMD GPUs.
        https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gpu-metrics
+   --drm_info, --drm-info
+       Dump DRM info.
+       Inspired by https://gitlab.freedesktop.org/emersion/drm_info
    -V, --version
        Print version information.
    -h, --help
