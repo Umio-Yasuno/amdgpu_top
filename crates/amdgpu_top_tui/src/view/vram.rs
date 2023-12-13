@@ -13,6 +13,8 @@ use cursive::align::HAlign;
 use super::{PANEL_WIDTH, VRAM_LABEL_WIDTH, TopView};
 use libamdgpu_top::VramUsage;
 
+const TITLE: &str = "Memory Usage";
+
 #[derive(Clone, Debug)]
 pub struct VramUsageView {
     vram_counter: Counter,
@@ -21,8 +23,6 @@ pub struct VramUsageView {
 }
 
 impl VramUsageView {
-    const TITLE: &str = "Memory Usage";
-
     pub fn new(index: usize) -> Self {
         Self {
             vram_counter: Counter::new(0),
@@ -34,7 +34,7 @@ impl VramUsageView {
     pub fn view(&self, usage: &VramUsage) -> TopView {
         const BAR_WIDTH: usize = PANEL_WIDTH / 2 - VRAM_LABEL_WIDTH;
 
-        let title = Self::TITLE.to_string();
+        let title = TITLE.to_string();
         let label = |value: usize, (_min, max): (usize, usize)| -> String {
             let val = format!("{:5} / {:5} MiB", value >> 20, max >> 20);
             format!("[{val:^width$}]", width = BAR_WIDTH - 2)
