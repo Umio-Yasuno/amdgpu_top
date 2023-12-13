@@ -14,21 +14,33 @@ pub fn dump_all_drm_info(device_path_list: &[DevicePath]) {
 
 pub fn dump_drm_info(device_path: &DevicePath) {
     let vec_conn_info = libamdgpu_top::connector_info(device_path);
+    let len = vec_conn_info.len() - 1;
 
     println!("\nNode: {:?}", device_path.card);
 
-    for conn in vec_conn_info {
-        println!("├───{}", conn.name());
+    for (i, conn) in vec_conn_info.iter().enumerate() {
+        let last = i == len;
 
-        for mode_prop in &conn.mode_props {
-            dump_mode_prop(mode_prop);
+        println!(
+            "{}───{}",
+            if last { "└" } else { "├" },
+            conn.name(),
+        );
+
+        let props_len = conn.mode_props.len() - 1;
+
+        for (j, mode_prop) in conn.mode_props.iter().enumerate() {
+            let last_prop = j == props_len;
+            dump_mode_prop(mode_prop, last, last_prop);
         }
     }
 }
 
-pub fn dump_mode_prop((mode_prop, value): &(ModeProp, u64)) {
+pub fn dump_mode_prop((mode_prop, value): &(ModeProp, u64), last: bool, last_prop: bool) {
     println!(
-        "├───────{:?}, id = {}, value: {}{}",
+        "{}    {}───{:?}, id = {}, value: {}{}",
+        if last { " " } else { "│" },
+        if last_prop { "└" } else { "├" },
         mode_prop.name,
         mode_prop.prop_id,
         value,
