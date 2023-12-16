@@ -2,7 +2,7 @@
 name = "amdgpu_top_gui"
 version = "0.5.0"
 edition = "2021"
-license = "MIT"
+license = "MIT AND OFL-1.1"
 homepage = "https://github.com/Umio-Yasuno/amdgpu_top"
 authors = ["Umio Yasuno <coelacanth_dream@protonmail.com>"]
 description = "GUI Library for amdgpu_top"
