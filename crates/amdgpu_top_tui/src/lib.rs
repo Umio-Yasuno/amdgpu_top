@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 use cursive::view::{Nameable, Scrollable};
 use cursive::{event::Key, menu, traits::With};
+use cursive::theme::{BorderStyle, Theme, Palette};
 
 use libamdgpu_top::{DevicePath, Sampling};
 use libamdgpu_top::stat::{self, FdInfoSortType, PCType, ProcInfo};
@@ -27,6 +28,7 @@ struct ToggleOptions {
     gpu_metrics: bool,
     select_index: usize,
     indexes: Vec<usize>,
+    is_dark_mode: bool,
 }
 
 impl Default for ToggleOptions {
@@ -43,6 +45,7 @@ impl Default for ToggleOptions {
             gpu_metrics: true,
             select_index: 0,
             indexes: Vec::new(),
+            is_dark_mode: false,
         }
     }
 }
@@ -58,7 +61,8 @@ pub const TOGGLE_HELP: &str = concat!(
 */
 pub const TOGGLE_HELP: &str = concat!(
     " (g)rbm g(r)bm2 (v)ram_usage (f)dinfo\n se(n)sor (m)etrics (h)igh_freq (q)uit \n",
-    " (P): sort_by_pid (V): sort_by_vram (G): sort_by_gfx\n (M): sort_by_media (R): reverse"
+    " (P): sort_by_pid (V): sort_by_vram (G): sort_by_gfx\n (M): sort_by_media (R): reverse \n",
+    " (T): switch theme (light/dark)",
 );
 
 pub fn run(
@@ -167,6 +171,16 @@ pub fn run(
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.high_freq ^= true;
         });
+        siv.add_global_callback('T', |siv| {
+            let is_dark_mode;
+            {
+                let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+                opt.is_dark_mode ^= true;
+                is_dark_mode = opt.is_dark_mode;
+            }
+
+            siv.set_theme(if is_dark_mode { dark_mode() } else { Theme::default() });
+        });
         siv.add_global_callback(Key::Esc, |siv| siv.select_menubar());
     }
 
@@ -206,4 +220,25 @@ pub fn run(
     });
 
     siv.run();
+}
+
+fn dark_mode() -> Theme {
+    Theme {
+            shadow: true,
+            borders: BorderStyle::Simple,
+            palette: Palette::terminal_default().with(|palette| {
+                use cursive::theme::PaletteColor::*;
+                use cursive::theme::BaseColor;
+
+                palette[Background] = BaseColor::Black.light();
+
+                palette[View] = BaseColor::Black.dark();
+                palette[Primary] = BaseColor::White.dark();
+                palette[TitlePrimary] = BaseColor::Cyan.light();
+
+                palette[Highlight] = BaseColor::Cyan.light();
+                palette[HighlightInactive] = BaseColor::Cyan.dark();
+                palette[HighlightText] = BaseColor::Black.dark();
+            }),
+    }
 }
