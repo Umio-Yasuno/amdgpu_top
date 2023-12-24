@@ -44,6 +44,10 @@ FLAGS:
    --drm_info, --drm-info
        Dump DRM info.
        Inspired by https://gitlab.freedesktop.org/emersion/drm_info
+   --dark, --dark-mode
+       Set to the dark mode. (TUI/GUI)
+   --light, --light-mode
+       Set to the light mode. (TUI/GUI)
    -V, --version
        Print version information.
    -h, --help

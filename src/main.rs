@@ -113,6 +113,7 @@ fn main() {
                     &device_path_list,
                     main_opt.update_process_index,
                     main_opt.no_pc,
+                    main_opt.is_dark_mode == Some(true), // The default theme for TUI is light.
                 )
             }
             #[cfg(not(feature = "tui"))]
@@ -129,6 +130,7 @@ fn main() {
             device_path.pci,
             main_opt.update_process_index,
             main_opt.no_pc,
+            main_opt.is_dark_mode != Some(false), // The default theme for GUI is dark.
         ),
         #[cfg(feature = "json")]
         AppMode::JSON => unreachable!(),

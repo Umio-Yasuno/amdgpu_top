@@ -65,6 +65,12 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 **\-\-drm_info**, **\-\-drm-info**
 :   Dump DRM info. Inspired by https://gitlab.freedesktop.org/emersion/drm_info
 
+**\-\-dark**, **\-\-dark-mode**
+:   Set to the dark mode. (TUI/GUI)
+
+**\-\-light**, **\-\-light-mode**
+:   Set to the light mode. (TUI/GUI)
+
 **\-d**, **\-\-dump**
 :   Dump AMDGPU info. (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps) This option can be combined with the "-J" option.
 

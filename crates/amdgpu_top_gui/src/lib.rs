@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::ops::Range;
 use std::path::PathBuf;
-use eframe::egui;
+use eframe::{egui, Theme};
 use egui::{FontFamily, FontId, RichText, util::History, ViewportBuilder};
 use i18n_embed::DesktopLanguageRequester;
 
@@ -109,6 +109,7 @@ pub fn run(
     selected_pci_bus: PCI::BUS_INFO,
     update_process_index_interval: u64,
     no_pc: bool,
+    is_dark_mode: bool,
 ) {
     let localizer = localizer();
     let requested_languages = DesktopLanguageRequester::requested_languages();
@@ -198,6 +199,7 @@ pub fn run(
         viewport: ViewportBuilder::default()
             .with_inner_size(egui::vec2(1080.0, 840.0))
             .with_app_id(app_name),
+        default_theme: if is_dark_mode { Theme::Dark } else { Theme::Light },
         ..Default::default()
     };
 

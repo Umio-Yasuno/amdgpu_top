@@ -12,6 +12,7 @@ pub struct MainOpt {
     pub opt_dump_mode: OptDumpMode,
     pub single_gpu: bool,
     pub no_pc: bool,
+    pub is_dark_mode: Option<bool>,
 }
 
 impl Default for MainOpt {
@@ -28,6 +29,7 @@ impl Default for MainOpt {
             json_iterations: 0,
             single_gpu: false,
             no_pc: false,
+            is_dark_mode: None,
         }
     }
 }
@@ -97,6 +99,10 @@ const HELP_MSG: &str = concat!(
     "   --drm_info, --drm-info\n",
     "       Dump DRM info.\n",
     "       Inspired by https://gitlab.freedesktop.org/emersion/drm_info\n",
+    "   --dark, --dark-mode\n",
+    "       Set to the dark mode. (TUI/GUI)\n",
+    "   --light, --light-mode\n",
+    "       Set to the light mode. (TUI/GUI)\n",
     "   -V, --version\n",
     "       Print version information.\n",
     "   -h, --help\n",
@@ -264,6 +270,12 @@ impl MainOpt {
                 },
                 "--drm-info" | "--drm_info" => {
                     opt.opt_dump_mode = OptDumpMode::DrmInfo;
+                },
+                "--dark" | "--dark-mode" => {
+                    opt.is_dark_mode = Some(true);
+                },
+                "--light" | "--light-mode" => {
+                    opt.is_dark_mode = Some(false);
                 },
                 _ => {
                     eprintln!("Unknown option: {arg}");

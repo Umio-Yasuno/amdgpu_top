@@ -71,8 +71,10 @@ pub fn run(
     device_path_list: &[DevicePath],
     interval: u64,
     no_pc: bool,
+    is_dark_mode: bool,
 ) {
     let mut toggle_opt = ToggleOptions::default();
+    toggle_opt.is_dark_mode = is_dark_mode;
 
     let mut vec_app: Vec<_> = device_path_list.iter().enumerate().filter_map(|(i, device_path)| {
         let amdgpu_dev = device_path.init().ok()?;
@@ -150,6 +152,7 @@ pub fn run(
 
     siv.set_autohide_menu(false);
     siv.set_user_data(toggle_opt.clone());
+    siv.set_theme(if is_dark_mode { dark_mode() } else { Theme::default() });
 
     {
         if !no_pc {
