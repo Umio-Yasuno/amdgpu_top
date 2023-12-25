@@ -3,6 +3,7 @@ use crate::{
     drmModePropType,
     drmModeConnectorType,
     drmModeConnection,
+    drmModeModeInfo,
     drm_mode_property_enum,
 };
 use std::fs::File;
@@ -14,6 +15,7 @@ pub struct ConnectorInfo {
     pub connector_type: drmModeConnectorType,
     pub connector_type_id: u32,
     pub connection: drmModeConnection,
+    pub mode_info: Vec<drmModeModeInfo>,
     pub mode_props: Vec<(ModeProp, u64)>
 }
 
@@ -58,6 +60,7 @@ pub fn connector_info(device_path: &DevicePath) -> Vec<ConnectorInfo> {
         let connection = conn.connection();
 
         let conn_prop = conn.get_connector_props(fd)?;
+        let mode_info = conn.get_modes();
         let mode_props = conn_prop.get_mode_property(fd);
 
         let mode_props: Vec<(ModeProp, u64)> = mode_props.iter().map(|(prop, value)| {
@@ -83,6 +86,7 @@ pub fn connector_info(device_path: &DevicePath) -> Vec<ConnectorInfo> {
             connector_type,
             connector_type_id,
             connection,
+            mode_info,
             mode_props,
         })
     }).collect();

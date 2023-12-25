@@ -6,7 +6,7 @@ use crate::{
     fl,
 };
 
-use libamdgpu_top::{ConnectorInfo, ModeProp, drmModePropType};
+use libamdgpu_top::{ConnectorInfo, ModeProp, drmModeModeInfo, drmModePropType};
 use libamdgpu_top::AMDGPU::{
     GPU_INFO,
     IpDieEntry,
@@ -327,9 +327,38 @@ pub trait GuiConnectorInfo {
 impl GuiConnectorInfo for ConnectorInfo {
     fn ui(&self, ui: &mut egui::Ui) {
         let title = self.name();
-        collapsing(ui, &title, false, |ui| for mode_prop in &self.mode_props {
-            mode_prop.ui(ui);
+        collapsing(ui, &title, false, |ui| {
+            if !self.mode_info.is_empty() {
+                collapsing(ui, "Modes", false, |ui| {
+                    for mode in &self.mode_info {
+                        mode.ui(ui);
+                    }
+                });
+            }
+
+            for mode_prop in &self.mode_props {
+                mode_prop.ui(ui);
+            }
         });
+    }
+}
+
+pub trait GuiModeInfo {
+    fn ui(&self, ui: &mut egui::Ui);
+}
+
+impl GuiModeInfo for drmModeModeInfo {
+    fn ui(&self, ui: &mut egui::Ui) {
+        let txt = format!(
+            "{}x{}@{:.2}{}{}",
+            self.vdisplay,
+            self.hdisplay,
+            self.refresh_rate(),
+            if self.type_is_preferred() { " preferred" } else { "" },
+            if self.type_is_driver() { " driver" } else { "" },
+        );
+        ui.label(txt);
+        ui.end_row();
     }
 }
 

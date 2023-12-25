@@ -27,6 +27,26 @@ pub fn dump_drm_info(device_path: &DevicePath) {
             conn.name(),
         );
 
+        if !conn.mode_info.is_empty() {
+            println!("{}    ├───Modes", if last { " " } else { "│" });
+
+            let mode_info_len = conn.mode_info.len() - 1;
+
+            for (ii, mode) in conn.mode_info.iter().enumerate() {
+                let last_mode_info = ii == mode_info_len;
+                println!(
+                    "{}    │    {}───{}x{}@{:.2}{}{}",
+                    if last { " " } else { "│" },
+                    if last_mode_info { "└" } else { "├" },
+                    mode.vdisplay,
+                    mode.hdisplay,
+                    mode.refresh_rate(),
+                    if mode.type_is_preferred() { " preferred" } else { "" },
+                    if mode.type_is_driver() { " driver" } else { "" },
+                );
+            }
+        }
+
         let props_len = conn.mode_props.len() - 1;
 
         for (j, mode_prop) in conn.mode_props.iter().enumerate() {
