@@ -6,6 +6,7 @@ use libamdgpu_top::{
     PCI,
     ConnectorInfo,
     drmModePropType,
+    drmModeModeInfo,
 };
 use stat::{FdInfoStat, GpuActivity, Sensors, PerfCounter};
 use serde_json::{json, Map, Value};
@@ -313,6 +314,7 @@ impl OutputJson for ConnectorInfo {
                     "flags": prop.flags,
                     "value": value,
                     "type": prop.prop_type.to_string(),
+                    "modes": self.mode_info.iter().map(|m| m.json()).collect::<Vec<Value>>(),
                     "values": if let drmModePropType::RANGE = prop.prop_type {
                         prop.values.clone()
                     } else {
@@ -340,6 +342,28 @@ impl OutputJson for ConnectorInfo {
             "type_id": self.connector_type_id,
             "connection": self.connection.to_string(),
             "Properties": Value::Object(props),
+        })
+    }
+}
+
+impl OutputJson for drmModeModeInfo {
+    fn json(&self) -> Value {
+        json!({
+            "clock": self.clock,
+            "hdisplay": self.hdisplay,
+            "hsync_start": self.hsync_start,
+            "hsync_end": self.hsync_end,
+            "htotal": self.htotal,
+            "hskew": self.hskew,
+            "vdisplay": self.vdisplay,
+            "vsync_start": self.vsync_start,
+            "vsync_end": self.vsync_end,
+            "vtotal": self.vtotal,
+            "vscan": self.vscan,
+            "vrefresh": self.vrefresh,
+            "flags": self.flags,
+            "type": self.type_,
+            "name": self.name(),
         })
     }
 }
