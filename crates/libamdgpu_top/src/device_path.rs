@@ -38,6 +38,10 @@ impl DevicePath {
 
         amdgpu_devices.flat_map(|v| {
             let name = v.ok()?.file_name();
+
+            /* 0000:00:00.0 */
+            if name.len() < 12 { return None; }
+
             let pci = name.into_string().ok()?.parse::<PCI::BUS_INFO>().ok()?;
 
             Self::try_from(pci).ok()
