@@ -4,3 +4,4 @@ Name=AMDGPU TOP (GUI)
 GenericName=AMDGPU Monitoring Tool
 Exec=amdgpu_top --gui
 Categories=System;Monitor;
+Icon=utilities-system-monitor

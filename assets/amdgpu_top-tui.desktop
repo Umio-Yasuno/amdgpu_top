@@ -5,3 +5,4 @@ GenericName=AMDGPU Monitoring Tool
 Exec=amdgpu_top
 Terminal=true
 Categories=System;Monitor;
+Icon=utilities-system-monitor
