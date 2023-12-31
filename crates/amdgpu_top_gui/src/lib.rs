@@ -127,8 +127,6 @@ pub fn run(
             &AppOption { pcie_bw: true },
         )?;
 
-        app.device_info.gfx_target_version = device_path.get_gfx_target_version_from_kfd();
-
         app.stat.grbm.get_i18n_index(&LANGUAGE_LOADER);
         app.stat.grbm2.get_i18n_index(&LANGUAGE_LOADER);
 

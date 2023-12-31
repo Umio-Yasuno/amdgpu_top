@@ -148,7 +148,7 @@ impl ListNameInfoBar for AppDeviceInfo {
         format!(
             concat!(
                 "{mark_name} ({pci}, {did:#06X}:{rid:#04X})\n",
-                "{asic}, {gpu_type}, {chip_class}, {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
+                "{asic}, {gpu_type}, {chip_class},{gfx_ver} {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
                 "{vram_type} {vram_bus_width}-bit, {vram_size} MiB, ",
                 "{min_memory_clk}-{max_memory_clk} MHz",
             ),
@@ -159,6 +159,10 @@ impl ListNameInfoBar for AppDeviceInfo {
             asic = self.ext_info.get_asic_name(),
             gpu_type = if self.ext_info.is_apu() { "APU" } else { "dGPU" },
             chip_class = self.ext_info.get_chip_class(),
+            gfx_ver = match &self.gfx_target_version {
+                Some(ver) => format!(" {ver},"),
+                None => String::new(),
+            },
             num_cu = self.ext_info.cu_active_number(),
             min_gpu_clk = self.min_gpu_clk,
             max_gpu_clk = self.max_gpu_clk,

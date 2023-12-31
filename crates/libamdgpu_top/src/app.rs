@@ -98,12 +98,14 @@ impl AppAmdgpuTop {
             ..Default::default()
         };
 
-        let device_info = AppDeviceInfo::new(
+        let mut device_info = AppDeviceInfo::new(
             &amdgpu_dev,
             &ext_info,
             &memory_info,
             &sensors,
         );
+
+        device_info.gfx_target_version = device_path.get_gfx_target_version_from_kfd();
 
         Some(Self {
             amdgpu_dev,

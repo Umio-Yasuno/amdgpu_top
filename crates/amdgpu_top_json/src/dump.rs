@@ -154,6 +154,10 @@ impl JsonInfo for AppAmdgpuTop {
             "GPU Family": self.device_info.ext_info.get_family_name().to_string(),
             "ASIC Name": self.device_info.ext_info.get_asic_name().to_string(),
             "Chip Class": self.device_info.ext_info.get_chip_class().to_string(),
+            "gfx_target_version": match &self.device_info.gfx_target_version {
+                Some(ver) => Value::String(ver.to_string()),
+                None => Value::Null,
+            },
             "Shader Engine": self.device_info.ext_info.max_se(),
             "Shader Array per Shader Engine": self.device_info.ext_info.max_sa_per_se(),
             "Total Compute Unit": self.device_info.ext_info.cu_active_number(),

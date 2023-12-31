@@ -4,7 +4,7 @@ use cursive::align::HAlign;
 use cursive::view::{Nameable, Scrollable};
 use cursive::views::{HideableView, LinearLayout, TextContent, TextView, Panel};
 
-use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO, MetricsInfo};
+use libamdgpu_top::AMDGPU::{DeviceHandle, MetricsInfo};
 use libamdgpu_top::{stat, DevicePath, Sampling};
 use stat::{GfxoffMonitor, GfxoffStatus, FdInfoSortType};
 
@@ -45,7 +45,7 @@ impl SmiApp {
 
     fn info_header() -> TextView {
         let text = format!(concat!(
-            "GPU  {name:<name_len$} {pad:9}|{pci:<16}|{vram:^18}|\n",
+            "GPU {name:<name_len$} {pad:10}|{pci:<16}|{vram:^18}|\n",
             "SCLK    MCLK    VDDGFX  Power           | GFX% UMC%Media%|{gtt:^18}|\n",
             "Temp    {fan:<7} {thr:<THR_LEN$}|"
             ),
@@ -83,14 +83,17 @@ impl SmiApp {
 
         writeln!(
             self.info_text.buf,
-            " #{i:<2} [{name:GPU_NAME_LEN$}]({cu:3}CU) | {pci}   |{vu:6}/{vt:6} MiB |",
+            "#{i:<2} [{name:GPU_NAME_LEN$}]({gfx_ver:>7})| {pci}   |{vu:6}/{vt:6} MiB |",
             i = self.index,
             name = if GPU_NAME_LEN < self.app_amdgpu_top.device_info.marketing_name.len() {
                 &self.app_amdgpu_top.device_info.marketing_name[..GPU_NAME_LEN]
             } else {
                 &self.app_amdgpu_top.device_info.marketing_name
             },
-            cu = self.app_amdgpu_top.device_info.ext_info.cu_active_number(),
+            gfx_ver = match &self.app_amdgpu_top.device_info.gfx_target_version {
+                Some(ver) => ver.to_string(),
+                None => String::new(),
+            },
             pci = self.app_amdgpu_top.device_info.pci_bus,
             vu = self.app_amdgpu_top.stat.vram_usage.0.vram.heap_usage >> 20,
             vt = self.app_amdgpu_top.stat.vram_usage.0.vram.total_heap_size >> 20,
