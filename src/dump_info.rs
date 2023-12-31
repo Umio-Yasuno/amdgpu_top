@@ -1,7 +1,7 @@
 use libamdgpu_top::{
     AMDGPU::{
         VIDEO_CAPS::CODEC,
-        FW_VERSION::FW_TYPE,
+        FW_VERSION::{FW_TYPE, FwVer},
         DeviceHandle,
         GPU_INFO,
         MetricsInfo,
@@ -245,16 +245,29 @@ fn fw_info(amdgpu_dev: &DeviceHandle) {
             Ok(v) => v,
             Err(_) => continue,
         };
+        fw_info_dump(&fw_info);
+    }
 
-        let (ver, ftr) = (fw_info.version, fw_info.feature);
-
-        if ver == 0 { continue }
-
+    /* MEC2 */
+    if let Ok(mec2) = amdgpu_dev.query_firmware_version(FW_TYPE::GFX_MEC, 0, 1) {
         println!(
-            "    {fw_type:<8} feature: {ftr:>3}, ver: {ver:>#10X}",
-            fw_type = fw_type.to_string(),
+            "    {:<8} feature: {:>3}, ver: {:>#10X}",
+            "GFX_MEC2",
+            mec2.feature,
+            mec2.version,
         );
     }
+}
+
+fn fw_info_dump(fw_info: &FwVer) {
+    let (ver, ftr) = (fw_info.version, fw_info.feature);
+
+    if ver == 0 { return; }
+
+    println!(
+        "    {fw_type:<8} feature: {ftr:>3}, ver: {ver:>#10X}",
+        fw_type = fw_info.fw_type.to_string(),
+    );
 }
 
 trait DumpInfo {
