@@ -11,7 +11,7 @@ use crate::AMDGPU::{
     VBIOS::VbiosInfo,
     VIDEO_CAPS::{CAP_TYPE, VideoCapsInfo},
 };
-use crate::{PCI, stat::Sensors};
+use crate::{GfxTargetVersion, PCI, stat::Sensors};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
@@ -46,6 +46,7 @@ pub struct AppDeviceInfo {
     pub total_l3_cache_size_mib: u32,
     pub ip_die_entries: Vec<IpDieEntry>,
     pub power_profiles: Vec<PowerProfile>,
+    pub gfx_target_version: Option<GfxTargetVersion>,
 }
 
 impl AppDeviceInfo {
@@ -65,6 +66,7 @@ impl AppDeviceInfo {
         let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);
         let power_profiles = PowerProfile::get_all_supported_profiles_from_sysfs(&sysfs_path);
         let asic_name = ext_info.get_asic_name();
+        let gfx_target_version = None;
 
         Self {
             ext_info: *ext_info,
@@ -97,6 +99,7 @@ impl AppDeviceInfo {
             total_l3_cache_size_mib: ext_info.calc_l3_cache_size_mb(),
             ip_die_entries,
             power_profiles,
+            gfx_target_version,
         }
     }
 }

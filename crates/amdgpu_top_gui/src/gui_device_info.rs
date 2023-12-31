@@ -161,6 +161,12 @@ impl GuiInfo for AppDeviceInfo {
             ui.end_row();
         }
 
+        if let Some(ver) = &self.gfx_target_version {
+            ui.label(&fl!("gfx_target_version"));
+            ui.label(ver.to_string());
+            ui.end_row();
+        }
+
         ui.end_row();
     }
 

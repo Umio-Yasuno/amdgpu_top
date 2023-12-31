@@ -3,6 +3,7 @@ use libdrm_amdgpu_sys::{AMDGPU::DeviceHandle, PCI};
 use std::path::PathBuf;
 use std::fs;
 use std::fmt;
+use crate::GfxTargetVersion;
 
 // const DRM_RENDER: u32 = 128;
 
@@ -46,6 +47,43 @@ impl DevicePath {
 
             Self::try_from(pci).ok()
         }).collect()
+    }
+
+    pub fn get_gfx_target_version_from_kfd(&self) -> Option<GfxTargetVersion> {
+        let drm_render_minor = {
+            const PRE: &str = "/dev/dri/renderD";
+            const PRE_LEN: usize = PRE.len();
+            let render = self.render.to_str()?;
+            if !render.starts_with(PRE) { return None }
+
+            format!("drm_render_minor {}", &render[PRE_LEN..])
+        };
+
+        let dirs = std::fs::read_dir("/sys/class/kfd/kfd/topology/nodes/").ok()?;
+        let mut gfx_target_version = String::with_capacity(32);
+
+        'node: for dir_entry in dirs.flatten() {
+            gfx_target_version.clear();
+            let Ok(s) = std::fs::read_to_string(dir_entry.path().join("properties")) else {
+                continue
+            };
+            let lines = s.lines();
+
+            for l in lines {
+                if l.starts_with("gfx_target_version") {
+                    gfx_target_version = l.to_string();
+                }
+
+                if l.starts_with(&drm_render_minor) {
+                    break 'node;
+                }
+            }
+        }
+
+        const PRE_GFX_VER_LEN: usize = "gfx_target_version ".len();
+        let gfx_target_version: u32 = gfx_target_version[PRE_GFX_VER_LEN..].parse().ok()?;
+
+        Some(GfxTargetVersion::from(gfx_target_version))
     }
 }
 

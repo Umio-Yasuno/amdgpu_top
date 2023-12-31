@@ -130,6 +130,11 @@ fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
     }
 
     info.device_info();
+
+    if let Some(ver) = device_path.get_gfx_target_version_from_kfd() {
+        println!("gfx_target_version       : {ver}");
+    }
+
     info.gfx_info();
     info.memory_info();
     sensors_info(&sensors);
