@@ -91,20 +91,10 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
     type Error = std::io::Error;
 
     fn try_from(pci: PCI::BUS_INFO) -> Result<Self, Self::Error> {
-        let base = PathBuf::from("/dev/dri/by-path");
+        let render = pci.get_drm_render_path()?;
+        let card = pci.get_drm_card_path()?;
 
-        let [render, card] = ["render", "card"].map(|v| -> std::io::Result<PathBuf> {
-            let name = format!("pci-{pci}-{v}");
-            let link = fs::read_link(base.join(name))?;
-
-            fs::canonicalize(base.join(link))
-        });
-
-        Ok(Self {
-            render: render?,
-            card: card?,
-            pci,
-        })
+        Ok(Self { render, card, pci })
     }
 }
 
