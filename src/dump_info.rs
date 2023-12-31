@@ -206,8 +206,6 @@ fn sensors_info(sensors: &Sensors) {
     }
 
     for (link, label) in [
-        (&sensors.min_dpm_link, "(DPM, Min)"),
-        (&sensors.max_dpm_link, "(DPM, Max)"),
         (&sensors.max_gpu_link, "(GPU, Max)"),
         (&sensors.max_system_link, "(System, Max)"),
     ] {
