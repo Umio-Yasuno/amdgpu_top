@@ -1,11 +1,14 @@
 use anyhow::{anyhow, Context};
-use libdrm_amdgpu_sys::{AMDGPU::DeviceHandle, PCI};
+use libdrm_amdgpu_sys::{
+    AMDGPU::{
+        DeviceHandle,
+        GfxTargetVersion,
+    },
+    PCI,
+};
 use std::path::PathBuf;
 use std::fs;
 use std::fmt;
-use crate::GfxTargetVersion;
-
-// const DRM_RENDER: u32 = 128;
 
 #[derive(Clone)]
 pub struct DevicePath {

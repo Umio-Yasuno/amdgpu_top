@@ -3,6 +3,7 @@ use crate::AMDGPU::{
     DeviceHandle,
     drm_amdgpu_info_device,
     drm_amdgpu_memory_info,
+    GfxTargetVersion,
     GPU_INFO,
     HwmonTemp,
     IpDieEntry,
@@ -11,7 +12,7 @@ use crate::AMDGPU::{
     VBIOS::VbiosInfo,
     VIDEO_CAPS::{CAP_TYPE, VideoCapsInfo},
 };
-use crate::{GfxTargetVersion, PCI, stat::Sensors};
+use crate::{PCI, stat::Sensors};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
@@ -66,7 +67,7 @@ impl AppDeviceInfo {
         let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);
         let power_profiles = PowerProfile::get_all_supported_profiles_from_sysfs(&sysfs_path);
         let asic_name = ext_info.get_asic_name();
-        let gfx_target_version = None;
+        let gfx_target_version = ext_info.get_gfx_target_version();
 
         Self {
             ext_info: *ext_info,

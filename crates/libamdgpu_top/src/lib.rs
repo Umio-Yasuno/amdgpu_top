@@ -12,9 +12,6 @@ pub use app_device_info::*;
 pub mod stat;
 pub mod app;
 
-mod gfx_target_version;
-pub use gfx_target_version::GfxTargetVersion;
-
 mod device_path;
 pub use device_path::DevicePath;
 
