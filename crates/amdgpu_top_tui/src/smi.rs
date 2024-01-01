@@ -91,8 +91,8 @@ impl SmiApp {
                 &self.app_amdgpu_top.device_info.marketing_name
             },
             gfx_ver = match &self.app_amdgpu_top.device_info.gfx_target_version {
-                Some(ver) => ver.to_string(),
-                None => String::new(),
+                Some(ver) => &ver,
+                None => "",
             },
             pci = self.app_amdgpu_top.device_info.pci_bus,
             vu = self.app_amdgpu_top.stat.vram_usage.0.vram.heap_usage >> 20,

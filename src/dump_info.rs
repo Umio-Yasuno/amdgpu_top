@@ -131,7 +131,10 @@ fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
 
     info.device_info();
 
-    if let Some(ver) = device_path.get_gfx_target_version_from_kfd() {
+    if let Some(ver) = ext_info
+        .get_gfx_target_version()
+        .or_else(|| device_path.get_gfx_target_version_from_kfd())
+    {
         println!("gfx_target_version       : {ver}");
     }
 

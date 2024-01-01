@@ -3,7 +3,6 @@ use crate::AMDGPU::{
     DeviceHandle,
     drm_amdgpu_info_device,
     drm_amdgpu_memory_info,
-    GfxTargetVersion,
     GPU_INFO,
     HwmonTemp,
     IpDieEntry,
@@ -47,7 +46,7 @@ pub struct AppDeviceInfo {
     pub total_l3_cache_size_mib: u32,
     pub ip_die_entries: Vec<IpDieEntry>,
     pub power_profiles: Vec<PowerProfile>,
-    pub gfx_target_version: Option<GfxTargetVersion>,
+    pub gfx_target_version: Option<String>,
 }
 
 impl AppDeviceInfo {
@@ -67,7 +66,7 @@ impl AppDeviceInfo {
         let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);
         let power_profiles = PowerProfile::get_all_supported_profiles_from_sysfs(&sysfs_path);
         let asic_name = ext_info.get_asic_name();
-        let gfx_target_version = ext_info.get_gfx_target_version();
+        let gfx_target_version = ext_info.get_gfx_target_version().map(|v| v.to_string());
 
         Self {
             ext_info: *ext_info,

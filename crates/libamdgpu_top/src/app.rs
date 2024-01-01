@@ -106,7 +106,8 @@ impl AppAmdgpuTop {
         );
 
         if device_info.gfx_target_version.is_none() {
-            device_info.gfx_target_version = device_path.get_gfx_target_version_from_kfd();
+            device_info.gfx_target_version =
+                device_path.get_gfx_target_version_from_kfd().map(|v| v.to_string());
         }
 
         Some(Self {
