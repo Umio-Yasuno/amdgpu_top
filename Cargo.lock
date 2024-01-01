@@ -59,7 +59,7 @@ dependencies = [
 
 [[package]]
 name = "amdgpu_top"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "amdgpu_top_gui",
  "amdgpu_top_json",
@@ -70,7 +70,7 @@ dependencies = [
 
 [[package]]
 name = "amdgpu_top_gui"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "eframe",
  "egui_plot",
@@ -83,7 +83,7 @@ dependencies = [
 
 [[package]]
 name = "amdgpu_top_json"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "libamdgpu_top",
  "serde_json",
@@ -91,7 +91,7 @@ dependencies = [
 
 [[package]]
 name = "amdgpu_top_tui"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "cursive",
  "libamdgpu_top",
@@ -1774,7 +1774,7 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libamdgpu_top"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "libdrm_amdgpu_sys",
@@ -1788,8 +1788,8 @@ checksum = "302d7ab3130588088d277783b1e2d2e10c9e9e4a16dd9050e6ec93fb3e7048f4"
 
 [[package]]
 name = "libdrm_amdgpu_sys"
-version = "0.4.0"
-source = "git+https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs#f8a1f072edcc0c223d58799f031927e1640d313d"
+version = "0.4.1"
+source = "git+https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs#d2e0bd7d1dd822b95789842d96e183ae1bb31aeb"
 dependencies = [
  "libc",
 ]
