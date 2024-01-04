@@ -85,11 +85,9 @@ impl SmiApp {
             self.info_text.buf,
             "#{i:<2} [{name:GPU_NAME_LEN$}]({gfx_ver:>7})| {pci}   |{vu:6}/{vt:6} MiB |",
             i = self.index,
-            name = if GPU_NAME_LEN < self.app_amdgpu_top.device_info.marketing_name.len() {
-                &self.app_amdgpu_top.device_info.marketing_name[..GPU_NAME_LEN]
-            } else {
-                &self.app_amdgpu_top.device_info.marketing_name
-            },
+            name = self.app_amdgpu_top.device_info.marketing_name
+                .get(..GPU_NAME_LEN)
+                .unwrap_or_else(|| &self.app_amdgpu_top.device_info.marketing_name),
             gfx_ver = match &self.app_amdgpu_top.device_info.gfx_target_version {
                 Some(ver) => &ver,
                 None => "",
@@ -170,7 +168,7 @@ impl SmiApp {
             write!(
                 self.info_text.buf,
                 "{:<THR_LEN$}|",
-                if THR_LEN < thr.len() { &thr[..THR_LEN] } else { &thr },
+                thr.get(..THR_LEN).unwrap_or_else(|| &thr)
             )?;
         } else {
             write!(

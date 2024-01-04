@@ -71,9 +71,8 @@ pub fn dump_mode_prop((mode_prop, value): &(ModeProp, u64), last: bool, last_pro
                 let enums: String = mode_prop.enums.iter().map(|enum_| {
                     format!("{:?}={}, ", enum_.name(), enum_.value)
                 }).collect();
-                let len = enums.len();
 
-                format!(", enums: [{}]", &enums[..len-2])
+                format!(", enums: [{}]", enums.trim_end_matches(", "))
             },
             _ => "".to_string(),
         },

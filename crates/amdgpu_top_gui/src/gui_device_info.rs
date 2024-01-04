@@ -398,9 +398,9 @@ impl GuiModeProp for &(ModeProp, u64) {
                         let enums: String = self.0.enums.iter().map(|enum_| {
                             format!("{:?}={}, ", enum_.name(), enum_.value)
                         }).collect();
-                        let len = enums.len();
+
                         ui.label("enums");
-                        ui.label(format!("[{}]", &enums[..len-2]));
+                        ui.label(format!("[{}]", enums.trim_end_matches(", ")));
                         ui.end_row();
                     },
                     _ => {},

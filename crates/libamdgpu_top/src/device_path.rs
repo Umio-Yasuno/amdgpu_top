@@ -59,7 +59,7 @@ impl DevicePath {
             let render = self.render.to_str()?;
             if !render.starts_with(PRE) { return None }
 
-            format!("drm_render_minor {}", &render[PRE_LEN..])
+            format!("drm_render_minor {}", &render.get(PRE_LEN..)?)
         };
 
         let dirs = std::fs::read_dir("/sys/class/kfd/kfd/topology/nodes/").ok()?;
@@ -84,7 +84,7 @@ impl DevicePath {
         }
 
         const PRE_GFX_VER_LEN: usize = "gfx_target_version ".len();
-        let gfx_target_version: u32 = gfx_target_version[PRE_GFX_VER_LEN..].parse().ok()?;
+        let gfx_target_version: u32 = gfx_target_version.get(PRE_GFX_VER_LEN..)?.parse().ok()?;
 
         Some(GfxTargetVersion::from(gfx_target_version))
     }

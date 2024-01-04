@@ -128,7 +128,7 @@ impl MainOpt {
         let mut opt = Self::default();
         let mut skip = false;
 
-        let args = &std::env::args().collect::<Vec<String>>()[1..];
+        let args = &std::env::args().skip(1).collect::<Vec<String>>();
 
         for (idx, arg) in args.iter().enumerate() {
             if skip {
@@ -169,7 +169,10 @@ impl MainOpt {
                     if let Some(val_str) = args.get(idx+1) {
                         let tmp = if val_str.ends_with("ms") {
                             let len = val_str.len();
-                            val_str[..len-2].parse::<u64>().unwrap()
+                            val_str
+                                .get(..len-2)
+                                .and_then(|v| v.parse::<u64>().ok())
+                                .unwrap()
                         } else {
                             val_str.parse::<u64>().unwrap()
                         };
