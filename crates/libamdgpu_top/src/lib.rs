@@ -68,6 +68,14 @@ impl VramUsage {
             self.0.gtt.heap_usage = gtt;
         }
     }
+
+    pub fn update_usable_heap_size(&mut self, amdgpu_dev: &DeviceHandle) {
+        let Ok(info) = amdgpu_dev.vram_gtt_info() else { return };
+
+        self.0.vram.usable_heap_size = info.vram_size;
+        self.0.cpu_accessible_vram.usable_heap_size = info.vram_cpu_accessible_size;
+        self.0.gtt.usable_heap_size = info.gtt_size;
+    }
 }
 
 pub fn has_vcn(amdgpu_dev: &DeviceHandle) -> bool {

@@ -406,7 +406,7 @@ impl MyApp {
                 (&self.buf_data.stat.vram_usage.0.gtt, fl!("gtt")),
             ] {
                 let progress = (v.heap_usage >> 20) as f32 / (v.total_heap_size >> 20) as f32;
-                let text = format!("{:5} / {:5} {mib}", v.heap_usage >> 20, v.total_heap_size >> 20);
+                let text = format!("{:5} / {:5} ({}: {:5}) {mib}", v.heap_usage >> 20, v.total_heap_size >> 20, fl!("usable"), v.usable_heap_size >> 20);
                 let bar = egui::ProgressBar::new(progress)
                     .text(RichText::new(&text).font(BASE));
                 ui.label(RichText::new(name).font(MEDIUM));

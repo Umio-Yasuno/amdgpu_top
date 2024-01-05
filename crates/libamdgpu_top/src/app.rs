@@ -130,6 +130,7 @@ impl AppAmdgpuTop {
 
     pub fn update(&mut self, interval: Duration) {
         self.stat.vram_usage.update_usage(&self.amdgpu_dev);
+        self.stat.vram_usage.update_usable_heap_size(&self.amdgpu_dev);
         self.stat.sensors.update(&self.amdgpu_dev);
         self.stat.metrics = GpuMetrics::get_from_sysfs_path(&self.device_info.sysfs_path).ok();
 

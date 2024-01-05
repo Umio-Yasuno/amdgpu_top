@@ -123,6 +123,7 @@ SDMA = SDMA
 vram = VRAM
 cpu_visible_vram = CPU-Visible VRAM
 gtt = GTT
+usable = usable
 
 fdinfo = fdinfo
 fdinfo_plot = fdinfo Plot
