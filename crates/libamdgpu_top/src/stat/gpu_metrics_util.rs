@@ -1,8 +1,24 @@
 use libdrm_amdgpu_sys::AMDGPU::NUM_HBM_INSTANCES;
 
-pub fn check_metrics_val(val: Option<u16>) -> String {
+pub trait IsMax {
+    fn is_max(&self) -> bool;
+}
+
+impl IsMax for u16 {
+    fn is_max(&self) -> bool {
+        self == &u16::MAX
+    }
+}
+
+impl IsMax for u32 {
+    fn is_max(&self) -> bool {
+        self == &u32::MAX
+    }
+}
+
+pub fn check_metrics_val<T: IsMax + std::fmt::Display>(val: Option<T>) -> String {
     if let Some(v) = val {
-        if v == u16::MAX { "N/A".to_string() } else { v.to_string() }
+        if v.is_max() { "N/A".to_string() } else { v.to_string() }
     } else {
         "N/A".to_string()
     }

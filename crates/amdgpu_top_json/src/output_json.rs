@@ -185,10 +185,8 @@ impl OutputJson for GpuMetrics {
             ("temperature_vrgfx", self.get_temperature_vrgfx()),
             ("temperature_vrsoc", self.get_temperature_vrsoc()),
             ("temperature_vrmem", self.get_temperature_vrmem()),
-            ("average_socket_power", self.get_average_socket_power()),
             ("average_cpu_power", self.get_average_cpu_power()),
             ("average_soc_power", self.get_average_soc_power()),
-            ("average_gfx_power", self.get_average_gfx_power()),
             // ("average_core_power", self.get_average_core_power()),
             ("average_gfxclk_frequency", self.get_average_gfxclk_frequency()),
             ("average_socclk_frequency", self.get_average_socclk_frequency()),
@@ -225,6 +223,20 @@ impl OutputJson for GpuMetrics {
                     Value::Null
                 } else {
                     Value::from(val)
+                }
+            );
+        }
+
+        for (name, val_u32) in [
+            ("average_socket_power", self.get_average_socket_power()),
+            ("average_gfx_power", self.get_average_gfx_power()),
+        ] {
+            m.insert(
+                name.to_string(),
+                if val_u32 == Some(u32::MAX) {
+                    Value::Null
+                } else {
+                    Value::from(val_u32)
                 }
             );
         }
