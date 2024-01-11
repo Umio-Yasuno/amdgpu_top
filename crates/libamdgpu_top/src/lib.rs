@@ -18,6 +18,9 @@ pub use device_path::DevicePath;
 mod drm_mode;
 pub use drm_mode::*;
 
+mod ppfeaturemask;
+pub use ppfeaturemask::*;
+
 pub struct Sampling {
     pub count: usize,
     pub delay: Duration,

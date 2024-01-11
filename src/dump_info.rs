@@ -153,6 +153,12 @@ fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
     info.codec_info();
     info.vbios_info();
 
+    let pp_feature_mask = libamdgpu_top::PpFeatureMask::get_all_enabled_feature();
+
+    if !pp_feature_mask.is_empty() {
+        println!("\npp_feature_mask: {pp_feature_mask:#?}");
+    }
+
     if let OptDumpMode::GpuMetrics = opt_dump_mode {
         if let Ok(m) = amdgpu_dev.get_gpu_metrics() {
             println!("\nGPU Metrics: {m:#?}");
