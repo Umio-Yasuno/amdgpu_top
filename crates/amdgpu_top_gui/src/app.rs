@@ -82,13 +82,6 @@ pub trait GuiGpuMetrics: MetricsInfo {
         }
     }
 
-    fn v2_helper_u32(ui: &mut egui::Ui, v: &[(Option<u32>, &str)]) {
-        for (val, unit) in v {
-            let v = check_metrics_val(*val);
-            ui.label(format!("{v:>5} {unit}, "));
-        }
-    }
-
     fn socket_power(&self, ui: &mut egui::Ui);
 
     fn throttle_status(&self, ui: &mut egui::Ui) {
@@ -205,11 +198,11 @@ impl GuiGpuMetrics for GpuMetrics {
 
         ui.horizontal(|ui| {
             ui.label(format!("{} =>", fl!("gfx")));
-            let temp_gfx = self.get_temperature_gfx().map(|v| v.saturating_div(100) as u32);
-            Self::v2_helper_u32(ui, &[
+            let temp_gfx = self.get_temperature_gfx().map(|v| v.saturating_div(100));
+            Self::v2_helper(ui, &[
                 (temp_gfx, "C"),
                 (self.get_average_gfx_power(), &mw),
-                (self.get_current_gfxclk().map(|v| v as u32), &mhz),
+                (self.get_current_gfxclk(), &mhz),
             ]);
         });
 

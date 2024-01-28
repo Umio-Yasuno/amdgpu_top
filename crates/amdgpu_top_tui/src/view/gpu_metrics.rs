@@ -150,17 +150,17 @@ impl AppTextView {
     }
 
     fn gpu_metrics_v2_x(&mut self, metrics: &GpuMetrics) -> Result<(), fmt::Error> {
-        let temp_gfx = metrics.get_temperature_gfx().map(|v| v.saturating_div(100) as u32);
+        let temp_gfx = metrics.get_temperature_gfx().map(|v| v.saturating_div(100));
         let temp_soc = metrics.get_temperature_soc().map(|v| v.saturating_div(100));
 
         write!(self.text.buf, " CPU => {pad:9}", pad = "")?;
         v2_helper(&mut self.text.buf, &[(metrics.get_average_cpu_power(), "mW")])?;
 
         write!(self.text.buf, " GFX => ")?;
-        v2_helper_u32(&mut self.text.buf, &[
+        v2_helper(&mut self.text.buf, &[
             (temp_gfx, "C"),
             (metrics.get_average_gfx_power(), "mW"),
-            (metrics.get_current_gfxclk().map(|v| v as u32), "MHz"),
+            (metrics.get_current_gfxclk(), "MHz"),
         ])?;
 
         write!(self.text.buf, " SoC => ")?;
@@ -300,14 +300,6 @@ fn v1_helper(buf: &mut String, unit: &str, v: &[(Option<u16>, &str)]) -> Result<
 }
 
 fn v2_helper(buf: &mut String, v: &[(Option<u16>, &str)]) -> Result<(), fmt::Error> {
-    for (val, unit) in v {
-        let v = check_metrics_val(*val);
-        write!(buf, "{v:>5} {unit}, ")?;
-    }
-    writeln!(buf)
-}
-
-fn v2_helper_u32(buf: &mut String, v: &[(Option<u32>, &str)]) -> Result<(), fmt::Error> {
     for (val, unit) in v {
         let v = check_metrics_val(*val);
         write!(buf, "{v:>5} {unit}, ")?;

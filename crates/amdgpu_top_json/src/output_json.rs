@@ -188,6 +188,7 @@ impl OutputJson for GpuMetrics {
             ("average_cpu_power", self.get_average_cpu_power()),
             ("average_soc_power", self.get_average_soc_power()),
             // ("average_core_power", self.get_average_core_power()),
+            ("average_gfx_power", self.get_average_gfx_power()),
             ("average_gfxclk_frequency", self.get_average_gfxclk_frequency()),
             ("average_socclk_frequency", self.get_average_socclk_frequency()),
             ("average_uclk_frequency", self.get_average_uclk_frequency()),
@@ -229,7 +230,6 @@ impl OutputJson for GpuMetrics {
 
         for (name, val_u32) in [
             ("average_socket_power", self.get_average_socket_power()),
-            ("average_gfx_power", self.get_average_gfx_power()),
         ] {
             m.insert(
                 name.to_string(),
