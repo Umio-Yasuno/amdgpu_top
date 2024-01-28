@@ -66,6 +66,8 @@ pub trait GuiGpuMetrics: MetricsInfo {
     fn v1_ui(&self, ui: &mut egui::Ui);
     fn v2_ui(&self, ui: &mut egui::Ui);
 
+    fn v1_4_v1_5_ui(&self, ui: &mut egui::Ui);
+
     fn v1_helper(ui: &mut egui::Ui, unit: &str, v: &[(Option<u16>, &str)]) {
         for (val, name) in v {
             let v = check_metrics_val(*val);
@@ -87,10 +89,7 @@ pub trait GuiGpuMetrics: MetricsInfo {
         }
     }
 
-    fn socket_power(&self, ui: &mut egui::Ui) {
-        let v = check_metrics_val(self.get_average_socket_power());
-        ui.label(format!("{} => {v:>3} W", fl!("socket_power")));
-    }
+    fn socket_power(&self, ui: &mut egui::Ui);
 
     fn throttle_status(&self, ui: &mut egui::Ui) {
         if let Some(thr) = self.get_throttle_status_info() {
@@ -174,12 +173,20 @@ impl GuiGpuMetrics for GpuMetrics {
         // Only Aldebaran (MI200) supports it.
         if let Some(hbm_temp) = check_hbm_temp(self.get_temperature_hbm()) {
             ui.horizontal(|ui| {
-                ui.label(format!("{} => [", fl!("hbm_temp")));
-                for v in &hbm_temp {
-                    ui.label(RichText::new(format!("{v:>5},")));
-                }
-                ui.label("]");
+                let s: String = hbm_temp
+                    .iter()
+                    .map(|v| format!("{v:>5},"))
+                    .collect();
+
+                ui.label(format!("{} =>", fl!("hbm_temp")));
+                ui.label(format!("[{s}]"));
             });
+        }
+
+        match self {
+            GpuMetrics::V1_4(_) |
+            GpuMetrics::V1_5(_) => self.v1_4_v1_5_ui(ui),
+            _ => {},
         }
 
         self.throttle_status(ui);
@@ -271,12 +278,12 @@ impl GuiGpuMetrics for GpuMetrics {
                 (core_clk, fl!("core_clock")),
             ] {
                 let Some(val) = val else { continue };
-                ui.label(label);
-                ui.label("=> [");
-                for v in &val {
-                    ui.label(RichText::new(format!("{v:>5},")));
-                }
-                ui.label("]");
+                let s: String = val
+                    .iter()
+                    .map(|v| format!("{v:>5},"))
+                    .collect();
+                ui.label(format!("{label} =>"));
+                ui.label(format!("[{s}]"));
                 ui.end_row();
             }
 
@@ -285,12 +292,13 @@ impl GuiGpuMetrics for GpuMetrics {
                 (l3_clk, fl!("l3_clock")),
             ] {
                 let Some(val) = val else { continue };
-                ui.label(label);
-                ui.label("=> [");
-                for v in &val {
-                    ui.label(RichText::new(format!("{v:>5},")));
-                }
-                ui.label("]");
+                let s: String = val
+                    .iter()
+                    .map(|v| format!("{v:>5},"))
+                    .collect();
+
+                ui.label(format!("{label} =>"));
+                ui.label(format!("[{s}]"));
                 ui.end_row();
             }
 
@@ -323,6 +331,60 @@ impl GuiGpuMetrics for GpuMetrics {
         });
 
         self.throttle_status(ui);
+    }
+
+    fn v1_4_v1_5_ui(&self, ui: &mut egui::Ui) {
+        egui::Grid::new("GPU Metrics v1.4/v1.5, clock, activity").show(ui, |ui| {
+            if let Some(all_gfxclk) = self.get_all_instances_current_gfxclk() {
+                ui.label(format!("GFXCLK (Current) =>"));
+                ui.label(format!("[{}]", all_clk_helper(&all_gfxclk)));
+                ui.end_row();
+            }
+
+            for (label, all_clk) in [
+                ("SOCCLK (Current) =>", self.get_all_instances_current_socclk()),
+                ("VCLK0 (Current)  =>", self.get_all_instances_current_vclk0()),
+                ("DCLK0 (Current)  =>", self.get_all_instances_current_dclk0()),
+            ] {
+                let Some(all_clk) = all_clk else { continue };
+                ui.label(label);
+                ui.label(format!("[{}]", all_clk_helper(&all_clk)));
+                ui.end_row();
+            }
+
+            if let Some(all_vcn) = self.get_all_vcn_activity() {
+                ui.label("VCN Activity =>");
+                ui.label(format!("[{}]", all_activity_helper(&all_vcn)));
+                ui.end_row();
+            }
+
+            if let Some(all_jpeg) = self.get_all_jpeg_activity() {
+                ui.label("JPEG Activity =>");
+                ui.label(format!("[{}]", all_activity_helper(&all_jpeg)));
+                ui.end_row();
+            }
+        });
+
+        if let [Some(xgmi_width), Some(xgmi_speed)] = [
+            self.get_xgmi_link_width(),
+            self.get_xgmi_link_speed(),
+        ] {
+            ui.label(format!("XGMI => x{xgmi_width} {xgmi_speed}Gbps"));
+        }
+    }
+
+    fn socket_power(&self, ui: &mut egui::Ui) {
+        let avg = check_metrics_val(self.get_average_socket_power());
+        ui.label(format!("{} => {avg:>3} W", fl!("socket_power")));
+
+        match self {
+            GpuMetrics::V1_4(_) |
+            GpuMetrics::V1_5(_) => {
+                let cur = check_metrics_val(self.get_current_socket_power());
+                ui.label(format!("{} => {cur:>3} W", fl!("current_socket_power")));
+            },
+            _ => {},
+        }
     }
 }
 

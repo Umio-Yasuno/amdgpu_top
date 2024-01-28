@@ -32,6 +32,14 @@ pub fn check_power_clock_array(array: Option<Vec<u16>>) -> Option<Vec<u16>> {
     Some(array?.into_iter().map(|v| if v == u16::MAX { 0 } else { v }).collect())
 }
 
+pub fn all_clk_helper(v: &[u16]) -> String {
+    v.iter().map(|activity| format!("{activity:>5},")).collect()
+}
+
+pub fn all_activity_helper(v: &[u16]) -> String {
+    v.iter().map(|activity| format!("{activity:>3}%,")).collect()
+}
+
 #[allow(non_camel_case_types)]
 type HBM_TEMP = Option<[u16; NUM_HBM_INSTANCES as usize]>;
 

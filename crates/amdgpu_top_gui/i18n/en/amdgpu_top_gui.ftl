@@ -156,7 +156,8 @@ core_power = Core Power (mW)
 core_clock = Core Clock (MHz)
 l3_temp = L3 Cache Temp. (C)
 l3_clock = L3 Cache Clock (MHz)
-socket_power = Socket Power
+socket_power = Socket Power (Average)
+current_socket_power = Socket Power (Current)
 avg_activity = Average Activity
 throttle_status = Throttle Status
 

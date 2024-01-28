@@ -19,7 +19,9 @@ impl AppTextView {
             GpuMetrics::V1_0(_) |
             GpuMetrics::V1_1(_) |
             GpuMetrics::V1_2(_) |
-            GpuMetrics::V1_3(_) => self.gpu_metrics_v1_x(metrics)?,
+            GpuMetrics::V1_3(_) |
+            GpuMetrics::V1_4(_) |
+            GpuMetrics::V1_5(_) => self.gpu_metrics_v1_x(metrics)?,
             GpuMetrics::V2_0(_) |
             GpuMetrics::V2_1(_) |
             GpuMetrics::V2_2(_) |
@@ -106,6 +108,44 @@ impl AppTextView {
             writeln!(self.text.buf, "]")?;
         }
 
+        match metrics {
+            GpuMetrics::V1_4(_) |
+            GpuMetrics::V1_5(_) => self.gpu_metrics_v1_4_v1_5(metrics)?,
+            _ => {},
+        }
+
+        Ok(())
+    }
+
+    fn gpu_metrics_v1_4_v1_5(&mut self, metrics: &GpuMetrics) -> Result<(), fmt::Error> {
+        if let Some(all_gfxclk) = metrics.get_all_instances_current_gfxclk() {
+            writeln!(self.text.buf, "GFXCLK (Current) => [{}]", all_clk_helper(&all_gfxclk))?;
+        }
+
+        for (label, all_clk) in [
+            ("SOCCLK (Current)", metrics.get_all_instances_current_socclk()),
+            ("VCLK0 (Current) ", metrics.get_all_instances_current_vclk0()),
+            ("DCLK0 (Current) ", metrics.get_all_instances_current_dclk0()),
+        ] {
+            let Some(all_clk) = all_clk else { continue };
+            writeln!(self.text.buf, "{label} => [{}]", all_clk_helper(&all_clk))?;
+        }
+
+        if let Some(all_vcn) = metrics.get_all_vcn_activity() {
+            writeln!(self.text.buf, "VCN Activity => [{}]", all_activity_helper(&all_vcn))?;
+        }
+
+        if let Some(all_jpeg) = metrics.get_all_jpeg_activity() {
+            writeln!(self.text.buf, "JPEG Activity => [{}]", all_activity_helper(&all_jpeg))?;
+        }
+
+        if let [Some(xgmi_width), Some(xgmi_speed)] = [
+            metrics.get_xgmi_link_width(),
+            metrics.get_xgmi_link_speed(),
+        ] {
+            writeln!(self.text.buf, "XGMI => x{xgmi_width} {xgmi_speed}Gbps")?;
+        }
+
         Ok(())
     }
 
@@ -181,11 +221,8 @@ impl AppTextView {
             (core_clk, CORE_CLOCK_LABEL),
         ] {
             let Some(val) = val else { continue };
-            write!(self.text.buf, " {label:<16} => [")?;
-            for v in &val {
-                write!(self.text.buf, "{v:5},")?;
-            }
-            writeln!(self.text.buf, "]")?;
+            let s: String = val.iter().map(|v| format!("{v:>5},")).collect();
+            writeln!(self.text.buf, " {label:<16} => [{s}]")?;
         }
 
         for (val, label) in [
@@ -193,11 +230,8 @@ impl AppTextView {
             (l3_clk, L3_CLOCK_LABEL),
         ] {
             let Some(val) = val else { continue };
-            write!(self.text.buf, " {label:<20} => [")?;
-            for v in &val {
-                write!(self.text.buf, "{v:>5},")?;
-            }
-            writeln!(self.text.buf, "]")?;
+            let s: String = val.iter().map(|v| format!("{v:>5},")).collect();
+            writeln!(self.text.buf, " {label:<20} => [{s}]")?;
         }
 
         for (label, voltage, current) in [
@@ -223,8 +257,19 @@ impl AppTextView {
 }
 
 fn socket_power(buf: &mut String, gpu_metrics: &GpuMetrics) -> Result<(), fmt::Error> {
-    let v = check_metrics_val(gpu_metrics.get_average_socket_power());
-    writeln!(buf, " Socket Power => {v:>3} W")
+    let avg = check_metrics_val(gpu_metrics.get_average_socket_power());
+    writeln!(buf, " Socket Power (Average) => {avg:>3} W")?;
+
+    match gpu_metrics {
+        GpuMetrics::V1_4(_) |
+        GpuMetrics::V1_5(_) => {
+            let cur = check_metrics_val(gpu_metrics.get_current_socket_power());
+            writeln!(buf, " Socket Power (Current) => {cur:>3} W")?;
+        },
+        _ => {},
+    }
+
+    Ok(())
 }
 
 fn avg_activity(buf: &mut String, gpu_metrics: &GpuMetrics) -> Result<(), fmt::Error> {
