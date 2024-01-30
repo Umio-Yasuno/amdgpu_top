@@ -51,6 +51,7 @@ section = "utils"
 assets = [
     ["target/release/amdgpu_top", "usr/bin/", "755"],
     ["assets/amdgpu_top.desktop", "usr/share/applications/", "644"],
+    ["assets/amdgpu_top-tui.desktop", "usr/share/applications/", "644"],
     ["docs/amdgpu_top.1", "usr/share/man/man1/", "644"],
 ]
 
@@ -60,6 +61,7 @@ auto-req = "libdrm"
 assets = [
     { source = "target/release/amdgpu_top", dest = "/usr/bin/", mode = "755" },
     { source = "assets/amdgpu_top.desktop", dest = "/usr/share/applications/", mode = "644" },
+    { source = "assets/amdgpu_top-tui.desktop", dest = "/usr/share/applications/", mode = "644" },
     { source = "docs/amdgpu_top.1", dest = "/usr/share/man/man1/", mode = "644" },
 ]
 

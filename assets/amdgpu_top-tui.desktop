@@ -6,3 +6,8 @@ Exec=amdgpu_top
 Terminal=true
 Categories=System;Monitor;
 Icon=utilities-system-monitor
+Actions=SMI;
+
+[Desktop Action SMI]
+Exec=amdgpu_top --smi
+Name=AMDGPU TOP (SMI)
