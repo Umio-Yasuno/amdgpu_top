@@ -1,4 +1,7 @@
 use libamdgpu_top::PCI;
+use std::path::PathBuf;
+
+const DEFAULT_FIFO_PATH: &str = "/tmp/amdgpu_top.pipe";
 
 pub struct MainOpt {
     pub instance: Option<usize>, // index
@@ -34,7 +37,7 @@ impl Default for MainOpt {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 #[allow(non_camel_case_types)]
 #[allow(clippy::upper_case_acronyms)]
 pub enum AppMode {
@@ -43,6 +46,8 @@ pub enum AppMode {
     GUI,
     #[cfg(feature = "json")]
     JSON,
+    #[cfg(feature = "json")]
+    JSON_FIFO(PathBuf),
     #[cfg(feature = "tui")]
     SMI,
 }
@@ -120,6 +125,8 @@ const HELP_MSG: &str = concat!(
     "       If 0 is specified, it will be an infinite loop. (default: 0)\n",
     "   -u <u64>, --update-process-index <u64>\n",
     "       Update interval in seconds of the process index for fdinfo. (default: 5s)\n",
+    "   --json_fifo, --json-fifo <String>\n",
+    "       Output JSON formatted data to FIFO (named pipe) for other application and scripts.\n",
 );
 
 impl MainOpt {
@@ -158,6 +165,28 @@ impl MainOpt {
                     #[cfg(feature = "json")]
                     {
                         opt.app_mode = AppMode::JSON;
+                    }
+                    #[cfg(not(feature = "json"))]
+                    {
+                        eprintln!("\"json\" feature is not enabled for this build.");
+                        std::process::exit(1);
+                    }
+                },
+                "--json-fifo" | "--json_fifo" => {
+                    #[cfg(feature = "json")]
+                    {
+                        let path = if let Some(val_str) = args.get(idx+1) {
+                            if val_str.starts_with("-") {
+                                PathBuf::from(DEFAULT_FIFO_PATH)
+                            } else {
+                                skip = true;
+                                PathBuf::from(val_str)
+                            }
+                        } else {
+                            PathBuf::from(DEFAULT_FIFO_PATH)
+                        };
+
+                        opt.app_mode = AppMode::JSON_FIFO(path);
                     }
                     #[cfg(not(feature = "json"))]
                     {

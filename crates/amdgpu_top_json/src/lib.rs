@@ -4,6 +4,8 @@ use stat::{ProcInfo};
 use serde_json::{json, Value};
 use std::time::{Duration, Instant};
 use std::sync::{Arc, Mutex};
+use std::path::PathBuf;
+use std::io::Write;
 
 mod output_json;
 mod dump;
@@ -81,7 +83,7 @@ impl JsonApp {
         }
     }
 
-    pub fn run(&mut self, title: &str) {
+    pub fn run(&mut self, title: &str, fifo_path: Option<PathBuf>) {
         let mut n = 0;
         let mut buf_json: Vec<Value> = Vec::with_capacity(self.vec_device_info.len());
         let devices_len = self.vec_device_info.len();
@@ -112,7 +114,7 @@ impl JsonApp {
 
             let now = Instant::now();
 
-            println!("{}", json!({
+            let s = json!({
                 "period": {
                     "duration": now.duration_since(self.base_time).as_millis(),
                     "unit": "ms",
@@ -121,11 +123,24 @@ impl JsonApp {
                 "devices_len": devices_len,
                 "amdgpu_top_version": amdgpu_top_version(),
                 "title": title,
-            }));
+            }).to_string();
+
+            if let Some(path) = &fifo_path {
+                if let Ok(mut f) = std::fs::OpenOptions::new()
+                    .read(true)
+                    .write(true)
+                    .open(&path)
+                {
+                    f.write_all(s.as_bytes()).unwrap();
+                    f.flush().unwrap();
+                }
+            } else {
+                println!("{s}");
+            }
 
             buf_json.clear();
 
-            if self.iterations != 0 {
+            if fifo_path.is_none() && self.iterations != 0 {
                 n += 1;
                 if self.iterations == n { break; }
             }
