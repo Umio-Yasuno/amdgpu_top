@@ -66,6 +66,7 @@ dependencies = [
  "amdgpu_top_tui",
  "gix",
  "libamdgpu_top",
+ "libc",
 ]
 
 [[package]]

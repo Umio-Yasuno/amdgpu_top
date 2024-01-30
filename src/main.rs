@@ -62,7 +62,7 @@ fn main() {
                 main_opt.no_pc,
             );
 
-            j.run(TITLE);
+            j.run(TITLE, None);
 
             return;
         },
@@ -134,6 +134,45 @@ fn main() {
         ),
         #[cfg(feature = "json")]
         AppMode::JSON => unreachable!(),
+        #[cfg(feature = "json")]
+        AppMode::JSON_FIFO(path) => {
+            use std::ffi::CString;
+            use std::os::unix::fs::FileTypeExt;
+
+            let create_fifo = if path.exists() {
+                let metadata = std::fs::metadata(&path).unwrap();
+
+                if metadata.file_type().is_fifo() {
+                    false
+                } else {
+                    std::fs::remove_file(&path).unwrap();
+                    true
+                }
+            } else {
+                true
+            };
+
+            if create_fifo {
+                let bytes = path.clone().into_os_string().into_encoded_bytes();
+                let fifo_path = CString::new(bytes).unwrap();
+
+                let r = unsafe { libc::mkfifo(fifo_path.as_ptr(), 0o644) };
+
+                if r != 0 {
+                    panic!("mkfifo failed.");
+                }
+            }
+
+            let mut j = amdgpu_top_json::JsonApp::new(
+                &device_path_list,
+                main_opt.refresh_period,
+                main_opt.update_process_index,
+                main_opt.json_iterations,
+                main_opt.no_pc,
+            );
+
+            j.run(TITLE, Some(path));
+        },
         #[cfg(feature = "tui")]
         AppMode::SMI => amdgpu_top_tui::run_smi(
             TITLE,

@@ -65,6 +65,8 @@ OPTIONS:
        If 0 is specified, it will be an infinite loop. (default: 0)
    -u <u64>, --update-process-index <u64>
        Update interval in seconds of the process index for fdinfo. (default: 5s)
+   --json_fifo, --json-fifo <String>
+       Output JSON formatted data to FIFO (named pipe) for other application and scripts.
 ```
 
 ### Commands for TUI
