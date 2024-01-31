@@ -1,5 +1,4 @@
 use libamdgpu_top::PCI;
-use std::path::PathBuf;
 
 const DEFAULT_FIFO_PATH: &str = "/tmp/amdgpu_top.pipe";
 
@@ -47,7 +46,7 @@ pub enum AppMode {
     #[cfg(feature = "json")]
     JSON,
     #[cfg(feature = "json")]
-    JSON_FIFO(PathBuf),
+    JSON_FIFO(String),
     #[cfg(feature = "tui")]
     SMI,
 }
@@ -175,18 +174,18 @@ impl MainOpt {
                 "--json-fifo" | "--json_fifo" => {
                     #[cfg(feature = "json")]
                     {
-                        let path = if let Some(val_str) = args.get(idx+1) {
+                        let s = if let Some(val_str) = args.get(idx+1) {
                             if val_str.starts_with("-") {
-                                PathBuf::from(DEFAULT_FIFO_PATH)
+                                String::from(DEFAULT_FIFO_PATH)
                             } else {
                                 skip = true;
-                                PathBuf::from(val_str)
+                                String::from(val_str)
                             }
                         } else {
-                            PathBuf::from(DEFAULT_FIFO_PATH)
+                            String::from(DEFAULT_FIFO_PATH)
                         };
 
-                        opt.app_mode = AppMode::JSON_FIFO(path);
+                        opt.app_mode = AppMode::JSON_FIFO(s);
                     }
                     #[cfg(not(feature = "json"))]
                     {
