@@ -135,31 +135,24 @@ fn main() {
         #[cfg(feature = "json")]
         AppMode::JSON => unreachable!(),
         #[cfg(feature = "json")]
-        AppMode::JSON_FIFO(path) => {
+        AppMode::JSON_FIFO(path_string) => {
             use std::ffi::CString;
-            use std::os::unix::fs::FileTypeExt;
+            use std::path::PathBuf;
 
-            let create_fifo = if path.exists() {
-                let metadata = std::fs::metadata(&path).unwrap();
+            let path = PathBuf::from(path_string.clone());
 
-                if metadata.file_type().is_fifo() {
-                    false
-                } else {
-                    std::fs::remove_file(&path).unwrap();
-                    true
-                }
-            } else {
-                true
+            if path.exists() {
+                panic!("{path:?} already exists");
             };
 
-            if create_fifo {
-                let bytes = path.clone().into_os_string().into_encoded_bytes();
+            {
+                let bytes = path_string.as_bytes();
                 let fifo_path = CString::new(bytes).unwrap();
 
                 let r = unsafe { libc::mkfifo(fifo_path.as_ptr(), 0o644) };
 
                 if r != 0 {
-                    panic!("mkfifo failed.");
+                    panic!("mkfifo failed: {r}, {path:?}");
                 }
             }
 
