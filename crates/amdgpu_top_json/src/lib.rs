@@ -126,14 +126,14 @@ impl JsonApp {
             }).to_string();
 
             if let Some(path) = &fifo_path {
-                if let Ok(mut f) = std::fs::OpenOptions::new()
+                let mut f = std::fs::OpenOptions::new()
                     .read(true)
                     .write(true)
                     .open(&path)
-                {
-                    f.write_all(s.as_bytes()).unwrap();
-                    f.flush().unwrap();
-                }
+                    .unwrap();
+
+                f.write_all(s.as_bytes()).unwrap();
+                f.flush().unwrap();
             } else {
                 println!("{s}");
             }
