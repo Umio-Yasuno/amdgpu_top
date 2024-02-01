@@ -1853,7 +1853,7 @@ checksum = "302d7ab3130588088d277783b1e2d2e10c9e9e4a16dd9050e6ec93fb3e7048f4"
 [[package]]
 name = "libdrm_amdgpu_sys"
 version = "0.4.1"
-source = "git+https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs#225b4668145c2cb13961576a27c99a8b768ce5e5"
+source = "git+https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs#1cc48763ba99e0c91837359cf113c29a7415df04"
 dependencies = [
  "libc",
 ]
