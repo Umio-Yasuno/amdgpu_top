@@ -1,7 +1,5 @@
 use libamdgpu_top::PCI;
 
-const DEFAULT_FIFO_PATH: &str = "/tmp/amdgpu_top.pipe";
-
 pub struct MainOpt {
     pub instance: Option<usize>, // index
     pub refresh_period: u64, // ms
@@ -176,13 +174,15 @@ impl MainOpt {
                     {
                         let s = if let Some(val_str) = args.get(idx+1) {
                             if val_str.starts_with("-") {
-                                String::from(DEFAULT_FIFO_PATH)
+                                eprintln!("missing argument: \"--json-fifo <String>\"");
+                                std::process::exit(1);
                             } else {
                                 skip = true;
                                 String::from(val_str)
                             }
                         } else {
-                            String::from(DEFAULT_FIFO_PATH)
+                            eprintln!("missing argument: \"--json-fifo <String>\"");
+                            std::process::exit(1);
                         };
 
                         opt.app_mode = AppMode::JSON_FIFO(s);
