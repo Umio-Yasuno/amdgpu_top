@@ -66,6 +66,7 @@ impl AvgActivity for GpuMetrics {
 pub trait GuiGpuMetrics: MetricsInfo {
     fn v1_ui(&self, ui: &mut egui::Ui);
     fn v2_ui(&self, ui: &mut egui::Ui);
+    fn v3_ui(&self, ui: &mut egui::Ui);
 
     fn v1_4_v1_5_ui(&self, ui: &mut egui::Ui);
 
@@ -233,6 +234,16 @@ impl GuiGpuMetrics for GpuMetrics {
 
         for (avg, cur, name) in [
             (
+                self.get_average_gfxclk_frequency(),
+                self.get_current_gfxclk(),
+                "GFXCLK",
+            ),
+            (
+                self.get_average_socclk_frequency(),
+                self.get_current_socclk(),
+                "SOCCLK",
+            ),
+            (
                 self.get_average_uclk_frequency(),
                 self.get_current_uclk(),
                 "UMCCLK",
@@ -365,6 +376,151 @@ impl GuiGpuMetrics for GpuMetrics {
         ] {
             ui.label(format!("XGMI => x{xgmi_width} {xgmi_speed}Gbps"));
         }
+    }
+
+    fn v3_ui(&self, ui: &mut egui::Ui) {
+        let mhz = fl!("mhz");
+        let mw = fl!("mw");
+
+        ui.horizontal(|ui| {
+            ui.label(format!("{} => {pad:9}", fl!("cpu"), pad = ""));
+            Self::v2_helper(ui, &[
+                (self.get_average_cpu_power(), &mw),
+            ]);
+        });
+
+        ui.horizontal(|ui| {
+            ui.label(format!("{} =>", fl!("gfx")));
+            let temp_gfx = self.get_temperature_gfx().map(|v| v.saturating_div(100));
+            Self::v2_helper(ui, &[
+                (temp_gfx, "C"),
+                (self.get_average_gfx_power(), &mw),
+                (self.get_current_gfxclk(), &mhz),
+            ]);
+        });
+
+        ui.horizontal(|ui| {
+            ui.label(format!("{} =>", fl!("soc")));
+            let temp_soc = self.get_temperature_soc().map(|v| v.saturating_div(100));
+            Self::v2_helper(ui, &[
+                (temp_soc, "C"),
+                (self.get_average_soc_power(), &mw),
+                (self.get_current_socclk(), &mhz),
+            ]);
+        });
+
+        self.socket_power(ui);
+        self.avg_activity(ui);
+
+       if let [Some(dram_reads), Some(dram_writes)] = [
+            self.get_average_dram_reads(),
+            self.get_average_dram_writes(),
+        ] {
+            ui.label(format!(
+                " DRAM => Reads: {dram_reads:>4} MB/s, Writes: {dram_writes:>} MB/s",
+            ));
+        }
+
+        let fl_avg = fl!("avg");
+        let fl_cur = fl!("cur");
+
+        for (avg, cur, name) in [
+            (
+                self.get_average_gfxclk_frequency(),
+                self.get_current_gfxclk(),
+                "GFXCLK",
+            ),
+            (
+                self.get_average_socclk_frequency(),
+                self.get_current_socclk(),
+                "SOCCLK",
+            ),
+            (
+                self.get_average_uclk_frequency(),
+                self.get_current_uclk(),
+                "UMCCLK",
+            ),
+            (
+                self.get_average_fclk_frequency(),
+                self.get_current_fclk(),
+                "FCLK",
+            ),
+            (
+                self.get_average_vclk_frequency(),
+                self.get_current_vclk(),
+                "VCLK",
+            ),
+            (
+                self.get_average_dclk_frequency(),
+                self.get_current_dclk(),
+                "DCLK",
+            ),
+            (
+                self.get_average_vpeclk_frequency(),
+                None,
+                "VPECLK",
+            ),
+            (
+                self.get_average_ipuclk_frequency(),
+                None,
+                "IPUCLK",
+            ),
+            (
+                self.get_average_mpipu_frequency(),
+                None,
+                "MPIPUCLK",
+            ),
+        ] {
+            let [avg, cur] = [avg, cur].map(check_metrics_val);
+            ui.label(format!("{name:<6} => {fl_avg} {avg:>4} {mhz}, {fl_cur} {cur:>4} {mhz}"));
+        }
+
+        if let Some(ipu) = self.get_average_ipu_activity() {
+            egui::Grid::new("GPU Metrics v3.x IPU").show(ui, |ui| {
+                ui.label("IPU =>");
+                ui.label(format!(" IPU => {ipu:?}%"));
+
+                if let Some(ipu_power) = self.get_average_ipu_power() {
+                    ui.label(format!(", {ipu_power:>5} {mw}"));
+                }
+                ui.end_row();
+
+                ui.label("");
+
+
+                if let [Some(ipu_reads), Some(ipu_writes)] = [
+                    self.get_average_ipu_reads(),
+                    self.get_average_ipu_writes(),
+                ] {
+                    ui.label(format!(
+                        "        Reads: {ipu_reads:>4} MB/s, Writes: {ipu_writes:>} MB/s",
+                    ));
+                }
+            });
+        }
+
+        egui::Grid::new("GPU Metrics v3.x Core").show(ui, |ui| {
+            let core_temp = check_temp_array(self.get_temperature_core());
+            let [core_power, core_clk] = [
+                self.get_average_core_power(),
+                self.get_current_coreclk(),
+            ].map(check_power_clock_array);
+
+            for (val, label) in [
+                (core_temp, fl!("core_temp")),
+                (core_power, fl!("core_power")),
+                (core_clk, fl!("core_clock")),
+            ] {
+                let Some(val) = val else { continue };
+                let s = val.iter().fold(String::new(), |mut s, v| {
+                    let _ = write!(s, "{v:>5},");
+                    s
+                });
+                ui.label(format!("{label} =>"));
+                ui.label(format!("[{s}]"));
+                ui.end_row();
+            }
+        });
     }
 
     fn socket_power(&self, ui: &mut egui::Ui) {

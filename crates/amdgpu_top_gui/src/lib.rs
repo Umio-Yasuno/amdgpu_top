@@ -407,6 +407,10 @@ impl MyApp {
                         ui.add_space(SPACE);
                         collapsing(ui, &header, true, |ui| metrics.v2_ui(ui));
                     },
+                    GpuMetrics::V3_0(_) => {
+                        ui.add_space(SPACE);
+                        collapsing(ui, &header, true, |ui| metrics.v3_ui(ui));
+                    },
                     _ => {},
                 }
             }
