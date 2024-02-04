@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use libdrm_amdgpu_sys::AMDGPU::NUM_HBM_INSTANCES;
 
 pub trait IsMax {
@@ -33,11 +34,17 @@ pub fn check_power_clock_array(array: Option<Vec<u16>>) -> Option<Vec<u16>> {
 }
 
 pub fn all_clk_helper(v: &[u16]) -> String {
-    v.iter().map(|activity| format!("{activity:>5},")).collect()
+    v.iter().fold(String::new(), |mut s, activity| {
+        let _ = write!(s, "{activity:>5},");
+        s
+    })
 }
 
 pub fn all_activity_helper(v: &[u16]) -> String {
-    v.iter().map(|activity| format!("{activity:>3}%,")).collect()
+    v.iter().fold(String::new(), |mut s, activity| {
+        let _ = write!(s, "{activity:>3}%,");
+        s
+    })
 }
 
 #[allow(non_camel_case_types)]

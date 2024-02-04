@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use eframe::egui;
 use crate::{
     app::grid,
@@ -395,9 +396,10 @@ impl GuiModeProp for &(ModeProp, u64) {
                         ui.end_row();
                     },
                     drmModePropType::ENUM => {
-                        let enums: String = self.0.enums.iter().map(|enum_| {
-                            format!("{:?}={}, ", enum_.name(), enum_.value)
-                        }).collect();
+                        let enums = self.0.enums.iter().fold(String::new(), |mut s, enum_| {
+                            let _ = write!(s, "{:?}={}, ", enum_.name(), enum_.value);
+                            s
+                        });
 
                         ui.label("enums");
                         ui.label(format!("[{}]", enums.trim_end_matches(", ")));

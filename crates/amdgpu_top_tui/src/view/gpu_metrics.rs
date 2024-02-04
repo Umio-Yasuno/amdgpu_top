@@ -221,7 +221,10 @@ impl AppTextView {
             (core_clk, CORE_CLOCK_LABEL),
         ] {
             let Some(val) = val else { continue };
-            let s: String = val.iter().map(|v| format!("{v:>5},")).collect();
+            let s = val.iter().fold(String::new(), |mut s, v| {
+                let _ = write!(s, "{v:>5},");
+                s
+            });
             writeln!(self.text.buf, " {label:<16} => [{s}]")?;
         }
 
@@ -230,7 +233,10 @@ impl AppTextView {
             (l3_clk, L3_CLOCK_LABEL),
         ] {
             let Some(val) = val else { continue };
-            let s: String = val.iter().map(|v| format!("{v:>5},")).collect();
+            let s = val.iter().fold(String::new(), |mut s, v| {
+                let _ = write!(s, "{v:>5},");
+                s
+            });
             writeln!(self.text.buf, " {label:<20} => [{s}]")?;
         }
 

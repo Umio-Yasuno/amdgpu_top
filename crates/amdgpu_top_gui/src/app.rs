@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
 use eframe::egui;
@@ -166,10 +167,10 @@ impl GuiGpuMetrics for GpuMetrics {
         // Only Aldebaran (MI200) supports it.
         if let Some(hbm_temp) = check_hbm_temp(self.get_temperature_hbm()) {
             ui.horizontal(|ui| {
-                let s: String = hbm_temp
-                    .iter()
-                    .map(|v| format!("{v:>5},"))
-                    .collect();
+                let s = hbm_temp.iter().fold(String::new(), |mut s, v| {
+                    let _ = write!(s, "{v:>5},");
+                    s
+                });
 
                 ui.label(format!("{} =>", fl!("hbm_temp")));
                 ui.label(format!("[{s}]"));
@@ -271,10 +272,10 @@ impl GuiGpuMetrics for GpuMetrics {
                 (core_clk, fl!("core_clock")),
             ] {
                 let Some(val) = val else { continue };
-                let s: String = val
-                    .iter()
-                    .map(|v| format!("{v:>5},"))
-                    .collect();
+                let s = val.iter().fold(String::new(), |mut s, v| {
+                    let _ = write!(s, "{v:>5},");
+                    s
+                });
                 ui.label(format!("{label} =>"));
                 ui.label(format!("[{s}]"));
                 ui.end_row();
@@ -285,10 +286,10 @@ impl GuiGpuMetrics for GpuMetrics {
                 (l3_clk, fl!("l3_clock")),
             ] {
                 let Some(val) = val else { continue };
-                let s: String = val
-                    .iter()
-                    .map(|v| format!("{v:>5},"))
-                    .collect();
+                let s = val.iter().fold(String::new(), |mut s, v| {
+                    let _ = write!(s, "{v:>5},");
+                    s
+                });
 
                 ui.label(format!("{label} =>"));
                 ui.label(format!("[{s}]"));

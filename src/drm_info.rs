@@ -4,6 +4,7 @@ use libamdgpu_top::{
     // ConnectorInfo,
     ModeProp,
 };
+use std::fmt::Write;
 
 pub fn dump_all_drm_info(device_path_list: &[DevicePath]) {
     for device_path in device_path_list {
@@ -65,12 +66,13 @@ pub fn dump_mode_prop((mode_prop, value): &(ModeProp, u64), last: bool, last_pro
         mode_prop.prop_id,
         value,
         match mode_prop.prop_type {
-            drmModePropType::BLOB => format!(", blob"),
+            drmModePropType::BLOB => ", blob".to_string(),
             drmModePropType::RANGE => format!(", values: {:?}", mode_prop.values),
             drmModePropType::ENUM => {
-                let enums: String = mode_prop.enums.iter().map(|enum_| {
-                    format!("{:?}={}, ", enum_.name(), enum_.value)
-                }).collect();
+                let enums = mode_prop.enums.iter().fold(String::new(), |mut s, enum_| {
+                    let _ = write!(s, "{:?}={}, ", enum_.name(), enum_.value);
+                    s
+                });
 
                 format!(", enums: [{}]", enums.trim_end_matches(", "))
             },
