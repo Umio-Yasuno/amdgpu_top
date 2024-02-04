@@ -27,6 +27,7 @@ impl AppTextView {
             GpuMetrics::V2_2(_) |
             GpuMetrics::V2_3(_) |
             GpuMetrics::V2_4(_) => self.gpu_metrics_v2_x(metrics)?,
+            GpuMetrics::V3_0(_) => self.gpu_metrics_v3_x(metrics)?,
             _ => {},
         };
 
@@ -183,6 +184,16 @@ impl AppTextView {
 
         for (avg, cur, name) in [
             (
+                metrics.get_average_gfxclk_frequency(),
+                metrics.get_current_gfxclk(),
+                "GFXCLK",
+            ),
+            (
+                metrics.get_average_socclk_frequency(),
+                metrics.get_current_socclk(),
+                "SOCCLK",
+            ),
+            (
                 metrics.get_average_uclk_frequency(),
                 metrics.get_current_uclk(),
                 "UMCCLK",
@@ -253,6 +264,144 @@ impl AppTextView {
 
         Ok(())
     }
+
+    fn gpu_metrics_v3_x(&mut self, metrics: &GpuMetrics) -> Result<(), fmt::Error> {
+        let temp_gfx = metrics.get_temperature_gfx().map(|v| v.saturating_div(100));
+        let temp_soc = metrics.get_temperature_soc().map(|v| v.saturating_div(100));
+
+        write!(self.text.buf, " CPU => {pad:9}", pad = "")?;
+        v2_helper(&mut self.text.buf, &[(metrics.get_average_cpu_power(), "mW")])?;
+
+        write!(self.text.buf, " GFX => ")?;
+        v2_helper(&mut self.text.buf, &[
+            (temp_gfx, "C"),
+            (metrics.get_average_gfx_power(), "mW"),
+            (metrics.get_current_gfxclk(), "MHz"),
+        ])?;
+
+        write!(self.text.buf, " SoC => ")?;
+        v2_helper(&mut self.text.buf, &[
+            (temp_soc, "C"),
+            (metrics.get_average_soc_power(), "mW"),
+            (metrics.get_current_socclk(), "MHz"),
+        ])?;
+
+        socket_power(&mut self.text.buf, metrics)?;
+        avg_activity(&mut self.text.buf, metrics)?;
+
+        if let [Some(dram_reads), Some(dram_writes)] = [
+            metrics.get_average_dram_reads(),
+            metrics.get_average_dram_writes(),
+        ] {
+            writeln!(
+                self.text.buf,
+                " DRAM => Reads: {dram_reads:>4} MB/s, Writes: {dram_writes:>} MB/s",
+            )?;
+        }
+
+        if let Some(ipu) = metrics.get_average_ipu_activity() {
+            write!(self.text.buf, " IPU => {ipu:?}%")?;
+
+            if let Some(ipu_power) = metrics.get_average_ipu_power() {
+                write!(self.text.buf, ", {ipu_power:>5} mW")?;
+            }
+
+            writeln!(self.text.buf)?;
+        }
+
+        if let [Some(ipu_reads), Some(ipu_writes)] = [
+            metrics.get_average_ipu_reads(),
+            metrics.get_average_ipu_writes(),
+        ] {
+            writeln!(
+                self.text.buf,
+                "        Reads: {ipu_reads:>4} MB/s, Writes: {ipu_writes:>} MB/s",
+            )?;
+        }
+
+        let core_temp = check_temp_array(metrics.get_temperature_core());
+        let [core_power, core_clk] = [
+            metrics.get_average_core_power(),
+            metrics.get_current_coreclk(),
+        ].map(check_power_clock_array);
+
+        for (val, label) in [
+            (core_temp, CORE_TEMP_LABEL),
+            (core_power, CORE_POWER_LABEL),
+            (core_clk, CORE_CLOCK_LABEL),
+        ] {
+            let Some(val) = val else { continue };
+            let s = val.iter().fold(String::new(), |mut s, v| {
+                let _ = write!(s, "{v:>5},");
+                s
+            });
+            writeln!(self.text.buf, " {label:<16} => [{s}]")?;
+        }
+
+        for (avg, cur, name) in [
+            (
+                metrics.get_average_gfxclk_frequency(),
+                metrics.get_current_gfxclk(),
+                "GFXCLK",
+            ),
+            (
+                metrics.get_average_socclk_frequency(),
+                metrics.get_current_socclk(),
+                "SOCCLK",
+            ),
+            (
+                metrics.get_average_uclk_frequency(),
+                metrics.get_current_uclk(),
+                "UMCCLK",
+            ),
+            (
+                metrics.get_average_fclk_frequency(),
+                metrics.get_current_fclk(),
+                "FCLK",
+            ),
+            (
+                metrics.get_average_vclk_frequency(),
+                metrics.get_current_vclk(),
+                "VCLK",
+            ),
+            (
+                metrics.get_average_dclk_frequency(),
+                metrics.get_current_dclk(),
+                "DCLK",
+            ),
+            (
+                metrics.get_average_vpeclk_frequency(),
+                None,
+                "VPECLK",
+            ),
+            (
+                metrics.get_average_ipuclk_frequency(),
+                None,
+                "IPUCLK",
+            ),
+            (
+                metrics.get_average_mpipu_frequency(),
+                None,
+                "MPIPUCLK",
+            ),
+        ] {
+            let [avg, cur] = [avg, cur].map(check_metrics_val);
+            writeln!(self.text.buf, " {name:<6} => Avg. {avg:>4} MHz, Cur. {cur:>4} MHz")?;
+        }
+
+        if let [Some(stapm_limit), Some(current_stapm_limit)] = [
+            metrics.get_stapm_power_limit(),
+            metrics.get_current_stapm_power_limit(),
+        ] {
+            writeln!(
+                self.text.buf,
+                " STAPM Limit: {stapm_limit:>5} mW, {current_stapm_limit:>5} mW (Current)",
+            )?;
+        }
+
+        Ok(())
+    }
+
 
     pub fn cb_gpu_metrics(siv: &mut cursive::Cursive) {
         {
