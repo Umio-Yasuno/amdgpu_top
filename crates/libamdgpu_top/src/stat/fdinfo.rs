@@ -39,9 +39,11 @@ pub struct FdInfoUsage {
     pub total_enc: i64,
 }
 
-impl std::ops::AddAssign for FdInfoUsage {
-    fn add_assign(&mut self, other: Self) {
-        *self = Self {
+impl std::ops::Add for FdInfoUsage {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
             vram_usage: self.vram_usage + other.vram_usage,
             gtt_usage: self.gtt_usage + other.gtt_usage,
             system_cpu_memory_usage: self.system_cpu_memory_usage + other.system_cpu_memory_usage,
@@ -229,13 +231,7 @@ impl FdInfoStat {
     }
 
     pub fn fold_fdinfo_usage(&self) -> FdInfoUsage {
-        let mut fold = FdInfoUsage::default();
-
-        for pu in &self.proc_usage {
-            fold += pu.usage;
-        }
-
-        fold
+        self.proc_usage.iter().fold(FdInfoUsage::default(), |acc, pu| acc + pu.usage)
     }
 
     pub fn sort_proc_usage(&mut self, sort: FdInfoSortType, reverse: bool) {
