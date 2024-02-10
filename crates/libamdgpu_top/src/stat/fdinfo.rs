@@ -37,6 +37,7 @@ pub struct FdInfoUsage {
     pub media: i64,
     pub total_dec: i64,
     pub total_enc: i64,
+    pub vpe: i64,
 }
 
 impl std::ops::Add for FdInfoUsage {
@@ -63,6 +64,7 @@ impl std::ops::Add for FdInfoUsage {
             media: self.media + other.media,
             total_dec: self.total_dec + other.total_dec,
             total_enc: self.total_enc + other.total_enc,
+            vpe: self.vpe + other.vpe,
         }
     }
 }
@@ -257,6 +259,8 @@ impl FdInfoStat {
                 (FdInfoSortType::Encode, true) => a.usage.total_enc.cmp(&b.usage.total_enc),
                 (FdInfoSortType::MediaEngine, false) => b.usage.media.cmp(&a.usage.media),
                 (FdInfoSortType::MediaEngine, true) => a.usage.media.cmp(&b.usage.media),
+                (FdInfoSortType::VPE, false) => b.usage.media.cmp(&a.usage.vpe),
+                (FdInfoSortType::VPE, true) => a.usage.media.cmp(&b.usage.vpe),
             }
         );
     }
@@ -272,10 +276,11 @@ pub enum FdInfoSortType {
     CPU,
     GFX,
     Compute,
-    DMA,
+    DMA, // SDMA, System DMA Engine
     Decode,
     Encode,
     MediaEngine,
+    VPE, // Video Compression Engine
 }
 
 impl FdInfoUsage {
@@ -322,6 +327,7 @@ impl FdInfoUsage {
             "enc:" => self.enc += ns,
             "enc_1:" => self.uvd_enc += ns,
             "jpeg:" => self.vcn_jpeg += ns,
+            "vpe:" => self.vpe += ns,
             _ => {},
         };
     }
@@ -417,7 +423,7 @@ impl FdInfoUsage {
         has_vcn: bool,
         has_vcn_unified: bool,
     ) -> Self {
-        let [gfx, compute, dma, dec, enc, uvd_enc, vcn_jpeg] = {
+        let [gfx, compute, dma, dec, enc, uvd_enc, vcn_jpeg, vpe] = {
             [
                 (pre_stat.gfx, self.gfx),
                 (pre_stat.compute, self.compute),
@@ -426,6 +432,7 @@ impl FdInfoUsage {
                 (pre_stat.enc, self.enc),
                 (pre_stat.uvd_enc, self.uvd_enc),
                 (pre_stat.vcn_jpeg, self.vcn_jpeg),
+                (pre_stat.vpe, self.vpe),
             ]
             .map(|(pre, cur)| {
                 let usage = if pre == 0 {
@@ -480,6 +487,7 @@ impl FdInfoUsage {
             media,
             total_dec,
             total_enc,
+            vpe,
         }
     }
 }
