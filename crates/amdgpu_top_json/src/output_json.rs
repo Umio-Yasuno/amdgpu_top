@@ -139,6 +139,7 @@ impl OutputJson for FdInfoStat {
                 ("Encode", pu.usage.total_enc),
                 ("CPU", pu.cpu_usage),
                 ("Media", pu.usage.media),
+                ("VPE", pu.usage.vpe),
             ] {
                 sub.insert(
                     label.to_string(),
