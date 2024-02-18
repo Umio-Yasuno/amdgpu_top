@@ -113,6 +113,9 @@ impl OutputJson for Sensors {
 impl OutputJson for FdInfoStat {
     fn json(&self) -> Value {
         let mut m = Map::new();
+        let has_vcn = self.has_vcn;
+        let has_vcn_unified = self.has_vcn_unified;
+        let has_vpe = self.has_vpe;
 
         for pu in &self.proc_usage {
             let mut sub = Map::new();
@@ -132,23 +135,29 @@ impl OutputJson for FdInfoStat {
             );
 
             for (label, val) in [
-                ("GFX", pu.usage.gfx),
-                ("Compute", pu.usage.compute),
-                ("DMA", pu.usage.dma),
-                ("Decode", pu.usage.total_dec),
-                ("Encode", pu.usage.total_enc),
-                ("CPU", pu.cpu_usage),
-                ("Media", pu.usage.media),
-                ("VPE", pu.usage.vpe),
+                ("GFX", Some(pu.usage.gfx)),
+                ("Compute", Some(pu.usage.compute)),
+                ("DMA", Some(pu.usage.dma)),
+                ("Decode", if !has_vcn_unified { Some(pu.usage.total_dec) } else { None }),
+                ("Encode", if !has_vcn_unified { Some(pu.usage.total_enc) } else { None }),
+                ("CPU", Some(pu.cpu_usage)),
+                ("Media", Some(pu.usage.media)),
+                ("VCN_JPEG", if has_vcn { Some(pu.usage.vcn_jpeg) } else { None }),
+                ("VPE", if has_vpe { Some(pu.usage.vpe) } else { None }),
             ] {
                 sub.insert(
                     label.to_string(),
-                    json!({
-                        "value": val,
-                        "unit": "%",
-                    }),
+                    if let Some(val) = val {
+                        json!({
+                            "value": val,
+                            "unit": "%",
+                        })
+                    } else {
+                        Value::Null
+                    },
                 );
             }
+
             m.insert(
                 format!("{}", pu.pid),
                 json!({
