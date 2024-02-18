@@ -91,6 +91,10 @@ pub fn has_vcn_unified(amdgpu_dev: &DeviceHandle) -> bool {
     4 <= ip.info.hw_ip_version_major
 }
 
+pub fn has_vpe(amdgpu_dev: &DeviceHandle) -> bool {
+    amdgpu_dev.get_hw_ip_info(HW_IP_TYPE::VPE).is_ok()
+}
+
 pub fn get_hw_ip_info_list(amdgpu_dev: &DeviceHandle) -> Vec<HwIpInfo> {
     const HW_IP_LIST: &[HW_IP_TYPE] = &[
         HW_IP_TYPE::GFX,
@@ -106,5 +110,6 @@ pub fn get_hw_ip_info_list(amdgpu_dev: &DeviceHandle) -> Vec<HwIpInfo> {
 
     HW_IP_LIST.iter()
         .filter_map(|ip_type| amdgpu_dev.get_hw_ip_info(*ip_type).ok())
-        .filter(|hw_ip_info| hw_ip_info.count != 0).collect()
+        .filter(|hw_ip_info| hw_ip_info.count != 0)
+        .collect()
 }

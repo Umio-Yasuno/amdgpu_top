@@ -42,7 +42,6 @@ impl AppTextView {
         Ok(())
     }
 
-    // AMDGPU always returns `u16::MAX` for some values it doesn't actually support.
     fn gpu_metrics_v1_x(&mut self, metrics: &GpuMetrics) -> Result<(), fmt::Error> {
         socket_power(&mut self.text.buf, metrics)?;
         avg_activity(&mut self.text.buf, metrics)?;

@@ -134,6 +134,8 @@ compute = Compute
 dma = DMA
 # Video Core Next
 vcn = VCN
+# Video Compression Engine
+vpe = VPE
 # Process Name
 name = Name
 pid = PID

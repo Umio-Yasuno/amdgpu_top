@@ -17,6 +17,7 @@ const DMA_LABEL: &str = "DMA";
 const DEC_LABEL: &str = "DEC";
 const ENC_LABEL: &str = "ENC";
 const VCN_LABEL: &str = "VCN";
+const VPE_LABEL: &str = "VPE";
 // const UVD_ENC_LABEL: &str = "UVD (ENC)";
 // const JPEG_LABEL: &str = "JPEG";
 
@@ -43,6 +44,10 @@ impl AppTextView {
             writeln!(self.text.buf, "|{VCN_LABEL:^4}|")?;
         } else {
             writeln!(self.text.buf, "|{DEC_LABEL:^4}|{ENC_LABEL:^4}|")?;
+        }
+
+        if stat.has_vpe {
+            writeln!(self.text.buf, "|{VPE_LABEL:^4}|")?;
         }
 
         stat.sort_proc_usage(sort, reverse);
@@ -87,6 +92,9 @@ impl AppTextView {
                 write!(self.text.buf, "{:>3}%|", pu.usage.total_enc)?;
             }
 
+            if stat.has_vpe {
+                write!(self.text.buf, "{:>3}%|", pu.usage.vpe)?;
+            }
 
             writeln!(self.text.buf)?;
         }

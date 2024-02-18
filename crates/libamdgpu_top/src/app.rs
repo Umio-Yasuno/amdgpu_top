@@ -1,5 +1,5 @@
 use crate::AMDGPU::{ASIC_NAME, DeviceHandle, GPU_INFO, GpuMetrics};
-use crate::{DevicePath, stat, VramUsage, has_vcn, has_vcn_unified, Sampling};
+use crate::{DevicePath, stat, VramUsage, has_vcn, has_vcn_unified, has_vpe, Sampling};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use std::time::Duration;
 use std::sync::{Arc, Mutex};
@@ -95,6 +95,7 @@ impl AppAmdgpuTop {
         let fdinfo = FdInfoStat {
             has_vcn: has_vcn(&amdgpu_dev),
             has_vcn_unified: has_vcn_unified(&amdgpu_dev),
+            has_vpe: has_vpe(&amdgpu_dev),
             ..Default::default()
         };
 

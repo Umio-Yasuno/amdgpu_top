@@ -644,12 +644,12 @@ impl MyApp {
         self.fdinfo_sort = sort_type;
     }
 
-    pub fn egui_fdinfo_plot(&self, ui: &mut egui::Ui, has_vcn_unified: bool) {
+    pub fn egui_fdinfo_plot(&self, ui: &mut egui::Ui, has_vcn_unified: bool, has_vpe: bool) {
         let label_fmt = |name: &str, val: &PlotPoint| {
             format!("{:.1}s : {name} {:.0}%", val.x, val.y)
         };
 
-        let [mut gfx, mut compute, mut dma, mut dec, mut enc] = [0; 5]
+        let [mut gfx, mut compute, mut dma, mut dec, mut enc, mut vpe] = [0; 6]
             .map(|_| Vec::<[f64; 2]>::with_capacity(HISTORY_LENGTH.end));
 
         for (i, usage) in self.buf_data.history.fdinfo_history.iter() {
@@ -658,6 +658,7 @@ impl MyApp {
             dma.push([i, usage.dma as f64]);
             dec.push([i, usage.total_dec as f64]);
             enc.push([i, usage.total_enc as f64]);
+            vpe.push([i, usage.vpe as f64]);
         }
 
         default_plot("fdinfo Plot")
@@ -683,17 +684,22 @@ impl MyApp {
                     plot_ui.line(Line::new(PlotPoints::new(dec)).name(fl!("decode")));
                     plot_ui.line(Line::new(PlotPoints::new(enc)).name(fl!("encode")));
                 }
+
+                if has_vpe {
+                    plot_ui.line(Line::new(PlotPoints::new(vpe)).name(fl!("vpe")));
+                }
             });
     }
 
     pub fn egui_grid_fdinfo(&mut self, ui: &mut egui::Ui) {
         let has_vcn_unified = self.buf_data.stat.fdinfo.has_vcn_unified;
+        let has_vpe = self.buf_data.stat.fdinfo.has_vpe;
 
         collapsing_plot(
             ui,
             &fl!("fdinfo_plot"),
             true,
-            |ui| self.egui_fdinfo_plot(ui, has_vcn_unified),
+            |ui| self.egui_fdinfo_plot(ui, has_vcn_unified, has_vpe),
         );
 
         egui::Grid::new("fdinfo").show(ui, |ui| {
@@ -719,10 +725,10 @@ impl MyApp {
             if ui.button(rt_base(format!("{:^5}", fl!("dma")))).clicked() {
                 self.set_fdinfo_sort_type(FdInfoSortType::DMA);
             }
-            if has_vcn_unified {
-                if ui.button(rt_base(format!("{:^5}", fl!("media")))).clicked() {
-                    self.set_fdinfo_sort_type(FdInfoSortType::MediaEngine);
-                }
+            if has_vcn_unified
+                && ui.button(rt_base(format!("{:^5}", fl!("media")))).clicked()
+            {
+                self.set_fdinfo_sort_type(FdInfoSortType::MediaEngine);
             } else {
                 if ui.button(rt_base(fl!("decode"))).clicked() {
                     self.set_fdinfo_sort_type(FdInfoSortType::Decode);
@@ -730,6 +736,9 @@ impl MyApp {
                 if ui.button(rt_base(fl!("encode"))).clicked() {
                     self.set_fdinfo_sort_type(FdInfoSortType::Encode);
                 }
+            }
+            if has_vpe && ui.button(rt_base(format!("{:^5}", fl!("vpe")))).clicked() {
+                self.set_fdinfo_sort_type(FdInfoSortType::VPE);
             }
             ui.end_row();
 
@@ -758,6 +767,11 @@ impl MyApp {
                     ui.label(format!("{:3} %", pu.usage.total_dec));
                     ui.label(format!("{:3} %", pu.usage.total_enc));
                 }
+
+                if has_vpe {
+                    ui.label(format!("{:3} %", pu.usage.vpe));
+                }
+
                 ui.end_row();
             } // proc_usage
         });

@@ -87,6 +87,7 @@ pub struct FdInfoStat {
     pub cpu_time_map: HashMap<i32, f32>, // sec
     pub has_vcn: bool,
     pub has_vcn_unified: bool,
+    pub has_vpe: bool,
 }
 
 impl FdInfoStat {
@@ -280,7 +281,7 @@ pub enum FdInfoSortType {
     Decode,
     Encode,
     MediaEngine,
-    VPE, // Video Compression Engine
+    VPE, // Video Processing Engine
 }
 
 impl FdInfoUsage {
