@@ -358,8 +358,8 @@ impl GuiModeInfo for drmModeModeInfo {
     fn ui(&self, ui: &mut egui::Ui) {
         let txt = format!(
             "{}x{}@{:.2}{}{}",
-            self.vdisplay,
             self.hdisplay,
+            self.vdisplay,
             self.refresh_rate(),
             if self.type_is_preferred() { " preferred" } else { "" },
             if self.type_is_driver() { " driver" } else { "" },
