@@ -56,7 +56,7 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
             let usage_gtt_mib = pu.usage.gtt_usage >> 10; // KiB -> MiB
 
             println!(
-                "    {:15} ({:7}), fds {:2}, VRAM {:5} MiB ({:3}%), GTT {:5} MiB ({:3}%)",
+                "    {:15} ({:7}), ctxs {:2}, VRAM {:5} MiB ({:3}%), GTT {:5} MiB ({:3}%)",
                 pu.name,
                 pu.pid,
                 pu.ids_count,
@@ -67,7 +67,7 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
             );
 
             println!(
-                "{:27} Requested: VRAM {:5} MiB, {:6} GTT {:5} MiB",
+                "{:28} Requested: VRAM {:5} MiB, {:6} GTT {:5} MiB",
                 "",
                 pu.usage.amd_requested_vram >> 10,
                 "",
@@ -75,7 +75,7 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
             );
 
             println!(
-                "{:27}   Evicted: VRAM {:5} MiB",
+                "{:28}   Evicted: VRAM {:5} MiB",
                 "",
                 pu.usage.amd_evicted_vram >> 10,
             );
