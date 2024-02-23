@@ -707,39 +707,33 @@ impl MyApp {
             ui.label(rt_base(format!("{:^15}", fl!("name")))).highlight();
             ui.label(rt_base(format!("{:^8}", fl!("pid")))).highlight();
             ui.label("KFD").highlight();
-            if ui.button(rt_base(format!("{:^10}", fl!("vram")))).clicked() {
-                self.set_fdinfo_sort_type(FdInfoSortType::VRAM);
-            }
-            if ui.button(rt_base(format!("{:^10}", fl!("gtt")))).clicked() {
-                self.set_fdinfo_sort_type(FdInfoSortType::GTT);
-            }
-            if ui.button(rt_base(format!("{:^5}", fl!("cpu")))).clicked() {
-                self.set_fdinfo_sort_type(FdInfoSortType::CPU);
-            }
-            if ui.button(rt_base(format!("{:^5}", fl!("gfx")))).clicked() {
-                self.set_fdinfo_sort_type(FdInfoSortType::GFX);
-            }
-            if ui.button(rt_base(fl!("compute"))).clicked() {
-                self.set_fdinfo_sort_type(FdInfoSortType::Compute);
-            }
-            if ui.button(rt_base(format!("{:^5}", fl!("dma")))).clicked() {
-                self.set_fdinfo_sort_type(FdInfoSortType::DMA);
-            }
-            if has_vcn_unified
-                && ui.button(rt_base(format!("{:^5}", fl!("media")))).clicked()
-            {
-                self.set_fdinfo_sort_type(FdInfoSortType::MediaEngine);
-            } else {
-                if ui.button(rt_base(fl!("decode"))).clicked() {
-                    self.set_fdinfo_sort_type(FdInfoSortType::Decode);
-                }
-                if ui.button(rt_base(fl!("encode"))).clicked() {
-                    self.set_fdinfo_sort_type(FdInfoSortType::Encode);
+
+            for (s, align, sort_type, flag) in [
+                (fl!("vram"), 10, FdInfoSortType::VRAM, true),
+                (fl!("gtt"), 10, FdInfoSortType::GTT, true),
+                (fl!("cpu"), 5, FdInfoSortType::CPU, true),
+                (fl!("gfx"), 5, FdInfoSortType::GFX, true),
+                (fl!("compute"), 9, FdInfoSortType::Compute, true),
+                (fl!("dma"), 5, FdInfoSortType::DMA, true),
+                (fl!("media"), 5, FdInfoSortType::MediaEngine, has_vcn_unified),
+                (fl!("decode"), 9, FdInfoSortType::Decode, !has_vcn_unified),
+                (fl!("encode"), 9, FdInfoSortType::Encode, !has_vcn_unified),
+                (fl!("vpe"), 5, FdInfoSortType::VPE, has_vpe),
+            ] {
+                if !flag { continue; }
+
+                let mark = match (self.fdinfo_sort == sort_type, self.reverse_sort) {
+                    (true, false) => "▽ ",
+                    (true, true) => "△ ",
+                    _ => "",
+                };
+                let s = format!("{mark}{s}");
+                let s = format!("{s:^align$}");
+                if ui.button(rt_base(s)).clicked() {
+                    self.set_fdinfo_sort_type(sort_type);
                 }
             }
-            if has_vpe && ui.button(rt_base(format!("{:^5}", fl!("vpe")))).clicked() {
-                self.set_fdinfo_sort_type(FdInfoSortType::VPE);
-            }
+
             ui.end_row();
 
             self.buf_data.stat.fdinfo.sort_proc_usage(self.fdinfo_sort, self.reverse_sort);
