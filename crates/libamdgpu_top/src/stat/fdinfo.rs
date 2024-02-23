@@ -73,6 +73,7 @@ impl std::ops::Add for FdInfoUsage {
 pub struct ProcUsage {
     pub pid: i32,
     pub name: String,
+    pub ids_count: usize,
     pub usage: FdInfoUsage,
     pub cpu_usage: i64, // %
     pub is_kfd_process: bool,
@@ -141,6 +142,7 @@ impl FdInfoStat {
         let name = &proc_info.name;
         let mut stat = FdInfoUsage::default();
         let mut buf = String::new();
+        let mut ids_count = 0usize;
 
         for fd in &proc_info.fds {
             buf.clear();
@@ -150,6 +152,7 @@ impl FdInfoStat {
 
             let mut lines = buf.lines().skip_while(|l| !l.starts_with("drm-client-id"));
             if let Some(id) = lines.next().and_then(FdInfoUsage::id_parse) {
+                ids_count += 1;
                 if !self.drm_client_ids.insert(id) { continue }
             } else {
                 continue;
@@ -219,6 +222,7 @@ impl FdInfoStat {
         self.proc_usage.push(ProcUsage {
             pid,
             name: name.to_string(),
+            ids_count,
             usage: diff,
             cpu_usage: cpu_usage as i64,
             is_kfd_process,
