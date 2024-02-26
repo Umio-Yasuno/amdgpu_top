@@ -649,16 +649,24 @@ impl MyApp {
             format!("{:.1}s : {name} {:.0}%", val.x, val.y)
         };
 
-        let [mut gfx, mut compute, mut dma, mut dec, mut enc, mut vpe] = [0; 6]
+        let [mut gfx, mut compute, mut dma, mut dec, mut enc, mut media, mut vpe] = [0; 7]
             .map(|_| Vec::<[f64; 2]>::with_capacity(HISTORY_LENGTH.end));
 
         for (i, usage) in self.buf_data.history.fdinfo_history.iter() {
             gfx.push([i, usage.gfx as f64]);
             compute.push([i, usage.compute as f64]);
             dma.push([i, usage.dma as f64]);
-            dec.push([i, usage.total_dec as f64]);
-            enc.push([i, usage.total_enc as f64]);
-            vpe.push([i, usage.vpe as f64]);
+
+            if has_vcn_unified {
+                media.push([i, usage.media as f64]);
+            } else {
+                dec.push([i, usage.total_dec as f64]);
+                enc.push([i, usage.total_enc as f64]);
+            }
+
+            if has_vpe {
+                vpe.push([i, usage.vpe as f64]);
+            }
         }
 
         default_plot("fdinfo Plot")
@@ -679,7 +687,7 @@ impl MyApp {
                 }
 
                 if has_vcn_unified {
-                    plot_ui.line(Line::new(PlotPoints::new(enc)).name(fl!("media")));
+                    plot_ui.line(Line::new(PlotPoints::new(media)).name(fl!("media")));
                 } else {
                     plot_ui.line(Line::new(PlotPoints::new(dec)).name(fl!("decode")));
                     plot_ui.line(Line::new(PlotPoints::new(enc)).name(fl!("encode")));
