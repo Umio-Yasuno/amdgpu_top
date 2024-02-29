@@ -68,6 +68,11 @@ system = System
 
 supported_power_profiles = Supported Power Profiles
 
+hw_ip_info = Hardware IP Info
+count = count
+ip_type = IP type
+queues = queues
+
 ip_discovery_table = IP Discovery table
 gpu_die = Die
 ip_hw = IP HW

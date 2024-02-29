@@ -32,7 +32,7 @@ mod app;
 use app::{GuiGpuMetrics, MyApp};
 
 mod gui_device_info;
-use gui_device_info::{GuiInfo, GuiConnectorInfo, GuiIpDiscovery, GuiVbiosInfo, GuiVideoCapsInfo};
+use gui_device_info::{GuiInfo, GuiConnectorInfo, GuiHwIpInfo, GuiIpDiscovery, GuiVbiosInfo, GuiVideoCapsInfo};
 
 mod util;
 use util::*;
@@ -311,6 +311,16 @@ impl MyApp {
                 true,
                 |ui| self.buf_data.device_info.ui(ui, &self.gl_vendor_info),
             );
+
+            if !self.buf_data.device_info.hw_ip_info_list.is_empty() {
+                ui.add_space(SPACE);
+                collapsing(
+                    ui,
+                    &fl!("hw_ip_info"),
+                    false,
+                    |ui| self.buf_data.device_info.hw_ip_info_list.ui(ui),
+                );
+            }
 
             if !self.buf_data.device_info.ip_die_entries.is_empty() {
                 ui.add_space(SPACE);

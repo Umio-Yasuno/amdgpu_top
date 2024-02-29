@@ -147,6 +147,7 @@ fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
         println!("Supported Power Profiles: {profiles:?}");
     }
     info.cache_info();
+    info.hw_ip_info();
     if !info.ip_die_entries.is_empty() {
         info.ip_discovery_table();
     }
@@ -292,6 +293,7 @@ trait DumpInfo {
     fn cache_info(&self);
     fn vbios_info(&self);
     fn codec_info(&self);
+    fn hw_ip_info(&self);
     fn ip_discovery_table(&self);
 }
 
@@ -424,6 +426,21 @@ impl DumpInfo for AppDeviceInfo {
                 }
             });
             println!("    {codec:10}: {dec:>12} (Decode), {enc:>12} (Encode)");
+        }
+    }
+
+    fn hw_ip_info(&self) {
+        println!("\nHardware IP info:");
+
+        for hw_ip_info in &self.hw_ip_info_list {
+            println!(
+                "    {ip_type:8} count: {ip_count}, ver: {major:2}.{minor}, queues: {queues}",
+                ip_type = hw_ip_info.ip_type.to_string(),
+                ip_count = hw_ip_info.count,
+                major = hw_ip_info.info.hw_ip_version_major,
+                minor = hw_ip_info.info.hw_ip_version_minor,
+                queues = hw_ip_info.info.num_queues(),
+            );
         }
     }
 

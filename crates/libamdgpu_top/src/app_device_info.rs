@@ -4,6 +4,7 @@ use crate::AMDGPU::{
     drm_amdgpu_info_device,
     drm_amdgpu_memory_info,
     GPU_INFO,
+    HW_IP::HwIpInfo,
     HwmonTemp,
     IpDieEntry,
     PowerCap,
@@ -11,7 +12,7 @@ use crate::AMDGPU::{
     VBIOS::VbiosInfo,
     VIDEO_CAPS::{CAP_TYPE, VideoCapsInfo},
 };
-use crate::{PCI, stat::Sensors};
+use crate::{get_hw_ip_info_list, PCI, stat::Sensors};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
@@ -44,6 +45,7 @@ pub struct AppDeviceInfo {
     pub gl1_cache_size_kib_per_sa: u32,
     pub total_l2_cache_size_kib: u32,
     pub total_l3_cache_size_mib: u32,
+    pub hw_ip_info_list: Vec<HwIpInfo>,
     pub ip_die_entries: Vec<IpDieEntry>,
     pub power_profiles: Vec<PowerProfile>,
     pub gfx_target_version: Option<String>,
@@ -63,6 +65,7 @@ impl AppDeviceInfo {
         let resizable_bar = memory_info.check_resizable_bar();
         let marketing_name = amdgpu_dev.get_marketing_name_or_default();
         let sysfs_path = sensors.bus_info.get_sysfs_path();
+        let hw_ip_info_list = get_hw_ip_info_list(amdgpu_dev, ext_info.get_chip_class());
         let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);
         let power_profiles = PowerProfile::get_all_supported_profiles_from_sysfs(&sysfs_path);
         let asic_name = ext_info.get_asic_name();
@@ -97,6 +100,7 @@ impl AppDeviceInfo {
             gl1_cache_size_kib_per_sa: ext_info.get_gl1_cache_size() >> 10,
             total_l2_cache_size_kib: ext_info.calc_l2_cache_size() >> 10,
             total_l3_cache_size_mib: ext_info.calc_l3_cache_size_mb(),
+            hw_ip_info_list,
             ip_die_entries,
             power_profiles,
             gfx_target_version,

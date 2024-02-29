@@ -10,6 +10,7 @@ use crate::{
 use libamdgpu_top::{ConnectorInfo, ModeProp, drmModeModeInfo, drmModePropType};
 use libamdgpu_top::AMDGPU::{
     GPU_INFO,
+    HW_IP::HwIpInfo,
     IpDieEntry,
     VBIOS::VbiosInfo,
     VIDEO_CAPS::VideoCapsInfo,
@@ -54,6 +55,34 @@ impl GuiVideoCapsInfo for (&VideoCapsInfo, &VideoCapsInfo) {
             }
         });
 
+    }
+}
+
+pub trait GuiHwIpInfo {
+    fn ui(&self, ui: &mut egui::Ui);
+}
+
+impl GuiHwIpInfo for Vec<HwIpInfo> {
+    fn ui(&self, ui: &mut egui::Ui) {
+        egui::Grid::new("hw_ip_info").show(ui, |ui| {
+            ui.label(fl!("ip_type")).highlight();
+            ui.label(fl!("count")).highlight();
+            ui.label(fl!("version")).highlight();
+            ui.label(fl!("queues")).highlight();
+            ui.end_row();
+
+            for hw_ip_info in self {
+                ui.label(hw_ip_info.ip_type.to_string());
+                ui.label(hw_ip_info.count.to_string());
+                ui.label(
+                    format!("{:2}.{}",
+                    hw_ip_info.info.hw_ip_version_major,
+                    hw_ip_info.info.hw_ip_version_minor,
+                ));
+                ui.label(hw_ip_info.info.num_queues().to_string());
+                ui.end_row();
+            }
+        });
     }
 }
 

@@ -1,6 +1,7 @@
 use std::time::Duration;
 pub use libdrm_amdgpu_sys::*;
 use libdrm_amdgpu_sys::AMDGPU::{
+    CHIP_CLASS,
     DeviceHandle,
     drm_amdgpu_memory_info,
     HW_IP::{HW_IP_TYPE, HwIpInfo},
@@ -95,10 +96,13 @@ pub fn has_vpe(amdgpu_dev: &DeviceHandle) -> bool {
     amdgpu_dev.get_hw_ip_info(HW_IP_TYPE::VPE).is_ok()
 }
 
-pub fn get_hw_ip_info_list(amdgpu_dev: &DeviceHandle) -> Vec<HwIpInfo> {
+pub fn get_hw_ip_info_list(
+    amdgpu_dev: &DeviceHandle,
+    chip_class: CHIP_CLASS,
+) -> Vec<HwIpInfo> {
     const HW_IP_LIST: &[HW_IP_TYPE] = &[
-        HW_IP_TYPE::GFX,
-        HW_IP_TYPE::COMPUTE,
+        // HW_IP_TYPE::GFX,
+        // HW_IP_TYPE::COMPUTE,
         HW_IP_TYPE::DMA,
         HW_IP_TYPE::UVD,
         HW_IP_TYPE::VCE,
@@ -106,10 +110,36 @@ pub fn get_hw_ip_info_list(amdgpu_dev: &DeviceHandle) -> Vec<HwIpInfo> {
         HW_IP_TYPE::VCN_DEC,
         HW_IP_TYPE::VCN_ENC,
         HW_IP_TYPE::VCN_JPEG,
+        HW_IP_TYPE::VPE,
     ];
 
-    HW_IP_LIST.iter()
-        .filter_map(|ip_type| amdgpu_dev.get_hw_ip_info(*ip_type).ok())
-        .filter(|hw_ip_info| hw_ip_info.count != 0)
-        .collect()
+    let mut hw_ip_list: Vec<HwIpInfo> = Vec::with_capacity(10);
+
+    {
+        for ip_type in [HW_IP_TYPE::GFX, HW_IP_TYPE::COMPUTE] {
+            let Ok(mut ip_info) = amdgpu_dev.get_hw_ip_info(ip_type) else { continue };
+
+            // Fix incorrect IP versions reported by the kernel.
+            // ref: https://gitlab.freedesktop.org/mesa/mesa/blob/main/src/amd/common/ac_gpu_info.c
+            match chip_class {
+                CHIP_CLASS::GFX10 => ip_info.info.hw_ip_version_minor = 1,
+                CHIP_CLASS::GFX10_3 => ip_info.info.hw_ip_version_minor = 3,
+                _ => {},
+            }
+
+            if ip_info.count != 0 {
+                hw_ip_list.push(ip_info);
+            }
+        }
+    }
+
+    for ip_type in HW_IP_LIST {
+        let Ok(ip_info) = amdgpu_dev.get_hw_ip_info(*ip_type) else { continue };
+
+        if ip_info.count != 0 {
+            hw_ip_list.push(ip_info);
+        }
+    }
+
+    hw_ip_list
 }
