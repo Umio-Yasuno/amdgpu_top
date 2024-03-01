@@ -1,4 +1,4 @@
-use crate::AMDGPU::{ASIC_NAME, DeviceHandle, GPU_INFO, GpuMetrics};
+use crate::AMDGPU::{ASIC_NAME, DeviceHandle, GPU_INFO, GpuMetrics, RasBlock, RasErrorCount};
 use crate::{DevicePath, stat, VramUsage, has_vcn, has_vcn_unified, has_vpe, Sampling};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use std::time::Duration;
@@ -23,6 +23,7 @@ pub struct AppAmdgpuTopStat {
     pub fdinfo: FdInfoStat,
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
     pub arc_pcie_bw: Option<Arc<Mutex<PcieBw>>>,
+    pub memory_error_count: Option<RasErrorCount>,
 }
 
 pub struct AppOption {
@@ -72,6 +73,7 @@ impl AppAmdgpuTop {
 
         let metrics = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path).ok();
         let activity = GpuActivity::get(&amdgpu_dev, &sysfs_path, asic_name);
+        let memory_error_count = RasErrorCount::get_from_sysfs_with_ras_block(&sysfs_path, RasBlock::UMC).ok();
 
         let arc_proc_index = {
             let mut proc_index: Vec<ProcInfo> = Vec::new();
@@ -125,6 +127,7 @@ impl AppAmdgpuTop {
                 fdinfo,
                 arc_proc_index,
                 arc_pcie_bw,
+                memory_error_count,
             },
         })
     }
@@ -133,7 +136,17 @@ impl AppAmdgpuTop {
         self.stat.vram_usage.update_usage(&self.amdgpu_dev);
         self.stat.vram_usage.update_usable_heap_size(&self.amdgpu_dev);
         self.stat.sensors.update(&self.amdgpu_dev);
-        self.stat.metrics = GpuMetrics::get_from_sysfs_path(&self.device_info.sysfs_path).ok();
+
+        if self.stat.metrics.is_some() {
+            self.stat.metrics = GpuMetrics::get_from_sysfs_path(&self.device_info.sysfs_path).ok();
+        }
+
+        if self.stat.memory_error_count.is_some() {
+            self.stat.memory_error_count = RasErrorCount::get_from_sysfs_with_ras_block(
+                &self.device_info.sysfs_path,
+                RasBlock::UMC,
+            ).ok();
+        }
 
         self.stat.activity = if let Some(metrics) = &self.stat.metrics {
             GpuActivity::from_gpu_metrics(metrics)

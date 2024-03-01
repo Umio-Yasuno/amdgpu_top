@@ -9,6 +9,8 @@ use crate::AMDGPU::{
     IpDieEntry,
     PowerCap,
     PowerProfile,
+    RasBlock,
+    RasErrorCount,
     VBIOS::VbiosInfo,
     VIDEO_CAPS::{CAP_TYPE, VideoCapsInfo},
 };
@@ -49,6 +51,7 @@ pub struct AppDeviceInfo {
     pub ip_die_entries: Vec<IpDieEntry>,
     pub power_profiles: Vec<PowerProfile>,
     pub gfx_target_version: Option<String>,
+    pub ecc_memory: bool,
 }
 
 impl AppDeviceInfo {
@@ -70,6 +73,8 @@ impl AppDeviceInfo {
         let power_profiles = PowerProfile::get_all_supported_profiles_from_sysfs(&sysfs_path);
         let asic_name = ext_info.get_asic_name();
         let gfx_target_version = ext_info.get_gfx_target_version().map(|v| v.to_string());
+
+        let ecc_memory = RasErrorCount::get_from_sysfs_with_ras_block(&sysfs_path, RasBlock::UMC).is_ok();
 
         Self {
             ext_info: *ext_info,
@@ -104,6 +109,7 @@ impl AppDeviceInfo {
             ip_die_entries,
             power_profiles,
             gfx_target_version,
+            ecc_memory,
         }
     }
 }
