@@ -112,7 +112,7 @@ pub fn dump_all(title: &str, device_path_list: &[DevicePath], opt_dump_mode: Opt
     }
 }
 
-fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
+pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
     let amdgpu_dev = device_path.init().unwrap();
     let ext_info = amdgpu_dev.device_info().unwrap();
     let memory_info = amdgpu_dev.memory_info().unwrap();
