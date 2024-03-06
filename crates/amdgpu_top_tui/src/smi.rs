@@ -68,7 +68,7 @@ impl SmiApp {
     }
 
     fn fdinfo_panel(&self) -> Panel<TextView> {
-        let text = TextView::new_with_content(self.fdinfo_view.text.content.clone());
+        let text = TextView::new_with_content(self.fdinfo_view.text.content.clone()).no_wrap();
         Panel::new(text)
             .title(format!(
                 "#{:<2} {}",
