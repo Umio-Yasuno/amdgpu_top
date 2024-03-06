@@ -20,7 +20,7 @@ default = [ "tui", "gui", "json", "git_version" ]
 package = [ "tui", "gui", "json" ]
 gui = ["dep:amdgpu_top_gui"]
 tui = ["dep:amdgpu_top_tui"]
-json = ["dep:amdgpu_top_json"]
+json = ["dep:amdgpu_top_json", "dep:libc"]
 git_version = ["gix"]
 
 [[bin]]
@@ -34,7 +34,7 @@ libamdgpu_top = { path = "crates/libamdgpu_top", version = "0.7.0" }
 amdgpu_top_tui = { path = "crates/amdgpu_top_tui/", version = "0.7.0", optional = true }
 amdgpu_top_gui = { path = "crates/amdgpu_top_gui/", version = "0.7.0", optional = true }
 amdgpu_top_json = { path = "crates/amdgpu_top_json/", version = "0.7.0", optional = true }
-libc = { version = "0.2.*" }
+libc = { version = "0.2.*", optional = true }
 
 [build-dependencies]
 gix = { version = "*", default-features = false, optional = true }
