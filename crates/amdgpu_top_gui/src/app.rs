@@ -7,7 +7,7 @@ use egui_plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
 use crate::{BASE, MEDIUM, HISTORY_LENGTH};
 
 use libamdgpu_top::PCI;
-use libamdgpu_top::AMDGPU::MetricsInfo;
+use libamdgpu_top::AMDGPU::{RasErrorCount, MetricsInfo};
 use libamdgpu_top::stat::{self, gpu_metrics_util::*, FdInfoSortType, PerfCounter};
 
 use crate::{GuiAppData, GpuMetrics, util::*, fl};
@@ -59,6 +59,24 @@ impl AvgActivity for GpuMetrics {
                     ui.label(format!("{label} ___%,"));
                 }
             }
+        });
+    }
+}
+
+pub trait GuiMemoryErrorCount {
+    fn ui(&self, ui: &mut egui::Ui);
+}
+
+impl GuiMemoryErrorCount for RasErrorCount {
+    fn ui(&self, ui: &mut egui::Ui) {
+        egui::Grid::new("ECC Memory Error Count").show(ui, |ui| {
+            ui.label(fl!("corrected"));
+            ui.label(self.corrected.to_string());
+            ui.end_row();
+
+            ui.label(fl!("uncorrected"));
+            ui.label(self.uncorrected.to_string());
+            ui.end_row();
         });
     }
 }

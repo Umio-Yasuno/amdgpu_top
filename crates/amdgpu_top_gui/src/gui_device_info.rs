@@ -245,6 +245,11 @@ impl GuiInfo for AppDeviceInfo {
         } else {
             fl!("disabled")
         };
+        let ecc = if self.ecc_memory {
+            fl!("supported")
+        } else {
+            fl!("not_supported")
+        };
 
         grid(ui, &[
             (&fl!("vram_type"), &self.ext_info.get_vram_type().to_string()),
@@ -252,6 +257,7 @@ impl GuiInfo for AppDeviceInfo {
             (&fl!("vram_size"), &format!("{} {}", self.memory_info.vram.total_heap_size >> 20, fl!("mib"))),
             (&fl!("memory_clock"), &format!("{}-{} {}", self.min_mem_clk, self.max_mem_clk, fl!("mhz"))),
             (&fl!("resizable_bar"), &re_bar),
+            (&fl!("ecc_memory"), &ecc),
         ]);
         ui.end_row();
     }

@@ -29,7 +29,7 @@ use libamdgpu_top::{
 };
 
 mod app;
-use app::{GuiGpuMetrics, MyApp};
+use app::{GuiMemoryErrorCount, GuiGpuMetrics, MyApp};
 
 mod gui_device_info;
 use gui_device_info::{GuiInfo, GuiConnectorInfo, GuiHwIpInfo, GuiIpDiscovery, GuiVbiosInfo, GuiVideoCapsInfo};
@@ -385,6 +385,11 @@ impl MyApp {
             if self.buf_data.support_pcie_bw {
                 ui.add_space(SPACE);
                 collapsing(ui, &fl!("pcie_bw"), true, |ui| self.egui_pcie_bw(ui));
+            }
+
+            if let Some(ecc) = &self.buf_data.stat.memory_error_count {
+                ui.add_space(SPACE);
+                collapsing(ui, &fl!("ecc_memory_error_count"), true, |ui| ecc.ui(ui));
             }
 
             if let Some(metrics) = &self.buf_data.stat.metrics {
