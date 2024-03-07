@@ -18,6 +18,7 @@ pub(crate) struct NewTuiApp {
     pub fdinfo_view: AppTextView,
     pub sensors_view: AppTextView,
     pub gpu_metrics_view: AppTextView,
+    pub ecc_view: AppTextView,
     pub no_pc: bool,
 }
 
@@ -46,6 +47,7 @@ impl NewTuiApp {
             fdinfo_view: Default::default(),
             sensors_view: Default::default(),
             gpu_metrics_view: Default::default(),
+            ecc_view: Default::default(),
             no_pc,
         })
     }
@@ -68,6 +70,10 @@ impl NewTuiApp {
         layout.add_child(self.vram_usage_view.view(&self.app_amdgpu_top.stat.vram_usage));
         layout.add_child(self.fdinfo_view.text.panel("fdinfo"));
         layout.add_child(self.sensors_view.text.panel("Sensors"));
+
+        if self.app_amdgpu_top.stat.memory_error_count.is_some() {
+            layout.add_child(self.ecc_view.text.panel("ECC Error Count"));
+        }
 
         if let Some(metrics) = &self.app_amdgpu_top.stat.metrics {
             let title = match metrics.get_header() {
@@ -113,6 +119,10 @@ impl NewTuiApp {
             self.sensors_view.text.clear();
         }
 
+        if let Some(ecc) = &self.app_amdgpu_top.stat.memory_error_count {
+            let _ = self.ecc_view.print_memory_error_count(ecc);
+        }
+
         if flags.gpu_metrics {
             if let Some(metrics) = &self.app_amdgpu_top.stat.metrics {
                 let _ = self.gpu_metrics_view.print_gpu_metrics(metrics);
@@ -130,6 +140,7 @@ impl NewTuiApp {
 
         self.sensors_view.text.set();
         self.fdinfo_view.text.set();
+        self.ecc_view.text.set();
         self.gpu_metrics_view.text.set();
     }
 }

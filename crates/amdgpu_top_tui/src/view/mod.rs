@@ -20,6 +20,8 @@ pub use util::*;
 mod vram;
 pub use vram::*;
 
+mod memory_error_count;
+
 #[derive(Clone, Default)]
 pub(crate) struct AppTextView {
     pub text: Text,
