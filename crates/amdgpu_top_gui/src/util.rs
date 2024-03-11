@@ -1,6 +1,6 @@
 use crate::{BASE, HEADING, HISTORY_LENGTH};
 use eframe::egui::{self, collapsing_header::CollapsingState, FontId, util::History, Id, RichText};
-use libamdgpu_top::{DevicePath, PCI, stat::Sensors};
+use libamdgpu_top::{AppDeviceInfo, PCI, stat::Sensors};
 use std::fmt;
 
 pub struct DeviceListMenu {
@@ -8,15 +8,12 @@ pub struct DeviceListMenu {
     pub pci: PCI::BUS_INFO,
 }
 
-impl DeviceListMenu {
-    pub fn new(device_path: &DevicePath) -> Option<Self> {
-        let pci = device_path.pci;
-        let name = {
-            let amdgpu_dev = device_path.init().ok()?;
-            amdgpu_dev.get_marketing_name_or_default()
-        };
-
-        Some(Self { pci, name })
+impl From<&AppDeviceInfo> for DeviceListMenu {
+    fn from(app_device_info: &AppDeviceInfo) -> Self {
+        Self {
+            pci: app_device_info.pci_bus,
+            name: app_device_info.marketing_name.clone(),
+        }
     }
 }
 

@@ -172,7 +172,7 @@ pub fn run(
     }).collect();
 
     let sample = Sampling::low();
-    let device_list = device_path_list.iter().flat_map(DeviceListMenu::new).collect();
+    let device_list = vec_app.iter().map(|app| DeviceListMenu::from(&app.device_info)).collect();
     let command_path = std::fs::read_link("/proc/self/exe").unwrap_or(PathBuf::from(app_name));
 
     let data = vec_data
