@@ -186,7 +186,7 @@ pub fn device_list(list: &[DevicePath]) {
         println!("#{i}:");
         println!(
             "    {} ({:#0X}.{:#0X})",
-            amdgpu_dev.get_marketing_name_or_default(),
+            ext_info.find_device_name_or_default(),
             ext_info.device_id(),
             ext_info.pci_rev_id()
         );

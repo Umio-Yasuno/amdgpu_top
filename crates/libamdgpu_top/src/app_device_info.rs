@@ -66,7 +66,7 @@ impl AppDeviceInfo {
         let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock()
             .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
         let resizable_bar = memory_info.check_resizable_bar();
-        let marketing_name = amdgpu_dev.get_marketing_name_or_default();
+        let marketing_name = ext_info.find_device_name_or_default();
         let sysfs_path = sensors.bus_info.get_sysfs_path();
         let hw_ip_info_list = get_hw_ip_info_list(amdgpu_dev, ext_info.get_chip_class());
         let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);

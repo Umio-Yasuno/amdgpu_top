@@ -24,6 +24,7 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
 
     for device_path in list {
         let Ok(amdgpu_dev) = device_path.init() else { continue };
+        let Ok(ext_info) = amdgpu_dev.device_info() else { continue };
         let Ok(memory_info) = amdgpu_dev.memory_info() else { continue };
 
         let mut proc_index: Vec<ProcInfo> = Vec::new();
@@ -44,7 +45,7 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
         println!(
             "{} ({}), VRAM {:5}/{:5} MiB, GTT {:5}/{:5} MiB",
             device_path.pci,
-            amdgpu_dev.get_marketing_name_or_default(),
+            ext_info.find_device_name_or_default(),
             memory_info.vram.heap_usage >> 20,
             total_vram_mib,
             memory_info.gtt.heap_usage >> 20,
@@ -92,7 +93,7 @@ pub fn dump_gpu_metrics(title: &str, device_path_list: &[DevicePath]) {
         println!("\n--------\n#{i} {device_path:?}");
         let Ok(amdgpu_dev) = device_path.init() else { continue };
         let Ok(ext_info) = amdgpu_dev.device_info() else { continue };
-        let mark_name = amdgpu_dev.get_marketing_name_or_default();
+        let mark_name = ext_info.find_device_name_or_default();
         println!("{mark_name} ({:#0X}:{:#0X})", ext_info.device_id(), ext_info.pci_rev_id());
 
         if let Ok(m) = amdgpu_dev.get_gpu_metrics() {
