@@ -1,4 +1,4 @@
-use crate::AMDGPU::{ASIC_NAME, DeviceHandle, GPU_INFO, GpuMetrics, RasBlock, RasErrorCount};
+use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, RasBlock, RasErrorCount};
 use crate::{DevicePath, stat, VramUsage, has_vcn, has_vcn_unified, has_vpe, Sampling};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use std::time::Duration;
@@ -72,7 +72,7 @@ impl AppAmdgpuTop {
         let sensors = Sensors::new(&amdgpu_dev, &pci_bus, &ext_info);
 
         let metrics = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path).ok();
-        let activity = GpuActivity::get(&amdgpu_dev, &sysfs_path, asic_name);
+        let activity = GpuActivity::get(&sysfs_path, asic_name);
         let memory_error_count = RasErrorCount::get_from_sysfs_with_ras_block(&sysfs_path, RasBlock::UMC).ok();
 
         let arc_proc_index = {
@@ -148,18 +148,11 @@ impl AppAmdgpuTop {
             ).ok();
         }
 
-        self.stat.activity = if let Some(metrics) = &self.stat.metrics {
-            GpuActivity::from_gpu_metrics(metrics)
-        } else {
-            // Some Raven/Picasso/Raven2 APU always report gpu_busy_percent as 100.
-            // ref: https://gitlab.freedesktop.org/drm/amd/-/issues/1932
-            // gpu_metrics is supported from Renoir APU.
-            match self.device_info.asic_name {
-                ASIC_NAME::CHIP_RAVEN |
-                ASIC_NAME::CHIP_RAVEN2 => GpuActivity { gfx: None, umc: None, media: None },
-                _ => GpuActivity::get_from_sysfs(&self.device_info.sysfs_path),
-            }
-        };
+        self.stat.activity = GpuActivity::get_with_option_gpu_metrics(
+            &self.device_info.sysfs_path,
+            self.device_info.asic_name,
+            &self.stat.metrics,
+        );
 
         {
             let lock = self.stat.arc_proc_index.try_lock();
