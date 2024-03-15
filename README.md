@@ -132,6 +132,15 @@ cargo install --locked --path .
 cargo install --locked --path . --no-default-features --features="tui"
 ```
 
+## Binary Size
+
+| Features       | Size (stripped) |
+| :------------- | :-------------: |
+| json           | ~852K |
+| tui            | ~1.3M |
+| json, tui      | ~1.4M |
+| json, tui, gui | ~14M  |
+
 ## Used library
  * [anyhow](https://github.com/dtolnay/anyhow)
  * [libdrm-amdgpu-sys-rs](https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs)
