@@ -104,13 +104,14 @@ pub fn collapsing_plot(
     state.show_body_unindented(ui, body);
 }
 
-pub fn collapsing(
+pub fn collapsing_with_id(
     ui: &mut egui::Ui,
     text: &str,
+    id: &str,
     default_open: bool,
     body: impl FnOnce(&mut egui::Ui),
 ) {
-    let mut state = CollapsingState::load_with_default_open(ui.ctx(), Id::new(text), default_open);
+    let mut state = CollapsingState::load_with_default_open(ui.ctx(), Id::new(id), default_open);
 
     let header_res = ui.horizontal(|ui| {
         let icon = {
@@ -124,6 +125,15 @@ pub fn collapsing(
     });
 
     state.show_body_indented(&header_res.response, ui, body);
+}
+
+pub fn collapsing(
+    ui: &mut egui::Ui,
+    text: &str,
+    default_open: bool,
+    body: impl FnOnce(&mut egui::Ui),
+) {
+    collapsing_with_id(ui, text, text, default_open, body);
 }
 
 pub fn rt_base<T: Into<String>>(s: T) -> RichText {

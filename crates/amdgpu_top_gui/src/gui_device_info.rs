@@ -379,7 +379,7 @@ impl GuiConnectorInfo for ConnectorInfo {
             }
 
             for mode_prop in &self.mode_props {
-                mode_prop.ui(ui);
+                mode_prop.ui(&title, ui);
             }
         });
     }
@@ -405,12 +405,12 @@ impl GuiModeInfo for drmModeModeInfo {
 }
 
 pub trait GuiModeProp {
-    fn ui(&self, ui: &mut egui::Ui);
+    fn ui(&self, conn_name: &str, ui: &mut egui::Ui);
 }
 
 impl GuiModeProp for &(ModeProp, u64) {
-    fn ui(&self, ui: &mut egui::Ui) {
-        collapsing(ui, &self.0.name, false, |ui| {
+    fn ui(&self, conn_name: &str, ui: &mut egui::Ui) {
+        collapsing_with_id(ui, &self.0.name, &format!("{} {conn_name}", &self.0.name), false, |ui| {
             egui::Grid::new(&self.0.name).show(ui, |ui| {
                 ui.label("type");
                 ui.label(self.0.prop_type.to_string());
