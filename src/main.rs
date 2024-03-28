@@ -6,6 +6,7 @@ const TITLE: &str = env!("TITLE");
 mod args;
 use args::{AppMode, DumpMode, OptDumpMode, MainOpt};
 mod dump_info;
+mod dump_pp_table;
 mod drm_info;
 
 fn main() {
@@ -41,6 +42,7 @@ fn main() {
             amdgpu_top_json::version_json(TITLE);
             return;
         },
+        DumpMode::PPTable => {},
         DumpMode::NoDump => {
             match main_opt.opt_dump_mode {
                 OptDumpMode::GpuMetrics => {
@@ -88,6 +90,10 @@ fn main() {
         },
         DumpMode::Version => {
             println!("{TITLE}");
+            return;
+        },
+        DumpMode::PPTable => {
+            dump_pp_table::dump_all_pp_table(TITLE, &device_path_list);
             return;
         },
         DumpMode::NoDump => match main_opt.opt_dump_mode {

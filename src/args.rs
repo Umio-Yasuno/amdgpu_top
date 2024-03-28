@@ -55,6 +55,7 @@ pub enum DumpMode {
     List,
     Process,
     Version,
+    PPTable,
     NoDump,
 }
 
@@ -289,6 +290,9 @@ impl MainOpt {
                 },
                 "-p" | "--process" => {
                     opt.dump_mode = DumpMode::Process;
+                },
+                "--pp-table" | "--pp_table" => {
+                    opt.dump_mode = DumpMode::PPTable;
                 },
                 "--single" | "--single-gpu" => {
                     opt.single_gpu = true;
