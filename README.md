@@ -41,6 +41,9 @@ FLAGS:
    -gm, --gpu_metrics, --gpu-metrics
        Dump gpu_metrics for all AMD GPUs.
        https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gpu-metrics
+   --pp_table, --pp-table
+       Dump pp_table from sysfs and VBIOS for all AMD GPUs.
+       (only support Navi1x and Navi2x, Navi3x)
    --drm_info, --drm-info
        Dump DRM info.
        Inspired by https://gitlab.freedesktop.org/emersion/drm_info
