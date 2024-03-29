@@ -90,11 +90,11 @@ pub fn dump_gpu_metrics(title: &str, device_path_list: &[DevicePath]) {
     println!("{title}");
 
     for (i, device_path) in device_path_list.iter().enumerate() {
-        println!("\n--------\n#{i} {device_path:?}");
+        println!("\n--------\n#{i}");
         let Ok(amdgpu_dev) = device_path.init() else { continue };
         let Ok(ext_info) = amdgpu_dev.device_info() else { continue };
         let mark_name = ext_info.find_device_name_or_default();
-        println!("{mark_name} ({:#0X}:{:#0X})", ext_info.device_id(), ext_info.pci_rev_id());
+        println!("{mark_name} ({}, {:#0X}:{:#0X})", device_path.pci, ext_info.device_id(), ext_info.pci_rev_id());
 
         if let Ok(m) = amdgpu_dev.get_gpu_metrics() {
             println!("\nGPU Metrics: {m:#?}");

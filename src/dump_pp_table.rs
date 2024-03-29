@@ -12,7 +12,8 @@ use libamdgpu_top::{
 pub fn dump_all_pp_table(title: &str, device_path_list: &[DevicePath]) {
     println!("{title}\n");
 
-    for device_path in device_path_list {
+    for (i, device_path) in device_path_list.iter().enumerate() {
+        println!("\n--------\n#{i}");
         dump_pp_table(device_path);
     }
 }
