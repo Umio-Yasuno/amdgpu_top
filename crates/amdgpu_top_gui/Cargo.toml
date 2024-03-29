@@ -11,8 +11,8 @@ description = "GUI Library for amdgpu_top"
 
 [dependencies]
 libamdgpu_top = { path = "../libamdgpu_top", version = "0.7.0" }
-eframe = { version = "0.25.0", default-features = false, features = [ "default_fonts", "glow", "persistence", "wayland" ] }
-egui_plot = { version = "0.25.0" }
+eframe = { version = "0.27.1", default-features = false, features = [ "default_fonts", "glow", "persistence", "wayland" ] }
+egui_plot = { version = "0.27.1" }
 i18n-embed = { version = "^0.14", features = ["fluent-system", "desktop-requester"] }
 i18n-embed-fl = "^0.7"
 rust-embed = { version = "8.0.0", features = ["debug-embed"] }
