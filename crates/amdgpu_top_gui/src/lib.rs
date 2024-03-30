@@ -470,6 +470,12 @@ impl eframe::App for MyApp {
                     .font(BASE))
                     .on_hover_text(fl!("toggle_side_panel"));
                 self.egui_device_list(ui);
+
+                {
+                    ui.separator();
+                    egui::gui_zoom::zoom_menu_buttons(ui);
+                    ui.label(format!("{:>3.0}%", ui.ctx().zoom_factor() * 100.0));
+                }
             });
         });
 
