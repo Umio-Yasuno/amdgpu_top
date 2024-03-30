@@ -21,7 +21,7 @@ package = [ "tui", "gui", "json" ]
 gui = ["dep:amdgpu_top_gui"]
 tui = ["dep:amdgpu_top_tui"]
 json = ["dep:amdgpu_top_json", "dep:libc"]
-git_version = ["gix"]
+git_version = ["dep:gix"]
 
 [[bin]]
 name = "amdgpu_top"
