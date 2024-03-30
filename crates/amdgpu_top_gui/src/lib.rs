@@ -1,7 +1,6 @@
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::ops::Range;
-use std::path::PathBuf;
 use eframe::{egui, Theme};
 use egui::{FontFamily, FontId, RichText, util::History, ViewportBuilder};
 use i18n_embed::DesktopLanguageRequester;
@@ -173,18 +172,17 @@ pub fn run(
 
     let sample = Sampling::low();
     let device_list = vec_app.iter().map(|app| DeviceListMenu::from(&app.device_info)).collect();
-    let command_path = std::fs::read_link("/proc/self/exe").unwrap_or(PathBuf::from(app_name));
 
     let data = vec_data
         .iter()
-        .find(|&d| selected_pci_bus == d.device_info.pci_bus).unwrap_or_else(|| {
+        .find(|&d| selected_pci_bus == d.device_info.pci_bus)
+        .unwrap_or_else(|| {
             eprintln!("invalid PCI bus: {selected_pci_bus}");
             panic!();
         });
 
     let mut app = MyApp {
         device_list,
-        command_path,
         fdinfo_sort: Default::default(),
         reverse_sort: false,
         buf_data: data.clone(),
@@ -277,9 +275,13 @@ pub fn run(
 
 impl MyApp {
     fn egui_device_list(&mut self, ui: &mut egui::Ui) {
-        let Some(selected) = self.device_list
+        let selected = self.device_list
             .iter()
-            .find(|&device| self.selected_pci_bus == device.pci) else { return };
+            .find(|&device| self.selected_pci_bus == device.pci)
+            .unwrap_or_else(|| {
+                eprintln!("invalid PCI bus: {}", self.selected_pci_bus);
+                panic!();
+            });
 
         egui::ComboBox::from_id_source("Device List")
             .selected_text(selected.to_string())

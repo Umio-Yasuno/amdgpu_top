@@ -1,6 +1,5 @@
 use std::fmt::Write;
 use std::sync::{Arc, Mutex};
-use std::path::PathBuf;
 use eframe::egui;
 use egui::{RichText, util::History};
 use egui_plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
@@ -18,7 +17,6 @@ const SENSORS_HEIGHT: f32 = 96.0;
 const SENSORS_WIDTH: f32 = SENSORS_HEIGHT * 4.0;
 
 pub struct MyApp {
-    pub command_path: PathBuf,
     pub device_list: Vec<DeviceListMenu>,
     pub fdinfo_sort: FdInfoSortType,
     pub reverse_sort: bool,
