@@ -91,6 +91,12 @@ impl AppTextView {
             } else if let Some(max) = sensors.max_dpm_link {
                 write!(self.text.buf, " (Max. Gen{}x{})", max.gen, max.width)?;
             }
+
+            writeln!(self.text.buf)?;
+        }
+
+        if let Some(power_state) = &sensors.pci_power_state {
+            writeln!(self.text.buf, " PCI Power State: {power_state}")?;
         }
 
         Ok(())

@@ -907,6 +907,14 @@ impl MyApp {
                 cur.width,
             ));
         }
+
+        if let Some(power_state) = &sensors.pci_power_state {
+            ui.label(format!(
+                "{}: {}",
+                fl!("pci_power_state"),
+                power_state,
+            ));
+        }
     }
 
     pub fn egui_temp_plot(&self, ui: &mut egui::Ui) {

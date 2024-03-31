@@ -37,6 +37,8 @@ pub struct Sensors {
     pub power_cap: Option<PowerCap>,
     pub fan_rpm: Option<u32>,
     pub fan_max_rpm: Option<u32>,
+    pub gpu_port_path: PathBuf,
+    pub pci_power_state: Option<String>,
 }
 
 impl Sensors {
@@ -100,6 +102,12 @@ impl Sensors {
 
         let fan_rpm = parse_hwmon(hwmon_path.join("fan1_input"));
         let fan_max_rpm = parse_hwmon(hwmon_path.join("fan1_max"));
+        let gpu_port_path = pci_bus.get_gpu_pcie_port_bus().get_sysfs_path();
+        let pci_power_state = std::fs::read_to_string(&gpu_port_path.join("power_state")).ok()
+            .map(|mut s| {
+                s.pop();
+                s
+            });
 
         Self {
             hwmon_path,
@@ -123,6 +131,8 @@ impl Sensors {
             power_cap,
             fan_rpm,
             fan_max_rpm,
+            gpu_port_path,
+            pci_power_state,
         }
     }
 
@@ -159,6 +169,11 @@ impl Sensors {
         }
 
         self.fan_rpm = parse_hwmon(self.hwmon_path.join("fan1_input"));
+        self.pci_power_state = std::fs::read_to_string(&self.gpu_port_path.join("power_state")).ok()
+            .map(|mut s| {
+                s.pop(); // trim `\n`
+                s
+            });
     }
 
     pub fn any_hwmon_power(&self) -> Option<HwmonPower> {

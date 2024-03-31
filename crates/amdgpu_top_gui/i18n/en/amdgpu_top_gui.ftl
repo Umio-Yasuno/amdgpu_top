@@ -67,6 +67,7 @@ power_cap = Power Cap.
 power_cap_default = Power Cap. (Default)
 
 pcie_link_speed = PCIe Link Speed
+pci_power_state = PCI Power State
 # Dynamic Power Management (DPM)
 dpm = DPM
 max = Max
