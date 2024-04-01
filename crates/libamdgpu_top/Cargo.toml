@@ -3,7 +3,7 @@ name = "libamdgpu_top"
 version = "0.8.0"
 edition = "2021"
 license = "MIT"
-homepage = "https://github.com/Umio-Yasuno/amdgpu_top"
+repository = "https://github.com/Umio-Yasuno/amdgpu_top"
 authors = ["Umio Yasuno <coelacanth_dream@protonmail.com>"]
 description = "A library for amdgpu_top"
 
