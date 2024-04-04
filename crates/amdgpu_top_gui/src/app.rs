@@ -26,6 +26,7 @@ pub struct MyApp {
     pub gl_vendor_info: Option<String>,
     pub selected_pci_bus: PCI::BUS_INFO,
     pub no_pc: bool,
+    pub pause: bool,
 }
 
 pub fn grid(ui: &mut egui::Ui, v: &[(&str, &str)]) {

@@ -1,6 +1,6 @@
 info = Info
 toggle_side_panel = Toggle the side panel visibility
-launch_new_process = Launch in a new process
+pause = Pause
 
 # SidePanel
 ## Device Info

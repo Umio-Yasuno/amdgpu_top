@@ -191,6 +191,7 @@ pub fn run(
         gl_vendor_info: None,
         selected_pci_bus,
         no_pc,
+        pause: false,
     };
 
     let options = eframe::NativeOptions {
@@ -439,7 +440,7 @@ impl MyApp {
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        {
+        if !self.pause {
             let lock = self.arc_data.try_lock();
             if let Ok(vec_data) = lock {
                 let data = vec_data
@@ -468,15 +469,24 @@ impl eframe::App for MyApp {
                 if let Some(theme) = visuals.light_dark_small_toggle_button(ui) {
                     ctx.set_visuals(theme);
                 };
-                ui.toggle_value(&mut self.show_sidepanel, RichText::new(fl!("info"))
-                    .font(BASE))
-                    .on_hover_text(fl!("toggle_side_panel"));
+                ui.toggle_value(
+                    &mut self.show_sidepanel,
+                    RichText::new(fl!("info")).font(BASE)).on_hover_text(fl!("toggle_side_panel"),
+                );
                 self.egui_device_list(ui);
 
                 {
                     ui.separator();
                     egui::gui_zoom::zoom_menu_buttons(ui);
                     ui.label(format!("{:>3.0}%", ui.ctx().zoom_factor() * 100.0));
+                }
+
+                {
+                    ui.separator();
+                    ui.toggle_value(
+                        &mut self.pause,
+                        RichText::new(fl!("pause")).font(BASE),
+                    );
                 }
             });
         });
