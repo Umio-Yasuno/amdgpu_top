@@ -117,8 +117,8 @@ AMD Radeon Graphics (0000:08:00.0): GFX: 0%, MediaEngine: 0%, Memory: null%
 
 ### Build from source
 Dependencies:
- * libdrm2
- * libdrm-amdgpu1
+ * libdrm
+ * libdrm_amdgpu
 
 ```
 cargo install amdgpu_top
