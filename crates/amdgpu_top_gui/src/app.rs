@@ -40,7 +40,7 @@ pub struct HistoryData {
 #[derive(Clone)]
 pub struct GuiAppData {
     pub stat: AppAmdgpuTopStat,
-    pub device_info: AppDeviceInfo,
+    pub pci_bus: PCI::BUS_INFO,
     pub support_pcie_bw: bool,
     pub history: HistoryData,
     pub vec_connector_info: Vec<ConnectorInfo>,
@@ -59,7 +59,7 @@ impl GuiAppData {
 
         Self {
             stat: app.stat.clone(),
-            device_info: app.device_info.clone(),
+            pci_bus: app.device_info.pci_bus,
             support_pcie_bw: app.stat.arc_pcie_bw.is_some(),
             history: HistoryData {
                 grbm_history,
@@ -112,6 +112,8 @@ pub struct MyApp {
     pub device_list: Vec<DeviceListMenu>,
     pub fdinfo_sort: FdInfoSortType,
     pub reverse_sort: bool,
+    pub vec_device_info: Vec<AppDeviceInfo>,
+    pub device_info: AppDeviceInfo,
     pub buf_data: GuiAppData,
     pub arc_data: Arc<Mutex<Vec<GuiAppData>>>,
     pub show_sidepanel: bool,
@@ -899,16 +901,18 @@ impl MyApp {
                     &self.buf_data.history.sensors_history.sclk,
                     sensors.sclk,
                     "GFX_SCLK",
-                    0, // self.buf_data.device_info.min_gpu_clk,
-                    self.buf_data.device_info.max_gpu_clk,
+                    // some AMD GPUs support DS (Deep Sleep) state
+                    0,
+                    self.device_info.max_gpu_clk,
                     fl!("mhz"),
                 ),
                 (
                     &self.buf_data.history.sensors_history.mclk,
                     sensors.mclk,
                     "GFX_MCLK",
-                    0, // self.buf_data.device_info.min_mem_clk,
-                    self.buf_data.device_info.max_mem_clk,
+                    // some AMD GPUs support DS (Deep Sleep) state
+                    0,
+                    self.device_info.max_mem_clk,
                     fl!("mhz"),
                 ),
                 (

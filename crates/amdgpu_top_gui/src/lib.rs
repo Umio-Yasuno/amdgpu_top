@@ -85,23 +85,33 @@ pub fn run(
         stat::spawn_update_index_thread(t_index, update_process_index_interval);
     }
 
-    let mut vec_data: Vec<_> = vec_app.iter().map(|app| GuiAppData::new(app)).collect();
+    let (mut vec_data, vec_device_info): (Vec<_>, Vec<_>) = vec_app.iter().map(|app| (GuiAppData::new(app), app.device_info.clone())).unzip();
 
     let sample = Sampling::low();
-    let device_list = vec_app.iter().map(|app| DeviceListMenu::from(&app.device_info)).collect();
+    let device_list = vec_device_info.iter().map(|info| DeviceListMenu::from(info)).collect();
 
     let data = vec_data
         .iter()
-        .find(|&d| selected_pci_bus == d.device_info.pci_bus)
+        .find(|&d| selected_pci_bus == d.pci_bus)
         .unwrap_or_else(|| {
             eprintln!("invalid PCI bus: {selected_pci_bus}");
             panic!();
         });
+    let device_info = vec_device_info
+        .iter()
+        .find(|&d| selected_pci_bus == d.pci_bus)
+        .unwrap_or_else(|| {
+            eprintln!("invalid PCI bus: {selected_pci_bus}");
+            panic!();
+        })
+        .clone();
 
     let mut app = MyApp {
         device_list,
         fdinfo_sort: Default::default(),
         reverse_sort: false,
+        device_info,
+        vec_device_info,
         buf_data: data.clone(),
         arc_data: Arc::new(Mutex::new(vec_data.clone())),
         show_sidepanel: true,
@@ -229,35 +239,35 @@ impl MyApp {
                 ui,
                 &fl!("device_info"),
                 true,
-                |ui| self.buf_data.device_info.ui(ui, &self.gl_vendor_info),
+                |ui| self.device_info.ui(ui, &self.gl_vendor_info),
             );
 
-            if !self.buf_data.device_info.hw_ip_info_list.is_empty() {
+            if !self.device_info.hw_ip_info_list.is_empty() {
                 ui.add_space(SPACE);
                 collapsing(
                     ui,
                     &fl!("hw_ip_info"),
                     false,
-                    |ui| self.buf_data.device_info.hw_ip_info_list.ui(ui),
+                    |ui| self.device_info.hw_ip_info_list.ui(ui),
                 );
             }
 
-            if !self.buf_data.device_info.ip_die_entries.is_empty() {
+            if !self.device_info.ip_die_entries.is_empty() {
                 ui.add_space(SPACE);
                 collapsing(
                     ui,
                     &fl!("ip_discovery_table"),
                     false,
-                    |ui| self.buf_data.device_info.ip_die_entries.ui(ui),
+                    |ui| self.device_info.ip_die_entries.ui(ui),
                 );
             }
 
-            if let (Some(dec), Some(enc)) = (&self.buf_data.device_info.decode, &self.buf_data.device_info.encode) {
+            if let (Some(dec), Some(enc)) = (&self.device_info.decode, &self.device_info.encode) {
                 ui.add_space(SPACE);
                 collapsing(ui, &fl!("video_caps_info"), false, |ui| (dec, enc).ui(ui));
             }
 
-            if let Some(vbios) = &self.buf_data.device_info.vbios {
+            if let Some(vbios) = &self.device_info.vbios {
                 ui.add_space(SPACE);
                 collapsing(ui, &fl!("vbios_info"), false, |ui| vbios.ui(ui));
             }
@@ -362,7 +372,7 @@ impl eframe::App for MyApp {
             if let Ok(vec_data) = lock {
                 let data = vec_data
                     .iter()
-                    .find(|&d| self.selected_pci_bus == d.device_info.pci_bus)
+                    .find(|&d| self.selected_pci_bus == d.pci_bus)
                     .unwrap_or_else(|| {
                         eprintln!("invalid PCI bus: {}", self.selected_pci_bus);
                         panic!();
@@ -370,7 +380,10 @@ impl eframe::App for MyApp {
 
                 self.buf_data = data.clone();
             }
+
+            self.device_info = self.vec_device_info.iter().find(|&d| self.selected_pci_bus == d.pci_bus).unwrap().clone();
         }
+
         let visuals;
         {
             let mut style = (*ctx.style()).clone();
