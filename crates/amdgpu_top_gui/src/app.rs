@@ -5,16 +5,81 @@ use egui::{RichText, util::History};
 use egui_plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
 use crate::{BASE, MEDIUM, HISTORY_LENGTH};
 
-use libamdgpu_top::PCI;
-use libamdgpu_top::AMDGPU::{RasErrorCount, MetricsInfo};
-use libamdgpu_top::stat::{self, gpu_metrics_util::*, FdInfoSortType, PerfCounter};
+use libamdgpu_top::app::{
+    AppAmdgpuTopStat,
+};
 
-use crate::{GuiAppData, GpuMetrics, util::*, fl};
+use libamdgpu_top::{AppDeviceInfo, ConnectorInfo, PCI};
+use libamdgpu_top::AMDGPU::{RasErrorCount, MetricsInfo};
+use libamdgpu_top::stat::{
+    self,
+    gpu_metrics_util::*,
+    FdInfoUsage,
+    FdInfoSortType,
+    PerfCounter,
+};
+
+use crate::{GpuMetrics, util::*, fl};
 
 const SPACING: [f32; 2] = [16.0; 2];
 
 const SENSORS_HEIGHT: f32 = 96.0;
 const SENSORS_WIDTH: f32 = SENSORS_HEIGHT * 4.0;
+
+#[derive(Clone)]
+pub struct HistoryData {
+    pub grbm_history: Vec<History<u8>>,
+    pub grbm2_history: Vec<History<u8>>,
+    pub vram_history: History<u64>,
+    pub gtt_history: History<u64>,
+    pub fdinfo_history: History<FdInfoUsage>,
+    pub sensors_history: SensorsHistory,
+    pub pcie_bw_history: History<(u64, u64)>,
+}
+
+#[derive(Clone)]
+pub struct GuiAppData {
+    pub stat: AppAmdgpuTopStat,
+    pub device_info: AppDeviceInfo,
+    pub support_pcie_bw: bool,
+    pub history: HistoryData,
+    pub vec_connector_info: Vec<ConnectorInfo>,
+}
+
+impl GuiAppData {
+    pub fn update_history(&mut self, secs: f64, no_pc: bool) {
+        if let Some(arc_pcie_bw) = &self.stat.arc_pcie_bw {
+            let lock = arc_pcie_bw.try_lock();
+            if let Ok(pcie_bw) = lock {
+                if let (Some(sent), Some(rec), Some(mps)) = (
+                    pcie_bw.sent,
+                    pcie_bw.received,
+                    pcie_bw.max_payload_size,
+                ) {
+                    let sent = (sent * mps as u64) >> 20;
+                    let rec = (rec * mps as u64) >> 20;
+                    self.history.pcie_bw_history.add(secs, (sent, rec));
+                }
+            }
+        }
+
+        if !no_pc {
+            for (pc, history) in [
+                (&self.stat.grbm, &mut self.history.grbm_history),
+                (&self.stat.grbm2, &mut self.history.grbm2_history),
+            ] {
+                for ((_name, pos), h) in pc.index.iter().zip(history.iter_mut()) {
+                    h.add(secs, pc.bits.get(*pos));
+                }
+            }
+        }
+
+        self.history.vram_history.add(secs, self.stat.vram_usage.0.vram.heap_usage);
+        self.history.gtt_history.add(secs, self.stat.vram_usage.0.gtt.heap_usage);
+        self.history.sensors_history.add(secs, &self.stat.sensors);
+        self.history.fdinfo_history.add(secs, self.stat.fdinfo.fold_fdinfo_usage());
+    }
+}
 
 pub struct MyApp {
     pub device_list: Vec<DeviceListMenu>,

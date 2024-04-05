@@ -12,23 +12,20 @@ use libamdgpu_top::{
     },
     app::{
         AppAmdgpuTop,
-        AppAmdgpuTopStat,
         AppOption,
     },
     stat::{
         self,
-        FdInfoUsage,
         PerfCounter,
     },
     AppDeviceInfo,
-    ConnectorInfo,
     DevicePath,
     Sampling,
     PCI,
 };
 
 mod app;
-use app::{GuiMemoryErrorCount, GuiGpuMetrics, MyApp};
+use app::{GuiAppData, GuiMemoryErrorCount, GuiGpuMetrics, HistoryData, MyApp};
 
 mod gui_device_info;
 use gui_device_info::{GuiInfo, GuiConnectorInfo, GuiHwIpInfo, GuiIpDiscovery, GuiVbiosInfo, GuiVideoCapsInfo};
@@ -45,61 +42,6 @@ const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
 const MEDIUM: FontId = FontId::new(15.0, FontFamily::Monospace);
 const HEADING: FontId = FontId::new(16.0, FontFamily::Monospace);
 const HISTORY_LENGTH: Range<usize> = 0..30; // seconds
-
-#[derive(Clone)]
-pub struct HistoryData {
-    pub grbm_history: Vec<History<u8>>,
-    pub grbm2_history: Vec<History<u8>>,
-    pub vram_history: History<u64>,
-    pub gtt_history: History<u64>,
-    pub fdinfo_history: History<FdInfoUsage>,
-    pub sensors_history: SensorsHistory,
-    pub pcie_bw_history: History<(u64, u64)>,
-}
-
-#[derive(Clone)]
-pub struct GuiAppData {
-    pub stat: AppAmdgpuTopStat,
-    pub device_info: AppDeviceInfo,
-    pub support_pcie_bw: bool,
-    pub history: HistoryData,
-    pub vec_connector_info: Vec<ConnectorInfo>,
-}
-
-impl GuiAppData {
-    fn update_history(&mut self, secs: f64, no_pc: bool) {
-        if let Some(arc_pcie_bw) = &self.stat.arc_pcie_bw {
-            let lock = arc_pcie_bw.try_lock();
-            if let Ok(pcie_bw) = lock {
-                if let (Some(sent), Some(rec), Some(mps)) = (
-                    pcie_bw.sent,
-                    pcie_bw.received,
-                    pcie_bw.max_payload_size,
-                ) {
-                    let sent = (sent * mps as u64) >> 20;
-                    let rec = (rec * mps as u64) >> 20;
-                    self.history.pcie_bw_history.add(secs, (sent, rec));
-                }
-            }
-        }
-
-        if !no_pc {
-            for (pc, history) in [
-                (&self.stat.grbm, &mut self.history.grbm_history),
-                (&self.stat.grbm2, &mut self.history.grbm2_history),
-            ] {
-                for ((_name, pos), h) in pc.index.iter().zip(history.iter_mut()) {
-                    h.add(secs, pc.bits.get(*pos));
-                }
-            }
-        }
-
-        self.history.vram_history.add(secs, self.stat.vram_usage.0.vram.heap_usage);
-        self.history.gtt_history.add(secs, self.stat.vram_usage.0.gtt.heap_usage);
-        self.history.sensors_history.add(secs, &self.stat.sensors);
-        self.history.fdinfo_history.add(secs, self.stat.fdinfo.fold_fdinfo_usage());
-    }
-}
 
 pub fn run(
     app_name: &str,
