@@ -98,6 +98,7 @@ vbios_name = Name
 vbios_pn = PN
 vbios_version = Version
 vbios_date = Date
+vbios_size = Size (Byte)
 
 connector_info = Connector Info
 
