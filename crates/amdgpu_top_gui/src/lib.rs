@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::ops::Range;
 use eframe::{egui, Theme};
-use egui::{FontFamily, FontId, RichText, util::History, ViewportBuilder};
+use egui::{FontFamily, FontId, RichText, ViewportBuilder};
 use i18n_embed::DesktopLanguageRequester;
 
 use libamdgpu_top::{
@@ -25,7 +25,7 @@ use libamdgpu_top::{
 };
 
 mod app;
-use app::{GuiAppData, GuiMemoryErrorCount, GuiGpuMetrics, HistoryData, MyApp};
+use app::{GuiAppData, GuiMemoryErrorCount, GuiGpuMetrics, MyApp};
 
 mod gui_device_info;
 use gui_device_info::{GuiInfo, GuiConnectorInfo, GuiHwIpInfo, GuiIpDiscovery, GuiVbiosInfo, GuiVideoCapsInfo};
@@ -85,32 +85,7 @@ pub fn run(
         stat::spawn_update_index_thread(t_index, update_process_index_interval);
     }
 
-    let mut vec_data: Vec<_> = vec_app.iter().map(|app| {
-        let vram_history = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let gtt_history = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let sensors_history = SensorsHistory::default();
-        let pcie_bw_history: History<(u64, u64)> = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let [grbm_history, grbm2_history] = [&app.stat.grbm, &app.stat.grbm2].map(|pc| {
-            vec![History::<u8>::new(HISTORY_LENGTH, f32::INFINITY); pc.index.len()]
-        });
-
-        GuiAppData {
-            stat: app.stat.clone(),
-            device_info: app.device_info.clone(),
-            support_pcie_bw: app.stat.arc_pcie_bw.is_some(),
-            history: HistoryData {
-                grbm_history,
-                grbm2_history,
-                vram_history,
-                gtt_history,
-                fdinfo_history,
-                sensors_history,
-                pcie_bw_history,
-            },
-            vec_connector_info: libamdgpu_top::connector_info(&app.device_path),
-        }
-    }).collect();
+    let mut vec_data: Vec<_> = vec_app.iter().map(|app| GuiAppData::new(app)).collect();
 
     let sample = Sampling::low();
     let device_list = vec_app.iter().map(|app| DeviceListMenu::from(&app.device_info)).collect();
