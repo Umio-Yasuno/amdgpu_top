@@ -370,18 +370,23 @@ impl eframe::App for MyApp {
         if !self.pause {
             let lock = self.arc_data.try_lock();
             if let Ok(vec_data) = lock {
-                let data = vec_data
+                self.buf_data = vec_data
                     .iter()
                     .find(|&d| self.selected_pci_bus == d.pci_bus)
                     .unwrap_or_else(|| {
                         eprintln!("invalid PCI bus: {}", self.selected_pci_bus);
                         panic!();
-                    });
-
-                self.buf_data = data.clone();
+                    })
+                    .clone();
             }
 
-            self.device_info = self.vec_device_info.iter().find(|&d| self.selected_pci_bus == d.pci_bus).unwrap().clone();
+            if self.selected_pci_bus != self.device_info.pci_bus {
+                self.device_info = self.vec_device_info
+                    .iter()
+                    .find(|&d| self.selected_pci_bus == d.pci_bus)
+                    .unwrap()
+                    .clone();
+            }
         }
 
         let visuals;
