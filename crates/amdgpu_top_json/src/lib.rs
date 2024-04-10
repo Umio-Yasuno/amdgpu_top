@@ -129,7 +129,7 @@ impl JsonApp {
                 let mut f = std::fs::OpenOptions::new()
                     .read(true)
                     .write(true)
-                    .open(&path)
+                    .open(path)
                     .unwrap();
 
                 f.write_all(s.as_bytes()).unwrap();

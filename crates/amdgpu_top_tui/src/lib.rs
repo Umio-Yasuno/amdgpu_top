@@ -73,8 +73,7 @@ pub fn run(
     no_pc: bool,
     is_dark_mode: bool,
 ) {
-    let mut toggle_opt = ToggleOptions::default();
-    toggle_opt.is_dark_mode = is_dark_mode;
+    let mut toggle_opt = ToggleOptions { is_dark_mode, ..Default::default() };
 
     let mut vec_app: Vec<_> = device_path_list.iter().enumerate().filter_map(|(i, device_path)| {
         let amdgpu_dev = device_path.init().ok()?;

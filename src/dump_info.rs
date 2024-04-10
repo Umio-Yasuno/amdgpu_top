@@ -28,7 +28,7 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
         let Ok(memory_info) = amdgpu_dev.memory_info() else { continue };
 
         let mut proc_index: Vec<ProcInfo> = Vec::new();
-        stat::update_index(&mut proc_index, &device_path);
+        stat::update_index(&mut proc_index, device_path);
 
         let mut fdinfo = FdInfoStat {
             has_vcn: has_vcn(&amdgpu_dev),
@@ -168,10 +168,8 @@ pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
         } else {
             println!("\nGPU Metrics: Not Supported");
         }
-    } else {
-        if let Some(h) = amdgpu_dev.get_gpu_metrics().ok().and_then(|m| m.get_header()) {
-            println!("\nGPU Metrics Version: v{}.{}", h.format_revision, h.content_revision);
-        }
+    } else if let Some(h) = amdgpu_dev.get_gpu_metrics().ok().and_then(|m| m.get_header()) {
+        println!("\nGPU Metrics Version: v{}.{}", h.format_revision, h.content_revision);
     }
 
     if let OptDumpMode::DrmInfo = opt_dump_mode {

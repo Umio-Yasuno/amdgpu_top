@@ -103,7 +103,7 @@ impl Sensors {
         let fan_rpm = parse_hwmon(hwmon_path.join("fan1_input"));
         let fan_max_rpm = parse_hwmon(hwmon_path.join("fan1_max"));
         let gpu_port_path = pci_bus.get_gpu_pcie_port_bus().get_sysfs_path();
-        let pci_power_state = std::fs::read_to_string(&gpu_port_path.join("power_state")).ok()
+        let pci_power_state = std::fs::read_to_string(gpu_port_path.join("power_state")).ok()
             .map(|mut s| {
                 s.pop();
                 s
@@ -169,7 +169,7 @@ impl Sensors {
         }
 
         self.fan_rpm = parse_hwmon(self.hwmon_path.join("fan1_input"));
-        self.pci_power_state = std::fs::read_to_string(&self.gpu_port_path.join("power_state")).ok()
+        self.pci_power_state = std::fs::read_to_string(self.gpu_port_path.join("power_state")).ok()
             .map(|mut s| {
                 s.pop(); // trim `\n`
                 s

@@ -28,13 +28,13 @@ fn dump_pp_table(device_path: &DevicePath) {
     }
 
     let sysfs = device_path.pci.get_sysfs_path();
-    let smu = IpHwId::get_from_die_id_sysfs(HwId::MP1, &sysfs.join("ip_discovery/die/0/")).ok().and_then(|smu| smu.instances.get(0).map(|v| v.clone()));
+    let smu = IpHwId::get_from_die_id_sysfs(HwId::MP1, sysfs.join("ip_discovery/die/0/")).ok().and_then(|smu| smu.instances.first().cloned());
 
     if let Some(smu) = &smu {
         println!("    SMU (MP1) version: {}.{}.{}", smu.major, smu.minor, smu.revision);
     }
 
-    let pp_table_bytes_sysfs = std::fs::read(&sysfs.join("pp_table")).ok();
+    let pp_table_bytes_sysfs = std::fs::read(sysfs.join("pp_table")).ok();
     let pp_table_bytes_vbios = amdgpu_dev.get_vbios_image().ok().and_then(|vbios_image| {
         use AMDGPU::VBIOS::VbiosParser;
 

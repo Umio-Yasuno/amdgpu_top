@@ -8,8 +8,8 @@ pub struct DeviceListMenu {
     pub pci: PCI::BUS_INFO,
 }
 
-impl From<&AppDeviceInfo> for DeviceListMenu {
-    fn from(app_device_info: &AppDeviceInfo) -> Self {
+impl DeviceListMenu {
+    pub fn new(app_device_info: &AppDeviceInfo) -> Self {
         Self {
             pci: app_device_info.pci_bus,
             name: app_device_info.marketing_name.clone(),

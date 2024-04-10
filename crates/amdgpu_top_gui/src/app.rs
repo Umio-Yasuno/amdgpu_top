@@ -452,7 +452,7 @@ impl GuiGpuMetrics for GpuMetrics {
     fn v1_4_v1_5_ui(&self, ui: &mut egui::Ui) {
         egui::Grid::new("GPU Metrics v1.4/v1.5, clock, activity").show(ui, |ui| {
             if let Some(all_gfxclk) = self.get_all_instances_current_gfxclk() {
-                ui.label(format!("GFXCLK (Current) =>"));
+                ui.label("GFXCLK (Current) =>");
                 ui.label(format!("[{}]", all_clk_helper(&all_gfxclk)));
                 ui.end_row();
             }
@@ -950,7 +950,7 @@ impl MyApp {
             ] {
                 let Some(val) = val else { continue };
 
-                egui::Grid::new(&label).show(ui, |ui| {
+                egui::Grid::new(label).show(ui, |ui| {
                     ui.label(format!("{label} ({val:4} {unit})"));
                     ui.end_row();
 
@@ -1029,7 +1029,7 @@ impl MyApp {
         ] {
             let Some(temp) = temp else { continue };
 
-            egui::Grid::new(&label).show(ui, |ui| {
+            egui::Grid::new(label).show(ui, |ui| {
                 let val = temp.current;
                 let max = temp.critical.unwrap_or(105) as f64;
 

@@ -177,15 +177,15 @@ impl MainOpt {
                     #[cfg(feature = "json")]
                     {
                         let s = if let Some(val_str) = args.get(idx+1) {
-                            if val_str.starts_with("-") {
-                                eprintln!("missing argument: \"--json-fifo <String>\"");
+                            if val_str.starts_with('-') {
+                                eprintln!("missing argument: \"--json-fifo <String/Path>\"");
                                 std::process::exit(1);
                             } else {
                                 skip = true;
                                 String::from(val_str)
                             }
                         } else {
-                            eprintln!("missing argument: \"--json-fifo <String>\"");
+                            eprintln!("missing argument: \"--json-fifo <String/Path>\"");
                             std::process::exit(1);
                         };
 

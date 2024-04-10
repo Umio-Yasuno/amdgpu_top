@@ -88,7 +88,7 @@ pub fn run(
     let (mut vec_data, vec_device_info): (Vec<_>, Vec<_>) = vec_app.iter().map(|app| (GuiAppData::new(app), app.device_info.clone())).unzip();
 
     let sample = Sampling::low();
-    let device_list = vec_device_info.iter().map(|info| DeviceListMenu::from(info)).collect();
+    let device_list = vec_device_info.iter().map(DeviceListMenu::new).collect();
 
     let data = vec_data
         .iter()
