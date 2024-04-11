@@ -107,6 +107,10 @@ pub fn dump_gpu_metrics(title: &str, device_path_list: &[DevicePath]) {
 pub fn dump_all(title: &str, device_path_list: &[DevicePath], opt_dump_mode: OptDumpMode) {
     println!("{title}");
 
+    if let Some(ver) = libamdgpu_top::get_rocm_version() {
+        println!("ROCm Version: {ver}");
+    }
+
     for (i, device_path) in device_path_list.iter().enumerate() {
         println!("\n--------\n#{i} {device_path:?}");
         dump(device_path, opt_dump_mode);

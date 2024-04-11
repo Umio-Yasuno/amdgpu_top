@@ -116,6 +116,7 @@ pub fn run(
         arc_data: Arc::new(Mutex::new(vec_data.clone())),
         show_sidepanel: true,
         gl_vendor_info: None,
+        rocm_version: libamdgpu_top::get_rocm_version(),
         selected_pci_bus,
         no_pc,
         pause: false,
@@ -239,7 +240,7 @@ impl MyApp {
                 ui,
                 &fl!("device_info"),
                 true,
-                |ui| self.device_info.ui(ui, &self.gl_vendor_info),
+                |ui| self.device_info.ui(ui, &self.gl_vendor_info, &self.rocm_version),
             );
 
             if !self.device_info.hw_ip_info_list.is_empty() {

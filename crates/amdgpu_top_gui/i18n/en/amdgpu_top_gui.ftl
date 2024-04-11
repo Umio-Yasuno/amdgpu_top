@@ -9,6 +9,7 @@ device_name = Device Name
 pci_bus = PCI (domain:bus:dev.func)
 did_rid = DeviceID:RevID
 opengl_driver_ver = OpenGL Driver Version
+rocm_ver = ROCm Version
 gfx_target_version = gfx_target_version
 apu = APU
 dgpu = dGPU

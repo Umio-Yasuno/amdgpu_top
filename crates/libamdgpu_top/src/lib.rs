@@ -143,3 +143,9 @@ pub fn get_hw_ip_info_list(
 
     hw_ip_list
 }
+
+pub fn get_rocm_version() -> Option<String> {
+    std::fs::read_to_string("/opt/rocm/.info/version").ok()?
+        .split('-').next()
+        .map(|s| s.to_string())
+}

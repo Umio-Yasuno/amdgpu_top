@@ -118,6 +118,7 @@ pub struct MyApp {
     pub arc_data: Arc<Mutex<Vec<GuiAppData>>>,
     pub show_sidepanel: bool,
     pub gl_vendor_info: Option<String>,
+    pub rocm_version: Option<String>,
     pub selected_pci_bus: PCI::BUS_INFO,
     pub no_pc: bool,
     pub pause: bool,
