@@ -177,5 +177,6 @@ socket_power = Socket Power (Average)
 current_socket_power = Socket Power (Current)
 avg_activity = Average Activity
 throttle_status = Throttle Status
+throttling_log = Throttling Log
 
 failed_to_set_up_gui = Failed to set up a graphics context (OpenGL).

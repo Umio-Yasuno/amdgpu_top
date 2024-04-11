@@ -10,7 +10,7 @@ use libamdgpu_top::app::{
     AppAmdgpuTop,
     AppAmdgpuTopStat,
 };
-use libamdgpu_top::AMDGPU::{RasErrorCount, MetricsInfo};
+use libamdgpu_top::AMDGPU::{RasErrorCount, MetricsInfo, ThrottleStatus};
 use libamdgpu_top::stat::{
     self,
     gpu_metrics_util::*,
@@ -35,6 +35,7 @@ pub struct HistoryData {
     pub fdinfo_history: History<FdInfoUsage>,
     pub sensors_history: SensorsHistory,
     pub pcie_bw_history: History<(u64, u64)>,
+    pub throttling_history: History<ThrottleStatus>,
 }
 
 #[derive(Clone)]
@@ -53,6 +54,7 @@ impl GuiAppData {
         let fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
         let sensors_history = SensorsHistory::default();
         let pcie_bw_history: History<(u64, u64)> = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let throttling_history = History::new(HISTORY_LENGTH, f32::INFINITY);
         let [grbm_history, grbm2_history] = [&app.stat.grbm, &app.stat.grbm2].map(|pc| {
             vec![History::<u8>::new(HISTORY_LENGTH, f32::INFINITY); pc.index.len()]
         });
@@ -69,6 +71,7 @@ impl GuiAppData {
                 fdinfo_history,
                 sensors_history,
                 pcie_bw_history,
+                throttling_history,
             },
             vec_connector_info: libamdgpu_top::connector_info(&app.device_path),
         }
@@ -98,6 +101,12 @@ impl GuiAppData {
                 for ((_name, pos), h) in pc.index.iter().zip(history.iter_mut()) {
                     h.add(secs, pc.bits.get(*pos));
                 }
+            }
+        }
+
+        if let Some(thr_val) = self.stat.metrics.as_ref().and_then(|m| m.get_indep_throttle_status()) {
+            if thr_val != 0 {
+                self.history.throttling_history.add(secs, ThrottleStatus::new(thr_val));
             }
         }
 

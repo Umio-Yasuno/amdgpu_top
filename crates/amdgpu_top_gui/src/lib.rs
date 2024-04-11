@@ -361,6 +361,12 @@ impl MyApp {
                 }
             }
 
+            collapsing(ui, &fl!("throttling_log"), false, |ui| {
+                for (time, value) in self.buf_data.history.throttling_history.iter() {
+                    ui.label(format!("{time:.1}s: {:?}", value.get_all_throttler()));
+                }
+            });
+
             ui.add_space(SPACE);
         });
     }
