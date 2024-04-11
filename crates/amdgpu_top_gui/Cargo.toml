@@ -1,6 +1,6 @@
 [package]
 name = "amdgpu_top_gui"
-version = "0.8.0"
+version = "0.8.1"
 edition = "2021"
 license = "MIT AND OFL-1.1"
 repository = "https://github.com/Umio-Yasuno/amdgpu_top"
@@ -10,7 +10,7 @@ description = "GUI Library for amdgpu_top"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libamdgpu_top = { path = "../libamdgpu_top", version = "0.8.0" }
+libamdgpu_top = { path = "../libamdgpu_top", version = "0.8.1" }
 eframe = { version = "0.27.1", default-features = false, features = [ "default_fonts", "glow", "persistence", "wayland" ] }
 egui_plot = { version = "0.27.1" }
 i18n-embed = { version = "^0.14", features = ["fluent-system", "desktop-requester"] }
