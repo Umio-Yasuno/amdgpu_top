@@ -25,6 +25,7 @@ const SPACING: [f32; 2] = [16.0; 2];
 
 const SENSORS_HEIGHT: f32 = 96.0;
 const SENSORS_WIDTH: f32 = SENSORS_HEIGHT * 4.0;
+const FDINFO_LIST_HEIGHT: f32 = 208.0;
 
 #[derive(Clone)]
 pub struct HistoryData {
@@ -820,17 +821,7 @@ impl MyApp {
             });
     }
 
-    pub fn egui_grid_fdinfo(&mut self, ui: &mut egui::Ui) {
-        let has_vcn_unified = self.buf_data.stat.fdinfo.has_vcn_unified;
-        let has_vpe = self.buf_data.stat.fdinfo.has_vpe;
-
-        collapsing_plot(
-            ui,
-            &fl!("fdinfo_plot"),
-            true,
-            |ui| self.egui_fdinfo_plot(ui, has_vcn_unified, has_vpe),
-        );
-
+    pub fn egui_fdinfo_list(&mut self, ui: &mut egui::Ui, has_vcn_unified: bool, has_vpe: bool) {
         egui::Grid::new("fdinfo").show(ui, |ui| {
             ui.style_mut().override_font_id = Some(MEDIUM);
             ui.label(rt_base(format!("{:^15}", fl!("name")))).highlight();
@@ -898,6 +889,23 @@ impl MyApp {
                 ui.end_row();
             } // proc_usage
         });
+    }
+
+    pub fn egui_grid_fdinfo(&mut self, ui: &mut egui::Ui) {
+        let has_vcn_unified = self.buf_data.stat.fdinfo.has_vcn_unified;
+        let has_vpe = self.buf_data.stat.fdinfo.has_vpe;
+
+        collapsing_plot(
+            ui,
+            &fl!("fdinfo_plot"),
+            true,
+            |ui| self.egui_fdinfo_plot(ui, has_vcn_unified, has_vpe),
+        );
+
+        egui::ScrollArea::vertical()
+            .auto_shrink([true, false])
+            .min_scrolled_height(FDINFO_LIST_HEIGHT)
+            .show(ui, |ui| self.egui_fdinfo_list(ui, has_vcn_unified, has_vpe));
     }
 
     pub fn egui_sensors(&self, ui: &mut egui::Ui) {
