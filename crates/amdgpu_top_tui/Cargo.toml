@@ -1,14 +1,14 @@
 [package]
 name = "amdgpu_top_tui"
-version = "0.8.2"
-edition = "2021"
 license = "MIT"
-repository = "https://github.com/Umio-Yasuno/amdgpu_top"
-authors = ["Umio Yasuno <coelacanth_dream@protonmail.com>"]
 description = "TUI library for amdgpu_top"
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+authors.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libamdgpu_top = { path = "../libamdgpu_top", version = "0.8.2" }
+libamdgpu_top = { workspace = true }
 cursive = { version = "0.20", default-features = false, features = ["crossterm-backend"] }

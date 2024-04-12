@@ -29,8 +29,25 @@ path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
+[workspace]
+members = [
+    "crates/libamdgpu_top",
+    "crates/amdgpu_top_tui",
+    "crates/amdgpu_top_gui",
+    "crates/amdgpu_top_json",
+]
+
+[workspace.package]
+version = "0.8.2"
+edition = "2021"
+authors = ["Umio Yasuno <coelacanth_dream@protonmail.com>"]
+repository = "https://github.com/Umio-Yasuno/amdgpu_top"
+
+[workspace.dependencies]
 libamdgpu_top = { path = "crates/libamdgpu_top", version = "0.8.2" }
+
+[dependencies]
+libamdgpu_top = { workspace = true }
 amdgpu_top_tui = { path = "crates/amdgpu_top_tui/", version = "0.8.2", optional = true }
 amdgpu_top_gui = { path = "crates/amdgpu_top_gui/", version = "0.8.2", optional = true }
 amdgpu_top_json = { path = "crates/amdgpu_top_json/", version = "0.8.2", optional = true }
@@ -69,11 +86,3 @@ assets = [
 # cargo-appimage
 [package.metadata.appimage]
 assets = ["assets/"]
-
-[workspace]
-members = [
-    "crates/libamdgpu_top",
-    "crates/amdgpu_top_tui",
-    "crates/amdgpu_top_gui",
-    "crates/amdgpu_top_json",
-]
