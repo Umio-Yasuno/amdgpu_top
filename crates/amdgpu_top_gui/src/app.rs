@@ -825,10 +825,10 @@ impl MyApp {
         egui::Grid::new("fdinfo").show(ui, |ui| {
             ui.style_mut().override_font_id = Some(MEDIUM);
             ui.label(rt_base(format!("{:^15}", fl!("name")))).highlight();
-            ui.label(rt_base(format!("{:^8}", fl!("pid")))).highlight();
-            ui.label("KFD").highlight();
 
             for (s, align, sort_type, flag) in [
+                (fl!("pid"), 8, FdInfoSortType::PID, true),
+                ("KFD".to_string(), 3, FdInfoSortType::KFD, true),
                 (fl!("vram"), 10, FdInfoSortType::VRAM, true),
                 (fl!("gtt"), 10, FdInfoSortType::GTT, true),
                 (fl!("cpu"), 5, FdInfoSortType::CPU, true),

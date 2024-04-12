@@ -246,6 +246,8 @@ impl FdInfoStat {
             match (sort, reverse) {
                 (FdInfoSortType::PID, false) => b.pid.cmp(&a.pid),
                 (FdInfoSortType::PID, true) => a.pid.cmp(&b.pid),
+                (FdInfoSortType::KFD, false) => b.is_kfd_process.cmp(&a.is_kfd_process),
+                (FdInfoSortType::KFD, true) => a.is_kfd_process.cmp(&b.is_kfd_process),
                 (FdInfoSortType::VRAM, false) => b.usage.vram_usage.cmp(&a.usage.vram_usage),
                 (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
                 (FdInfoSortType::GTT, false) => b.usage.gtt_usage.cmp(&a.usage.gtt_usage),
@@ -275,6 +277,7 @@ impl FdInfoStat {
 #[allow(clippy::upper_case_acronyms)]
 pub enum FdInfoSortType {
     PID,
+    KFD,
     #[default]
     VRAM,
     GTT,
