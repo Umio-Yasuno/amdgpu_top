@@ -26,6 +26,8 @@ const SPACING: [f32; 2] = [16.0; 2];
 const SENSORS_HEIGHT: f32 = 96.0;
 const SENSORS_WIDTH: f32 = SENSORS_HEIGHT * 4.0;
 const FDINFO_LIST_HEIGHT: f32 = 208.0;
+const PLOT_HEIGHT: f32 = 208.0;
+const PLOT_WIDTH: f32 = PLOT_HEIGHT * 5.0;
 
 #[derive(Clone)]
 pub struct HistoryData {
@@ -723,8 +725,8 @@ impl MyApp {
             .include_y(max as f64)
             .label_formatter(label_fmt)
             .auto_bounds([true, false].into())
-            .height(ui.available_width() / 4.0)
-            .width(ui.available_width() - 36.0)
+            .height(PLOT_HEIGHT)
+            .width(PLOT_WIDTH.min(ui.available_width()))
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| {
                 for (usage, name) in [
@@ -796,8 +798,8 @@ impl MyApp {
             .include_y(100.0)
             .label_formatter(label_fmt)
             .auto_bounds([true, false].into())
-            .height(ui.available_width() / 4.0)
-            .width(ui.available_width() - 36.0)
+            .height(PLOT_HEIGHT)
+            .width(PLOT_WIDTH.min(ui.available_width()))
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| {
                 for (usage, name) in [
@@ -1098,8 +1100,8 @@ impl MyApp {
         default_plot("pcie_bw plot")
             .label_formatter(label_fmt)
             .auto_bounds([true, true].into())
-            .height(ui.available_width() / 4.0)
-            .width(ui.available_width() - 36.0)
+            .height(PLOT_HEIGHT)
+            .width(PLOT_WIDTH.min(ui.available_width()))
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| {
                 plot_ui.line(sent);
