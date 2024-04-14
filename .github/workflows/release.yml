@@ -1,0 +1,99 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get the tag name
+        if: env.VERSION == ''
+        run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+      - name: Print Version
+        run: echo "$VERSION"
+      - name: Print Cargo Version
+        run: cargo -V
+      - name: Package Version
+        run: echo "PKG_VER=$(cargo metadata --no-deps --format-version 1 | jq ".packages[].version" | head -n 1)" >> $GITHUB_ENV
+      - name: Print Package Version
+        run: echo "$PKG_VER"
+      - name: Check Version
+        run: |
+          if ! [ "$PKG_VER" == "VERSION" ]; then
+            echo "version does not match tag"
+            exit 1
+          fi
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create $VERSION --draft --verify-tag --title $VERSION
+    outputs:
+      version: ${{ env.VERSION }}
+      pkg_ver: ${{ env.PKG_VER }}
+
+  build:
+    name: build
+    needs: ['create-release']
+    env:
+      APPIMAGETOOL: tools/appimagetool
+      VERSION: ${{needs.create-release.outputs.version}}
+      PKG_VER: ${{needs.create-release.outputs.pkg_ver}}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Version env
+        run: |
+          if [ "$PKG_VER" == "" ]; then
+            exit 1
+          fi
+          if [ "$VERSION" == "" ]; then
+            exit 1
+          fi
+      - name: Install
+        run: |
+          sudo apt update
+          sudo apt install libdrm-dev mold desktop-file-utils appstream
+      - name: Download appimagetool
+        run: |
+          mkdir tools
+          curl -o $APPIMAGETOOL -L -O https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x $APPIMAGETOOL
+      - name: Install cargo-deb
+        run: mold -run cargo install cargo-deb
+      - name: Install cargo-generate-rpm
+        run: mold -run cargo install cargo-generate-rpm
+      - name: Install cargo-appimage
+        run: mold -run cargo install cargo-appimage
+      - name: Build binary
+        run: mold -run cargo build --release --no-default-features --features="package"
+      - name: Build Deb Package
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mold -run cargo deb -- --no-default-features --features="package"
+          gh release upload "$VERSION" ./target/debian/amdgpu-top_${{ env.PKG_VER }}-1_amd64.deb
+      - name: Build RPM Pakcage
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mold -run cargo generate-rpm
+          gh release upload "$VERSION" ./target/generate-rpm/amdgpu_top-${{ env.PKG_VER }}-1.x86_64.rpm
+      - name: Build AppImage
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PATH=$PATH:$PWD/tools/
+          mold -run cargo appimage --no-default-features --features="package"
+          cp ./target/appimage/amdgpu_top.AppImage amdgpu_top-x86_64.AppImage
+          gh release upload "$VERSION" amdgpu_top-x86_64.AppImage
