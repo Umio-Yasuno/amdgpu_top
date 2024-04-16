@@ -2,7 +2,10 @@
 name = "amdgpu_top_gui"
 license = "MIT AND OFL-1.1"
 description = "GUI Library for amdgpu_top"
-version.workspace = true
+# version.workspace = true
+# Workaround for cargo-i18n
+# https://github.com/kellpossible/cargo-i18n/issues/97
+version = "0.8.2"
 edition.workspace = true
 repository.workspace = true
 authors.workspace = true
