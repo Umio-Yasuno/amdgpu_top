@@ -97,3 +97,11 @@ jobs:
           mold -run cargo appimage --no-default-features --features="package"
           cp ./target/appimage/amdgpu_top.AppImage amdgpu_top-x86_64.AppImage
           gh release upload "$VERSION" amdgpu_top-x86_64.AppImage
+      - name: Build Deb Package without GUI
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mold -run cargo deb -- --no-default-features --features="tui, json"
+          mv ./target/debian/amdgpu-top{,_without_gui}_${{ env.PKG_VER }}-1_amd64.deb
+          gh release upload "$VERSION" ./target/debian/amdgpu-top_without_gui_${{ env.PKG_VER }}-1_amd64.deb
