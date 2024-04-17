@@ -6,6 +6,19 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 | :-: | :-: | :-: |
 | ![amdgpu_top Simple TUI](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/66c3fb7e-cb23-4a19-ab10-2bb9919a1a8a) | ![amdgpu_top TUI](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/859010d8-07b3-411c-b079-c4a837855d41) | ![amdgpu_top GUI mode](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/e3ff372e-86f9-4b82-b3c9-910b638a3c90) |
 
+## Quick links
+ * [Usage](#usage)
+   * [Options](#options)
+   * [Commands for TUI](#commands-for-tui)
+   * [Example of using JSON mode](#example-of-using-json-mode)
+ * [Installation](#installation)
+   * [Packages](#packages)
+   * [Build from source](#build-from-source)
+   * [Binary Size](#binary-size)
+ * [References](#references)
+ * [Translations](#translations)
+ * [Alternatives](#alternatives)
+
 ## Usage
 ```
 cargo run -- [options ..]
@@ -13,7 +26,7 @@ cargo run -- [options ..]
 amdgpu_top [options ..]
 ```
 
-### Option
+### Options
 ```
 FLAGS:
    -d, --dump
@@ -135,7 +148,7 @@ cargo install --locked --path .
 cargo install --locked --path . --no-default-features --features="tui"
 ```
 
-## Binary Size
+### Binary Size
 
 | Features       | Size (stripped) |
 | :------------- | :-------------: |
@@ -144,29 +157,14 @@ cargo install --locked --path . --no-default-features --features="tui"
 | json, tui      | ~1.4M |
 | json, tui, gui | ~14M  |
 
-## Used library
- * [anyhow](https://github.com/dtolnay/anyhow)
- * [libdrm-amdgpu-sys-rs](https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs)
- * [serde-rs/json](https://github.com/serde-rs/json)
-
-### TUI
- * [Cursive](https://github.com/gyscos/cursive)
-
-### GUI
- * [egui](https://github.com/emilk/egui)
-
-### i18n
- * [cargo-i18n](https://github.com/kellpossible/cargo-i18n/)
-
-## Reference
+## References
  * [Tom St Denis / umr · GitLab](https://gitlab.freedesktop.org/tomstdenis/umr/)
  * Mesa3D
     * [src/gallium/drivers/radeonsi/si_gpu_load.c · main · Mesa / mesa · GitLab](https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/gallium/drivers/radeonsi/si_gpu_load.c)
  * AMD Documentation
     * [R6xx_R7xx_3D.pdf](https://developer.amd.com/wordpress/media/2013/10/R6xx_R7xx_3D.pdf)
     * [CIK_3D_registers_v2.pdf](http://developer.amd.com/wordpress/media/2013/10/CIK_3D_registers_v2.pdf)
-    * [MI200 Performance Counters: Listing](https://docs.amd.com/bundle/AMD-Instinct-MI200-Performance-Counters-v5.3/page/MI200_Performance_Counters_Listing.html)
-    * [MI200 Performance Counters: Abbreviations](https://docs.amd.com/bundle/AMD-Instinct-MI200-Performance-Counters-v5.3/page/MI200_Performance_Counters_Abbreviations.html)
+    * [MI200 performance counters and metrics — ROCm Documentation](https://rocm.docs.amd.com/en/docs-6.0.0/conceptual/gpu-arch/mi200-performance-counters.html)
  * <https://github.com/AMDResearch/omniperf/tree/v1.0.4/src/perfmon_pub>
  * <https://github.com/freedesktop/mesa-r600_demo>
  * [radeonhd:r6xxErrata](https://www.x.org/wiki/radeonhd:r6xxErrata/)
@@ -176,7 +174,7 @@ cargo install --locked --path . --no-default-features --features="tui"
     * `amdgpu_allowed_register_entry`
         * `/drivers/gpu/drm/amd/amdgpu/{cik,nv,vi,si,soc15,soc21}.c`
 
-## Translate
+## Translations
 `amdgpu_top` is using [cargo-i18n](https://github.com/kellpossible/cargo-i18n/) with [Project Fluent](https://projectfluent.org/) for translation.  
 Please refer to [pop-os/popsicle](https://github.com/pop-os/popsicle#translators) for additional supported languages.  
 

@@ -1,5 +1,6 @@
 use libamdgpu_top::DevicePath;
 
+#[cfg(feature = "gui")]
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
 const TITLE: &str = env!("TITLE");
 
