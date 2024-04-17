@@ -146,15 +146,10 @@ impl NewTuiApp {
 }
 
 pub trait ListNameInfoBar {
-    fn list_name(&self) -> String;
     fn info_bar(&self) -> String;
 }
 
 impl ListNameInfoBar for AppDeviceInfo {
-    fn list_name(&self) -> String {
-        format!("{} ({})", self.marketing_name, self.pci_bus)
-    }
-
     fn info_bar(&self) -> String {
         format!(
             concat!(

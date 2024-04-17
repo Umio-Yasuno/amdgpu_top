@@ -1,27 +1,6 @@
 use crate::{BASE, HEADING, HISTORY_LENGTH};
 use eframe::egui::{self, collapsing_header::CollapsingState, FontId, util::History, Id, RichText};
-use libamdgpu_top::{AppDeviceInfo, PCI, stat::Sensors};
-use std::fmt;
-
-pub struct DeviceListMenu {
-    pub name: String,
-    pub pci: PCI::BUS_INFO,
-}
-
-impl DeviceListMenu {
-    pub fn new(app_device_info: &AppDeviceInfo) -> Self {
-        Self {
-            pci: app_device_info.pci_bus,
-            name: app_device_info.marketing_name.clone(),
-        }
-    }
-}
-
-impl fmt::Display for DeviceListMenu {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} ({})", self.name, self.pci)
-    }
-}
+use libamdgpu_top::stat::Sensors;
 
 #[derive(Debug, Clone)]
 pub struct SensorsHistory {

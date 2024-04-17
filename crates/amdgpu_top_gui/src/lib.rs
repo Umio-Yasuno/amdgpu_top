@@ -88,7 +88,6 @@ pub fn run(
     let (mut vec_data, vec_device_info): (Vec<_>, Vec<_>) = vec_app.iter().map(|app| (GuiAppData::new(app), app.device_info.clone())).unzip();
 
     let sample = Sampling::low();
-    let device_list = vec_device_info.iter().map(DeviceListMenu::new).collect();
 
     let data = vec_data
         .iter()
@@ -107,7 +106,6 @@ pub fn run(
         .clone();
 
     let mut app = MyApp {
-        device_list,
         fdinfo_sort: Default::default(),
         reverse_sort: false,
         device_info,
@@ -204,30 +202,21 @@ pub fn run(
 
 impl MyApp {
     fn egui_device_list(&mut self, ui: &mut egui::Ui) {
-        let selected = self.device_list
-            .iter()
-            .find(|&device| self.selected_pci_bus == device.pci)
-            .unwrap_or_else(|| {
-                eprintln!("invalid PCI bus: {}", self.selected_pci_bus);
-                panic!();
-            });
+        let selected_text = self.device_info.menu_entry();
 
         egui::ComboBox::from_id_source("Device List")
-            .selected_text(selected.to_string())
-            .show_ui(ui, |ui| {
-                for device in &self.device_list {
-                    if selected.pci == device.pci {
-                        let _ = ui.add_enabled(
-                            false,
-                            egui::SelectableLabel::new(true, device.to_string()),
-                        );
-                        continue;
-                    }
-
+            .selected_text(&selected_text)
+            .show_ui(ui, |ui| for device in &self.vec_device_info {
+                if self.device_info.pci_bus == device.pci_bus {
+                    let _ = ui.add_enabled(
+                        false,
+                        egui::SelectableLabel::new(true, &selected_text),
+                    );
+                } else {
                     ui.selectable_value(
                         &mut self.selected_pci_bus,
-                        device.pci,
-                        device.to_string(),
+                        device.pci_bus,
+                        device.menu_entry(),
                     );
                 }
             });

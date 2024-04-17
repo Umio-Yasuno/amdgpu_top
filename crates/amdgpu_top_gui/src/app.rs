@@ -121,7 +121,6 @@ impl GuiAppData {
 }
 
 pub struct MyApp {
-    pub device_list: Vec<DeviceListMenu>,
     pub fdinfo_sort: FdInfoSortType,
     pub reverse_sort: bool,
     pub vec_device_info: Vec<AppDeviceInfo>,

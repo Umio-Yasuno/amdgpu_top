@@ -10,7 +10,6 @@ mod view;
 use view::*;
 
 mod app;
-use app::ListNameInfoBar;
 
 mod smi;
 pub use smi::run_smi;
@@ -104,7 +103,7 @@ pub fn run(
             "Device List [ESC]",
             menu::Tree::new()
                 .with(|tree| { for app in &vec_app {
-                    let name = app.app_amdgpu_top.device_info.list_name();
+                    let name = app.app_amdgpu_top.device_info.menu_entry();
                     let index = app.index;
 
                     tree.add_leaf(

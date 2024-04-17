@@ -112,4 +112,8 @@ impl AppDeviceInfo {
             ecc_memory,
         }
     }
+
+    pub fn menu_entry(&self) -> String {
+        format!("{} ({})", self.marketing_name, self.pci_bus)
+    }
 }
