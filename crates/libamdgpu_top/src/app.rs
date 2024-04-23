@@ -157,8 +157,8 @@ impl AppAmdgpuTop {
         {
             let lock = self.stat.arc_proc_index.try_lock();
             if let Ok(proc_index) = lock {
-                self.stat.fdinfo.get_all_proc_usage(&proc_index);
                 self.stat.fdinfo.interval = interval;
+                self.stat.fdinfo.get_all_proc_usage(&proc_index);
             } else {
                 self.stat.fdinfo.interval += interval;
             }
