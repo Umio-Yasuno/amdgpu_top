@@ -10,6 +10,7 @@ pub struct AppAmdgpuTop {
     pub device_info: AppDeviceInfo,
     pub device_path: DevicePath,
     pub stat: AppAmdgpuTopStat,
+    pub buf_interval: Duration,
 }
 
 #[derive(Clone)]
@@ -129,6 +130,7 @@ impl AppAmdgpuTop {
                 arc_pcie_bw,
                 memory_error_count,
             },
+            buf_interval: Duration::ZERO,
         })
     }
 
@@ -157,10 +159,11 @@ impl AppAmdgpuTop {
         {
             let lock = self.stat.arc_proc_index.try_lock();
             if let Ok(proc_index) = lock {
-                self.stat.fdinfo.interval = interval;
+                self.stat.fdinfo.interval = interval + self.buf_interval;
                 self.stat.fdinfo.get_all_proc_usage(&proc_index);
+                self.buf_interval = Duration::ZERO;
             } else {
-                self.stat.fdinfo.interval += interval;
+                self.buf_interval += interval;
             }
         }
 
