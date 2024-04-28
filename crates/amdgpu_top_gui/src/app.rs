@@ -683,7 +683,7 @@ impl MyApp {
 
                     let points: PlotPoints = history.iter()
                         .map(|(i, val)| [i, val as f64]).collect();
-                    let line = Line::new(points).fill(1.0);
+                    let line = Line::new(points).fill(0.0);
 
                     default_plot(name)
                         .allow_scroll(false)
@@ -978,7 +978,7 @@ impl MyApp {
                     };
                     let points: PlotPoints = history.iter()
                         .map(|(i, val)| [i, val as f64]).collect();
-                    let line = Line::new(points).fill(1.0);
+                    let line = Line::new(points).fill(0.0);
 
                     Plot::new(label)
                         .allow_zoom(false)
@@ -1057,7 +1057,7 @@ impl MyApp {
 
                 let points: PlotPoints = temp_history.iter()
                     .map(|(i, val)| [i, val as f64]).collect();
-                let line = Line::new(points).fill(1.0);
+                let line = Line::new(points).fill(0.0);
 
                 default_plot(label)
                     .include_y(max)
