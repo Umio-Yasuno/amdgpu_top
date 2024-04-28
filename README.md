@@ -14,10 +14,15 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
  * [Installation](#installation)
    * [Packages](#packages)
    * [Build from source](#build-from-source)
+     * [Distribution specific instructions](#distribution-specific-instructions)
    * [Binary Size](#binary-size)
  * [References](#references)
  * [Translations](#translations)
  * [Alternatives](#alternatives)
+
+## Dependent dynamic libraries
+ * libdrm
+ * libdrm_amdgpu
 
 ## Usage
 ```
@@ -129,10 +134,6 @@ AMD Radeon Graphics (0000:08:00.0): GFX: 0%, MediaEngine: 0%, Memory: null%
  * [Solus](https://github.com/getsolus/packages/tree/main/packages/a/amdgpu_top) to install run `sudo eopkg it amdgpu_top`
 
 ### Build from source
-Dependencies:
- * libdrm
- * libdrm_amdgpu
-
 ```
 cargo install amdgpu_top
 
@@ -146,6 +147,12 @@ cargo install --locked --path .
 #### without GUI
 ```
 cargo install --locked --path . --no-default-features --features="tui"
+```
+
+#### Distribution specific instructions
+##### Debian/Ubuntu
+```
+sudo apt install libdrm-dev
 ```
 
 ### Binary Size
