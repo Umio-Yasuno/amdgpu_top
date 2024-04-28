@@ -15,7 +15,7 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
    * [Packages](#packages)
    * [Build from source](#build-from-source)
      * [Distribution specific instructions](#distribution-specific-instructions)
-   * [Binary Size](#binary-size)
+ * [Binary Size](#binary-size)
  * [References](#references)
  * [Translations](#translations)
  * [Alternatives](#alternatives)
@@ -155,7 +155,7 @@ cargo install --locked --path . --no-default-features --features="tui"
 sudo apt install libdrm-dev
 ```
 
-### Binary Size
+## Binary Size
 
 | Features       | Size (stripped) |
 | :------------- | :-------------: |
