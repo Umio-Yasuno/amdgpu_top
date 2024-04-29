@@ -13,9 +13,10 @@ pub fn drm_info_json(device_path_list: &[DevicePath]) {
     let vec_drm_info_json: Vec<Value> = device_path_list.iter().map(|device_path| {
         let vec_conn_info = libamdgpu_top::connector_info(device_path);
         let vec_conn_info = vec_conn_info.iter().map(|conn| conn.json()).collect();
+        let node = device_path.card.display();
 
         json!({
-            "Node": device_path.card.as_os_str().to_str().unwrap(),
+            "Node": node.to_string(),
             "Connectors": Value::Array(vec_conn_info),
         })
     }).collect();
