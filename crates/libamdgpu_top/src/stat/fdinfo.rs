@@ -500,13 +500,6 @@ impl FdInfoUsage {
     }
 }
 
-pub fn get_self_pid() -> Option<i32> {
-    let link = std::fs::read_link("/proc/self").ok()?;
-    let path_str = link.to_str()?;
-
-    path_str.parse::<i32>().ok()
-}
-
 fn get_fds(pid: i32, device_path: &DevicePath) -> Vec<i32> {
     let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else { return Vec::new() };
 
