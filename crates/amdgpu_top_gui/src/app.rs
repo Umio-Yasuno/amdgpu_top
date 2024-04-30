@@ -759,7 +759,11 @@ impl MyApp {
     }
 
     fn set_fdinfo_sort_type(&mut self, sort_type: FdInfoSortType) {
-        self.reverse_sort ^= sort_type == self.fdinfo_sort;
+        if sort_type == self.fdinfo_sort {
+            self.reverse_sort ^= true;
+        } else {
+            self.reverse_sort = false;
+        }
         self.fdinfo_sort = sort_type;
     }
 
