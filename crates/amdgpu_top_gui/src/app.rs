@@ -758,15 +758,6 @@ impl MyApp {
         });
     }
 
-    fn set_fdinfo_sort_type(&mut self, sort_type: FdInfoSortType) {
-        if sort_type == self.fdinfo_sort {
-            self.reverse_sort ^= true;
-        } else {
-            self.reverse_sort = false;
-        }
-        self.fdinfo_sort = sort_type;
-    }
-
     pub fn egui_fdinfo_plot(&self, ui: &mut egui::Ui, has_vcn_unified: bool, has_vpe: bool) {
         let label_fmt = |name: &str, val: &PlotPoint| {
             format!("{:.1}s : {name} {:.0}%", val.x, val.y)
@@ -843,15 +834,16 @@ impl MyApp {
             ] {
                 if !flag { continue; }
 
-                let mark = match (self.fdinfo_sort == sort_type, self.reverse_sort) {
-                    (true, false) => "▽ ",
-                    (true, true) => "△ ",
-                    _ => "",
+                let (mark, rev) = match (self.fdinfo_sort == sort_type, self.reverse_sort) {
+                    (true, false) => ("▽ ", true),
+                    (true, true) => ("△ ", false),
+                    _ => ("", false),
                 };
                 let s = format!("{mark}{s}");
                 let s = format!("{s:^align$}");
                 if ui.button(rt_base(s)).clicked() {
-                    self.set_fdinfo_sort_type(sort_type);
+                    self.reverse_sort = rev;
+                    self.fdinfo_sort = sort_type;
                 }
             }
 
