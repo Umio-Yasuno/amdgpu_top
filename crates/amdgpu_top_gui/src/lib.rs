@@ -158,7 +158,7 @@ pub fn run(
             {
                 let lock = share_data.lock();
                 if let Ok(mut share_data) = lock {
-                    *share_data = vec_data.clone();
+                    share_data.clone_from(&vec_data);
                 }
             }
         });
