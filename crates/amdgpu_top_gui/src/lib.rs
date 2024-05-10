@@ -299,8 +299,11 @@ impl MyApp {
             collapsing(ui, &fl!("vram"), true, |ui| self.egui_vram(ui));
             ui.add_space(SPACE);
             collapsing(ui, &fl!("fdinfo"), true, |ui| self.egui_grid_fdinfo(ui));
-            ui.add_space(SPACE);
-            collapsing(ui, &fl!("sensor"), true, |ui| self.egui_sensors(ui));
+
+            if self.buf_data.stat.sensors.is_some() {
+                ui.add_space(SPACE);
+                collapsing(ui, &fl!("sensor"), true, |ui| self.egui_sensors(ui));
+            }
 
             if self.buf_data.support_pcie_bw {
                 ui.add_space(SPACE);

@@ -59,7 +59,8 @@ impl AppDeviceInfo {
         amdgpu_dev: &DeviceHandle,
         ext_info: &drm_amdgpu_info_device,
         memory_info: &drm_amdgpu_memory_info,
-        sensors: &Sensors,
+        sensors: &Option<Sensors>,
+        pci_bus: PCI::BUS_INFO,
     ) -> Self {
         let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock()
             .unwrap_or_else(|| (0, (ext_info.max_engine_clock() / 1000) as u32));
@@ -67,7 +68,7 @@ impl AppDeviceInfo {
             .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
         let resizable_bar = memory_info.check_resizable_bar();
         let marketing_name = ext_info.find_device_name_or_default();
-        let sysfs_path = sensors.bus_info.get_sysfs_path();
+        let sysfs_path = pci_bus.get_sysfs_path();
         let hw_ip_info_list = get_hw_ip_info_list(amdgpu_dev, ext_info.get_chip_class());
         let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);
         let power_profiles = PowerProfile::get_all_supported_profiles_from_sysfs(&sysfs_path);
@@ -80,23 +81,23 @@ impl AppDeviceInfo {
             ext_info: *ext_info,
             memory_info: *memory_info,
             resizable_bar,
-            min_dpm_link: sensors.min_dpm_link.clone(),
-            max_dpm_link: sensors.max_dpm_link.clone(),
-            max_gpu_link: sensors.max_gpu_link.clone(),
-            max_system_link: sensors.max_system_link.clone(),
+            min_dpm_link: sensors.as_ref().and_then(|s| s.min_dpm_link.clone()),
+            max_dpm_link: sensors.as_ref().and_then(|s| s.max_dpm_link.clone()),
+            max_gpu_link: sensors.as_ref().and_then(|s| s.max_gpu_link.clone()),
+            max_system_link: sensors.as_ref().and_then(|s| s.max_system_link.clone()),
             min_gpu_clk,
             max_gpu_clk,
             min_mem_clk,
             max_mem_clk,
             marketing_name,
             asic_name,
-            pci_bus: sensors.bus_info,
+            pci_bus,
             sysfs_path,
-            edge_temp: sensors.edge_temp.clone(),
-            junction_temp: sensors.junction_temp.clone(),
-            memory_temp: sensors.memory_temp.clone(),
-            power_cap: sensors.power_cap.clone(),
-            fan_max_rpm: sensors.fan_max_rpm,
+            edge_temp: sensors.as_ref().and_then(|s| s.edge_temp.clone()),
+            junction_temp: sensors.as_ref().and_then(|s| s.junction_temp.clone()),
+            memory_temp: sensors.as_ref().and_then(|s| s.memory_temp.clone()),
+            power_cap: sensors.as_ref().and_then(|s| s.power_cap.clone()),
+            fan_max_rpm: sensors.as_ref().and_then(|s| s.fan_max_rpm),
             decode: amdgpu_dev.get_video_caps_info(CAP_TYPE::DECODE).ok(),
             encode: amdgpu_dev.get_video_caps_info(CAP_TYPE::ENCODE).ok(),
             vbios: amdgpu_dev.get_vbios_info().ok(),

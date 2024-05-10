@@ -172,7 +172,7 @@ impl JsonDeviceInfo {
             "GRBM": if !no_pc { self.app.stat.grbm.json() } else { Value::Null },
             "GRBM2": if !no_pc { self.app.stat.grbm2.json() } else { Value::Null },
             "VRAM": self.app.stat.vram_usage.json(),
-            "Sensors": self.app.stat.sensors.json(),
+            "Sensors": self.app.stat.sensors.as_ref().map(|s| s.json()),
             "fdinfo": self.app.stat.fdinfo.json(),
             "gpu_metrics": self.app.stat.metrics.as_ref().map(|m| m.json()),
             "gpu_activity": self.app.stat.activity.json(),

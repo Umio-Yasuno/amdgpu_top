@@ -188,7 +188,7 @@ impl JsonInfo for AppAmdgpuTop {
     fn stat(&self) -> Value {
         json!({
             "VRAM": self.stat.vram_usage.json(),
-            "Sensors": self.stat.sensors.json(),
+            "Sensors": self.stat.sensors.as_ref().map(|s| s.json()),
             // "fdinfo": self.stat.fdinfo.json(),
             "gpu_metrics": self.stat.metrics.as_ref().map(|m| m.json()),
             "gpu_activity": self.stat.activity.json(),

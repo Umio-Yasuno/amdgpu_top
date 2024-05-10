@@ -82,6 +82,7 @@ impl SmiApp {
     }
 
     fn update_info_text(&mut self) -> Result<(), std::fmt::Error> {
+        let sensors = self.app_amdgpu_top.stat.sensors.as_ref();
         self.info_text.clear();
 
         writeln!(
@@ -100,24 +101,27 @@ impl SmiApp {
             vt = self.app_amdgpu_top.stat.vram_usage.0.vram.total_heap_size >> 20,
         )?;
 
-        if let Some(sclk) = &self.app_amdgpu_top.stat.sensors.sclk {
+        if let Some(sclk) = sensors.and_then(|s| s.sclk) {
             write!(self.info_text.buf, "{sclk:4}MHz ")?;
         } else {
             write!(self.info_text.buf, "____MHz ")?;
         }
-        if let Some(mclk) = &self.app_amdgpu_top.stat.sensors.mclk {
+        if let Some(mclk) = sensors.and_then(|s| s.mclk) {
             write!(self.info_text.buf, "{mclk:4}MHz ")?;
         } else {
             write!(self.info_text.buf, "____MHz ")?;
         }
 
-        if let Some(vddgfx) = &self.app_amdgpu_top.stat.sensors.vddgfx {
+        if let Some(vddgfx) = sensors.and_then(|s| s.vddgfx) {
             write!(self.info_text.buf, "{vddgfx:4}mV ")?;
         } else {
             write!(self.info_text.buf, "____mV ")?;
         }
 
-        match (&self.app_amdgpu_top.stat.sensors.any_hwmon_power(), &self.app_amdgpu_top.stat.sensors.power_cap) {
+        match (
+            sensors.and_then(|s| s.any_hwmon_power()),
+            sensors.and_then(|s| s.power_cap.as_ref()),
+        ) {
             (Some(power), Some(cap)) =>
                 write!(self.info_text.buf, " {:>3}/{:>3}W ", power.value, cap.current)?,
             (Some(power), None) => write!(self.info_text.buf, " {:>3}/___W ", power.value)?,
@@ -154,13 +158,13 @@ impl SmiApp {
             gt = self.app_amdgpu_top.stat.vram_usage.0.gtt.total_heap_size >> 20,
         )?;
 
-        if let Some(temp) = &self.app_amdgpu_top.stat.sensors.edge_temp {
+        if let Some(temp) = sensors.and_then(|s| s.edge_temp.as_ref()) {
             write!(self.info_text.buf, " {:>3}C ", temp.current)?;
         } else {
             write!(self.info_text.buf, " ___C ")?;
         }
 
-        if let Some(fan_rpm) = &self.app_amdgpu_top.stat.sensors.fan_rpm {
+        if let Some(fan_rpm) = sensors.and_then(|s| s.fan_rpm) {
             write!(self.info_text.buf, "  {fan_rpm:4}RPM ")?;
         } else {
             write!(self.info_text.buf, "  ____RPM ")?;

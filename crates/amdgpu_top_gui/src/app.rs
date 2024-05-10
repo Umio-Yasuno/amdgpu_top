@@ -113,9 +113,12 @@ impl GuiAppData {
             }
         }
 
+        if let Some(ref mut sensors) = self.stat.sensors {
+            self.history.sensors_history.add(secs, sensors);
+        }
+
         self.history.vram_history.add(secs, self.stat.vram_usage.0.vram.heap_usage);
         self.history.gtt_history.add(secs, self.stat.vram_usage.0.gtt.heap_usage);
-        self.history.sensors_history.add(secs, &self.stat.sensors);
         self.history.fdinfo_history.add(secs, self.stat.fdinfo.fold_fdinfo_usage());
     }
 }
@@ -902,9 +905,9 @@ impl MyApp {
     }
 
     pub fn egui_sensors(&self, ui: &mut egui::Ui) {
-        ui.style_mut().override_font_id = Some(MEDIUM);
-        let sensors = &self.buf_data.stat.sensors;
+        let Some(sensors) = self.buf_data.stat.sensors.as_ref() else { return };
         let mut n = 1;
+        ui.style_mut().override_font_id = Some(MEDIUM);
 
         egui::Grid::new("Sensors").spacing(SPACING).show(ui, |ui| {
             for (history, val, label, min, max, unit) in [
@@ -1026,11 +1029,11 @@ impl MyApp {
     }
 
     pub fn egui_temp_plot(&self, ui: &mut egui::Ui) {
-        ui.style_mut().override_font_id = Some(MEDIUM);
-        let sensors = &self.buf_data.stat.sensors;
+        let Some(sensors) = self.buf_data.stat.sensors.as_ref() else { return };
         let label_fmt = |_name: &str, val: &PlotPoint| {
             format!("{:.1}s\n{:.0} C", val.x, val.y)
         };
+        ui.style_mut().override_font_id = Some(MEDIUM);
         let mut n = 1;
 
         for (label, temp, temp_history) in [

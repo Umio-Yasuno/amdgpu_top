@@ -18,7 +18,7 @@ pub struct AppAmdgpuTopStat {
     pub grbm: PerfCounter,
     pub grbm2: PerfCounter,
     pub vram_usage: VramUsage,
-    pub sensors: Sensors,
+    pub sensors: Option<Sensors>,
     pub metrics: Option<GpuMetrics>,
     pub activity: GpuActivity,
     pub fdinfo: FdInfoStat,
@@ -107,6 +107,7 @@ impl AppAmdgpuTop {
             &ext_info,
             &memory_info,
             &sensors,
+            pci_bus,
         );
 
         if device_info.gfx_target_version.is_none() {
@@ -137,7 +138,10 @@ impl AppAmdgpuTop {
     pub fn update(&mut self, interval: Duration) {
         self.stat.vram_usage.update_usage(&self.amdgpu_dev);
         self.stat.vram_usage.update_usable_heap_size(&self.amdgpu_dev);
-        self.stat.sensors.update(&self.amdgpu_dev);
+
+        if let Some(ref mut sensors) = self.stat.sensors {
+            sensors.update(&self.amdgpu_dev);
+        }
 
         if self.stat.metrics.is_some() {
             self.stat.metrics = GpuMetrics::get_from_sysfs_path(&self.device_info.sysfs_path).ok();

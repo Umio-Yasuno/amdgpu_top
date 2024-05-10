@@ -129,6 +129,7 @@ pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
         &ext_info,
         &memory_info,
         &sensors,
+        pci_bus,
     );
 
     if let Ok(drm) = amdgpu_dev.get_drm_version_struct() {
@@ -146,7 +147,11 @@ pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
 
     info.gfx_info();
     info.memory_info();
-    sensors_info(&sensors);
+
+    if let Some(ref sensors) = sensors {
+        sensors_info(sensors);
+    }
+
     {
         let profiles: Vec<String> = info.power_profiles.iter().map(|p| p.to_string()).collect();
         println!("Supported Power Profiles: {profiles:?}");

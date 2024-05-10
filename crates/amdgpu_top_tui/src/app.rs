@@ -69,7 +69,10 @@ impl NewTuiApp {
 
         layout.add_child(self.vram_usage_view.view(&self.app_amdgpu_top.stat.vram_usage));
         layout.add_child(self.fdinfo_view.text.panel("fdinfo"));
-        layout.add_child(self.sensors_view.text.panel("Sensors"));
+
+        if self.app_amdgpu_top.stat.sensors.is_some() {
+            layout.add_child(self.sensors_view.text.panel("Sensors"));
+        }
 
         if self.app_amdgpu_top.stat.memory_error_count.is_some() {
             layout.add_child(self.ecc_view.text.panel("ECC Error Count"));
@@ -105,7 +108,9 @@ impl NewTuiApp {
         self.vram_usage_view.set_value(&self.app_amdgpu_top.stat.vram_usage);
 
         if flags.sensor {
-            let _ = self.sensors_view.print_sensors(&self.app_amdgpu_top.stat.sensors);
+            if let Some(ref sensors) = &self.app_amdgpu_top.stat.sensors {
+                let _ = self.sensors_view.print_sensors(sensors);
+            }
 
             {
                 if let Some(arc_pcie_bw) = &self.app_amdgpu_top.stat.arc_pcie_bw {

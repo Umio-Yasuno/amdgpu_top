@@ -46,8 +46,8 @@ impl Sensors {
         amdgpu_dev: &DeviceHandle,
         pci_bus: &PCI::BUS_INFO,
         ext_info: &drm_amdgpu_info_device,
-    ) -> Self {
-        let hwmon_path = pci_bus.get_hwmon_path().unwrap();
+    ) -> Option<Self> {
+        let hwmon_path = pci_bus.get_hwmon_path()?;
         let asic_name = ext_info.get_asic_name();
         let is_apu = ext_info.is_apu();
         let vega10_and_later = ASIC_NAME::CHIP_VEGA10 <= asic_name;
@@ -109,7 +109,7 @@ impl Sensors {
                 s
             });
 
-        Self {
+        Some(Self {
             hwmon_path,
             is_apu,
             vega10_and_later,
@@ -133,7 +133,7 @@ impl Sensors {
             fan_max_rpm,
             gpu_port_path,
             pci_power_state,
-        }
+        })
     }
 
     pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
