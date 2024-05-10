@@ -31,6 +31,7 @@ pub struct AppOption {
     pub pcie_bw: bool,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for AppOption {
     fn default() -> Self {
         Self {

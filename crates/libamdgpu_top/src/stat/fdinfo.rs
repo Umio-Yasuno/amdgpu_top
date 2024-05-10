@@ -587,7 +587,7 @@ pub fn spawn_update_index_thread(
 
             let lock = index.lock();
             if let Ok(mut index) = lock {
-                *index = buf_index.clone();
+                index.clone_from(&buf_index);
             }
         }
     });

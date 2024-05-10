@@ -11,7 +11,7 @@ pub enum PowerType {
 }
 
 impl PowerType {
-    const fn to_filename(&self) -> &str {
+    const fn as_filename(&self) -> &str {
         match self {
             Self::Input => POWER1_INPUT,
             Self::Average => POWER1_AVG,
@@ -35,7 +35,7 @@ impl HwmonPower {
     pub fn from_hwmon_path_with_type<P: Into<PathBuf>>(path: P, type_: PowerType) -> Option<Self> {
         let path = path.into();
 
-        let s = std::fs::read_to_string(path.join(type_.to_filename())).ok()?;
+        let s = std::fs::read_to_string(path.join(type_.as_filename())).ok()?;
         let value = s.trim_end().parse::<u32>().ok()?.saturating_div(1_000_000);
 
         Some(Self { type_, value })

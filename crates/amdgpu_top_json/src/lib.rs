@@ -34,7 +34,6 @@ pub fn amdgpu_top_version() -> Value {
 pub struct JsonApp {
     pub vec_device_info: Vec<JsonDeviceInfo>,
     pub base_time: Instant,
-    pub period: Duration,
     pub interval: Duration,
     pub delay: Duration,
     pub iterations: u32,
@@ -49,9 +48,8 @@ impl JsonApp {
         iterations: u32,
         no_pc: bool,
     ) -> Self {
-        let period = Duration::from_millis(refresh_period);
-        let interval = period.clone();
-        let delay = period / 100;
+        let interval = Duration::from_millis(refresh_period);
+        let delay = interval / 100;
         let mut vec_device_info = JsonDeviceInfo::from_device_path_list(device_path_list);
 
         for device in vec_device_info.iter_mut() {
@@ -75,7 +73,6 @@ impl JsonApp {
         Self {
             vec_device_info,
             base_time,
-            period,
             interval,
             delay,
             iterations,

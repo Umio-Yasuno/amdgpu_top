@@ -238,6 +238,7 @@ impl OutputJson for GpuMetrics {
             );
         }
 
+        #[allow(clippy::single_element_loop)]
         for (name, val_u32) in [
             ("average_socket_power", self.get_average_socket_power()),
         ] {

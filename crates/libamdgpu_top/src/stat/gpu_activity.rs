@@ -35,7 +35,7 @@ impl GpuActivity {
             match asic_name {
                 ASIC_NAME::CHIP_RAVEN |
                 ASIC_NAME::CHIP_RAVEN2 => Self { gfx: None, umc: None, media: None },
-                _ => GpuActivity::get_from_sysfs(&path),
+                _ => GpuActivity::get_from_sysfs(path),
             }
         }
     }
