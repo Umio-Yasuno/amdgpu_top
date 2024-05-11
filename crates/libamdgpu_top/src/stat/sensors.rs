@@ -10,6 +10,7 @@ use libdrm_amdgpu_sys::{
         HwmonTempType,
         SENSOR_INFO::SENSOR_TYPE,
         PowerCap,
+        PowerProfile,
     },
 };
 use super::{parse_hwmon, HwmonPower, PowerType};
@@ -17,6 +18,8 @@ use super::{parse_hwmon, HwmonPower, PowerType};
 #[derive(Clone, Debug)]
 pub struct Sensors {
     pub hwmon_path: PathBuf,
+    pub gpu_port_path: PathBuf,
+    pub sysfs_path: PathBuf,
     pub is_apu: bool,
     pub vega10_and_later: bool,
     pub current_link: Option<PCI::LINK>,
@@ -37,8 +40,8 @@ pub struct Sensors {
     pub power_cap: Option<PowerCap>,
     pub fan_rpm: Option<u32>,
     pub fan_max_rpm: Option<u32>,
-    pub gpu_port_path: PathBuf,
     pub pci_power_state: Option<String>,
+    pub power_profile: Option<PowerProfile>,
 }
 
 impl Sensors {
@@ -48,6 +51,7 @@ impl Sensors {
         ext_info: &drm_amdgpu_info_device,
     ) -> Option<Self> {
         let hwmon_path = pci_bus.get_hwmon_path()?;
+        let sysfs_path = pci_bus.get_sysfs_path();
         let asic_name = ext_info.get_asic_name();
         let is_apu = ext_info.is_apu();
         let vega10_and_later = ASIC_NAME::CHIP_VEGA10 <= asic_name;
@@ -108,9 +112,11 @@ impl Sensors {
                 s.pop();
                 s
             });
+        let power_profile = PowerProfile::get_current_profile_from_sysfs(&sysfs_path);
 
         Some(Self {
             hwmon_path,
+            sysfs_path,
             is_apu,
             vega10_and_later,
             current_link,
@@ -133,6 +139,7 @@ impl Sensors {
             fan_max_rpm,
             gpu_port_path,
             pci_power_state,
+            power_profile,
         })
     }
 
@@ -174,6 +181,7 @@ impl Sensors {
                 s.pop(); // trim `\n`
                 s
             });
+        self.power_profile = PowerProfile::get_current_profile_from_sysfs(&self.sysfs_path);
     }
 
     pub fn any_hwmon_power(&self) -> Option<HwmonPower> {

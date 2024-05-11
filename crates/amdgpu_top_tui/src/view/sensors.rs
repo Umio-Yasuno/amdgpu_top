@@ -99,6 +99,10 @@ impl AppTextView {
             writeln!(self.text.buf, " PCI Power State: {power_state}")?;
         }
 
+        if let Some(power_profile) = &sensors.power_profile {
+            writeln!(self.text.buf, " Power Profile: {power_profile}")?;
+        }
+
         Ok(())
     }
 

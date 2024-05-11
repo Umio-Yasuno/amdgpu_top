@@ -1026,6 +1026,14 @@ impl MyApp {
                 power_state,
             ));
         }
+
+        if let Some(power_profile) = &sensors.power_profile {
+            ui.label(format!(
+                "{}: {}",
+                fl!("power_profile"),
+                power_profile,
+            ));
+        }
     }
 
     pub fn egui_temp_plot(&self, ui: &mut egui::Ui) {
