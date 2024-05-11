@@ -31,6 +31,32 @@ cargo run -- [options ..]
 amdgpu_top [options ..]
 ```
 
+```
+# Run TUI mode
+amdgpu_top
+
+# Run GUI mode
+amdgpu_top --gui
+
+# Run SMI mode
+amdgpu_top --smi
+
+# Dump AMDGPU info
+amdgpu_top -d
+
+# Dump AMDGPU info and gpu_metrics
+amdgpu_top -d -gm
+
+# Dump AMDGPU info and pp_table
+amdgpu_top -d --pp-table
+
+# Dump AMDGPU info in JSON format
+amdgpu_top -d --json
+
+# Dump DRM info
+amdgpu_top --drm-info
+```
+
 ### Options
 ```
 FLAGS:
