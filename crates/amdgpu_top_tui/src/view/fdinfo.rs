@@ -18,6 +18,7 @@ const DEC_LABEL: &str = "DEC";
 const ENC_LABEL: &str = "ENC";
 const VCN_LABEL: &str = "VCN";
 const VPE_LABEL: &str = "VPE";
+const KFD_LABEL: &str = "KFD";
 // const UVD_ENC_LABEL: &str = "UVD (ENC)";
 // const JPEG_LABEL: &str = "JPEG";
 
@@ -34,10 +35,9 @@ impl AppTextView {
 
         write!(
             self.text.buf,
-            " {proc_name:<PROC_NAME_LEN$}|{pid:^PID_MAX_LEN$}|{kfd}|{VRAM_LABEL:^6}|{GTT_LABEL:^6}|{CPU_LABEL:^4}|{GFX_LABEL:^4}|{COMPUTE_LABEL:^4}|{DMA_LABEL:^4}",
+            " {proc_name:<PROC_NAME_LEN$}|{pid:^PID_MAX_LEN$}|{KFD_LABEL}|{VRAM_LABEL:^6}|{GTT_LABEL:^6}|{CPU_LABEL:^4}|{GFX_LABEL:^4}|{COMPUTE_LABEL:^4}|{DMA_LABEL:^4}",
             proc_name = "Name",
             pid = "PID",
-            kfd = "KFD",
         )?;
 
         if stat.has_vcn_unified {
