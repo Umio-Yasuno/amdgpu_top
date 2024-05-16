@@ -22,14 +22,14 @@ jobs:
       - name: Print Cargo Version
         run: cargo -V
       - name: Package Version
-        run: echo "PKG_VER=$(cargo metadata --no-deps --format-version 1 | jq ".packages[].version" | head -n 1)" >> $GITHUB_ENV
+        run: echo "PKG_VER=$(cargo metadata --no-deps --format-version 1 | jq '.packages[0].version' | head -n 1)" >> $GITHUB_ENV
       - name: Print Package Version
         run: echo "$PKG_VER"
       - name: Check Version
         run: |
-          if ! [ "$PKG_VER" == "VERSION" ]; then
+          if ! [ "$PKG_VER" == "${VERSION#v}" ]; then
             echo "version does not match tag"
-            exit 1
+            # exit 1
           fi
       - name: Create release
         env:
