@@ -963,13 +963,27 @@ impl MyApp {
                 ),
             ] {
                 let Some(val) = val else { continue };
+                let per = if min == 0 {
+                    val.saturating_mul(100).checked_div(max)
+                } else {
+                    None
+                };
 
                 egui::Grid::new(label).show(ui, |ui| {
-                    ui.label(format!("{label} ({val:4} {unit})"));
+                    if let Some(per) = per {
+                        ui.label(format!("{label} ({val:4} {unit}) ({per:>3}%)"));
+                    } else {
+                        ui.label(format!("{label} ({val:4} {unit})"));
+                    }
+
                     ui.end_row();
 
                     let label_fmt = move |_name: &str, val: &PlotPoint| {
-                        format!("{:.1}s\n{:.0} {unit}", val.x, val.y)
+                        if let Some(per) = per {
+                            format!("{:.1}s\n{:.0} {unit} ({per:>3}%)", val.x, val.y)
+                        } else {
+                            format!("{:.1}s\n{:.0} {unit}", val.x, val.y)
+                        }
                     };
                     let points: PlotPoints = history.iter()
                         .map(|(i, val)| [i, val as f64]).collect();

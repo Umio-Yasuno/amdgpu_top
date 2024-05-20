@@ -71,6 +71,10 @@ impl AppTextView {
         if let Some(fan_rpm) = sensors.fan_rpm {
             write!(self.text.buf, " Fan => {fan_rpm:4} RPM")?;
             if let Some(max_rpm) = sensors.fan_max_rpm {
+                if let Some(per) = fan_rpm.saturating_mul(100).checked_div(max_rpm) {
+                    write!(self.text.buf, " ({per:>3}%)")?;
+                }
+
                 write!(self.text.buf, " (Max. {max_rpm} RPM)")?;
             }
             writeln!(self.text.buf)?;
