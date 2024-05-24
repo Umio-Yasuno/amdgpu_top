@@ -212,6 +212,9 @@ fn sensors_info(sensors: &Sensors) {
     if let Some(fan_max_rpm) = &sensors.fan_max_rpm {
         println!("Fan RPM (Max)       : {fan_max_rpm} RPM");
     }
+    if let Some(fan_rpm) = &sensors.fan_rpm {
+        println!("Fan RPM (Current)   : {fan_rpm} RPM");
+    }
 
     const PCIE_LABEL: &str = "PCIe Link Speed";
     const PCIE_LEN: usize = 14;

@@ -68,6 +68,10 @@
         "unit": "RPM",
         "value": 0
       },
+      "Fan Max": {
+        "unit": "RPM",
+        "value": 6000
+      },
       "GFX Power": {
         "unit": "W",
         "value": 16

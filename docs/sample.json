@@ -801,6 +801,7 @@
           "value": 33
         },
         "Fan": null,
+        "Fan Max": null,
         "GFX Power": {
           "unit": "W",
           "value": 13
