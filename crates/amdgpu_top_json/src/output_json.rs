@@ -56,13 +56,14 @@ impl OutputJson for PerfCounter {
 impl OutputJson for Sensors {
     fn json(&self) -> Value {
         let mut m = Map::new();
-        
+
         for (label, val, unit) in [
             ("GFX_SCLK", self.sclk, "MHz"),
             ("GFX_MCLK", self.mclk, "MHz"),
             ("VDDNB", self.vddnb, "mV"),
             ("VDDGFX", self.vddgfx, "mV"),
             ("Fan", self.fan_rpm, "RPM"),
+            ("Fan Max", self.fan_max_rpm, "RPM"),
         ] {
             m.insert(
                 label.to_string(),
