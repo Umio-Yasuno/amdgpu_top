@@ -1,43 +1,43 @@
 {
   "amdgpu_top_version": {
     "major": 0,
-    "minor": 4,
-    "patch": 0
+    "minor": 8,
+    "patch": 3
   },
   "devices": [
     {
       "GRBM": {
         "Color Block": {
           "unit": "%",
-          "value": 3
+          "value": 0
         },
         "Depth Block": {
           "unit": "%",
-          "value": 3
+          "value": 0
         },
         "Geometry Engine": {
           "unit": "%",
-          "value": 2
+          "value": 0
         },
         "Graphics Pipe": {
           "unit": "%",
-          "value": 4
+          "value": 0
         },
         "Primitive Assembly": {
           "unit": "%",
-          "value": 1
+          "value": 0
         },
         "Shader Export": {
           "unit": "%",
-          "value": 2
+          "value": 0
         },
         "Shader Processor Interpolator": {
           "unit": "%",
-          "value": 3
+          "value": 0
         },
         "Texture Pipe": {
           "unit": "%",
-          "value": 1
+          "value": 0
         }
       },
       "GRBM2": {
@@ -47,19 +47,19 @@
         },
         "Command Processor -  Fetcher": {
           "unit": "%",
-          "value": 4
+          "value": 0
         },
         "Command Processor - Graphics": {
           "unit": "%",
-          "value": 3
+          "value": 0
         },
         "Efficiency Arbiter": {
           "unit": "%",
-          "value": 1
+          "value": 0
         },
         "Render Backend Memory Interface": {
           "unit": "%",
-          "value": 1
+          "value": 0
         },
         "RunList Controller": {
           "unit": "%",
@@ -86,7 +86,7 @@
         },
         "GPU Family": "Navi (NV)",
         "GPU Type": "dGPU",
-        "GTT Size": 8058241024,
+        "GTT Size": 8053469184,
         "L1 Cache per CU": 16384,
         "L2 Cache": 2097152,
         "L3 Cache": 33554432,
@@ -209,48 +209,53 @@
         },
         "amdgpu_top_version": {
           "major": 0,
-          "minor": 4,
-          "patch": 0
+          "minor": 8,
+          "patch": 3
         },
         "drm_version": {
           "major": 3,
-          "minor": 56,
+          "minor": 57,
           "patchlevel": 0
-        }
+        },
+        "gfx_target_version": "gfx1032"
       },
       "Sensors": {
         "Average Power": {
           "unit": "W",
-          "value": 16
+          "value": 4
         },
         "Edge Temperature": {
           "unit": "C",
-          "value": 53
+          "value": 33
         },
         "Fan": {
           "unit": "RPM",
           "value": 0
         },
+        "Fan Max": {
+          "unit": "RPM",
+          "value": 3600
+        },
         "GFX Power": {
           "unit": "W",
-          "value": 16
+          "value": 4
         },
         "GFX_MCLK": {
           "unit": "MHz",
-          "value": 541
+          "value": 96
         },
         "GFX_SCLK": {
           "unit": "MHz",
-          "value": 39
+          "value": 5
         },
         "Input Power": null,
         "Junction Temperature": {
           "unit": "C",
-          "value": 54
+          "value": 33
         },
         "Memory Temperature": {
           "unit": "C",
-          "value": 52
+          "value": 26
         },
         "PCIe Link Speed": {
           "gen": 3,
@@ -258,18 +263,18 @@
         },
         "VDDGFX": {
           "unit": "mV",
-          "value": 756
+          "value": 750
         },
         "VDDNB": null
       },
       "VRAM": {
         "Total GTT": {
           "unit": "MiB",
-          "value": 7684
+          "value": 7680
         },
         "Total GTT Usage": {
           "unit": "MiB",
-          "value": 119
+          "value": 76
         },
         "Total VRAM": {
           "unit": "MiB",
@@ -277,12 +282,12 @@
         },
         "Total VRAM Usage": {
           "unit": "MiB",
-          "value": 891
+          "value": 639
         }
       },
       "fdinfo": {
-        "1073588": {
-          "name": "amdgpu_top",
+        "1470": {
+          "name": "Xwayland",
           "usage": {
             "CPU": {
               "unit": "%",
@@ -310,24 +315,29 @@
             },
             "GTT": {
               "unit": "MiB",
-              "value": 0
+              "value": 13
             },
             "Media": {
               "unit": "%",
               "value": 0
             },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
             "VRAM": {
               "unit": "MiB",
-              "value": 0
+              "value": 37
             }
           }
         },
-        "6029": {
-          "name": "steam",
+        "1495": {
+          "name": "ksmserver",
           "usage": {
             "CPU": {
               "unit": "%",
-              "value": 1
+              "value": 0
             },
             "Compute": {
               "unit": "%",
@@ -351,20 +361,301 @@
             },
             "GTT": {
               "unit": "MiB",
-              "value": 4
+              "value": 2
             },
             "Media": {
               "unit": "%",
               "value": 0
             },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
             "VRAM": {
               "unit": "MiB",
               "value": 8
             }
           }
         },
-        "6054": {
-          "name": "steamwebhelper",
+        "1497": {
+          "name": "kded5",
+          "usage": {
+            "CPU": {
+              "unit": "%",
+              "value": 0
+            },
+            "Compute": {
+              "unit": "%",
+              "value": 0
+            },
+            "DMA": {
+              "unit": "%",
+              "value": 0
+            },
+            "Decode": {
+              "unit": "%",
+              "value": 0
+            },
+            "Encode": {
+              "unit": "%",
+              "value": 0
+            },
+            "GFX": {
+              "unit": "%",
+              "value": 0
+            },
+            "GTT": {
+              "unit": "MiB",
+              "value": 2
+            },
+            "Media": {
+              "unit": "%",
+              "value": 0
+            },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
+            "VRAM": {
+              "unit": "MiB",
+              "value": 8
+            }
+          }
+        },
+        "1538": {
+          "name": "plasmashell",
+          "usage": {
+            "CPU": {
+              "unit": "%",
+              "value": 0
+            },
+            "Compute": {
+              "unit": "%",
+              "value": 0
+            },
+            "DMA": {
+              "unit": "%",
+              "value": 0
+            },
+            "Decode": {
+              "unit": "%",
+              "value": 0
+            },
+            "Encode": {
+              "unit": "%",
+              "value": 0
+            },
+            "GFX": {
+              "unit": "%",
+              "value": 0
+            },
+            "GTT": {
+              "unit": "MiB",
+              "value": 6
+            },
+            "Media": {
+              "unit": "%",
+              "value": 0
+            },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
+            "VRAM": {
+              "unit": "MiB",
+              "value": 145
+            }
+          }
+        },
+        "1704": {
+          "name": "kaccess",
+          "usage": {
+            "CPU": {
+              "unit": "%",
+              "value": 0
+            },
+            "Compute": {
+              "unit": "%",
+              "value": 0
+            },
+            "DMA": {
+              "unit": "%",
+              "value": 0
+            },
+            "Decode": {
+              "unit": "%",
+              "value": 0
+            },
+            "Encode": {
+              "unit": "%",
+              "value": 0
+            },
+            "GFX": {
+              "unit": "%",
+              "value": 0
+            },
+            "GTT": {
+              "unit": "MiB",
+              "value": 2
+            },
+            "Media": {
+              "unit": "%",
+              "value": 0
+            },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
+            "VRAM": {
+              "unit": "MiB",
+              "value": 8
+            }
+          }
+        },
+        "1710": {
+          "name": "DiscoverNotifie",
+          "usage": {
+            "CPU": {
+              "unit": "%",
+              "value": 0
+            },
+            "Compute": {
+              "unit": "%",
+              "value": 0
+            },
+            "DMA": {
+              "unit": "%",
+              "value": 0
+            },
+            "Decode": {
+              "unit": "%",
+              "value": 0
+            },
+            "Encode": {
+              "unit": "%",
+              "value": 0
+            },
+            "GFX": {
+              "unit": "%",
+              "value": 0
+            },
+            "GTT": {
+              "unit": "MiB",
+              "value": 2
+            },
+            "Media": {
+              "unit": "%",
+              "value": 0
+            },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
+            "VRAM": {
+              "unit": "MiB",
+              "value": 8
+            }
+          }
+        },
+        "1711": {
+          "name": "kalendarac",
+          "usage": {
+            "CPU": {
+              "unit": "%",
+              "value": 0
+            },
+            "Compute": {
+              "unit": "%",
+              "value": 0
+            },
+            "DMA": {
+              "unit": "%",
+              "value": 0
+            },
+            "Decode": {
+              "unit": "%",
+              "value": 0
+            },
+            "Encode": {
+              "unit": "%",
+              "value": 0
+            },
+            "GFX": {
+              "unit": "%",
+              "value": 0
+            },
+            "GTT": {
+              "unit": "MiB",
+              "value": 2
+            },
+            "Media": {
+              "unit": "%",
+              "value": 0
+            },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
+            "VRAM": {
+              "unit": "MiB",
+              "value": 8
+            }
+          }
+        },
+        "1893": {
+          "name": "kdeconnectd",
+          "usage": {
+            "CPU": {
+              "unit": "%",
+              "value": 0
+            },
+            "Compute": {
+              "unit": "%",
+              "value": 0
+            },
+            "DMA": {
+              "unit": "%",
+              "value": 0
+            },
+            "Decode": {
+              "unit": "%",
+              "value": 0
+            },
+            "Encode": {
+              "unit": "%",
+              "value": 0
+            },
+            "GFX": {
+              "unit": "%",
+              "value": 0
+            },
+            "GTT": {
+              "unit": "MiB",
+              "value": 2
+            },
+            "Media": {
+              "unit": "%",
+              "value": 0
+            },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
+            "VRAM": {
+              "unit": "MiB",
+              "value": 8
+            }
+          }
+        },
+        "1930": {
+          "name": "firefox-esr",
           "usage": {
             "CPU": {
               "unit": "%",
@@ -392,20 +683,25 @@
             },
             "GTT": {
               "unit": "MiB",
-              "value": 50
+              "value": 8
             },
             "Media": {
               "unit": "%",
               "value": 0
             },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
             "VRAM": {
               "unit": "MiB",
-              "value": 34
+              "value": 134
             }
           }
         },
-        "60853": {
-          "name": "wezterm-gui",
+        "1998": {
+          "name": "xdg-desktop-por",
           "usage": {
             "CPU": {
               "unit": "%",
@@ -433,20 +729,25 @@
             },
             "GTT": {
               "unit": "MiB",
-              "value": 18
+              "value": 2
             },
             "Media": {
               "unit": "%",
               "value": 0
             },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
             "VRAM": {
               "unit": "MiB",
-              "value": 21
+              "value": 8
             }
           }
         },
-        "6112": {
-          "name": "steamwebhelper",
+        "2621": {
+          "name": "konsole",
           "usage": {
             "CPU": {
               "unit": "%",
@@ -474,24 +775,29 @@
             },
             "GTT": {
               "unit": "MiB",
-              "value": 12
+              "value": 2
             },
             "Media": {
               "unit": "%",
               "value": 0
             },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
             "VRAM": {
               "unit": "MiB",
-              "value": 131
+              "value": 8
             }
           }
         },
-        "883316": {
-          "name": "firefox",
+        "3481": {
+          "name": "amdgpu_top",
           "usage": {
             "CPU": {
               "unit": "%",
-              "value": 25
+              "value": 1
             },
             "Compute": {
               "unit": "%",
@@ -511,19 +817,24 @@
             },
             "GFX": {
               "unit": "%",
-              "value": 3
+              "value": 0
             },
             "GTT": {
               "unit": "MiB",
-              "value": 16
+              "value": 0
             },
             "Media": {
               "unit": "%",
               "value": 0
             },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
             "VRAM": {
               "unit": "MiB",
-              "value": 413
+              "value": 0
             }
           }
         }
@@ -531,7 +842,7 @@
       "gpu_activity": {
         "GFX": {
           "unit": "%",
-          "value": 1
+          "value": 0
         },
         "MediaEngine": {
           "unit": "%",
@@ -539,7 +850,7 @@
         },
         "Memory": {
           "unit": "%",
-          "value": 1
+          "value": 0
         }
       },
       "gpu_metrics": {
@@ -554,15 +865,15 @@
         "average_gfx_current": null,
         "average_gfx_power": null,
         "average_gfx_voltage": null,
-        "average_gfxclk_frequency": 39,
+        "average_gfxclk_frequency": 5,
         "average_soc_current": null,
         "average_soc_power": null,
         "average_soc_voltage": null,
         "average_socclk_frequency": null,
-        "average_socket_power": 16,
+        "average_socket_power": 4,
         "average_temperature_core": null,
         "average_temperature_l3": null,
-        "average_uclk_frequency": 539,
+        "average_uclk_frequency": 15,
         "average_vclk1_frequency": 0,
         "average_vclk_frequency": 33,
         "current_coreclk": null,
@@ -572,7 +883,7 @@
         "current_gfxclk": 800,
         "current_l3clk": null,
         "current_socclk": 640,
-        "current_uclk": 541,
+        "current_uclk": 96,
         "current_vclk": 0,
         "current_vclk1": 0,
         "fan_pwm": null,
@@ -583,13 +894,13 @@
         },
         "pcie_link_speed": 80,
         "pcie_link_width": 8,
-        "system_clock_counter": 71690672351770,
+        "system_clock_counter": 341546110759,
         "temperature_core": null,
-        "temperature_edge": 53,
+        "temperature_edge": 33,
         "temperature_gfx": null,
-        "temperature_hotspot": 54,
+        "temperature_hotspot": 33,
         "temperature_l3": null,
-        "temperature_mem": 52,
+        "temperature_mem": 26,
         "temperature_soc": null,
         "temperature_vrgfx": 0,
         "temperature_vrmem": 0,
@@ -688,7 +999,7 @@
         },
         "GPU Family": "Raven (RV)",
         "GPU Type": "APU",
-        "GTT Size": 8058241024,
+        "GTT Size": 8053469184,
         "L1 Cache per CU": 16384,
         "L2 Cache": 1048576,
         "L3 Cache": 0,
@@ -785,25 +1096,27 @@
         },
         "amdgpu_top_version": {
           "major": 0,
-          "minor": 4,
-          "patch": 0
+          "minor": 8,
+          "patch": 3
         },
         "drm_version": {
           "major": 3,
-          "minor": 56,
+          "minor": 57,
           "patchlevel": 0
-        }
+        },
+        "gfx_target_version": "gfx90c"
       },
       "Sensors": {
         "Average Power": null,
         "Edge Temperature": {
           "unit": "C",
-          "value": 33
+          "value": 29
         },
         "Fan": null,
+        "Fan Max": null,
         "GFX Power": {
           "unit": "W",
-          "value": 13
+          "value": 9
         },
         "GFX_MCLK": {
           "unit": "MHz",
@@ -815,28 +1128,28 @@
         },
         "Input Power": {
           "unit": "W",
-          "value": 13
+          "value": 9
         },
         "Junction Temperature": null,
         "Memory Temperature": null,
         "PCIe Link Speed": null,
         "VDDGFX": {
           "unit": "mV",
-          "value": 1081
+          "value": 1349
         },
         "VDDNB": {
           "unit": "mV",
-          "value": 993
+          "value": 999
         }
       },
       "VRAM": {
         "Total GTT": {
           "unit": "MiB",
-          "value": 7684
+          "value": 7680
         },
         "Total GTT Usage": {
           "unit": "MiB",
-          "value": 14
+          "value": 16
         },
         "Total VRAM": {
           "unit": "MiB",
@@ -844,16 +1157,16 @@
         },
         "Total VRAM Usage": {
           "unit": "MiB",
-          "value": 29
+          "value": 27
         }
       },
       "fdinfo": {
-        "1073588": {
+        "3481": {
           "name": "amdgpu_top",
           "usage": {
             "CPU": {
               "unit": "%",
-              "value": 0
+              "value": 1
             },
             "Compute": {
               "unit": "%",
@@ -883,6 +1196,11 @@
               "unit": "%",
               "value": 0
             },
+            "VCN_JPEG": {
+              "unit": "%",
+              "value": 0
+            },
+            "VPE": null,
             "VRAM": {
               "unit": "MiB",
               "value": 0
@@ -908,16 +1226,16 @@
         "Throttle Status": [],
         "average_core_power": [
           0,
-          496,
+          6,
           0,
-          498,
-          1119,
-          2265,
-          1332,
-          707
+          6,
+          6,
+          6,
+          6022,
+          6
         ],
         "average_cpu_current": null,
-        "average_cpu_power": 8397,
+        "average_cpu_power": 3932,
         "average_cpu_voltage": null,
         "average_dclk1_frequency": null,
         "average_dclk_frequency": null,
@@ -927,10 +1245,10 @@
         "average_gfx_voltage": null,
         "average_gfxclk_frequency": 401,
         "average_soc_current": null,
-        "average_soc_power": 2022,
+        "average_soc_power": 1744,
         "average_soc_voltage": null,
         "average_socclk_frequency": 400,
-        "average_socket_power": 13,
+        "average_socket_power": 9,
         "average_temperature_core": null,
         "average_temperature_l3": null,
         "average_uclk_frequency": null,
@@ -938,20 +1256,20 @@
         "average_vclk_frequency": 400,
         "current_coreclk": [
           0,
-          2960,
+          3560,
           0,
-          2960,
-          3700,
-          3700,
-          3700,
-          3700
+          3560,
+          3560,
+          3560,
+          4450,
+          3560
         ],
         "current_dclk": 400,
         "current_dclk1": null,
         "current_fclk": 1600,
         "current_gfxclk": 400,
         "current_l3clk": [
-          3700,
+          4450,
           0
         ],
         "current_socclk": 400,
@@ -966,26 +1284,26 @@
         },
         "pcie_link_speed": null,
         "pcie_link_width": null,
-        "system_clock_counter": 71690673932156,
+        "system_clock_counter": 341548284740,
         "temperature_core": [
-          3325,
-          3325,
-          3350,
-          3350,
-          3400,
-          3325,
-          3400,
-          3300
+          2900,
+          2850,
+          2875,
+          2850,
+          2950,
+          2850,
+          3500,
+          2850
         ],
         "temperature_edge": null,
-        "temperature_gfx": 3300,
+        "temperature_gfx": 2900,
         "temperature_hotspot": null,
         "temperature_l3": [
-          3375,
+          2950,
           0
         ],
         "temperature_mem": null,
-        "temperature_soc": 3400,
+        "temperature_soc": 2950,
         "temperature_vrgfx": null,
         "temperature_vrmem": null,
         "temperature_vrsoc": null,
@@ -997,8 +1315,8 @@
   ],
   "devices_len": 2,
   "period": {
-    "duration": 1012,
+    "duration": 1038,
     "unit": "ms"
   },
-  "title": "amdgpu_top v0.4.0 (git-a325a1b) (debug build)"
+  "title": "amdgpu_top v0.8.3 (git-5cd3de1) (debug build)"
 }
