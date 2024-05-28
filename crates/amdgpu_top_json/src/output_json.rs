@@ -8,7 +8,7 @@ use libamdgpu_top::{
     drmModePropType,
     drmModeModeInfo,
 };
-use stat::{FdInfoStat, GpuActivity, Sensors, PerfCounter};
+use stat::{FdInfoStat, FdInfoUsage, GpuActivity, Sensors, PerfCounter, ProcUsage};
 use serde_json::{json, Map, Value};
 use crate::OutputJson;
 
@@ -111,6 +111,100 @@ impl OutputJson for Sensors {
     }
 }
 
+impl OutputJson for FdInfoUsage {
+    fn json(&self) -> Value {
+        let mut sub = Map::new();
+        sub.insert(
+            "VRAM".to_string(),
+            json!({
+                "value": self.vram_usage >> 10,
+                "unit": "MiB",
+            }),
+        );
+        sub.insert(
+            "GTT".to_string(),
+            json!({
+                "value": self.gtt_usage >> 10,
+                "unit": "MiB",
+            }),
+        );
+
+        for (label, val) in [
+            ("GFX", self.gfx),
+            ("Compute", self.compute),
+            ("DMA", self.dma),
+            ("Decode", self.total_dec),
+            ("Encode", self.total_enc),
+            ("Media", self.media),
+            ("VCN_JPEG", self.vcn_jpeg),
+            ("VPE", self.vpe),
+        ] {
+            sub.insert(
+                label.to_string(),
+                json!({
+                    "value": val,
+                    "unit": "%",
+                })
+            );
+        }
+
+        sub.into()
+    }
+}
+
+pub trait FdInfoJson {
+    fn usage_json(&self, has_vcn: bool, has_vcn_unified: bool, has_vpe: bool) -> Value;
+}
+
+impl FdInfoJson for ProcUsage {
+    fn usage_json(&self, has_vcn: bool, has_vcn_unified: bool, has_vpe: bool) -> Value {
+        let mut sub = Map::new();
+        sub.insert(
+            "VRAM".to_string(),
+            json!({
+                "value": self.usage.vram_usage >> 10,
+                "unit": "MiB",
+            }),
+        );
+        sub.insert(
+            "GTT".to_string(),
+            json!({
+                "value": self.usage.gtt_usage >> 10,
+                "unit": "MiB",
+            }),
+        );
+
+        for (label, val) in [
+            ("GFX", Some(self.usage.gfx)),
+            ("Compute", Some(self.usage.compute)),
+            ("DMA", Some(self.usage.dma)),
+            ("Decode", if !has_vcn_unified { Some(self.usage.total_dec) } else { None }),
+            ("Encode", if !has_vcn_unified { Some(self.usage.total_enc) } else { None }),
+            ("CPU", Some(self.cpu_usage)),
+            ("Media", Some(self.usage.media)),
+            ("VCN_JPEG", if has_vcn { Some(self.usage.vcn_jpeg) } else { None }),
+            ("VPE", if has_vpe { Some(self.usage.vpe) } else { None }),
+        ] {
+            sub.insert(
+                label.to_string(),
+                if let Some(val) = val {
+                    json!({
+                        "value": val,
+                        "unit": "%",
+                    })
+                } else {
+                    Value::Null
+                },
+            );
+        }
+
+        json!({
+            "name": self.name,
+            "usage": sub,
+        })
+    }
+}
+
 impl OutputJson for FdInfoStat {
     fn json(&self) -> Value {
         let mut m = Map::new();
@@ -119,51 +213,11 @@ impl OutputJson for FdInfoStat {
         let has_vpe = self.has_vpe;
 
         for pu in &self.proc_usage {
-            let mut sub = Map::new();
-            sub.insert(
-                "VRAM".to_string(),
-                json!({
-                    "value": pu.usage.vram_usage >> 10,
-                    "unit": "MiB",
-                }),
-            );
-            sub.insert(
-                "GTT".to_string(),
-                json!({
-                    "value": pu.usage.gtt_usage >> 10,
-                    "unit": "MiB",
-                }),
-            );
-
-            for (label, val) in [
-                ("GFX", Some(pu.usage.gfx)),
-                ("Compute", Some(pu.usage.compute)),
-                ("DMA", Some(pu.usage.dma)),
-                ("Decode", if !has_vcn_unified { Some(pu.usage.total_dec) } else { None }),
-                ("Encode", if !has_vcn_unified { Some(pu.usage.total_enc) } else { None }),
-                ("CPU", Some(pu.cpu_usage)),
-                ("Media", Some(pu.usage.media)),
-                ("VCN_JPEG", if has_vcn { Some(pu.usage.vcn_jpeg) } else { None }),
-                ("VPE", if has_vpe { Some(pu.usage.vpe) } else { None }),
-            ] {
-                sub.insert(
-                    label.to_string(),
-                    if let Some(val) = val {
-                        json!({
-                            "value": val,
-                            "unit": "%",
-                        })
-                    } else {
-                        Value::Null
-                    },
-                );
-            }
-
             m.insert(
                 format!("{}", pu.pid),
                 json!({
                     "name": pu.name,
-                    "usage": sub,
+                    "usage": pu.usage_json(has_vcn, has_vcn_unified, has_vpe),
                 }),
             );
         }

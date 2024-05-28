@@ -171,6 +171,7 @@ impl JsonDeviceInfo {
             "VRAM": self.app.stat.vram_usage.json(),
             "Sensors": self.app.stat.sensors.as_ref().map(|s| s.json()),
             "fdinfo": self.app.stat.fdinfo.json(),
+            "Total fdinfo": self.app.stat.fdinfo.fold_fdinfo_usage().json(),
             "gpu_metrics": self.app.stat.metrics.as_ref().map(|m| m.json()),
             "gpu_activity": self.app.stat.activity.json(),
         })
