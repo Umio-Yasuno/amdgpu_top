@@ -9,11 +9,11 @@
       "GRBM": {
         "Color Block": {
           "unit": "%",
-          "value": 0
+          "value": 1
         },
         "Depth Block": {
           "unit": "%",
-          "value": 0
+          "value": 1
         },
         "Geometry Engine": {
           "unit": "%",
@@ -21,7 +21,7 @@
         },
         "Graphics Pipe": {
           "unit": "%",
-          "value": 0
+          "value": 2
         },
         "Primitive Assembly": {
           "unit": "%",
@@ -33,11 +33,11 @@
         },
         "Shader Processor Interpolator": {
           "unit": "%",
-          "value": 0
+          "value": 1
         },
         "Texture Pipe": {
           "unit": "%",
-          "value": 0
+          "value": 1
         }
       },
       "GRBM2": {
@@ -47,11 +47,11 @@
         },
         "Command Processor -  Fetcher": {
           "unit": "%",
-          "value": 0
+          "value": 2
         },
         "Command Processor - Graphics": {
           "unit": "%",
-          "value": 0
+          "value": 2
         },
         "Efficiency Arbiter": {
           "unit": "%",
@@ -222,11 +222,11 @@
       "Sensors": {
         "Average Power": {
           "unit": "W",
-          "value": 4
+          "value": 5
         },
         "Edge Temperature": {
           "unit": "C",
-          "value": 33
+          "value": 40
         },
         "Fan": {
           "unit": "RPM",
@@ -238,7 +238,7 @@
         },
         "GFX Power": {
           "unit": "W",
-          "value": 4
+          "value": 5
         },
         "GFX_MCLK": {
           "unit": "MHz",
@@ -246,16 +246,16 @@
         },
         "GFX_SCLK": {
           "unit": "MHz",
-          "value": 5
+          "value": 54
         },
         "Input Power": null,
         "Junction Temperature": {
           "unit": "C",
-          "value": 33
+          "value": 40
         },
         "Memory Temperature": {
           "unit": "C",
-          "value": 26
+          "value": 34
         },
         "PCIe Link Speed": {
           "gen": 3,
@@ -267,6 +267,48 @@
         },
         "VDDNB": null
       },
+      "Total fdinfo": {
+        "Compute": {
+          "unit": "%",
+          "value": 0
+        },
+        "DMA": {
+          "unit": "%",
+          "value": 0
+        },
+        "Decode": {
+          "unit": "%",
+          "value": 0
+        },
+        "Encode": {
+          "unit": "%",
+          "value": 0
+        },
+        "GFX": {
+          "unit": "%",
+          "value": 3
+        },
+        "GTT": {
+          "unit": "MiB",
+          "value": 53
+        },
+        "Media": {
+          "unit": "%",
+          "value": 0
+        },
+        "VCN_JPEG": {
+          "unit": "%",
+          "value": 0
+        },
+        "VPE": {
+          "unit": "%",
+          "value": 0
+        },
+        "VRAM": {
+          "unit": "MiB",
+          "value": 762
+        }
+      },
       "VRAM": {
         "Total GTT": {
           "unit": "MiB",
@@ -274,7 +316,7 @@
         },
         "Total GTT Usage": {
           "unit": "MiB",
-          "value": 76
+          "value": 86
         },
         "Total VRAM": {
           "unit": "MiB",
@@ -282,559 +324,595 @@
         },
         "Total VRAM Usage": {
           "unit": "MiB",
-          "value": 639
+          "value": 1034
         }
       },
       "fdinfo": {
-        "1470": {
-          "name": "Xwayland",
-          "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 0
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 13
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 37
-            }
-          }
-        },
-        "1495": {
-          "name": "ksmserver",
-          "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 0
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 2
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 8
-            }
-          }
-        },
-        "1497": {
-          "name": "kded5",
-          "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 0
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 2
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 8
-            }
-          }
-        },
-        "1538": {
-          "name": "plasmashell",
-          "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 0
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 6
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 145
-            }
-          }
-        },
-        "1704": {
-          "name": "kaccess",
-          "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 0
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 2
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 8
-            }
-          }
-        },
-        "1710": {
-          "name": "DiscoverNotifie",
-          "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 0
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 2
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 8
-            }
-          }
-        },
-        "1711": {
-          "name": "kalendarac",
-          "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 0
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 2
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 8
-            }
-          }
-        },
-        "1893": {
-          "name": "kdeconnectd",
-          "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 0
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 2
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 8
-            }
-          }
-        },
-        "1930": {
-          "name": "firefox-esr",
-          "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 1
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 8
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 134
-            }
-          }
-        },
-        "1998": {
-          "name": "xdg-desktop-por",
-          "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 0
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 2
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 8
-            }
-          }
-        },
-        "2621": {
-          "name": "konsole",
-          "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 0
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 2
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 8
-            }
-          }
-        },
-        "3481": {
+        "109386": {
           "name": "amdgpu_top",
           "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 1
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 0
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 0
+            "name": "amdgpu_top",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 1
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 0
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 0
+              }
+            }
+          }
+        },
+        "1482": {
+          "name": "Xwayland",
+          "usage": {
+            "name": "Xwayland",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 1
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 12
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 58
+              }
+            }
+          }
+        },
+        "1507": {
+          "name": "ksmserver",
+          "usage": {
+            "name": "ksmserver",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 0
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 2
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 8
+              }
+            }
+          }
+        },
+        "1509": {
+          "name": "kded5",
+          "usage": {
+            "name": "kded5",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 0
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 2
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 8
+              }
+            }
+          }
+        },
+        "1553": {
+          "name": "plasmashell",
+          "usage": {
+            "name": "plasmashell",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 0
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 8
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 190
+              }
+            }
+          }
+        },
+        "1726": {
+          "name": "kaccess",
+          "usage": {
+            "name": "kaccess",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 0
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 2
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 8
+              }
+            }
+          }
+        },
+        "1732": {
+          "name": "DiscoverNotifie",
+          "usage": {
+            "name": "DiscoverNotifie",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 0
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 2
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 8
+              }
+            }
+          }
+        },
+        "1733": {
+          "name": "kalendarac",
+          "usage": {
+            "name": "kalendarac",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 0
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 2
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 8
+              }
+            }
+          }
+        },
+        "1888": {
+          "name": "kdeconnectd",
+          "usage": {
+            "name": "kdeconnectd",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 0
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 2
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 8
+              }
+            }
+          }
+        },
+        "2014": {
+          "name": "xdg-desktop-por",
+          "usage": {
+            "name": "xdg-desktop-por",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 0
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 2
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 8
+              }
+            }
+          }
+        },
+        "29755": {
+          "name": "firefox-esr",
+          "usage": {
+            "name": "firefox-esr",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 19
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 3
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 17
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 450
+              }
+            }
+          }
+        },
+        "9199": {
+          "name": "konsole",
+          "usage": {
+            "name": "konsole",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 0
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 2
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 8
+              }
             }
           }
         }
@@ -842,7 +920,7 @@
       "gpu_activity": {
         "GFX": {
           "unit": "%",
-          "value": 0
+          "value": 6
         },
         "MediaEngine": {
           "unit": "%",
@@ -850,7 +928,7 @@
         },
         "Memory": {
           "unit": "%",
-          "value": 0
+          "value": 1
         }
       },
       "gpu_metrics": {
@@ -865,15 +943,15 @@
         "average_gfx_current": null,
         "average_gfx_power": null,
         "average_gfx_voltage": null,
-        "average_gfxclk_frequency": 5,
+        "average_gfxclk_frequency": 60,
         "average_soc_current": null,
         "average_soc_power": null,
         "average_soc_voltage": null,
         "average_socclk_frequency": null,
-        "average_socket_power": 4,
+        "average_socket_power": 5,
         "average_temperature_core": null,
         "average_temperature_l3": null,
-        "average_uclk_frequency": 15,
+        "average_uclk_frequency": 27,
         "average_vclk1_frequency": 0,
         "average_vclk_frequency": 33,
         "current_coreclk": null,
@@ -894,13 +972,13 @@
         },
         "pcie_link_speed": 80,
         "pcie_link_width": 8,
-        "system_clock_counter": 341546110759,
+        "system_clock_counter": 43546489520022,
         "temperature_core": null,
-        "temperature_edge": 33,
+        "temperature_edge": 40,
         "temperature_gfx": null,
-        "temperature_hotspot": 33,
+        "temperature_hotspot": 40,
         "temperature_l3": null,
-        "temperature_mem": 26,
+        "temperature_mem": 34,
         "temperature_soc": null,
         "temperature_vrgfx": 0,
         "temperature_vrmem": 0,
@@ -1110,13 +1188,13 @@
         "Average Power": null,
         "Edge Temperature": {
           "unit": "C",
-          "value": 29
+          "value": 32
         },
         "Fan": null,
         "Fan Max": null,
         "GFX Power": {
           "unit": "W",
-          "value": 9
+          "value": 12
         },
         "GFX_MCLK": {
           "unit": "MHz",
@@ -1128,18 +1206,60 @@
         },
         "Input Power": {
           "unit": "W",
-          "value": 9
+          "value": 12
         },
         "Junction Temperature": null,
         "Memory Temperature": null,
         "PCIe Link Speed": null,
         "VDDGFX": {
           "unit": "mV",
-          "value": 1349
+          "value": 1449
         },
         "VDDNB": {
           "unit": "mV",
           "value": 999
+        }
+      },
+      "Total fdinfo": {
+        "Compute": {
+          "unit": "%",
+          "value": 0
+        },
+        "DMA": {
+          "unit": "%",
+          "value": 0
+        },
+        "Decode": {
+          "unit": "%",
+          "value": 0
+        },
+        "Encode": {
+          "unit": "%",
+          "value": 0
+        },
+        "GFX": {
+          "unit": "%",
+          "value": 0
+        },
+        "GTT": {
+          "unit": "MiB",
+          "value": 0
+        },
+        "Media": {
+          "unit": "%",
+          "value": 0
+        },
+        "VCN_JPEG": {
+          "unit": "%",
+          "value": 0
+        },
+        "VPE": {
+          "unit": "%",
+          "value": 0
+        },
+        "VRAM": {
+          "unit": "MiB",
+          "value": 0
         }
       },
       "VRAM": {
@@ -1161,49 +1281,52 @@
         }
       },
       "fdinfo": {
-        "3481": {
+        "109386": {
           "name": "amdgpu_top",
           "usage": {
-            "CPU": {
-              "unit": "%",
-              "value": 1
-            },
-            "Compute": {
-              "unit": "%",
-              "value": 0
-            },
-            "DMA": {
-              "unit": "%",
-              "value": 0
-            },
-            "Decode": {
-              "unit": "%",
-              "value": 0
-            },
-            "Encode": {
-              "unit": "%",
-              "value": 0
-            },
-            "GFX": {
-              "unit": "%",
-              "value": 0
-            },
-            "GTT": {
-              "unit": "MiB",
-              "value": 0
-            },
-            "Media": {
-              "unit": "%",
-              "value": 0
-            },
-            "VCN_JPEG": {
-              "unit": "%",
-              "value": 0
-            },
-            "VPE": null,
-            "VRAM": {
-              "unit": "MiB",
-              "value": 0
+            "name": "amdgpu_top",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 1
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 0
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 0
+              }
             }
           }
         }
@@ -1226,16 +1349,16 @@
         "Throttle Status": [],
         "average_core_power": [
           0,
-          6,
+          2594,
           0,
-          6,
-          6,
-          6,
-          6022,
-          6
+          1320,
+          938,
+          2348,
+          4897,
+          8913
         ],
         "average_cpu_current": null,
-        "average_cpu_power": 3932,
+        "average_cpu_power": 7038,
         "average_cpu_voltage": null,
         "average_dclk1_frequency": null,
         "average_dclk_frequency": null,
@@ -1248,7 +1371,7 @@
         "average_soc_power": 1744,
         "average_soc_voltage": null,
         "average_socclk_frequency": 400,
-        "average_socket_power": 9,
+        "average_socket_power": 12,
         "average_temperature_core": null,
         "average_temperature_l3": null,
         "average_uclk_frequency": null,
@@ -1256,20 +1379,20 @@
         "average_vclk_frequency": 400,
         "current_coreclk": [
           0,
-          3560,
+          4425,
           0,
-          3560,
-          3560,
-          3560,
-          4450,
-          3560
+          3540,
+          3540,
+          4425,
+          4425,
+          4425
         ],
         "current_dclk": 400,
         "current_dclk1": null,
         "current_fclk": 1600,
         "current_gfxclk": 400,
         "current_l3clk": [
-          4450,
+          4425,
           0
         ],
         "current_socclk": 400,
@@ -1284,26 +1407,26 @@
         },
         "pcie_link_speed": null,
         "pcie_link_width": null,
-        "system_clock_counter": 341548284740,
+        "system_clock_counter": 43546492407336,
         "temperature_core": [
-          2900,
-          2850,
-          2875,
-          2850,
-          2950,
-          2850,
+          3275,
+          3450,
+          3275,
           3500,
-          2850
+          3325,
+          4175,
+          3350,
+          3925
         ],
         "temperature_edge": null,
-        "temperature_gfx": 2900,
+        "temperature_gfx": 3225,
         "temperature_hotspot": null,
         "temperature_l3": [
-          2950,
+          3475,
           0
         ],
         "temperature_mem": null,
-        "temperature_soc": 2950,
+        "temperature_soc": 3250,
         "temperature_vrgfx": null,
         "temperature_vrmem": null,
         "temperature_vrsoc": null,
@@ -1315,7 +1438,7 @@
   ],
   "devices_len": 2,
   "period": {
-    "duration": 1038,
+    "duration": 1017,
     "unit": "ms"
   },
   "title": "amdgpu_top v0.8.3 (git-5cd3de1) (debug build)"
