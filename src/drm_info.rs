@@ -28,6 +28,16 @@ pub fn dump_drm_info(device_path: &DevicePath) {
             conn.name(),
         );
 
+        if let Some(crtc) = conn.crtc {
+            println!(
+                "{}    ├───CRTC: {}x{}@{}",
+                if last { " " } else { "│" },
+                crtc.mode.hdisplay,
+                crtc.mode.vdisplay,
+                crtc.mode.refresh_rate(),
+            );
+        }
+
         if !conn.mode_info.is_empty() {
             println!("{}    ├───Modes", if last { " " } else { "│" });
 

@@ -3,6 +3,7 @@ use crate::{
     drmModePropType,
     drmModeConnectorType,
     drmModeConnection,
+    drmModeCrtc,
     drmModeModeInfo,
     drm_mode_property_enum,
 };
@@ -16,7 +17,8 @@ pub struct ConnectorInfo {
     pub connector_type_id: u32,
     pub connection: drmModeConnection,
     pub mode_info: Vec<drmModeModeInfo>,
-    pub mode_props: Vec<(ModeProp, u64)>
+    pub mode_props: Vec<(ModeProp, u64)>,
+    pub crtc: Option<drmModeCrtc>,
 }
 
 impl ConnectorInfo {
@@ -50,6 +52,7 @@ pub fn connector_info(device_path: &DevicePath) -> Vec<ConnectorInfo> {
         f.into_raw_fd()
     };
 
+    libdrm_amdgpu_sys::set_all_client_caps(fd);
     let Some(drm_mode_res) = drmModeRes::get(fd) else { return Vec::new() };
     let current_connectors = drm_mode_res.get_all_connector_current(fd);
 
@@ -68,18 +71,35 @@ pub fn connector_info(device_path: &DevicePath) -> Vec<ConnectorInfo> {
             let flags = prop.flags();
             let name = prop.name();
             let prop_id = prop.prop_id();
+            let enums = prop.enums();
+            let values = prop.values();
 
             let mode_prop = ModeProp {
                 prop_type,
                 prop_id,
                 flags,
                 name,
-                enums: prop.enums(),
-                values: prop.values(),
+                enums,
+                values,
             };
 
             (mode_prop, *value)
         }).collect();
+
+        let crtc_id = mode_props
+            .iter()
+            .find(|prop| prop.0.name == "CRTC_ID")
+            .map(|prop| prop.1);
+
+        let crtc = if let Some(crtc_id) = crtc_id {
+            drm_mode_res
+                .get_all_crtcs(fd)
+                .iter()
+                .copied()
+                .find(|crtc| crtc.crtc_id as u64 == crtc_id)
+        } else {
+            None
+        };
 
         Some(ConnectorInfo {
             connector_id,
@@ -88,6 +108,7 @@ pub fn connector_info(device_path: &DevicePath) -> Vec<ConnectorInfo> {
             connection,
             mode_info,
             mode_props,
+            crtc,
         })
     }).collect();
 
