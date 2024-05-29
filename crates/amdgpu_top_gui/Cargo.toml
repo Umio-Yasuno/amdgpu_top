@@ -5,7 +5,7 @@ description = "GUI Library for amdgpu_top"
 # version.workspace = true
 # Workaround for cargo-i18n
 # https://github.com/kellpossible/cargo-i18n/issues/97
-version = "0.8.4"
+version = "0.8.5"
 edition.workspace = true
 repository.workspace = true
 authors.workspace = true
