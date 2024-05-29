@@ -382,6 +382,17 @@ impl GuiConnectorInfo for ConnectorInfo {
     fn ui(&self, ui: &mut egui::Ui) {
         let title = self.name();
         collapsing(ui, &title, false, |ui| {
+            if let Some(crtc) = self.crtc {
+                collapsing_with_id(ui, "CRTC", &format!("CRTC {title}"), true, |ui| {
+                    ui.label(format!(
+                        "{}x{}@{}",
+                        crtc.mode.hdisplay,
+                        crtc.mode.vdisplay,
+                        crtc.mode.refresh_rate(),
+                    ));
+                });
+            }
+
             if !self.mode_info.is_empty() {
                 collapsing_with_id(ui, "Modes", &format!("Modes {title}"), false, |ui| {
                     for mode in &self.mode_info {
