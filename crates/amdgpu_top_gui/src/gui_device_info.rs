@@ -383,7 +383,7 @@ impl GuiConnectorInfo for ConnectorInfo {
         let title = self.name();
         collapsing(ui, &title, false, |ui| {
             if !self.mode_info.is_empty() {
-                collapsing(ui, "Modes", false, |ui| {
+                collapsing_with_id(ui, "Modes", &format!("Modes {title}"), false, |ui| {
                     for mode in &self.mode_info {
                         mode.ui(ui);
                     }
