@@ -154,11 +154,6 @@ impl MainOpt {
                 continue;
             }
 
-            if !arg.starts_with('-') {
-                eprintln!("Unknown option: {arg}");
-                continue;
-            }
-
             match arg.as_str() {
                 "-i" => {
                     if let Some(val_str) = args.get(idx+1) {
