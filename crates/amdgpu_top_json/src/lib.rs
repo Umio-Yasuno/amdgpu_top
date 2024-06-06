@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 use std::net::TcpStream;
 use std::time::{Duration, Instant};
 use std::path::PathBuf;
-use std::io::{Read, Write};
+use std::io::Write;
 
 mod output_json;
 mod dump;
