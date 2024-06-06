@@ -107,6 +107,16 @@ impl OutputJson for Sensors {
             self.current_link.map_or(Value::Null, |link| link.json()),
         );
 
+        m.insert(
+            "PCI Power State".to_string(),
+            self.pci_power_state.clone().map_or(Value::Null, |power_state| Value::String(power_state)),
+        );
+
+        m.insert(
+            "Power Profile".to_string(),
+            self.power_profile.map_or(Value::Null, |pp| Value::String(pp.to_string())),
+        );
+
         m.into()
     }
 }
