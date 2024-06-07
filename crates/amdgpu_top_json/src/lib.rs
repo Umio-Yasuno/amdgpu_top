@@ -111,19 +111,6 @@ impl JsonApp {
             let now = Instant::now();
             now.duration_since(self.base_time)
         };
-
-/*
-        let s = json!({
-            "period": {
-                "duration": now.duration_since(self.base_time).as_millis(),
-                "unit": "ms",
-            },
-            "devices": Value::Array(buf_json.clone()),
-            "devices_len": devices_len,
-            "amdgpu_top_version": self.amdgpu_top_version,
-            "title": title,
-        }).to_string();
-*/
     }
 
     pub fn json(&self, title: &str) -> Value {
