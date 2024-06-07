@@ -38,6 +38,7 @@ pub struct JsonApp {
     pub delay: Duration,
     pub iterations: u32,
     pub no_pc: bool,
+    pub amdgpu_top_version: Value,
 }
 
 impl JsonApp {
@@ -77,6 +78,7 @@ impl JsonApp {
             delay,
             iterations,
             no_pc,
+            amdgpu_top_version: amdgpu_top_version(),
         }
     }
 
@@ -118,7 +120,7 @@ impl JsonApp {
                 },
                 "devices": Value::Array(buf_json.clone()),
                 "devices_len": devices_len,
-                "amdgpu_top_version": amdgpu_top_version(),
+                "amdgpu_top_version": self.amdgpu_top_version,
                 "title": title,
             }).to_string();
 
