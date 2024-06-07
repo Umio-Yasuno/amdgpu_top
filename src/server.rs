@@ -1,11 +1,23 @@
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::io::{BufRead, BufReader, Read, Write};
+use std::sync::{Arc, Mutex};
 
 use amdgpu_top_json::JsonApp;
 
 pub fn gui_server(addr: &SocketAddr, title: &str, j: &mut JsonApp) {
     println!("server");
     let listener = TcpListener::bind(addr).unwrap();
+    let j = Arc::new(Mutex::new(j));
+
+    let update_j = j.clone();
+
+    std::thread::spawn(move || loop {
+        let lock = update_j.lock();
+
+        if let Ok(mut j) = lock {
+            j.update();
+        }
+    });
 
     for stream in listener.incoming() {
         match stream {
@@ -20,7 +32,15 @@ pub fn gui_server(addr: &SocketAddr, title: &str, j: &mut JsonApp) {
                     continue;
                 }
 
-                j.run(title, None, &mut Some(stream));
+                loop {
+                    j.update();
+
+                    let s = j.json(title).to_string();
+
+                    if let Ok(_) = stream.write(s.as_bytes()) {
+                        let _ = stream.write(b"\n").unwrap();
+                    }
+                }
             },
             Err(_) => {},
         }
