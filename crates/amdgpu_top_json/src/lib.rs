@@ -35,6 +35,7 @@ pub struct JsonApp {
     pub vec_device_info: Vec<JsonDeviceInfo>,
     pub base_time: Instant,
     pub interval: Duration,
+    pub duration_time: Duration,
     pub delay: Duration,
     pub iterations: u32,
     pub no_pc: bool,
@@ -59,6 +60,7 @@ impl JsonApp {
         }
 
         let base_time = Instant::now();
+        let duration_time = base_time.elapsed();
 
         {
             let t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)> = vec_device_info
@@ -74,6 +76,7 @@ impl JsonApp {
         Self {
             vec_device_info,
             base_time,
+            duration_time,
             interval,
             delay,
             iterations,
@@ -82,67 +85,96 @@ impl JsonApp {
         }
     }
 
-    pub fn run(&mut self, title: &str, fifo_path: Option<PathBuf>) {
+    pub fn update(&mut self) {
+        if !self.no_pc {
+            for device in self.vec_device_info.iter_mut() {
+                device.app.clear_pc();
+            }
+        }
+
+        if !self.no_pc {
+            for _ in 0..100 {
+                for device in self.vec_device_info.iter_mut() {
+                    device.app.update_pc();
+                }
+                std::thread::sleep(self.delay);
+            }
+        } else {
+            std::thread::sleep(self.delay * 100);
+        }
+
+        for device in self.vec_device_info.iter_mut() {
+            device.app.update(self.interval);
+        }
+
+        self.duration_time = {
+            let now = Instant::now();
+            now.duration_since(self.base_time)
+        };
+
+/*
+        let s = json!({
+            "period": {
+                "duration": now.duration_since(self.base_time).as_millis(),
+                "unit": "ms",
+            },
+            "devices": Value::Array(buf_json.clone()),
+            "devices_len": devices_len,
+            "amdgpu_top_version": self.amdgpu_top_version,
+            "title": title,
+        }).to_string();
+*/
+    }
+
+    pub fn json(&self, title: &str) -> Value {
+        let devices: Vec<Value> = self.vec_device_info
+            .iter()
+            .map(|device| device.json(self.no_pc))
+            .collect();
+
+        json!({
+            "period": {
+                "duration": self.duration_time.as_millis(),
+                "unit": "ms",
+            },
+            "devices": devices,
+            "devices_len": self.vec_device_info.len(),
+            "amdgpu_top_version": self.amdgpu_top_version,
+            "title": title,
+        })
+    }
+
+    pub fn run(&mut self, title: &str) {
         let mut n = 0;
-        let mut buf_json: Vec<Value> = Vec::with_capacity(self.vec_device_info.len());
-        let devices_len = self.vec_device_info.len();
 
         loop {
-            if !self.no_pc {
-                for device in self.vec_device_info.iter_mut() {
-                    device.app.clear_pc();
-                }
-            }
+            self.update();
 
-            if !self.no_pc {
-                for _ in 0..100 {
-                    for device in self.vec_device_info.iter_mut() {
-                        device.app.update_pc();
-                    }
-                    std::thread::sleep(self.delay);
-                }
-            } else {
-                std::thread::sleep(self.delay * 100);
-            }
+            let s = self.json(title).to_string();
 
-            for device in self.vec_device_info.iter_mut() {
-                device.app.update(self.interval);
+            println!("{s}");
 
-                buf_json.push(device.json(self.no_pc));
-            }
-
-            let now = Instant::now();
-
-            let s = json!({
-                "period": {
-                    "duration": now.duration_since(self.base_time).as_millis(),
-                    "unit": "ms",
-                },
-                "devices": Value::Array(buf_json.clone()),
-                "devices_len": devices_len,
-                "amdgpu_top_version": self.amdgpu_top_version,
-                "title": title,
-            }).to_string();
-
-            if let Some(path) = &fifo_path {
-                let mut f = std::fs::OpenOptions::new()
-                    .read(true)
-                    .write(true)
-                    .open(path)
-                    .unwrap();
-
-                f.write_all(s.as_bytes()).unwrap();
-                f.flush().unwrap();
-            } else {
-                println!("{s}");
-            }
-
-            buf_json.clear();
-
-            if fifo_path.is_none() && self.iterations != 0 {
+            if self.iterations != 0 {
                 n += 1;
                 if self.iterations == n { break; }
             }
+        }
+    }
+
+    pub fn run_fifo(&mut self, title: &str, fifo_path: PathBuf) {
+        loop {
+            self.update();
+
+            let s = self.json(title).to_string();
+
+            let mut f = std::fs::OpenOptions::new()
+                .read(true)
+                .write(true)
+                .open(&fifo_path)
+                .unwrap();
+
+            f.write_all(s.as_bytes()).unwrap();
+            f.flush().unwrap();
         }
     }
 }

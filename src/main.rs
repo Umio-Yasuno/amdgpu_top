@@ -65,7 +65,7 @@ fn main() {
                 main_opt.no_pc,
             );
 
-            j.run(TITLE, None);
+            j.run(TITLE);
 
             return;
         },
@@ -171,7 +171,7 @@ fn main() {
                 main_opt.no_pc,
             );
 
-            j.run(TITLE, Some(path));
+            j.run_fifo(TITLE, path);
         },
         #[cfg(feature = "tui")]
         AppMode::SMI => amdgpu_top_tui::run_smi(
