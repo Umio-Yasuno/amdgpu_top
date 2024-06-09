@@ -58,6 +58,7 @@ fn main() {
             }
 
             let mut j = amdgpu_top_json::JsonApp::new(
+                TITLE,
                 &device_path_list,
                 main_opt.refresh_period,
                 main_opt.update_process_index,
@@ -65,7 +66,7 @@ fn main() {
                 main_opt.no_pc,
             );
 
-            j.run(TITLE);
+            j.run();
 
             return;
         },
@@ -164,6 +165,7 @@ fn main() {
             }
 
             let mut j = amdgpu_top_json::JsonApp::new(
+                TITLE,
                 &device_path_list,
                 main_opt.refresh_period,
                 main_opt.update_process_index,
@@ -171,7 +173,7 @@ fn main() {
                 main_opt.no_pc,
             );
 
-            j.run_fifo(TITLE, path);
+            j.run_fifo(path);
         },
         #[cfg(feature = "tui")]
         AppMode::SMI => amdgpu_top_tui::run_smi(

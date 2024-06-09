@@ -40,10 +40,12 @@ pub struct JsonApp {
     pub iterations: u32,
     pub no_pc: bool,
     pub amdgpu_top_version: Value,
+    pub title: String,
 }
 
 impl JsonApp {
     pub fn new(
+        title: &str,
         device_path_list: &[DevicePath],
         refresh_period: u64,
         update_process_index_interval: u64,
@@ -82,6 +84,7 @@ impl JsonApp {
             iterations,
             no_pc,
             amdgpu_top_version: amdgpu_top_version(),
+            title: title.to_string(),
         }
     }
 
@@ -113,7 +116,7 @@ impl JsonApp {
         };
     }
 
-    pub fn json(&self, title: &str) -> Value {
+    pub fn json(&self) -> Value {
         let devices: Vec<Value> = self.vec_device_info
             .iter()
             .map(|device| device.json(self.no_pc))
@@ -127,17 +130,17 @@ impl JsonApp {
             "devices": devices,
             "devices_len": self.vec_device_info.len(),
             "amdgpu_top_version": self.amdgpu_top_version,
-            "title": title,
+            "title": self.title,
         })
     }
 
-    pub fn run(&mut self, title: &str) {
+    pub fn run(&mut self) {
         let mut n = 0;
 
         loop {
             self.update();
 
-            let s = self.json(title).to_string();
+            let s = self.json().to_string();
 
             println!("{s}");
 
@@ -148,11 +151,11 @@ impl JsonApp {
         }
     }
 
-    pub fn run_fifo(&mut self, title: &str, fifo_path: PathBuf) {
+    pub fn run_fifo(&mut self, fifo_path: PathBuf) {
         loop {
             self.update();
 
-            let s = self.json(title).to_string();
+            let s = self.json().to_string();
 
             let mut f = std::fs::OpenOptions::new()
                 .read(true)
