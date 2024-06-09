@@ -40,6 +40,7 @@ pub struct JsonApp {
     pub iterations: u32,
     pub no_pc: bool,
     pub amdgpu_top_version: Value,
+    pub rocm_version: Value,
     pub title: String,
 }
 
@@ -84,6 +85,7 @@ impl JsonApp {
             iterations,
             no_pc,
             amdgpu_top_version: amdgpu_top_version(),
+            rocm_version: libamdgpu_top::get_rocm_version().map_or(Value::Null, |ver| Value::String(ver)),
             title: title.to_string(),
         }
     }
@@ -130,6 +132,7 @@ impl JsonApp {
             "devices": devices,
             "devices_len": self.vec_device_info.len(),
             "amdgpu_top_version": self.amdgpu_top_version,
+            "ROCm version": self.rocm_version,
             "title": self.title,
         })
     }
