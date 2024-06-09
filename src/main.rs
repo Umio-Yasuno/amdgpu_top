@@ -53,7 +53,8 @@ fn main() {
 
     #[cfg(feature = "json")]
     if let Some(addr) = main_opt.gui_server {
-        let mut j = amdgpu_top_json::JsonApp::new(
+        let j = amdgpu_top_json::JsonApp::new(
+            TITLE,
             &device_path_list,
             main_opt.refresh_period,
             main_opt.update_process_index,
@@ -61,7 +62,7 @@ fn main() {
             main_opt.no_pc,
         );
 
-        server::gui_server(&addr, TITLE, &mut j);
+        server::gui_server(&addr, j);
         return;
     } else if let Some(addr) = main_opt.gui_client {
         server::gui_client(&addr);
