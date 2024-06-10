@@ -167,6 +167,11 @@ impl JsonInfo for AppAmdgpuTop {
             }),
             "Total Compute Unit": self.device_info.ext_info.cu_active_number(),
             "RenderBackend": self.device_info.ext_info.rb_pipes(),
+            "RenderBackend Type": if self.device_info.ext_info.get_asic_name().rbplus_allowed() {
+                "RB Plus"
+            } else {
+                "RB"
+            },
             "Total ROP": self.device_info.ext_info.calc_rop_count(),
             "GPU Clock": gpu_clk,
             "VRAM Type": self.device_info.ext_info.get_vram_type().to_string(),
