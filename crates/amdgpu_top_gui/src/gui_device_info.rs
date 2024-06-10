@@ -227,9 +227,9 @@ impl GuiInfo for AppDeviceInfo {
         let rb_pipes = self.ext_info.rb_pipes();
         let rop_count = self.ext_info.calc_rop_count();
         let rb_type = if asic.rbplus_allowed() {
-            fl!("rb")
-        } else {
             fl!("rb_plus")
+        } else {
+            fl!("rb")
         };
         let peak_gp = format!("{} {}", rop_count * self.max_gpu_clk / 1000, fl!("gp_s"));
         let peak_fp32 = format!("{} {}", self.ext_info.peak_gflops(), fl!("gflops"));
