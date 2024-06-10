@@ -161,6 +161,10 @@ impl JsonInfo for AppAmdgpuTop {
             },
             "Shader Engine": self.device_info.ext_info.max_se(),
             "Shader Array per Shader Engine": self.device_info.ext_info.max_sa_per_se(),
+            "CU per Shader Array": json!({
+                "min": self.device_info.ext_info.get_min_good_cu_per_sa(),
+                "max": self.device_info.ext_info.get_max_good_cu_per_sa(),
+            }),
             "Total Compute Unit": self.device_info.ext_info.cu_active_number(),
             "RenderBackend": self.device_info.ext_info.rb_pipes(),
             "Total ROP": self.device_info.ext_info.calc_rop_count(),
