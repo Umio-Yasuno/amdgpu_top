@@ -145,7 +145,12 @@ pub fn get_hw_ip_info_list(
 }
 
 pub fn get_rocm_version() -> Option<String> {
-    std::fs::read_to_string("/opt/rocm/.info/version").ok()?
+    let rocm_path = match std::env::var_os("ROCM_PATH") {
+        Some(v) => v.into_string().unwrap(),
+        None => "/opt/rocm".to_owned()
+    };
+
+    std::fs::read_to_string(rocm_path + "/.info/version").ok()?
         .split('-').next()
         .map(|s| s.to_string())
 }
