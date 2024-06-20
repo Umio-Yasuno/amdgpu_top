@@ -1,4 +1,5 @@
 use std::time::Duration;
+use std::path::PathBuf;
 pub use libdrm_amdgpu_sys::*;
 use libdrm_amdgpu_sys::AMDGPU::{
     CHIP_CLASS,
@@ -145,12 +146,8 @@ pub fn get_hw_ip_info_list(
 }
 
 pub fn get_rocm_version() -> Option<String> {
-    let rocm_path = match std::env::var_os("ROCM_PATH") {
-        Some(v) => v.into_string().unwrap(),
-        None => "/opt/rocm".to_owned()
-    };
+    let rocm_path = std::env::var("ROCM_PATH").unwrap_or("/opt/rocm".to_string());
+    let s = std::fs::read_to_string(PathBuf::from(rocm_path).join(".info/version")).ok()?;
 
-    std::fs::read_to_string(rocm_path + "/.info/version").ok()?
-        .split('-').next()
-        .map(|s| s.to_string())
+    s.split_once('-').map(|(ver, _)| ver.to_string())
 }
