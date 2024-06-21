@@ -1,32 +1,31 @@
-<release>
+<releases>
   <release version="0.8.5" date="2024-05-29">
-  <description>
-    <p>Lib
-      <ul>
-        <li>update dependencies</li>
-        <li>update docs/{dump,sample}.json</li>
-        <li>display CRTC info</li>
-      </ul>
-    </p>
-    <p>TUI
-      <ul>
-        <li>display the percentage of fan rpm</li>
-      </ul>
-    </p>
-    <p>JSON
-      <ul>
-        <li>add missing fan info to dumps (#84, by @ChaosInfinited)</li>
-        <li>add "Total fdinfo"</li>
-      </ul>
-    </p>
-    <p>GUI
-      <ul>
-        <li>display the percentage of clock, fan rpm, and power</li>
-        <li>fix the collapsing state</li>
-        <li>display CRTC info</li>
-      </ul>
-    </p>
-  </description>
-
-  <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/latest/download/io.github.umio_yasuno.amdgpu_top.release.xml</url>
-</release>
+    <description>
+      <p>Lib
+        <ul>
+          <li>update dependencies</li>
+          <li>update docs/{dump,sample}.json</li>
+          <li>display CRTC info</li>
+        </ul>
+      </p>
+      <p>TUI
+        <ul>
+          <li>display the percentage of fan rpm</li>
+        </ul>
+      </p>
+      <p>JSON
+        <ul>
+          <li>add missing fan info to dumps (#84, by @ChaosInfinited)</li>
+          <li>add "Total fdinfo"</li>
+        </ul>
+      </p>
+      <p>GUI
+        <ul>
+          <li>display the percentage of clock, fan rpm, and power</li>
+          <li>fix the collapsing state</li>
+          <li>display CRTC info</li>
+        </ul>
+      </p>
+    </description>
+  </release>
+</releases>
