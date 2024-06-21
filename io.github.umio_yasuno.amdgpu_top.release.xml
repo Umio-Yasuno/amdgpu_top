@@ -16,7 +16,7 @@
     <p>JSON
       <ul>
         <li>add missing fan info to dumps (#84, by @ChaosInfinited)</li>
-        <li>add "Total fdinfo"<li>
+        <li>add "Total fdinfo"</li>
       </ul>
     </p>
     <p>GUI
@@ -28,5 +28,5 @@
     </p>
   </description>
 
-  <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/latest/download/io.github.umio_yasuno.amdgpu_top.release.xml<\url>
+  <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/latest/download/io.github.umio_yasuno.amdgpu_top.release.xml</url>
 </release>
