@@ -36,5 +36,7 @@
         <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu_top-x86_64.AppImage</location>
       </artifact>
     </artifacts>
+
+    <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.8.5</url>
   </release>
 </releases>
