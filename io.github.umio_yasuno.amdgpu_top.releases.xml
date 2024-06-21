@@ -1,6 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <releases>
   <release version="0.8.5" date="2024-05-29">
     <description>
+      <p>Changelog</p>
       <ul>
         <li>lib: update dependencies</li>
         <li>lib: update docs/{dump,sample}.json</li>

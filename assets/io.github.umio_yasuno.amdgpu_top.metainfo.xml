@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
   <id>io.github.umio_yasuno.amdgpu_top</id>
-  <releases type="external" url="https://raw.githubusercontent.com/Umio-Yasuno/amdgpu_top/appstream/io.github.umio_yasuno.amdgpu_top.release.xml" />
+  <releases type="external" url="https://raw.githubusercontent.com/Umio-Yasuno/amdgpu_top/appstream/io.github.umio_yasuno.amdgpu_top.releases.xml" />
   
   <name>amdgpu_top</name>
   <summary> Tool to display AMDGPU usage</summary>
