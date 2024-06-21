@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.umio_yasuno.amdgpu_top</id>
+  <name>amdgpu_top</name>
+  <summary> Tool to display AMDGPU usage</summary>
+  <content_rating />
+ 
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <url type="homepage">https://github.com/Umio-Yasuno/amdgpu_top</url>
+  
+  <description>
+    <p>
+      amdgpu_top is tool that display AMD GPU utilization, like umr or clbr/radeontop or intel_gpu_top. The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, and AMDGPU driver.
+    </p>
+  </description>
+  
+  <launchable type="desktop-id">amdgpu_top.desktop</launchable>
+  <launchable type="desktop-id">amdgpu_top-tui.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>amdgpu_top SMI mode</caption>
+      <image>https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/66c3fb7e-cb23-4a19-ab10-2bb9919a1a8a</image>
+    </screenshot>
+    <screenshot type="default">
+      <caption>amdgpu_top TUI mode</caption>
+      <image>https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/859010d8-07b3-411c-b079-c4a837855d41</image>
+    </screenshot>
+    <screenshot type="default">
+      <caption>amdgpu_top GUI mode</caption>
+      <image>https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/e3ff372e-86f9-4b82-b3c9-910b638a3c90</image>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="0.9.2" date="2024-09-14">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>Support for suspended devices in TUI mode and GUI mode. If there are no active AMDGPU devices, amdgpu_top wake up a suspended device.</li>
+        </ul>
+        <ul>
+          <li>tui: add Activity view</li>
+        </ul>
+        <ul>
+          <li>gui: fix full_fdinfo_list</li>
+          <li>gui: add Activity plot</li>
+          <li>gui: persist show sidepanel state and theme</li>
+        </ul>
+      </description>
+
+      <artifacts>
+        <artifact type="binary" platform="x86_64-linux-gnu" bundle="package">
+          <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.9.2/amdgpu-top_0.9.2-1_amd64.deb</location>
+        </artifact>
+        <artifact type="binary" platform="x86_64-linux-gnu" bundle="package">
+          <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.9.2/amdgpu-top_without_gui_0.9.2-1_amd64.deb</location>
+        </artifact>
+        <artifact type="binary" platform="x86_64-linux-gnu" bundle="package">
+          <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.9.2/amdgpu_top-0.9.2-1.x86_64.rpm</location>
+        </artifact>
+
+        <artifact type="binary" platform="x86_64-linux-gnu" bundle="appimage">
+          <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.9.2/amdgpu_top-x86_64.AppImage</location>
+        </artifact>
+      </artifacts>
+
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.9.2</url>
+    </release>
+    <release version="0.9.1" date="2024-08-15" />
+    <release version="0.9.0" date="2024-07-17" />
+    <release version="0.8.5" date="2024-05-29">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>lib: update dependencies</li>
+          <li>lib: update docs/{dump,sample}.json</li>
+          <li>lib: display CRTC info</li>
+        </ul>
+        <ul>
+          <li>tui: display the percentage of fan rpm</li>
+        </ul>
+        <ul>
+          <li>json: add missing fan info to dumps (#84, by @ChaosInfinited)</li>
+          <li>json: add "Total fdinfo"</li>
+        </ul>
+        <ul>
+          <li>gui: display the percentage of clock, fan rpm, and power</li>
+          <li>gui: fix the collapsing state</li>
+          <li>gui: display CRTC info</li>
+        </ul>
+      </description>
+
+      <artifacts>
+        <artifact type="binary" platform="x86_64-linux-gnu" bundle="package">
+          <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu-top_0.8.5-1_amd64.deb</location>
+        </artifact>
+        <artifact type="binary" platform="x86_64-linux-gnu" bundle="package">
+          <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu-top_without_gui_0.8.5-1_amd64.deb</location>
+        </artifact>
+        <artifact type="binary" platform="x86_64-linux-gnu" bundle="package">
+          <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu_top-0.8.5-1.x86_64.rpm</location>
+        </artifact>
+
+        <artifact type="binary" platform="x86_64-linux-gnu" bundle="appimage">
+          <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu_top-x86_64.AppImage</location>
+        </artifact>
+      </artifacts>
+
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.8.5</url>
+    </release>
+  </releases>
+</component>
