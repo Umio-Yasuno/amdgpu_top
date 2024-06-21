@@ -21,6 +21,20 @@
         <li>gui: display CRTC info</li>
       </ul>
     </description>
-    <url>https://raw.githubusercontent.com/Umio-Yasuno/amdgpu_top/appstream/io.github.umio_yasuno.amdgpu_top.release.xml</url>
+
+    <artifacts>
+      <artifact type="package" platform="x86_64-linux-gnu">
+        <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu-top_0.8.5-1_amd64.deb</location>
+      </artifact>
+      <artifact type="package" platform="x86_64-linux-gnu">
+        <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu-top_without_gui_0.8.5-1_amd64.deb</location>
+      </artifact>
+      <artifact type="package" platform="x86_64-linux-gnu">
+        <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu_top-0.8.5-1.x86_64.rpm</location>
+      </artifact>
+      <artifact type="appimage" platform="x86_64-linux-gnu">
+        <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu_top-x86_64.AppImage</location>
+      </artifact>
+    </artifacts>
   </release>
 </releases>
