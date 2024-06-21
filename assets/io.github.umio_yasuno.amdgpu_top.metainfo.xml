@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
   <id>io.github.umio_yasuno.amdgpu_top</id>
-  <releases type="external" url="https://raw.githubusercontent.com/Umio-Yasuno/amdgpu_top/appstream/io.github.umio_yasuno.amdgpu_top.release.xml" />
-  
+  <releases type="external" url="https://raw.githubusercontent.com/Umio-Yasuno/amdgpu_top/refs/heads/appstream/io.github.umio_yasuno.amdgpu_top.releases.xml" />
   <name>amdgpu_top</name>
   <summary> Tool to display AMDGPU usage</summary>
+  <content_rating />
   
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
+  <url type="homepage">https://github.com/Umio-Yasuno/amdgpu_top</url>
   
   <description>
     <p>
@@ -17,14 +18,18 @@
   
   <launchable type="desktop-id">amdgpu_top.desktop</launchable>
   <launchable type="desktop-id">amdgpu_top-tui.desktop</launchable>
+
   <screenshots>
     <screenshot type="default">
+      <caption>amdgpu_top SMI mode</caption>
       <image>https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/66c3fb7e-cb23-4a19-ab10-2bb9919a1a8a</image>
     </screenshot>
-    <screenshot>
+    <screenshot type="default">
+      <caption>amdgpu_top TUI mode</caption>
       <image>https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/859010d8-07b3-411c-b079-c4a837855d41</image>
     </screenshot>
-    <screenshot>
+    <screenshot type="default">
+      <caption>amdgpu_top GUI mode</caption>
       <image>https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/e3ff372e-86f9-4b82-b3c9-910b638a3c90</image>
     </screenshot>
   </screenshots>
