@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <releases>
   <release version="0.8.5" date="2024-05-29">
     <description>
@@ -23,16 +22,17 @@
     </description>
 
     <artifacts>
-      <artifact type="package" platform="x86_64-linux-gnu">
+      <artifact type="binary" platform="x86_64-linux-gnu" bundle="package">
         <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu-top_0.8.5-1_amd64.deb</location>
       </artifact>
-      <artifact type="package" platform="x86_64-linux-gnu">
+      <artifact type="binary" platform="x86_64-linux-gnu" bundle="package">
         <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu-top_without_gui_0.8.5-1_amd64.deb</location>
       </artifact>
-      <artifact type="package" platform="x86_64-linux-gnu">
+      <artifact type="binary" platform="x86_64-linux-gnu" bundle="package">
         <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu_top-0.8.5-1.x86_64.rpm</location>
       </artifact>
-      <artifact type="appimage" platform="x86_64-linux-gnu">
+
+      <artifact type="binary" platform="x86_64-linux-gnu" bundle="appimage">
         <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu_top-x86_64.AppImage</location>
       </artifact>
     </artifacts>

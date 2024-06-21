@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
   <id>io.github.umio_yasuno.amdgpu_top</id>
-  <!--
-    <releases type="external" url="https://raw.githubusercontent.com/Umio-Yasuno/amdgpu_top/appstream/io.github.umio_yasuno.amdgpu_top.releases.xml" />
-  -->
+  <releases type="external" url="https://raw.githubusercontent.com/Umio-Yasuno/amdgpu_top/appstream/io.github.umio_yasuno.amdgpu_top.releases.xml" />
   <name>amdgpu_top</name>
   <summary> Tool to display AMDGPU usage</summary>
   
@@ -30,47 +28,4 @@
       <image>https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/e3ff372e-86f9-4b82-b3c9-910b638a3c90</image>
     </screenshot>
   </screenshots>
-
-  <releases>
-    <release version="0.8.5" date="2024-05-29">
-      <description>
-        <p>Changelog</p>
-        <ul>
-          <li>lib: update dependencies</li>
-          <li>lib: update docs/{dump,sample}.json</li>
-          <li>lib: display CRTC info</li>
-        </ul>
-        <ul>
-          <li>tui: display the percentage of fan rpm</li>
-        </ul>
-        <ul>
-          <li>json: add missing fan info to dumps (#84, by @ChaosInfinited)</li>
-          <li>json: add "Total fdinfo"</li>
-        </ul>
-        <ul>
-          <li>gui: display the percentage of clock, fan rpm, and power</li>
-          <li>gui: fix the collapsing state</li>
-          <li>gui: display CRTC info</li>
-        </ul>
-      </description>
-
-      <artifacts>
-        <artifact type="binary" platform="x86_64-linux-gnu" bundle="package">
-          <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu-top_0.8.5-1_amd64.deb</location>
-        </artifact>
-        <artifact type="binary" platform="x86_64-linux-gnu" bundle="package">
-          <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu-top_without_gui_0.8.5-1_amd64.deb</location>
-        </artifact>
-        <artifact type="binary" platform="x86_64-linux-gnu" bundle="package">
-          <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu_top-0.8.5-1.x86_64.rpm</location>
-        </artifact>
-
-        <artifact type="binary" platform="x86_64-linux-gnu" bundle="appimage">
-          <location>https://github.com/Umio-Yasuno/amdgpu_top/releases/download/v0.8.5/amdgpu_top-x86_64.AppImage</location>
-        </artifact>
-      </artifacts>
-
-      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.8.5</url>
-    </release>
-  </releases>
 </component>
