@@ -191,7 +191,7 @@ pub fn run(
 
             cc.egui_ctx.set_fonts(fonts);
 
-            Box::new(app)
+            Ok(Box::new(app))
         }),
     ).unwrap_or_else(|err| {
         eprintln!("{}", fl!("failed_to_set_up_gui"));
