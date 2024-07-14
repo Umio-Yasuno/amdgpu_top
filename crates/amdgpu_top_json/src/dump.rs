@@ -41,7 +41,7 @@ pub fn gpu_metrics_json(_title: &str, device_path_list: &[DevicePath]) {
 pub fn dump_json(device_path_list: &[DevicePath]) {
     let vec_json_info: Vec<Value> = device_path_list.iter().filter_map(|device_path| {
         let amdgpu_dev = device_path.init().ok()?;
-        let app = AppAmdgpuTop::new(amdgpu_dev, device_path.clone(), &Default::default())?;
+        let mut app = AppAmdgpuTop::new(amdgpu_dev, device_path.clone(), &Default::default())?;
 
         let mut m = Map::new();
         let mut info = app.json_info();
@@ -57,12 +57,12 @@ pub fn dump_json(device_path_list: &[DevicePath]) {
 }
 
 pub trait JsonInfo {
-    fn json_info(&self) -> Value;
+    fn json_info(&mut self) -> Value;
     fn stat(&self) -> Value;
 }
 
 impl JsonInfo for AppAmdgpuTop {
-    fn json_info(&self) -> Value {
+    fn json_info(&mut self) -> Value {
         let gpu_clk = json!({
             "min": self.device_info.min_gpu_clk,
             "max": self.device_info.max_gpu_clk,
@@ -71,7 +71,7 @@ impl JsonInfo for AppAmdgpuTop {
             "min": self.device_info.min_mem_clk,
             "max": self.device_info.max_mem_clk,
         });
-        let drm = self.amdgpu_dev.get_drm_version_struct().map_or(Value::Null, |drm| json!({
+        let drm = self.get_drm_version_struct().map_or(Value::Null, |drm| json!({
             "major": drm.version_major,
             "minor": drm.version_minor,
             "patchlevel": drm.version_patchlevel,

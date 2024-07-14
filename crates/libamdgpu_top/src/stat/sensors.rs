@@ -143,7 +143,7 @@ impl Sensors {
         })
     }
 
-    pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
+    pub fn update_without_device_handle(&mut self) {
         self.current_link = if self.is_apu {
             None
         } else if self.vega10_and_later {
@@ -151,10 +151,6 @@ impl Sensors {
         } else {
             self.bus_info.get_current_link_info()
         };
-        self.sclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_SCLK).ok();
-        self.mclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_MCLK).ok();
-        self.vddnb = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDNB).ok();
-        self.vddgfx = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDGFX).ok();
 
         for temp in [&mut self.edge_temp, &mut self.junction_temp, &mut self.memory_temp] {
             let Some(temp) = temp else { continue };
@@ -182,6 +178,14 @@ impl Sensors {
                 s
             });
         self.power_profile = PowerProfile::get_current_profile_from_sysfs(&self.sysfs_path);
+    }
+
+    pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
+        self.update_without_device_handle();
+        self.sclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_SCLK).ok();
+        self.mclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_MCLK).ok();
+        self.vddnb = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDNB).ok();
+        self.vddgfx = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDGFX).ok();
     }
 
     pub fn any_hwmon_power(&self) -> Option<HwmonPower> {
