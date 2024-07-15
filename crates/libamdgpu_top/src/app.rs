@@ -162,17 +162,10 @@ impl AppAmdgpuTop {
 
         if self.amdgpu_dev.is_none() {
             if let Some(ref mut sensors) = self.stat.sensors {
-                sensors.update_without_device_handle();
-                sensors.sclk = None;
-                sensors.mclk = None;
-                sensors.vddnb = None;
-                sensors.vddgfx = None;
+                sensors.update_for_idle();
             }
 
-            if self.stat.metrics.is_some() {
-                self.stat.metrics = GpuMetrics::get_from_sysfs_path(&self.device_info.sysfs_path).ok();
-            }
-
+            self.stat.metrics = None;
             return;
         };
 
@@ -182,6 +175,8 @@ impl AppAmdgpuTop {
 
             if let Some(ref mut sensors) = self.stat.sensors {
                 sensors.update(dev);
+            } else {
+                self.stat.sensors = Sensors::new(dev, &self.device_info.pci_bus, &self.device_info.ext_info);
             }
         }
 

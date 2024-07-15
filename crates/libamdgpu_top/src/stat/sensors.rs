@@ -172,12 +172,34 @@ impl Sensors {
         }
 
         self.fan_rpm = parse_hwmon(self.hwmon_path.join("fan1_input"));
-        self.pci_power_state = std::fs::read_to_string(self.gpu_port_path.join("power_state")).ok()
+        self.power_profile = PowerProfile::get_current_profile_from_sysfs(&self.sysfs_path);
+        self.update_pci_power_state();
+    }
+
+    pub fn update_for_idle(&mut self) {
+        self.current_link = None;
+        self.edge_temp = None;
+        self.junction_temp = None;
+        self.memory_temp = None;
+        self.average_power = None;
+        self.input_power = None;
+        self.sclk = None;
+        self.mclk = None;
+        self.vddnb = None;
+        self.vddgfx = None;
+        self.fan_rpm = None;
+        self.power_profile = None;
+
+        self.update_pci_power_state();
+    }
+
+    pub fn update_pci_power_state(&mut self) {
+        self.pci_power_state = std::fs::read_to_string(self.gpu_port_path.join("power_state"))
+            .ok()
             .map(|mut s| {
                 s.pop(); // trim `\n`
                 s
             });
-        self.power_profile = PowerProfile::get_current_profile_from_sysfs(&self.sysfs_path);
     }
 
     pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
