@@ -169,6 +169,12 @@ impl AppAmdgpuTop {
             return;
         };
 
+        if self.stat.metrics.is_some()
+        || (self.stat.metrics.is_none() && self.stat.sensors.is_none())
+        {
+            self.stat.metrics = GpuMetrics::get_from_sysfs_path(&self.device_info.sysfs_path).ok();
+        }
+
         if let Some(dev) = self.amdgpu_dev.as_ref() {
             self.stat.vram_usage.update_usage(dev);
             self.stat.vram_usage.update_usable_heap_size(dev);
@@ -176,13 +182,14 @@ impl AppAmdgpuTop {
             if let Some(ref mut sensors) = self.stat.sensors {
                 sensors.update(dev);
             } else {
-                self.stat.sensors = Sensors::new(dev, &self.device_info.pci_bus, &self.device_info.ext_info);
+                self.stat.sensors = Sensors::new(
+                    dev,
+                    &self.device_info.pci_bus,
+                    &self.device_info.ext_info,
+                );
             }
         }
 
-        if self.stat.metrics.is_some() {
-            self.stat.metrics = GpuMetrics::get_from_sysfs_path(&self.device_info.sysfs_path).ok();
-        }
 
         if self.stat.memory_error_count.is_some() {
             self.stat.memory_error_count = RasErrorCount::get_from_sysfs_with_ras_block(
