@@ -8,8 +8,7 @@ use crate::AppDeviceInfo;
 use crate::drmVersion;
 
 pub struct AppAmdgpuTop {
-    pub amdgpu_dev: ManuallyDrop<DeviceHandle>,
-    is_dropped: bool,
+    pub amdgpu_dev: ManuallyDrop<Option<DeviceHandle>>,
     pub device_info: AppDeviceInfo,
     pub device_path: DevicePath,
     pub stat: AppAmdgpuTopStat,
@@ -120,8 +119,7 @@ impl AppAmdgpuTop {
         }
 
         Some(Self {
-            amdgpu_dev: ManuallyDrop::new(amdgpu_dev),
-            is_dropped: false,
+            amdgpu_dev: ManuallyDrop::new(Some(amdgpu_dev)),
             device_info,
             device_path,
             stat: AppAmdgpuTopStat {
@@ -154,16 +152,15 @@ impl AppAmdgpuTop {
         }
         {
             // running GPU process is only "amdgpu_top"
-            if self.stat.fdinfo.proc_usage.len() == 1 && !self.is_dropped {
+            if self.stat.fdinfo.proc_usage.len() == 1 && self.amdgpu_dev.is_some() {
                 unsafe { ManuallyDrop::drop(&mut self.amdgpu_dev); }
-                self.is_dropped = true;
-            } else if self.stat.fdinfo.proc_usage.len() != 1 && self.is_dropped {
-                self.amdgpu_dev = ManuallyDrop::new(self.device_path.init().unwrap());
-                self.is_dropped = false;
+                self.amdgpu_dev = ManuallyDrop::new(None);
+            } else if self.stat.fdinfo.proc_usage.len() != 1 && self.amdgpu_dev.is_none() {
+                self.amdgpu_dev = ManuallyDrop::new(Some(self.device_path.init().unwrap()));
             }
         }
 
-        let amdgpu_dev = if self.is_dropped {
+        if self.amdgpu_dev.is_none() {
             if let Some(ref mut sensors) = self.stat.sensors {
                 sensors.update_without_device_handle();
                 sensors.sclk = None;
@@ -177,15 +174,15 @@ impl AppAmdgpuTop {
             }
 
             return;
-        } else {
-            unsafe { ManuallyDrop::take(&mut self.amdgpu_dev) }
         };
 
-        self.stat.vram_usage.update_usage(&amdgpu_dev);
-        self.stat.vram_usage.update_usable_heap_size(&amdgpu_dev);
+        if let Some(dev) = self.amdgpu_dev.as_ref() {
+            self.stat.vram_usage.update_usage(dev);
+            self.stat.vram_usage.update_usable_heap_size(dev);
 
-        if let Some(ref mut sensors) = self.stat.sensors {
-            sensors.update(&amdgpu_dev);
+            if let Some(ref mut sensors) = self.stat.sensors {
+                sensors.update(dev);
+            }
         }
 
         if self.stat.metrics.is_some() {
@@ -208,21 +205,13 @@ impl AppAmdgpuTop {
         if self.stat.activity.media.is_none() || self.stat.activity.media == Some(0) {
             self.stat.activity.media = self.stat.fdinfo.fold_fdinfo_usage().media.try_into().ok();
         }
-
-        self.amdgpu_dev = ManuallyDrop::new(amdgpu_dev);
     }
 
     pub fn update_pc(&mut self) {
-        let amdgpu_dev = if self.is_dropped {
-            return;
-        } else {
-            unsafe { ManuallyDrop::take(&mut self.amdgpu_dev) }
-        };
-
-        self.stat.grbm.read_reg(&amdgpu_dev);
-        self.stat.grbm2.read_reg(&amdgpu_dev);
-
-        self.amdgpu_dev = ManuallyDrop::new(amdgpu_dev);
+        if let Some(dev) = self.amdgpu_dev.as_ref() {
+            self.stat.grbm.read_reg(dev);
+            self.stat.grbm2.read_reg(dev);
+        }
     }
 
     pub fn update_pc_with_sampling(&mut self, sample: &Sampling) {
@@ -240,16 +229,8 @@ impl AppAmdgpuTop {
     }
 
     pub fn get_drm_version_struct(&mut self) -> Option<drmVersion> {
-        let amdgpu_dev = if self.is_dropped {
-            return None;
-        } else {
-            unsafe { ManuallyDrop::take(&mut self.amdgpu_dev) }
-        };
-
-        let drm_ver = amdgpu_dev.get_drm_version_struct().ok();
-
-        self.amdgpu_dev = ManuallyDrop::new(amdgpu_dev);
-
-        drm_ver
+        self.amdgpu_dev
+            .as_ref()
+            .and_then(|dev| dev.get_drm_version_struct().ok())
     }
 }
