@@ -55,6 +55,12 @@ amdgpu_top -d --json
 
 # Dump DRM info
 amdgpu_top --drm-info
+
+# Decode gpu_metrics file
+amdgpu_top --decode-gm <path>
+
+# Decode gpu_metrics file and output in JSON format
+amdgpu_top --json --decode-gm <path>
 ```
 
 ### Options
@@ -114,6 +120,8 @@ OPTIONS:
        Update interval in seconds of the process index for fdinfo. (default: 5s)
    --json_fifo, --json-fifo <String>
        Output JSON formatted data to FIFO (named pipe) for other application and scripts.
+   --decode-gm <Path>, --decode-gpu-metrics <Path>
+       Decode the specified gpu_metrics file.
 ```
 
 ### Commands for TUI

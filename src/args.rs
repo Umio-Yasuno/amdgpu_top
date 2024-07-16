@@ -13,6 +13,7 @@ pub struct MainOpt {
     pub single_gpu: bool,
     pub no_pc: bool,
     pub is_dark_mode: Option<bool>,
+    pub decode_gpu_metrics: Option<String>,
 }
 
 impl Default for MainOpt {
@@ -30,6 +31,7 @@ impl Default for MainOpt {
             single_gpu: false,
             no_pc: false,
             is_dark_mode: None,
+            decode_gpu_metrics: None,
         }
     }
 }
@@ -128,6 +130,8 @@ const HELP_MSG: &str = concat!(
     "       Update interval in seconds of the process index for fdinfo. (default: 5s)\n",
     "   --json_fifo, --json-fifo <String>\n",
     "       Output JSON formatted data to FIFO (named pipe) for other application and scripts.\n",
+    "   --decode-gm <Path>, --decode-gpu-metrics <Path>\n",
+    "       Decode the specified gpu_metrics file.\n",
 );
 
 impl MainOpt {
@@ -305,6 +309,10 @@ impl MainOpt {
                 },
                 "-gm" | "--gpu-metrics" | "--gpu_metrics" => {
                     opt.opt_dump_mode = OptDumpMode::GpuMetrics;
+                },
+                "--decode-gm" | "--decode-gpu-metrics" => {
+                    opt.decode_gpu_metrics = args.get(idx+1).map(|s| s.to_string());
+                    skip = true;
                 },
                 "--drm-info" | "--drm_info" => {
                     opt.opt_dump_mode = OptDumpMode::DrmInfo;

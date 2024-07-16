@@ -12,6 +12,21 @@ mod drm_info;
 
 fn main() {
     let main_opt = MainOpt::parse();
+
+    if let Some(path) = &main_opt.decode_gpu_metrics {
+        let gm = dump_info::decode_gpu_metrics(path);
+
+        #[cfg(feature = "json")]
+        if let AppMode::JSON = main_opt.app_mode {
+            use amdgpu_top_json::OutputJson;
+            println!("{}", gm.json());
+            return;
+        }
+
+        println!("{gm:#?}");
+        return;
+    }
+
     let (device_path_list, device_path) = {
         let list = DevicePath::get_device_path_list();
 

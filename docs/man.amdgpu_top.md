@@ -49,8 +49,12 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 
 **-u** *`<u64>`*, **\-\-update-process-index** *`<u64>`*
 :   Update interval in seconds of the process index for fdinfo. (default: 5s)
+
 **\-\-json_fifo** *`<String>`*, **\-\-json-fifo** *`<String>`*
 :   Output JSON formatted data to FIFO (named pipe) for other application and scripts.
+
+**--decode-gm** *`<Path>`*, **--decode-gpu-metrics** *`<Path>`*
+:   Decode the specified gpu_metrics file.
 
 **\-\-apu**, **\-\-select-apu**
 :   Select APU instance.

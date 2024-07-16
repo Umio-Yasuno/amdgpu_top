@@ -4,6 +4,7 @@ use libamdgpu_top::{
         FW_VERSION::{FW_TYPE, FwVer},
         DeviceHandle,
         GPU_INFO,
+        GpuMetrics,
         MetricsInfo,
     },
     AppDeviceInfo,
@@ -473,4 +474,10 @@ impl DumpInfo for AppDeviceInfo {
             }
         }
     }
+}
+
+pub fn decode_gpu_metrics(path: &str) -> GpuMetrics {
+    let mut buf = Vec::with_capacity(128);
+
+    GpuMetrics::read_file_with_buffer(&mut buf, path).unwrap()
 }
