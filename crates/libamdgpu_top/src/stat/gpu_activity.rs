@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use crate::AMDGPU::{ASIC_NAME, GpuMetrics, MetricsInfo};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct GpuActivity {
     pub gfx: Option<u16>, // %
     pub umc: Option<u16>, // %
@@ -34,7 +34,7 @@ impl GpuActivity {
             // gpu_metrics is supported from Renoir APU.
             match asic_name {
                 ASIC_NAME::CHIP_RAVEN |
-                ASIC_NAME::CHIP_RAVEN2 => Self { gfx: None, umc: None, media: None },
+                ASIC_NAME::CHIP_RAVEN2 => Self::default(),
                 _ => GpuActivity::get_from_sysfs(path),
             }
         }
@@ -42,7 +42,7 @@ impl GpuActivity {
 
     pub fn from_gpu_metrics(metrics: &GpuMetrics) -> Self {
         let Some(header) = metrics.get_header() else {
-            return Self { gfx: None, umc: None, media: None }
+            return Self::default()
         };
 
         let [gfx, umc, media] = [

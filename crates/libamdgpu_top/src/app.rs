@@ -62,6 +62,7 @@ impl AppAmdgpuTop {
         let asic_name = ext_info.get_asic_name();
         let memory_info = amdgpu_dev.memory_info().ok()?;
         let sysfs_path = pci_bus.get_sysfs_path();
+        let in_d3_state = stat::check_device_is_in_d3_state(&sysfs_path);
 
         let [grbm, grbm2] = {
             let chip_class = ext_info.get_chip_class();
@@ -73,11 +74,21 @@ impl AppAmdgpuTop {
         };
 
         let vram_usage = VramUsage::new(&memory_info);
-        let sensors = Sensors::new(&amdgpu_dev, &pci_bus, &ext_info);
-
-        let metrics = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path).ok();
-        let activity = GpuActivity::get(&sysfs_path, asic_name);
         let memory_error_count = RasErrorCount::get_from_sysfs_with_ras_block(&sysfs_path, RasBlock::UMC).ok();
+
+        let (sensors, metrics, activity) = if in_d3_state {
+            (
+                None,
+                None,
+                GpuActivity::default(),
+            )
+        } else {
+            (
+                Sensors::new(&amdgpu_dev, &pci_bus, &ext_info),
+                amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path).ok(),
+                GpuActivity::get(&sysfs_path, asic_name),
+            )
+        };
 
         let arc_proc_index = {
             let mut proc_index: Vec<ProcInfo> = Vec::new();
@@ -86,7 +97,7 @@ impl AppAmdgpuTop {
             Arc::new(Mutex::new(proc_index))
         };
 
-        let arc_pcie_bw = if opt.pcie_bw {
+        let arc_pcie_bw = if opt.pcie_bw && !in_d3_state {
             let pcie_bw = PcieBw::new(pci_bus.get_sysfs_path());
 
             if pcie_bw.check_pcie_bw_support(&ext_info) {

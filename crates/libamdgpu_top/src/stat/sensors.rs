@@ -214,3 +214,11 @@ impl Sensors {
         self.average_power.clone().or(self.input_power.clone())
     }
 }
+
+pub fn check_device_is_in_d3_state<P: Into<PathBuf>>(sysfs_path: P) -> bool {
+    let Ok(s) = std::fs::read_to_string(sysfs_path.into().join("power_state")) else {
+        return false;
+    };
+
+    s.starts_with("D3")
+}
