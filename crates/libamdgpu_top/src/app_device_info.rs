@@ -21,6 +21,7 @@ use std::path::PathBuf;
 pub struct AppDeviceInfo {
     pub ext_info: drm_amdgpu_info_device,
     pub memory_info: drm_amdgpu_memory_info,
+    pub is_apu: bool,
     pub resizable_bar: bool,
     pub min_dpm_link: Option<PCI::LINK>,
     pub max_dpm_link: Option<PCI::LINK>,
@@ -67,6 +68,7 @@ impl AppDeviceInfo {
         let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock()
             .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
         let resizable_bar = memory_info.check_resizable_bar();
+        let is_apu = ext_info.is_apu();
         let marketing_name = ext_info.find_device_name_or_default();
         let sysfs_path = pci_bus.get_sysfs_path();
         let hw_ip_info_list = get_hw_ip_info_list(amdgpu_dev, ext_info.get_chip_class());
@@ -81,6 +83,7 @@ impl AppDeviceInfo {
             ext_info: *ext_info,
             memory_info: *memory_info,
             resizable_bar,
+            is_apu,
             min_dpm_link: sensors.as_ref().and_then(|s| s.min_dpm_link),
             max_dpm_link: sensors.as_ref().and_then(|s| s.max_dpm_link),
             max_gpu_link: sensors.as_ref().and_then(|s| s.max_gpu_link),
