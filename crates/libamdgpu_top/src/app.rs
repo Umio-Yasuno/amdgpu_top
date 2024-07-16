@@ -165,6 +165,7 @@ impl AppAmdgpuTop {
             let proc_len = self.stat.fdinfo.proc_usage.len();
 
             // running GPU process is only "amdgpu_top"
+            // TODO: those checks may not be enough
             if proc_len == 1 && self.amdgpu_dev.is_some() && !self.device_info.is_apu {
                 unsafe { ManuallyDrop::drop(&mut self.amdgpu_dev); }
                 self.amdgpu_dev = ManuallyDrop::new(None);
