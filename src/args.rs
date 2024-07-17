@@ -312,6 +312,12 @@ impl MainOpt {
                 },
                 "--decode-gm" | "--decode-gpu-metrics" => {
                     opt.decode_gpu_metrics = args.get(idx+1).map(|s| s.to_string());
+
+                    if opt.decode_gpu_metrics.is_none() {
+                        eprintln!("missing argument: \"--decode-gm/--decode-gpu-metrics <Path>\"");
+                        std::process::exit(1);
+                    }
+
                     skip = true;
                 },
                 "--drm-info" | "--drm_info" => {
