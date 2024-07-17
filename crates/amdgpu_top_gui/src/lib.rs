@@ -118,6 +118,7 @@ pub fn run(
         selected_pci_bus,
         no_pc,
         pause: false,
+        full_fdinfo_list: false,
     };
 
     let options = eframe::NativeOptions {

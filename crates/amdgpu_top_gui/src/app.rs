@@ -136,6 +136,7 @@ pub struct MyApp {
     pub selected_pci_bus: PCI::BUS_INFO,
     pub no_pc: bool,
     pub pause: bool,
+    pub full_fdinfo_list: bool,
 }
 
 pub fn grid(ui: &mut egui::Ui, v: &[(&str, &str)]) {
@@ -898,10 +899,16 @@ impl MyApp {
             |ui| self.egui_fdinfo_plot(ui, has_vcn_unified, has_vpe),
         );
 
-        egui::ScrollArea::vertical()
-            .auto_shrink([true, false])
-            .min_scrolled_height(FDINFO_LIST_HEIGHT)
-            .show(ui, |ui| self.egui_fdinfo_list(ui, has_vcn_unified, has_vpe));
+        ui.toggle_value(&mut self.full_fdinfo_list, fl!("full_fdinfo_list"));
+
+        if self.full_fdinfo_list {
+            self.egui_fdinfo_list(ui, has_vcn_unified, has_vpe);
+        } else {
+            egui::ScrollArea::vertical()
+                .auto_shrink([true, false])
+                .min_scrolled_height(FDINFO_LIST_HEIGHT)
+                .show(ui, |ui| self.egui_fdinfo_list(ui, has_vcn_unified, has_vpe));
+        }
     }
 
     pub fn egui_sensors(&self, ui: &mut egui::Ui) {

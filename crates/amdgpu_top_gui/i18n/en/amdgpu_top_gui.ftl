@@ -143,6 +143,7 @@ usable = usable
 
 fdinfo = fdinfo
 fdinfo_plot = fdinfo Plot
+full_fdinfo_list = Full list
 vram_plot = VRAM Plot
 cpu = CPU
 gfx = GFX
