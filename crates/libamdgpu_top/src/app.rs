@@ -13,6 +13,7 @@ pub struct AppAmdgpuTop {
     pub device_path: DevicePath,
     pub stat: AppAmdgpuTopStat,
     pub buf_interval: Duration,
+    no_drop_device_handle: bool,
 }
 
 #[derive(Clone)]
@@ -62,7 +63,12 @@ impl AppAmdgpuTop {
         let asic_name = ext_info.get_asic_name();
         let memory_info = amdgpu_dev.memory_info().ok()?;
         let sysfs_path = pci_bus.get_sysfs_path();
-        let in_d3_state = stat::check_device_is_in_d3_state(&sysfs_path);
+        let no_drop_device_handle = if let Ok(s) = std::env::var("AGT_NO_DROP") {
+            s == "1"
+        } else {
+            false
+        };
+        let in_d3_state = stat::check_device_is_in_d3_state(&sysfs_path) && !no_drop_device_handle;
 
         let [grbm, grbm2] = {
             let chip_class = ext_info.get_chip_class();
@@ -146,6 +152,7 @@ impl AppAmdgpuTop {
                 memory_error_count,
             },
             buf_interval: Duration::ZERO,
+            no_drop_device_handle,
         })
     }
 
@@ -166,7 +173,11 @@ impl AppAmdgpuTop {
 
             // running GPU process is only "amdgpu_top"
             // TODO: those checks may not be enough
-            if proc_len == 1 && self.amdgpu_dev.is_some() && !self.device_info.is_apu {
+            if proc_len == 1
+            && self.amdgpu_dev.is_some()
+            && !self.no_drop_device_handle
+            && !self.device_info.is_apu
+            {
                 unsafe { ManuallyDrop::drop(&mut self.amdgpu_dev); }
                 self.amdgpu_dev = ManuallyDrop::new(None);
             } else if proc_len != 1 && self.amdgpu_dev.is_none() {
