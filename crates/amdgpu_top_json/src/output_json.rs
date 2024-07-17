@@ -110,7 +110,7 @@ impl OutputJson for Sensors {
 
         m.insert(
             "PCI Power State".to_string(),
-            self.pci_power_state.clone().map_or(Value::Null, |power_state| Value::String(power_state)),
+            self.pci_power_state.clone().map_or(Value::Null, Value::String),
         );
 
         m.insert(

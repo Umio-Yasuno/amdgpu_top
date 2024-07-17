@@ -85,7 +85,7 @@ impl JsonApp {
             iterations,
             no_pc,
             amdgpu_top_version: amdgpu_top_version(),
-            rocm_version: libamdgpu_top::get_rocm_version().map_or(Value::Null, |ver| Value::String(ver)),
+            rocm_version: libamdgpu_top::get_rocm_version().map_or(Value::Null, Value::String),
             title: title.to_string(),
         }
     }
