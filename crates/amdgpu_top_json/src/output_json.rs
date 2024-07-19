@@ -8,7 +8,6 @@ use libamdgpu_top::{
     drmModePropType,
     drmModeModeInfo,
 };
-use stat::gpu_metrics_util::{check_temp_array, check_power_clock_array};
 use stat::{FdInfoStat, FdInfoUsage, GpuActivity, Sensors, PerfCounter, ProcUsage};
 use serde_json::{json, Map, Value};
 use crate::OutputJson;
@@ -239,7 +238,6 @@ impl OutputJson for FdInfoStat {
 
 impl OutputJson for GpuMetrics {
     fn json(&self) -> Value {
-        let rev;
         let mut m = Map::new();
 
         if let Some(header) = self.get_header() {
@@ -251,33 +249,14 @@ impl OutputJson for GpuMetrics {
                     "content_revision": header.content_revision,
                 }),
             );
-
-            rev = header.format_revision;
-        } else {
-            rev = 0;
-        }
-
-        for (name, val) in [
-            ("temperature_gfx", self.get_temperature_gfx()),
-            ("temperature_soc", self.get_temperature_soc()),
-        ] {
-            m.insert(
-                name.to_string(),
-                if val == Some(u16::MAX) {
-                    Value::Null
-                } else if rev == 2 || rev == 3 {
-                    /* for APU */
-                    Value::from(val.map(|v| v.saturating_div(100)))
-                } else {
-                    Value::from(val)
-                }
-            );
         }
 
         for (name, val) in [
             ("temperature_edge", self.get_temperature_edge()),
             ("temperature_hotspot", self.get_temperature_hotspot()),
             ("temperature_mem", self.get_temperature_mem()),
+            ("temperature_gfx", self.get_temperature_gfx()),
+            ("temperature_soc", self.get_temperature_soc()),
             ("temperature_vrgfx", self.get_temperature_vrgfx()),
             ("temperature_vrsoc", self.get_temperature_vrsoc()),
             ("temperature_vrmem", self.get_temperature_vrmem()),
@@ -341,22 +320,12 @@ impl OutputJson for GpuMetrics {
         for (name, array) in [
             ("temperature_core", self.get_temperature_core()),
             ("temperature_l3", self.get_temperature_l3()),
-        ] {
-            let array = check_temp_array(array);
-            m.insert(
-                name.to_string(),
-                Value::from(array),
-            );
-        }
-
-        for (name, array) in [
             ("current_coreclk", self.get_current_coreclk()),
             ("current_l3clk", self.get_current_l3clk()),
             ("average_core_power", self.get_average_core_power()),
             ("average_temperature_core", self.get_average_temperature_core()),
             ("average_temperature_l3", self.get_average_temperature_l3()),
         ] {
-            let array = check_power_clock_array(array);
             m.insert(
                 name.to_string(),
                 Value::from(array),
