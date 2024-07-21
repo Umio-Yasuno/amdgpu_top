@@ -1,7 +1,6 @@
 use libamdgpu_top::{
     AMDGPU::{
         self,
-        GPU_INFO,
         HwId,
         IpHwId,
         PPTable,
@@ -22,9 +21,13 @@ fn dump_pp_table(device_path: &DevicePath) {
     let Ok(amdgpu_dev) = device_path.init() else { return };
 
     {
-        let Ok(ext_info) = amdgpu_dev.device_info() else { return };
-        let mark_name = ext_info.find_device_name_or_default();
-        println!("{mark_name} ({}, {:#0X}:{:#0X})", device_path.pci, ext_info.device_id(), ext_info.pci_rev_id());
+        println!(
+            "{} ({}, {:#0X}:{:#0X})",
+            device_path.device_name,
+            device_path.pci,
+            device_path.device_id,
+            device_path.revision_id,
+        );
     }
 
     let sysfs = device_path.pci.get_sysfs_path();
