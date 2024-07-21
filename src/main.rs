@@ -235,6 +235,10 @@ fn select_apu(list: &[DevicePath]) -> DevicePath {
     use libamdgpu_top::AMDGPU::GPU_INFO;
 
     list.iter().find(|&device_path| {
+        if !libamdgpu_top::stat::check_if_device_is_active(&device_path.sysfs_path) {
+            return false;
+        }
+
         let Ok(amdgpu_dev) = device_path.init() else { return false };
         let Ok(ext_info) = amdgpu_dev.device_info() else { return false };
 
