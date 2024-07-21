@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context};
 use libdrm_amdgpu_sys::{
     AMDGPU::{
+        self,
         DeviceHandle,
         GfxTargetVersion,
     },
@@ -15,6 +16,10 @@ pub struct DevicePath {
     pub render: PathBuf,
     pub card: PathBuf,
     pub pci: PCI::BUS_INFO,
+    pub sysfs_path: PathBuf,
+    pub device_id: u32,
+    pub revision_id: u32,
+    pub device_name: String,
 }
 
 impl DevicePath {
@@ -96,8 +101,20 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
     fn try_from(pci: PCI::BUS_INFO) -> Result<Self, Self::Error> {
         let render = pci.get_drm_render_path()?;
         let card = pci.get_drm_card_path()?;
+        let sysfs_path = pci.get_sysfs_path();
+        let [device_id, revision_id] = {
+            let [did, rid] = ["device", "revision"]
+                .map(|s| std::fs::read_to_string(sysfs_path.join(s)));
 
-        Ok(Self { render, card, pci })
+            [did?, rid?]
+                .map(|s|
+                    u32::from_str_radix(s.trim_start_matches("0x").trim_end(), 16).unwrap()
+                )
+        };
+        let device_name = AMDGPU::find_device_name(device_id, revision_id)
+            .unwrap_or(AMDGPU::DEFAULT_DEVICE_NAME.to_string());
+
+        Ok(Self { render, card, pci, sysfs_path, device_id, revision_id, device_name })
     }
 }
 
@@ -107,6 +124,10 @@ impl fmt::Debug for DevicePath {
             .field("render", &self.render)
             .field("card", &self.card)
             .field("pci", &self.pci.to_string())
+            .field("sysfs_path", &self.sysfs_path)
+            .field("device_id", &self.device_id)
+            .field("revision_id", &self.revision_id)
+            .field("device_name", &self.device_name)
             .finish()
     }
 }

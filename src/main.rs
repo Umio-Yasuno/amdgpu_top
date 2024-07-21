@@ -200,21 +200,10 @@ fn main() {
 }
 
 pub fn device_list(list: &[DevicePath]) {
-    use libamdgpu_top::AMDGPU::GPU_INFO;
-
     println!("{TITLE}\n");
     for (i, device_path) in list.iter().enumerate() {
-        let Ok(amdgpu_dev) = device_path.init() else { continue };
-        let Ok(ext_info) = amdgpu_dev.device_info() else { continue };
-
         println!("#{i}:");
-        println!(
-            "    {} ({:#0X}.{:#0X})",
-            ext_info.find_device_name_or_default(),
-            ext_info.device_id(),
-            ext_info.pci_rev_id()
-        );
-        println!("    {device_path:?}");
+        println!("{device_path:#X?}");
     }
 }
 
