@@ -215,10 +215,10 @@ impl Sensors {
     }
 }
 
-pub fn check_device_is_in_d3_state<P: Into<PathBuf>>(sysfs_path: P) -> bool {
-    let Ok(s) = std::fs::read_to_string(sysfs_path.into().join("power_state")) else {
+pub fn check_if_device_is_active<P: Into<PathBuf>>(sysfs_path: P) -> bool {
+    let Ok(s) = std::fs::read_to_string(sysfs_path.into().join("power/runtime_status")) else {
         return false;
     };
 
-    s.starts_with("D3")
+    s.starts_with("active")
 }

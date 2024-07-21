@@ -68,7 +68,6 @@ impl AppAmdgpuTop {
         } else {
             false
         };
-        let in_d3_state = stat::check_device_is_in_d3_state(&sysfs_path) && !no_drop_device_handle;
 
         let [grbm, grbm2] = {
             let chip_class = ext_info.get_chip_class();
@@ -82,19 +81,9 @@ impl AppAmdgpuTop {
         let vram_usage = VramUsage::new(&memory_info);
         let memory_error_count = RasErrorCount::get_from_sysfs_with_ras_block(&sysfs_path, RasBlock::UMC).ok();
 
-        let (sensors, metrics, activity) = if in_d3_state {
-            (
-                None,
-                None,
-                GpuActivity::default(),
-            )
-        } else {
-            (
-                Sensors::new(&amdgpu_dev, &pci_bus, &ext_info),
-                amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path).ok(),
-                GpuActivity::get(&sysfs_path, asic_name),
-            )
-        };
+        let sensors = Sensors::new(&amdgpu_dev, &pci_bus, &ext_info);
+        let metrics = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path).ok();
+        let activity = GpuActivity::get(&sysfs_path, asic_name);
 
         let arc_proc_index = {
             let mut proc_index: Vec<ProcInfo> = Vec::new();
@@ -103,7 +92,7 @@ impl AppAmdgpuTop {
             Arc::new(Mutex::new(proc_index))
         };
 
-        let arc_pcie_bw = if opt.pcie_bw && !in_d3_state {
+        let arc_pcie_bw = if opt.pcie_bw {
             let pcie_bw = PcieBw::new(pci_bus.get_sysfs_path());
 
             if pcie_bw.check_pcie_bw_support(&ext_info) {
@@ -174,13 +163,16 @@ impl AppAmdgpuTop {
             // running GPU process is only "amdgpu_top"
             // TODO: those checks may not be enough
             if proc_len == 1
-            && self.amdgpu_dev.is_some()
-            && !self.no_drop_device_handle
-            && !self.device_info.is_apu
+                && self.amdgpu_dev.is_some()
+                && !self.no_drop_device_handle
+                && !self.device_info.is_apu
             {
                 unsafe { ManuallyDrop::drop(&mut self.amdgpu_dev); }
                 self.amdgpu_dev = ManuallyDrop::new(None);
-            } else if proc_len != 1 && self.amdgpu_dev.is_none() {
+            } else if proc_len > 1
+                && self.amdgpu_dev.is_none()
+                && stat::check_if_device_is_active(&self.device_info.sysfs_path)
+            {
                 self.amdgpu_dev = ManuallyDrop::new(self.device_path.init().ok());
             }
         }
@@ -214,7 +206,6 @@ impl AppAmdgpuTop {
                 );
             }
         }
-
 
         if self.stat.memory_error_count.is_some() {
             self.stat.memory_error_count = RasErrorCount::get_from_sysfs_with_ras_block(
