@@ -44,7 +44,7 @@ impl Default for AppOption {
 }
 
 impl AppAmdgpuTop {
-    pub fn create_self_and_suspended_list<T: AsRef<AppOption>>(
+    pub fn create_app_and_suspended_list<T: AsRef<AppOption>>(
         device_path_list: &[DevicePath],
         opt: T,
     ) -> (Vec<Self>, Vec<DevicePath>) {
@@ -65,6 +65,32 @@ impl AppAmdgpuTop {
         }
 
         (apps, suspended_devices)
+    }
+
+    pub fn check_suspended_list_and_create_app<T: AsRef<AppOption>>(
+        apps: &mut Vec<Self>,
+        suspended_list: &[DevicePath],
+        opt: T,
+    ) -> Vec<DevicePath> {
+        let mut remove_devices = Vec::new();
+        for device_path in suspended_list {
+            if !device_path.check_if_device_is_active() {
+                continue;
+            }
+
+            let Ok(amdgpu_dev) = device_path.init() else { continue };
+            let Some(app) = Self::new(amdgpu_dev, device_path.clone(), opt.as_ref()) else {
+                continue
+            };
+            apps.push(app);
+            remove_devices.push(device_path.pci);
+        }
+
+        suspended_list
+            .iter()
+            .cloned()
+            .filter(|device_path| remove_devices.contains(&device_path.pci))
+            .collect()
     }
 
     pub fn from_device_path_list<T: AsRef<AppOption>>(
