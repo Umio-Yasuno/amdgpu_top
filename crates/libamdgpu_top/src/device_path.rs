@@ -93,6 +93,13 @@ impl DevicePath {
 
         Some(GfxTargetVersion::from(gfx_target_version))
     }
+
+    pub fn check_if_device_is_active(&self) -> bool {
+        let path = self.sysfs_path.join("power/runtime_status");
+        let Ok(s) = std::fs::read_to_string(path) else { return false };
+
+        s.starts_with("active")
+    }
 }
 
 impl TryFrom<PCI::BUS_INFO> for DevicePath {
