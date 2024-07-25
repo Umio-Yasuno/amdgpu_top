@@ -1,5 +1,4 @@
 use std::fmt::Write;
-use std::sync::{Arc, Mutex};
 use cursive::align::HAlign;
 use cursive::view::{Nameable, Scrollable};
 use cursive::views::{HideableView, LinearLayout, TextContent, TextView, Panel};
@@ -252,13 +251,8 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
     }
 
     {
-        let t_index: Vec<(_, Arc<Mutex<Vec<_>>>)> = vec_app.iter().map(|app|
-            (
-                app.app_amdgpu_top.device_path.clone(),
-                app.app_amdgpu_top.stat.arc_proc_index.clone(),
-            )
-        ).collect();
-        stat::spawn_update_index_thread(t_index, interval);
+        let device_paths: Vec<DevicePath> = device_path_list.to_vec();
+        stat::spawn_update_index_thread(device_paths, interval);
     }
 
     siv.add_global_callback('q', cursive::Cursive::quit);

@@ -75,14 +75,8 @@ pub fn run(
     }).collect();
 
     {
-        let t_index: Vec<(_, Arc<Mutex<Vec<_>>>)> = vec_app.iter().map(|app|
-            (
-                app.device_path.clone(),
-                app.stat.arc_proc_index.clone(),
-            )
-        ).collect();
-
-        stat::spawn_update_index_thread(t_index, update_process_index_interval);
+        let device_paths: Vec<DevicePath> = device_path_list.to_vec();
+        stat::spawn_update_index_thread(device_paths, update_process_index_interval);
     }
 
     let (mut vec_data, vec_device_info): (Vec<_>, Vec<_>) = vec_app.iter().map(|app| (GuiAppData::new(app), app.device_info.clone())).unzip();

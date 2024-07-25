@@ -137,12 +137,7 @@ impl AppAmdgpuTop {
         let metrics = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path).ok();
         let activity = GpuActivity::get(&sysfs_path, asic_name);
 
-        let arc_proc_index = {
-            let mut proc_index: Vec<ProcInfo> = Vec::new();
-            stat::update_index(&mut proc_index, &device_path);
-
-            Arc::new(Mutex::new(proc_index))
-        };
+        let arc_proc_index = device_path.arc_proc_index.clone();
 
         let arc_pcie_bw = if opt.pcie_bw {
             let pcie_bw = PcieBw::new(pci_bus.get_sysfs_path());

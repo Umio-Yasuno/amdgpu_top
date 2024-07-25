@@ -4,7 +4,7 @@ use cursive::{event::Key, menu, traits::With};
 use cursive::theme::{BorderStyle, Theme, Palette};
 
 use libamdgpu_top::{DevicePath, Sampling};
-use libamdgpu_top::stat::{self, FdInfoSortType, PCType, ProcInfo};
+use libamdgpu_top::stat::{self, FdInfoSortType, PCType};
 
 mod view;
 use view::*;
@@ -86,13 +86,8 @@ pub fn run(
     toggle_opt.indexes = vec_app.iter().map(|app| app.index).collect();
 
     {
-        let t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)> = vec_app.iter().map(|app|
-            (
-                app.app_amdgpu_top.device_path.clone(),
-                app.app_amdgpu_top.stat.arc_proc_index.clone(),
-            )
-        ).collect();
-        stat::spawn_update_index_thread(t_index, interval);
+        let device_paths: Vec<DevicePath> = device_path_list.to_vec();
+        stat::spawn_update_index_thread(device_paths, interval);
     }
 
     let mut siv = cursive::default();

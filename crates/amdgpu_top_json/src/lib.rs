@@ -1,9 +1,7 @@
 use libamdgpu_top::{DevicePath, stat};
 use libamdgpu_top::app::*;
-use stat::{ProcInfo};
 use serde_json::{json, Value};
 use std::time::{Duration, Instant};
-use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
 use std::io::Write;
 
@@ -66,14 +64,8 @@ impl JsonApp {
         let duration_time = base_time.elapsed();
 
         {
-            let t_index: Vec<(DevicePath, Arc<Mutex<Vec<ProcInfo>>>)> = vec_device_info
-                .iter()
-                .map(|device| (
-                    device.app.device_path.clone(),
-                    device.app.stat.arc_proc_index.clone(),
-                ))
-                .collect();
-            stat::spawn_update_index_thread(t_index, update_process_index_interval);
+            let device_paths: Vec<DevicePath> = device_path_list.to_vec();
+            stat::spawn_update_index_thread(device_paths, update_process_index_interval);
         }
 
         Self {
