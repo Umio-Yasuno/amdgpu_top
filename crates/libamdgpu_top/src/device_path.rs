@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context};
-use libdrm_amdgpu_sys::{
+use crate::{
     AMDGPU::{
         self,
         DeviceHandle,
@@ -7,9 +7,11 @@ use libdrm_amdgpu_sys::{
     },
     PCI,
 };
+use crate::stat::ProcInfo;
 use std::path::PathBuf;
 use std::fs;
 use std::fmt;
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct DevicePath {
@@ -20,6 +22,7 @@ pub struct DevicePath {
     pub device_id: u32,
     pub revision_id: u32,
     pub device_name: String,
+    pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
 }
 
 impl DevicePath {
@@ -120,8 +123,18 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
         };
         let device_name = AMDGPU::find_device_name(device_id, revision_id)
             .unwrap_or(AMDGPU::DEFAULT_DEVICE_NAME.to_string());
+        let arc_proc_index = Arc::new(Mutex::new(Vec::new()));
 
-        Ok(Self { render, card, pci, sysfs_path, device_id, revision_id, device_name })
+        Ok(Self {
+            render,
+            card,
+            pci,
+            sysfs_path,
+            device_id,
+            revision_id,
+            device_name,
+            arc_proc_index,
+        })
     }
 }
 
