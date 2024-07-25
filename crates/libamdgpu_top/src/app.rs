@@ -1,11 +1,11 @@
+use crate::{drmVersion, PCI};
 use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, RasBlock, RasErrorCount};
-use crate::{DevicePath, stat, VramUsage, has_vcn, has_vcn_unified, has_vpe, Sampling};
+use crate::{AppDeviceInfo, DevicePath, stat, VramUsage, has_vcn, has_vcn_unified, has_vpe, Sampling};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
+use std::collections::HashMap;
 use std::mem::ManuallyDrop;
-use std::time::Duration;
 use std::sync::{Arc, Mutex};
-use crate::AppDeviceInfo;
-use crate::drmVersion;
+use std::time::Duration;
 
 pub struct AppAmdgpuTop {
     pub amdgpu_dev: ManuallyDrop<Option<DeviceHandle>>,
@@ -47,13 +47,13 @@ impl AppAmdgpuTop {
     pub fn create_app_and_suspended_list<T: AsRef<AppOption>>(
         device_path_list: &[DevicePath],
         opt: T,
-    ) -> (Vec<Self>, Vec<DevicePath>) {
-        let mut apps = Vec::with_capacity(8);
-        let mut suspended_devices = Vec::with_capacity(8);
+    ) -> (Vec<Self>, HashMap<PCI::BUS_INFO, DevicePath>) {
+        let mut apps = Vec::new();
+        let mut suspended_devices = HashMap::new();
 
         for device_path in device_path_list {
             if !device_path.check_if_device_is_active() {
-                suspended_devices.push(device_path.clone());
+                suspended_devices.insert(device_path.pci, device_path.clone());
                 continue;
             }
 
@@ -69,11 +69,11 @@ impl AppAmdgpuTop {
 
     pub fn check_suspended_list_and_create_app<T: AsRef<AppOption>>(
         apps: &mut Vec<Self>,
-        suspended_list: &[DevicePath],
+        suspended_list: &mut HashMap<PCI::BUS_INFO, DevicePath>,
         opt: T,
-    ) -> Vec<DevicePath> {
+    ) {
         let mut remove_devices = Vec::new();
-        for device_path in suspended_list {
+        for (_pci_bus, device_path) in suspended_list.iter() {
             if !device_path.check_if_device_is_active() {
                 continue;
             }
@@ -86,11 +86,14 @@ impl AppAmdgpuTop {
             remove_devices.push(device_path.pci);
         }
 
-        suspended_list
-            .iter()
-            .cloned()
-            .filter(|device_path| remove_devices.contains(&device_path.pci))
-            .collect()
+        for remove_dev in &remove_devices {
+            let removed = suspended_list.remove(remove_dev);
+            debug_assert!(removed.is_some());
+        }
+
+        if 0 < remove_devices.len() {
+            suspended_list.shrink_to_fit();
+        }
     }
 
     pub fn from_device_path_list<T: AsRef<AppOption>>(
