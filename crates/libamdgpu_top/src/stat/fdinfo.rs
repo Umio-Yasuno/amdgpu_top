@@ -499,7 +499,7 @@ impl FdInfoUsage {
     }
 }
 
-fn get_fds(pid: i32, device_path: &DevicePath) -> Vec<i32> {
+fn get_fds<T: AsRef<Path>>(pid: i32, device_path: &[T]) -> Vec<i32> {
     let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else { return Vec::new() };
 
     fd_list.filter_map(|fd_link| {
@@ -507,7 +507,10 @@ fn get_fds(pid: i32, device_path: &DevicePath) -> Vec<i32> {
         let link = fs::read_link(&dir_entry).ok()?;
 
         // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
-        if [&device_path.render, &device_path.card].into_iter().any(|path| link.starts_with(path)) {
+        if device_path
+            .into_iter()
+            .any(|path| link.starts_with(path))
+        {
             dir_entry.file_name()?.to_str()?.parse::<i32>().ok()
         } else {
             None
@@ -543,9 +546,9 @@ pub fn get_all_processes() -> Vec<i32> {
     }).collect()
 }
 
-pub fn update_index_by_all_proc(
+pub fn update_index_by_all_proc<T: AsRef<Path>>(
     vec_info: &mut Vec<ProcInfo>,
-    device_path: &DevicePath,
+    device_path: &[T],
     all_proc: &[i32],
 ) {
     vec_info.clear();
@@ -566,7 +569,11 @@ pub fn update_index_by_all_proc(
 }
 
 pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath) {
-    update_index_by_all_proc(vec_info, device_path, &get_all_processes());
+    update_index_by_all_proc(
+        vec_info,
+        &[&device_path.render, &device_path.card],
+        &get_all_processes(),
+    );
 }
 
 pub fn spawn_update_index_thread(
@@ -580,7 +587,11 @@ pub fn spawn_update_index_thread(
         let all_proc = get_all_processes();
 
         for device_path in &device_paths {
-            update_index_by_all_proc(&mut buf_index, device_path, &all_proc);
+            update_index_by_all_proc(
+                &mut buf_index,
+                &[&device_path.render, &device_path.card],
+                &all_proc,
+            );
 
             let lock = device_path.arc_proc_index.lock();
             if let Ok(mut index) = lock {

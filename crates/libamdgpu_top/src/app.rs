@@ -138,6 +138,15 @@ impl AppAmdgpuTop {
         let activity = GpuActivity::get(&sysfs_path, asic_name);
 
         let arc_proc_index = device_path.arc_proc_index.clone();
+        {
+            let mut proc_index = arc_proc_index.lock().unwrap();
+
+            stat::update_index_by_all_proc(
+                &mut proc_index,
+                &[&device_path.render, &device_path.card],
+                &stat::get_all_processes(),
+            );
+        }
 
         let arc_pcie_bw = if opt.pcie_bw {
             let pcie_bw = PcieBw::new(pci_bus.get_sysfs_path());
