@@ -44,9 +44,9 @@ impl Default for AppOption {
 }
 
 impl AppAmdgpuTop {
-    pub fn create_app_and_suspended_list<T: AsRef<AppOption>>(
+    pub fn create_app_and_suspended_list(
         device_path_list: &[DevicePath],
-        opt: T,
+        opt: &AppOption,
     ) -> (Vec<Self>, HashMap<PCI::BUS_INFO, DevicePath>) {
         let mut apps = Vec::new();
         let mut suspended_devices = HashMap::new();
@@ -58,7 +58,7 @@ impl AppAmdgpuTop {
             }
 
             let Ok(amdgpu_dev) = device_path.init() else { continue };
-            let Some(app) = Self::new(amdgpu_dev, device_path.clone(), opt.as_ref()) else {
+            let Some(app) = Self::new(amdgpu_dev, device_path.clone(), opt) else {
                 continue
             };
             apps.push(app);
@@ -67,10 +67,10 @@ impl AppAmdgpuTop {
         (apps, suspended_devices)
     }
 
-    pub fn check_suspended_list_and_create_app<T: AsRef<AppOption>>(
+    pub fn check_suspended_list_and_create_app(
         apps: &mut Vec<Self>,
         suspended_list: &mut HashMap<PCI::BUS_INFO, DevicePath>,
-        opt: T,
+        opt: &AppOption,
     ) {
         let mut remove_devices = Vec::new();
         for (_pci_bus, device_path) in suspended_list.iter() {
@@ -79,7 +79,7 @@ impl AppAmdgpuTop {
             }
 
             let Ok(amdgpu_dev) = device_path.init() else { continue };
-            let Some(app) = Self::new(amdgpu_dev, device_path.clone(), opt.as_ref()) else {
+            let Some(app) = Self::new(amdgpu_dev, device_path.clone(), opt) else {
                 continue
             };
             apps.push(app);

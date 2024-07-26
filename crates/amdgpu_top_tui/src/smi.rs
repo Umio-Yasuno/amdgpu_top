@@ -3,7 +3,7 @@ use cursive::align::HAlign;
 use cursive::view::{Nameable, Scrollable};
 use cursive::views::{HideableView, LinearLayout, TextContent, TextView, Panel};
 
-use libamdgpu_top::AMDGPU::{DeviceHandle, MetricsInfo};
+use libamdgpu_top::AMDGPU::MetricsInfo;
 use libamdgpu_top::{stat, DevicePath, Sampling};
 use stat::{GfxoffMonitor, GfxoffStatus, FdInfoSortType};
 
@@ -17,23 +17,19 @@ const ECC_LEN: usize = ECC_LABEL.len()-2;
 const PROC_TITLE: &str = "Processes";
 
 use libamdgpu_top::app::AppAmdgpuTop;
+use std::collections::HashMap;
 
-pub(crate) struct SmiApp {
-    pub app_amdgpu_top: AppAmdgpuTop,
-    pub index: usize,
-    pub gfxoff_monitor: Option<GfxoffMonitor>,
-    pub fdinfo_view: AppTextView,
-    pub info_text: Text,
+struct SmiApp {
+    app_amdgpu_top: AppAmdgpuTop,
+    index: usize,
+    gfxoff_monitor: Option<GfxoffMonitor>,
+    fdinfo_view: AppTextView,
+    info_text: Text,
 }
 
 impl SmiApp {
-    pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath, index: usize) -> Option<Self> {
-        let gfxoff_monitor = GfxoffMonitor::new(device_path.pci).ok();
-        let app_amdgpu_top = AppAmdgpuTop::new(
-            amdgpu_dev,
-            device_path,
-            &Default::default(),
-        )?;
+    pub fn new(app_amdgpu_top: AppAmdgpuTop, index: usize) -> Option<Self> {
+        let gfxoff_monitor = GfxoffMonitor::new(app_amdgpu_top.device_path.pci).ok();
 
         Some(Self {
             app_amdgpu_top,
@@ -209,13 +205,86 @@ impl SmiApp {
     }
 }
 
+struct SuspendedApp {
+    device_path: DevicePath,
+    index: usize,
+    fdinfo_view: AppTextView,
+    info_text: Text,
+}
+
+impl SuspendedApp {
+    fn new(device_path: DevicePath, index: usize) -> Self {
+        let mut info_text: Text = Default::default();
+
+        let _ = writeln!(
+            info_text.buf,
+            "#{index:<2} [{name:<20} ({did:#X}:{rid:#X})]| {pci}   | Suspended",
+            name = device_path.device_name,
+            did = device_path.device_id,
+            rid = device_path.revision_id,
+            pci = device_path.pci,
+        );
+
+        info_text.set();
+
+        Self {
+            device_path,
+            index,
+            fdinfo_view: Default::default(),
+            info_text,
+        }
+    }
+
+    fn info_text(&mut self) -> TextView {
+        TextView::new_with_content(self.info_text.content.clone()).no_wrap()
+    }
+
+    fn fdinfo_panel(&self) -> Panel<TextView> {
+        let text = TextView::new_with_content(self.fdinfo_view.text.content.clone()).no_wrap();
+        Panel::new(text)
+            .title(format!(
+                "#{:<2} {}",
+                self.index,
+                self.device_path.device_name,
+            ))
+            .title_position(HAlign::Left)
+    }
+
+    fn to_smi_app(&self) -> Option<SmiApp> {
+        let amdgpu_dev = self.device_path.init().ok()?;
+        let app_amdgpu_top = AppAmdgpuTop::new(amdgpu_dev, self.device_path.clone(), &Default::default())?;
+        let gfxoff_monitor = GfxoffMonitor::new(self.device_path.pci).ok();
+
+        Some(SmiApp {
+            app_amdgpu_top,
+            index: self.index,
+            gfxoff_monitor,
+            fdinfo_view: self.fdinfo_view.clone(),
+            info_text: self.info_text.clone(),
+        })
+    }
+}
+
 pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
     let sample = Sampling::low();
-    let mut vec_app: Vec<_> = device_path_list.iter().enumerate().filter_map(|(i, device_path)| {
-        let amdgpu_dev = device_path.init().ok()?;
-
-        SmiApp::new(amdgpu_dev, device_path.clone(), i)
-    }).collect();
+    let (vec_app, suspended) = AppAmdgpuTop::create_app_and_suspended_list(
+        device_path_list,
+        &Default::default(),
+    );
+    let mut vec_app: Vec<_> = vec_app
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, app)| SmiApp::new(app, i))
+        .collect();
+    let app_len = vec_app.len();
+    let mut sus_app_map: HashMap<_, _> = suspended
+        .into_iter()
+        .enumerate()
+        .map(|(i, (pci, device_path))| (
+            pci,
+            SuspendedApp::new(device_path.clone(), app_len+i),
+        ))
+        .collect();
 
     let mut siv = cursive::default();
     {
@@ -230,6 +299,10 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
                 info.add_child(app.info_text());
                 info.add_child(TextView::new_with_content(line.clone()).no_wrap());
             }
+            for (_pci, sus_app) in sus_app_map.iter_mut() {
+                info.add_child(sus_app.info_text());
+                info.add_child(TextView::new_with_content(line.clone()).no_wrap());
+            }
             info.remove_child(info.len()-1);
             layout.add_child(Panel::new(info));
         }
@@ -237,6 +310,9 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
             let mut proc = LinearLayout::vertical();
             for app in &vec_app {
                 proc.add_child(app.fdinfo_panel());
+            }
+            for (_pci, sus_app) in sus_app_map.iter_mut() {
+                proc.add_child(sus_app.fdinfo_panel());
             }
             let h = HideableView::new(proc).with_name(PROC_TITLE);
             layout.add_child(Panel::new(h).title(PROC_TITLE).title_position(HAlign::Left));
@@ -264,12 +340,30 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
     siv.set_theme(cursive::theme::Theme::terminal_default());
 
     let cb_sink = siv.cb_sink().clone();
+    let mut remove_sus_devices = Vec::new();
 
     std::thread::spawn(move || loop {
         std::thread::sleep(sample.to_duration()); // 1s
 
+        for pci in &remove_sus_devices {
+            let _ = sus_app_map.remove(pci);
+        }
+
+        if !remove_sus_devices.is_empty() {
+            remove_sus_devices.clear();
+            remove_sus_devices.shrink_to_fit();
+        }
+
         for app in vec_app.iter_mut() {
             app.update(&sample);
+        }
+
+        for (pci, sus_app) in sus_app_map.iter() {
+            if sus_app.device_path.check_if_device_is_active() {
+                let Some(smi_app) = sus_app.to_smi_app() else { continue };
+                vec_app.push(smi_app);
+                remove_sus_devices.push(*pci);
+            }
         }
 
         cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
