@@ -67,35 +67,6 @@ impl AppAmdgpuTop {
         (apps, suspended_devices)
     }
 
-    pub fn check_suspended_list_and_create_app(
-        apps: &mut Vec<Self>,
-        suspended_list: &mut HashMap<PCI::BUS_INFO, DevicePath>,
-        opt: &AppOption,
-    ) {
-        let mut remove_devices = Vec::new();
-        for (_pci_bus, device_path) in suspended_list.iter() {
-            if !device_path.check_if_device_is_active() {
-                continue;
-            }
-
-            let Ok(amdgpu_dev) = device_path.init() else { continue };
-            let Some(app) = Self::new(amdgpu_dev, device_path.clone(), opt) else {
-                continue
-            };
-            apps.push(app);
-            remove_devices.push(device_path.pci);
-        }
-
-        for remove_dev in &remove_devices {
-            let removed = suspended_list.remove(remove_dev);
-            debug_assert!(removed.is_some());
-        }
-
-        if 0 < remove_devices.len() {
-            suspended_list.shrink_to_fit();
-        }
-    }
-
     pub fn from_device_path_list<T: AsRef<AppOption>>(
         device_path_list: &[DevicePath],
         opt: T,
