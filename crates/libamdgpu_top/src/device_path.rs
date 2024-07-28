@@ -35,10 +35,9 @@ impl DevicePath {
     }
 
     pub fn get_device_path_list() -> Vec<Self> {
-        let amdgpu_devices = fs::read_dir("/sys/bus/pci/drivers/amdgpu").unwrap_or_else(|_| {
-            eprintln!("The AMDGPU driver is not loaded.");
-            panic!();
-        });
+        let Ok(amdgpu_devices) = fs::read_dir("/sys/bus/pci/drivers/amdgpu") else {
+            return Self::check_all_dri_dev();
+        };
 
         amdgpu_devices.flat_map(|v| {
             let name = v.ok()?.file_name();
@@ -50,6 +49,32 @@ impl DevicePath {
 
             Self::try_from(pci).ok()
         }).collect()
+    }
+
+    pub fn check_all_dri_dev() -> Vec<Self> {
+        let dri_devs = fs::read_dir("/dev/dri/").unwrap_or_else(|_| {
+            eprintln!("Unable to read `/dev/dri/` directory");
+            panic!();
+        });
+
+        dri_devs
+            .flat_map(|v| {
+                use std::os::unix::io::IntoRawFd;
+
+                let path = v.ok()?.path();
+                let name = path.to_string_lossy();
+
+                if !name.starts_with("/dev/dri/renderD") {
+                    return None;
+                }
+
+                let f = fs::OpenOptions::new().read(true).write(true).open(path).ok()?;
+                let (amdgpu_dev, _, _) = DeviceHandle::init(f.into_raw_fd()).ok()?;
+                let pci = amdgpu_dev.get_pci_bus_info().ok()?;
+
+                Self::try_from(pci).ok()
+            })
+            .collect()
     }
 
     pub fn get_gfx_target_version_from_kfd(&self) -> Option<GfxTargetVersion> {
