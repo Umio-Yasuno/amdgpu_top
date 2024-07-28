@@ -70,24 +70,20 @@ impl DevicePath {
             format!("drm_render_minor {}", &render.get(PRE_LEN..)?)
         };
 
-        let dirs = std::fs::read_dir("/sys/class/kfd/kfd/topology/nodes/").ok()?;
-        let mut gfx_target_version = String::with_capacity(32);
+        let dirs = fs::read_dir("/sys/class/kfd/kfd/topology/nodes/").ok()?;
+        let mut gfx_target_version = String::new();
 
         'node: for dir_entry in dirs.flatten() {
-            gfx_target_version.clear();
-            let Ok(s) = std::fs::read_to_string(dir_entry.path().join("properties")) else {
+            let Ok(s) = fs::read_to_string(dir_entry.path().join("properties")) else {
                 continue
             };
-            let lines = s.lines();
+            let mut lines = s.lines();
+            let Some(ver_str) = lines
+                .find(|&l| l.starts_with("gfx_target_version")) else { continue };
 
-            for l in lines {
-                if l.starts_with("gfx_target_version") {
-                    gfx_target_version = l.to_string();
-                }
-
-                if l.starts_with(&drm_render_minor) {
-                    break 'node;
-                }
+            if lines.any(|l| l.starts_with(&drm_render_minor)) {
+                gfx_target_version = ver_str.to_string();
+                break 'node;
             }
         }
 
