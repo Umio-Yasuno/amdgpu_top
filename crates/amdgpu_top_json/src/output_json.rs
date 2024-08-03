@@ -386,6 +386,9 @@ impl OutputJson for DevicePath {
             "render": self.render,
             "card": self.card,
             "pci": self.pci.to_string(),
+            "DeviceID": self.device_id,
+            "RevisionID": self.revision_id,
+            "DeviceName": self.device_name,
         })
     }
 }
