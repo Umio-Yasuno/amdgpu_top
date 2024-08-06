@@ -82,10 +82,10 @@ impl AppAmdgpuTop {
 
     pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath, opt: &AppOption) -> Option<Self> {
         let pci_bus = device_path.pci;
+        let sysfs_path = device_path.sysfs_path.clone();
         let ext_info = amdgpu_dev.device_info().ok()?;
         let asic_name = ext_info.get_asic_name();
         let memory_info = amdgpu_dev.memory_info().ok()?;
-        let sysfs_path = pci_bus.get_sysfs_path();
         let no_drop_device_handle = if let Ok(s) = std::env::var("AGT_NO_DROP") {
             s == "1"
         } else {
@@ -120,7 +120,7 @@ impl AppAmdgpuTop {
         }
 
         let arc_pcie_bw = if opt.pcie_bw {
-            let pcie_bw = PcieBw::new(pci_bus.get_sysfs_path());
+            let pcie_bw = PcieBw::new(&sysfs_path);
 
             if pcie_bw.check_pcie_bw_support(&ext_info) {
                 Some(pcie_bw.spawn_update_thread())

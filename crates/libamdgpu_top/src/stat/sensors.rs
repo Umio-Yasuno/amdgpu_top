@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::fs;
 use libdrm_amdgpu_sys::{
     PCI,
     AMDGPU::{
@@ -107,7 +108,8 @@ impl Sensors {
         let fan_rpm = parse_hwmon(hwmon_path.join("fan1_input"));
         let fan_max_rpm = parse_hwmon(hwmon_path.join("fan1_max"));
         let gpu_port_path = pci_bus.get_gpu_pcie_port_bus().get_sysfs_path();
-        let pci_power_state = std::fs::read_to_string(gpu_port_path.join("power_state")).ok()
+        let pci_power_state = fs::read_to_string(gpu_port_path.join("power_state"))
+            .ok()
             .map(|mut s| {
                 s.pop();
                 s
@@ -194,7 +196,7 @@ impl Sensors {
     }
 
     pub fn update_pci_power_state(&mut self) {
-        self.pci_power_state = std::fs::read_to_string(self.gpu_port_path.join("power_state"))
+        self.pci_power_state = fs::read_to_string(self.gpu_port_path.join("power_state"))
             .ok()
             .map(|mut s| {
                 s.pop(); // trim `\n`
@@ -216,7 +218,7 @@ impl Sensors {
 }
 
 pub fn check_if_device_is_active<P: Into<PathBuf>>(sysfs_path: P) -> bool {
-    let Ok(s) = std::fs::read_to_string(sysfs_path.into().join("power/runtime_status")) else {
+    let Ok(s) = fs::read_to_string(sysfs_path.into().join("power/runtime_status")) else {
         return false;
     };
 
