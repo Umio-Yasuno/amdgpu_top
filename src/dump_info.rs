@@ -130,7 +130,7 @@ pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
         &ext_info,
         &memory_info,
         &sensors,
-        pci_bus,
+        device_path,
     );
 
     if let Ok(drm) = amdgpu_dev.get_drm_version_struct() {

@@ -143,7 +143,7 @@ impl AppAmdgpuTop {
             &ext_info,
             &memory_info,
             &sensors,
-            pci_bus,
+            &device_path,
         );
 
         if device_info.gfx_target_version.is_none() {

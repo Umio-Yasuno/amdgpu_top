@@ -14,7 +14,7 @@ use crate::AMDGPU::{
     VBIOS::VbiosInfo,
     VIDEO_CAPS::{CAP_TYPE, VideoCapsInfo},
 };
-use crate::{get_hw_ip_info_list, PCI, stat::Sensors};
+use crate::{DevicePath, get_hw_ip_info_list, PCI, stat::Sensors};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
@@ -61,7 +61,7 @@ impl AppDeviceInfo {
         ext_info: &drm_amdgpu_info_device,
         memory_info: &drm_amdgpu_memory_info,
         sensors: &Option<Sensors>,
-        pci_bus: PCI::BUS_INFO,
+        device_path: &DevicePath,
     ) -> Self {
         let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock()
             .unwrap_or_else(|| (0, (ext_info.max_engine_clock() / 1000) as u32));
@@ -69,8 +69,12 @@ impl AppDeviceInfo {
             .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
         let resizable_bar = memory_info.check_resizable_bar();
         let is_apu = ext_info.is_apu();
-        let marketing_name = ext_info.find_device_name_or_default();
-        let sysfs_path = pci_bus.get_sysfs_path();
+        let marketing_name = if device_path.device_name.is_empty() {
+            ext_info.find_device_name_or_default()
+        } else {
+            device_path.device_name.clone()
+        };
+        let sysfs_path = device_path.sysfs_path.clone();
         let hw_ip_info_list = get_hw_ip_info_list(amdgpu_dev, ext_info.get_chip_class());
         let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);
         let power_profiles = PowerProfile::get_all_supported_profiles_from_sysfs(&sysfs_path);
@@ -94,7 +98,7 @@ impl AppDeviceInfo {
             max_mem_clk,
             marketing_name,
             asic_name,
-            pci_bus,
+            pci_bus: device_path.pci,
             sysfs_path,
             edge_temp: sensors.as_ref().and_then(|s| s.edge_temp.clone()),
             junction_temp: sensors.as_ref().and_then(|s| s.junction_temp.clone()),
