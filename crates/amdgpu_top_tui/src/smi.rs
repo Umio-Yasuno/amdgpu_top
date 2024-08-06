@@ -216,14 +216,21 @@ impl SuspendedApp {
     fn new(device_path: DevicePath, index: usize) -> Self {
         let mut info_text: Text = Default::default();
 
-        let _ = writeln!(
-            info_text.buf,
-            "#{index:<2} [{name:<20} ({did:#X}:{rid:#X})]| {pci}   | Suspended",
-            name = device_path.device_name,
-            did = device_path.device_id,
-            rid = device_path.revision_id,
-            pci = device_path.pci,
-        );
+        if let [Some(did), Some(rid)] = [device_path.device_id, device_path.revision_id] {
+            let _ = writeln!(
+                info_text.buf,
+                "#{index:<2} [{name:<20} ({did:#X}:{rid:#X})]| {pci}   | Suspended",
+                name = device_path.device_name,
+                pci = device_path.pci,
+            );
+        } else {
+            let _ = writeln!(
+                info_text.buf,
+                "#{index:<2} [{name:<20}]| {pci}   | Suspended",
+                name = device_path.device_name,
+                pci = device_path.pci,
+            );
+        }
 
         info_text.set();
 

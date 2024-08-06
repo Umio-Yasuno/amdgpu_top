@@ -19,8 +19,8 @@ pub struct DevicePath {
     pub card: PathBuf,
     pub pci: PCI::BUS_INFO,
     pub sysfs_path: PathBuf,
-    pub device_id: u32,
-    pub revision_id: u32,
+    pub device_id: Option<u32>,
+    pub revision_id: Option<u32>,
     pub device_name: String,
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
 }
@@ -114,15 +114,18 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
         let sysfs_path = pci.get_sysfs_path();
         let [device_id, revision_id] = {
             let [did, rid] = ["device", "revision"]
-                .map(|s| std::fs::read_to_string(sysfs_path.join(s)));
+                .map(|s| std::fs::read_to_string(sysfs_path.join(s)).ok());
 
-            [did?, rid?]
-                .map(|s|
-                    u32::from_str_radix(s.trim_start_matches("0x").trim_end(), 16).unwrap()
-                )
+            [did, rid].map(|s| s.and_then(|s|
+                u32::from_str_radix(s.trim_start_matches("0x").trim_end(), 16).ok()
+            ))
         };
-        let device_name = AMDGPU::find_device_name(device_id, revision_id)
-            .unwrap_or(AMDGPU::DEFAULT_DEVICE_NAME.to_string());
+        let device_name = if let [Some(did), Some(rid)] = [device_id, revision_id] {
+            AMDGPU::find_device_name(did, rid)
+                .unwrap_or(AMDGPU::DEFAULT_DEVICE_NAME.to_string())
+        } else {
+            String::new()
+        };
         let arc_proc_index = Arc::new(Mutex::new(Vec::new()));
 
         Ok(Self {

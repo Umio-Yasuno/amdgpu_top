@@ -20,17 +20,15 @@ pub fn dump_all_pp_table(title: &str, device_path_list: &[DevicePath]) {
 fn dump_pp_table(device_path: &DevicePath) {
     let Ok(amdgpu_dev) = device_path.init() else { return };
 
-    {
+    if let [Some(did), Some(rid)] = [device_path.device_id, device_path.revision_id] {
         println!(
-            "{} ({}, {:#0X}:{:#0X})",
+            "{} ({}, {did:#0X}:{rid:#0X})",
             device_path.device_name,
             device_path.pci,
-            device_path.device_id,
-            device_path.revision_id,
         );
     }
 
-    let sysfs = device_path.pci.get_sysfs_path();
+    let sysfs = &device_path.sysfs_path;
     let smu = IpHwId::get_from_die_id_sysfs(HwId::MP1, sysfs.join("ip_discovery/die/0/")).ok().and_then(|smu| smu.instances.first().cloned());
 
     if let Some(smu) = &smu {
