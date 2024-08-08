@@ -1,8 +1,7 @@
-use crate::{drmVersion, PCI};
+use crate::drmVersion;
 use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, RasBlock, RasErrorCount};
 use crate::{AppDeviceInfo, DevicePath, stat, VramUsage, has_vcn, has_vcn_unified, has_vpe, Sampling};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
-use std::collections::HashMap;
 use std::mem::ManuallyDrop;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -47,13 +46,13 @@ impl AppAmdgpuTop {
     pub fn create_app_and_suspended_list(
         device_path_list: &[DevicePath],
         opt: &AppOption,
-    ) -> (Vec<Self>, HashMap<PCI::BUS_INFO, DevicePath>) {
+    ) -> (Vec<Self>, Vec<DevicePath>) {
         let mut apps = Vec::new();
-        let mut suspended_devices = HashMap::new();
+        let mut suspended_devices = Vec::new();
 
         for device_path in device_path_list {
             if !device_path.check_if_device_is_active() {
-                suspended_devices.insert(device_path.pci, device_path.clone());
+                suspended_devices.push(device_path.clone());
                 continue;
             }
 

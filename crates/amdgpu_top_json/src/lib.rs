@@ -1,10 +1,9 @@
-use libamdgpu_top::{DevicePath, stat, PCI};
+use libamdgpu_top::{DevicePath, stat};
 use libamdgpu_top::app::*;
 use serde_json::{json, Value};
 use std::time::{Duration, Instant};
 use std::path::PathBuf;
 use std::io::Write;
-use std::collections::HashMap;
 
 mod output_json;
 mod dump;
@@ -32,7 +31,7 @@ pub fn amdgpu_top_version() -> Value {
 
 pub struct JsonApp {
     pub vec_device_info: Vec<JsonDeviceInfo>,
-    pub sus_app_list: HashMap<PCI::BUS_INFO, DevicePath>,
+    pub sus_app_list: Vec<DevicePath>,
     pub base_time: Instant,
     pub interval: Duration,
     pub duration_time: Duration,
@@ -86,16 +85,7 @@ impl JsonApp {
         }
     }
 
-    pub fn update(&mut self, remove_sus_devices: &mut Vec<PCI::BUS_INFO>) {
-        for pci in remove_sus_devices.iter() {
-            let _ = self.sus_app_list.remove(pci);
-        }
-
-        if !remove_sus_devices.is_empty() {
-            remove_sus_devices.clear();
-            remove_sus_devices.shrink_to_fit();
-        }
-
+    pub fn update(&mut self) {
         if !self.no_pc {
             for device in self.vec_device_info.iter_mut() {
                 device.app.clear_pc();
@@ -117,19 +107,22 @@ impl JsonApp {
             device.app.update(self.interval);
         }
 
-        for (pci, sus_device) in self.sus_app_list.iter() {
-            if sus_device.check_if_device_is_active() {
-                let Some(amdgpu_dev) = sus_device.init().ok() else { continue };
+        self.sus_app_list.retain(|sus_device| {
+            let is_active = sus_device.check_if_device_is_active();
+
+            if is_active {
+                let Some(amdgpu_dev) = sus_device.init().ok() else { return true };
                 let Some(mut app) = AppAmdgpuTop::new(
                     amdgpu_dev,
                     sus_device.clone(),
                     &Default::default(),
-                ) else { continue };
+                ) else { return true };
                 let info = app.json_info();
                 self.vec_device_info.push(JsonDeviceInfo { app, info });
-                remove_sus_devices.push(*pci);
             }
-        }
+
+            !is_active
+        });
 
         self.duration_time = {
             let now = Instant::now();
@@ -144,7 +137,7 @@ impl JsonApp {
             .collect();
         let sus_devices: Vec<Value> = self.sus_app_list
             .iter()
-            .map(|(_pci, sus_dev)| sus_dev.json())
+            .map(|sus_dev| sus_dev.json())
             .collect();
 
         json!({
@@ -164,10 +157,9 @@ impl JsonApp {
 
     pub fn run(&mut self) {
         let mut n = 0;
-        let mut remove_sus_devices = Vec::new();
 
         loop {
-            self.update(&mut remove_sus_devices);
+            self.update();
 
             let s = self.json().to_string();
 
@@ -181,10 +173,8 @@ impl JsonApp {
     }
 
     pub fn run_fifo(&mut self, fifo_path: PathBuf) {
-        let mut remove_sus_devices = Vec::new();
-
         loop {
-            self.update(&mut remove_sus_devices);
+            self.update();
 
             let s = self.json().to_string();
 
@@ -220,7 +210,7 @@ impl JsonDeviceInfo {
 
     pub fn from2_device_path_list(device_path_list: &[DevicePath]) -> (
         Vec<Self>,
-        HashMap<PCI::BUS_INFO, DevicePath>,
+        Vec<DevicePath>,
     ) {
         let (vec_app, sus_app_list) = AppAmdgpuTop::create_app_and_suspended_list(
             device_path_list,

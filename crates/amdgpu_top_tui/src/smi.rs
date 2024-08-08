@@ -17,7 +17,6 @@ const ECC_LEN: usize = ECC_LABEL.len()-2;
 const PROC_TITLE: &str = "Processes";
 
 use libamdgpu_top::app::AppAmdgpuTop;
-use std::collections::HashMap;
 
 struct SmiApp {
     app_amdgpu_top: AppAmdgpuTop,
@@ -284,13 +283,10 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
         .filter_map(|(i, app)| SmiApp::new(app, i))
         .collect();
     let app_len = vec_app.len();
-    let mut sus_app_map: HashMap<_, _> = suspended
+    let mut sus_app_devices: Vec<_> = suspended
         .into_iter()
         .enumerate()
-        .map(|(i, (pci, device_path))| (
-            pci,
-            SuspendedApp::new(device_path.clone(), app_len+i),
-        ))
+        .map(|(i, device_path)| SuspendedApp::new(device_path.clone(), app_len+i))
         .collect();
 
     let mut siv = cursive::default();
@@ -306,7 +302,7 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
                 info.add_child(app.info_text());
                 info.add_child(TextView::new_with_content(line.clone()).no_wrap());
             }
-            for (_pci, sus_app) in sus_app_map.iter_mut() {
+            for sus_app in sus_app_devices.iter_mut() {
                 info.add_child(sus_app.info_text());
                 info.add_child(TextView::new_with_content(line.clone()).no_wrap());
             }
@@ -318,7 +314,7 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
             for app in &vec_app {
                 proc.add_child(app.fdinfo_panel());
             }
-            for (_pci, sus_app) in sus_app_map.iter_mut() {
+            for sus_app in sus_app_devices.iter_mut() {
                 proc.add_child(sus_app.fdinfo_panel());
             }
             let h = HideableView::new(proc).with_name(PROC_TITLE);
@@ -347,31 +343,24 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
     siv.set_theme(cursive::theme::Theme::terminal_default());
 
     let cb_sink = siv.cb_sink().clone();
-    let mut remove_sus_devices = Vec::new();
 
     std::thread::spawn(move || loop {
         std::thread::sleep(sample.to_duration()); // 1s
-
-        for pci in &remove_sus_devices {
-            let _ = sus_app_map.remove(pci);
-        }
-
-        if !remove_sus_devices.is_empty() {
-            remove_sus_devices.clear();
-            remove_sus_devices.shrink_to_fit();
-        }
 
         for app in vec_app.iter_mut() {
             app.update(&sample);
         }
 
-        for (pci, sus_app) in sus_app_map.iter() {
-            if sus_app.device_path.check_if_device_is_active() {
-                let Some(smi_app) = sus_app.to_smi_app() else { continue };
+        sus_app_devices.retain(|sus_app| {
+            let is_active = sus_app.device_path.check_if_device_is_active();
+
+            if is_active {
+                let Some(smi_app) = sus_app.to_smi_app() else { return true };
                 vec_app.push(smi_app);
-                remove_sus_devices.push(*pci);
             }
-        }
+
+            !is_active
+        });
 
         cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
     });
