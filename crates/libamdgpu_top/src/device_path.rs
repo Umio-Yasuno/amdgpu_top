@@ -112,14 +112,7 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
         let render = pci.get_drm_render_path()?;
         let card = pci.get_drm_card_path()?;
         let sysfs_path = pci.get_sysfs_path();
-        let [device_id, revision_id] = {
-            let [did, rid] = ["device", "revision"]
-                .map(|s| std::fs::read_to_string(sysfs_path.join(s)).ok());
-
-            [did, rid].map(|s| s.and_then(|s|
-                u32::from_str_radix(s.trim_start_matches("0x").trim_end(), 16).ok()
-            ))
-        };
+        let [device_id, revision_id] = [pci.get_device_id(), pci.get_revision_id()];
         let device_name = if let [Some(did), Some(rid)] = [device_id, revision_id] {
             AMDGPU::find_device_name(did, rid)
                 .unwrap_or(AMDGPU::DEFAULT_DEVICE_NAME.to_string())
