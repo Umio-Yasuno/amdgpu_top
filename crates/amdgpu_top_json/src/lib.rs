@@ -55,7 +55,7 @@ impl JsonApp {
         let interval = Duration::from_millis(refresh_period);
         let delay = interval / 100;
         let (mut vec_device_info, sus_app_list) =
-            JsonDeviceInfo::from2_device_path_list(device_path_list);
+            JsonDeviceInfo::from_device_path_list(device_path_list);
 
         for device in vec_device_info.iter_mut() {
             device.app.stat.fdinfo.interval = interval;
@@ -196,19 +196,7 @@ pub struct JsonDeviceInfo {
 }
 
 impl JsonDeviceInfo {
-    pub fn from_device_path_list(device_path_list: &[DevicePath]) -> Vec<Self> {
-        let vec_json_device: Vec<Self> = device_path_list.iter().filter_map(|device_path| {
-            let amdgpu_dev = device_path.init().ok()?;
-            let mut app = AppAmdgpuTop::new(amdgpu_dev, device_path.clone(), &Default::default())?;
-            let info = app.json_info();
-
-            Some(Self { app, info })
-        }).collect();
-
-        vec_json_device
-    }
-
-    pub fn from2_device_path_list(device_path_list: &[DevicePath]) -> (
+    pub fn from_device_path_list(device_path_list: &[DevicePath]) -> (
         Vec<Self>,
         Vec<DevicePath>,
     ) {
