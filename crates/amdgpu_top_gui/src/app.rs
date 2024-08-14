@@ -901,7 +901,7 @@ impl MyApp {
 
         ui.toggle_value(&mut self.full_fdinfo_list, fl!("full_fdinfo_list"));
 
-        if self.full_fdinfo_list {
+        if self.full_fdinfo_list || self.buf_data.stat.fdinfo.proc_usage.len() < 8 {
             self.egui_fdinfo_list(ui, has_vcn_unified, has_vpe);
         } else {
             egui::ScrollArea::vertical()
