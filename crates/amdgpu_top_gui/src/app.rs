@@ -891,6 +891,7 @@ impl MyApp {
     pub fn egui_grid_fdinfo(&mut self, ui: &mut egui::Ui) {
         let has_vcn_unified = self.buf_data.stat.fdinfo.has_vcn_unified;
         let has_vpe = self.buf_data.stat.fdinfo.has_vpe;
+        let proc_len = self.buf_data.stat.fdinfo.proc_usage.len();
 
         collapsing_plot(
             ui,
@@ -901,11 +902,11 @@ impl MyApp {
 
         ui.toggle_value(&mut self.full_fdinfo_list, fl!("full_fdinfo_list"));
 
-        if self.full_fdinfo_list || self.buf_data.stat.fdinfo.proc_usage.len() < 8 {
+        if self.full_fdinfo_list || (proc_len != 0 && proc_len < 8) {
             self.egui_fdinfo_list(ui, has_vcn_unified, has_vpe);
         } else {
             egui::ScrollArea::vertical()
-                .auto_shrink([true, false])
+                .auto_shrink([false, false])
                 .min_scrolled_height(FDINFO_LIST_HEIGHT)
                 .show(ui, |ui| self.egui_fdinfo_list(ui, has_vcn_unified, has_vpe));
         }
