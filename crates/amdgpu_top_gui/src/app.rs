@@ -12,7 +12,6 @@ use libamdgpu_top::app::{
 };
 use libamdgpu_top::AMDGPU::{RasErrorCount, MetricsInfo, ThrottleStatus};
 use libamdgpu_top::stat::{
-    self,
     gpu_metrics_util::*,
     FdInfoUsage,
     FdInfoSortType,
@@ -166,31 +165,6 @@ pub fn grid(ui: &mut egui::Ui, v: &[(&str, &str)]) {
     }
 }
 
-pub trait AvgActivity {
-    fn avg_activity(&self, ui: &mut egui::Ui);
-}
-
-impl AvgActivity for GpuMetrics {
-    fn avg_activity(&self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            ui.label(format!("{} =>", fl!("avg_activity")));
-            let activity = stat::GpuActivity::from_gpu_metrics(self);
-
-            for (val, label) in [
-                (activity.gfx, fl!("gfx")),
-                (activity.umc, fl!("memory")),
-                (activity.media, fl!("media")),
-            ] {
-                if let Some(val) = val {
-                    ui.label(format!("{label} {val:>3}%,"));
-                } else {
-                    ui.label(format!("{label} ___%,"));
-                }
-            }
-        });
-    }
-}
-
 pub trait GuiMemoryErrorCount {
     fn ui(&self, ui: &mut egui::Ui);
 }
@@ -248,7 +222,6 @@ pub trait GuiGpuMetrics: MetricsInfo {
 impl GuiGpuMetrics for GpuMetrics {
     fn v1_ui(&self, ui: &mut egui::Ui) {
         self.socket_power(ui);
-        self.avg_activity(ui);
 
         ui.horizontal(|ui| {
             Self::v1_helper(ui, &fl!("c"), &[
@@ -373,7 +346,6 @@ impl GuiGpuMetrics for GpuMetrics {
             ref: https://gitlab.freedesktop.org/drm/amd/-/issues/2321
         */
         // socket_power(ui, self);
-        self.avg_activity(ui);
 
         let fl_avg = fl!("avg");
         let fl_cur = fl!("cur");
@@ -556,7 +528,6 @@ impl GuiGpuMetrics for GpuMetrics {
         });
 
         self.socket_power(ui);
-        self.avg_activity(ui);
 
        if let [Some(dram_reads), Some(dram_writes)] = [
             self.get_average_dram_reads(),
@@ -1163,11 +1134,20 @@ impl MyApp {
         let label_fmt = |name: &str, val: &PlotPoint| {
             format!("{:.1}s : {name} {:.0}%", val.x, val.y)
         };
+        let fl_gfx = fl!("gfx");
+        let fl_memory = fl!("memory");
+        let fl_media = fl!("media");
+
+        ui.label(format!("{fl_gfx}: {:>3}%, {fl_memory}: {:>3}%, {fl_media}: {:>3}%",
+            self.buf_data.stat.activity.gfx.map(|v| v.to_string()).unwrap_or("___".to_string()),
+            self.buf_data.stat.activity.umc.map(|v| v.to_string()).unwrap_or("___".to_string()),
+            self.buf_data.stat.activity.media.map(|v| v.to_string()).unwrap_or("___".to_string()),
+        ));
 
         let [gfx, umc, media] = [
-            ("GFX", &self.buf_data.history.gfx_activity),
-            ("Memory Controller", &self.buf_data.history.umc_activity),
-            ("Media", &self.buf_data.history.media_activity),
+            (fl_gfx, &self.buf_data.history.gfx_activity),
+            (fl_memory, &self.buf_data.history.umc_activity),
+            (fl_media, &self.buf_data.history.media_activity),
         ].map(|(name, history)| {
             let v: Vec<_> = history
                 .iter()
