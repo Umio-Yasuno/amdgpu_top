@@ -300,6 +300,11 @@ impl MyApp {
                 collapsing(ui, &fl!("sensor"), true, |ui| self.egui_sensors(ui));
             }
 
+            {
+                ui.add_space(SPACE);
+                collapsing(ui, &fl!("activity"), true, |ui| self.egui_activity(ui));
+            }
+
             if self.buf_data.support_pcie_bw {
                 ui.add_space(SPACE);
                 collapsing(ui, &fl!("pcie_bw"), true, |ui| self.egui_pcie_bw(ui));

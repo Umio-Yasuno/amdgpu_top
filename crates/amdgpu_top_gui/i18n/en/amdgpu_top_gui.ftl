@@ -168,6 +168,7 @@ avg = Avg.
 cur = Cur.
 soc = SoC
 memory = Memory
+mc = Memory Controller
 media = Media
 hbm_temp = HBM Temp. (C)
 core_temp = Core Temp. (C)
@@ -178,6 +179,7 @@ l3_clock = L3 Cache Clock (MHz)
 socket_power = Socket Power (Average)
 current_socket_power = Socket Power (Current)
 avg_activity = Average Activity
+activity = Activity
 throttle_status = Throttle Status
 throttling_log = Throttling Log
 

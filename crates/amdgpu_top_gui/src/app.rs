@@ -39,6 +39,9 @@ pub struct HistoryData {
     pub sensors_history: SensorsHistory,
     pub pcie_bw_history: History<(u64, u64)>,
     pub throttling_history: History<ThrottleStatus>,
+    pub gfx_activity: History<u16>,
+    pub umc_activity: History<u16>,
+    pub media_activity: History<u16>,
 }
 
 #[derive(Clone)]
@@ -61,6 +64,9 @@ impl GuiAppData {
         let [grbm_history, grbm2_history] = [&app.stat.grbm, &app.stat.grbm2].map(|pc| {
             vec![History::<u8>::new(HISTORY_LENGTH, f32::INFINITY); pc.index.len()]
         });
+        let gfx_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let umc_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let media_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
 
         Self {
             stat: app.stat.clone(),
@@ -75,6 +81,9 @@ impl GuiAppData {
                 sensors_history,
                 pcie_bw_history,
                 throttling_history,
+                gfx_activity,
+                umc_activity,
+                media_activity,
             },
             vec_connector_info: libamdgpu_top::connector_info(&app.device_path),
         }
@@ -120,6 +129,16 @@ impl GuiAppData {
         self.history.vram_history.add(secs, self.stat.vram_usage.0.vram.heap_usage);
         self.history.gtt_history.add(secs, self.stat.vram_usage.0.gtt.heap_usage);
         self.history.fdinfo_history.add(secs, self.stat.fdinfo.fold_fdinfo_usage());
+
+        if let Some(gfx) = self.stat.activity.gfx {
+            self.history.gfx_activity.add(secs, gfx);
+        }
+        if let Some(umc) = self.stat.activity.umc {
+            self.history.umc_activity.add(secs, umc);
+        }
+        if let Some(media) = self.stat.activity.media {
+            self.history.media_activity.add(secs, media);
+        }
     }
 }
 
@@ -1137,6 +1156,40 @@ impl MyApp {
         } else {
             ui.label(format!("{fl_sent}: _ {mib_s}, {fl_rec}: _ {mib_s}"));
         }
+    }
+
+    pub fn egui_activity(&self, ui: &mut egui::Ui) {
+        let label_fmt = |name: &str, val: &PlotPoint| {
+            format!("{:.1}s : {name} {:.0}%", val.x, val.y)
+        };
+
+        let [gfx, umc, media] = [
+            ("GFX", &self.buf_data.history.gfx_activity),
+            ("Memory Controller", &self.buf_data.history.umc_activity),
+            ("Media", &self.buf_data.history.media_activity),
+        ].map(|(name, history)| {
+            let v: Vec<_> = history
+                .iter()
+                .map(|(i, act)| [i, act as f64])
+                .collect();
+
+            Line::new(PlotPoints::new(v)).name(name)
+        });
+
+        default_plot("activity plot")
+            .allow_scroll(false)
+            .include_y(0.0)
+            .include_y(100.0)
+            .label_formatter(label_fmt)
+            .show_axes([false, true])
+            .height(PLOT_HEIGHT)
+            .width(PLOT_WIDTH.min(ui.available_width()))
+            .legend(Legend::default().position(Corner::LeftTop))
+            .show(ui, |plot_ui| {
+                plot_ui.line(gfx);
+                plot_ui.line(umc);
+                plot_ui.line(media);
+            });
     }
 }
 
