@@ -809,6 +809,7 @@ impl MyApp {
         default_plot("fdinfo Plot")
             .allow_scroll(false)
             .include_y(100.0)
+            .show_axes([false, true])
             .label_formatter(label_fmt)
             .auto_bounds([true, false].into())
             .height(PLOT_HEIGHT)
