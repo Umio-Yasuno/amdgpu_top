@@ -20,6 +20,9 @@ pub use util::*;
 mod vram;
 pub use vram::*;
 
+mod activity;
+pub use activity::*;
+
 mod memory_error_count;
 
 #[derive(Clone, Default)]

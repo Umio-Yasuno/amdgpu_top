@@ -41,14 +41,16 @@ impl AppTextView {
         )?;
 
         if stat.has_vcn_unified {
-            writeln!(self.text.buf, "|{VCN_LABEL:^4}|")?;
+            write!(self.text.buf, "|{VCN_LABEL:^4}|")?;
         } else {
-            writeln!(self.text.buf, "|{DEC_LABEL:^4}|{ENC_LABEL:^4}|")?;
+            write!(self.text.buf, "|{DEC_LABEL:^4}|{ENC_LABEL:^4}|")?;
         }
 
         if stat.has_vpe {
-            writeln!(self.text.buf, "|{VPE_LABEL:^4}|")?;
+            write!(self.text.buf, "|{VPE_LABEL:^4}|")?;
         }
+
+        writeln!(self.text.buf)?;
 
         stat.sort_proc_usage(sort, reverse);
 
@@ -150,5 +152,4 @@ impl AppTextView {
             opt.fdinfo_sort = FdInfoSortType::MediaEngine;
         }
     }
-
 }

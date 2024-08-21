@@ -26,7 +26,7 @@ impl AppTextView {
             c += 1;
             write!(
                 self.text.buf,
-                " {:<WIDTH$} ",
+                " {:<WIDTH$}",
                 format!("{name:<NAME_LEN$} => {val:>VAL_LEN$} {unit:3}")
             )?;
             if (c % 2) == 0 { writeln!(self.text.buf)? };

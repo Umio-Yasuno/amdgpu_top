@@ -19,6 +19,7 @@ struct ToggleOptions {
     grbm: bool,
     grbm2: bool,
     vram: bool,
+    activity: bool,
     sensor: bool,
     high_freq: bool,
     fdinfo: bool,
@@ -36,6 +37,7 @@ impl Default for ToggleOptions {
             grbm: true,
             grbm2: true,
             vram: true,
+            activity: true,
             sensor: true,
             high_freq: false,
             fdinfo: true,
@@ -153,6 +155,7 @@ pub fn run(
             siv.add_global_callback('r', pc_type_cb(PCType::GRBM2));
         }
         siv.add_global_callback('v', VramUsageView::cb);
+        siv.add_global_callback('a', ActivityView::cb);
         siv.add_global_callback('f', AppTextView::cb);
         siv.add_global_callback('R', AppTextView::cb_reverse_sort);
         siv.add_global_callback('P', AppTextView::cb_sort_by_pid);

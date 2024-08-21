@@ -15,6 +15,7 @@ pub(crate) struct NewTuiApp {
     pub grbm_view: PerfCounterView,
     pub grbm2_view: PerfCounterView,
     pub vram_usage_view: VramUsageView,
+    pub activity_view: ActivityView,
     pub fdinfo_view: AppTextView,
     pub sensors_view: AppTextView,
     pub gpu_metrics_view: AppTextView,
@@ -44,6 +45,7 @@ impl NewTuiApp {
             grbm_view,
             grbm2_view,
             vram_usage_view: VramUsageView::new(index),
+            activity_view: ActivityView::new(index),
             fdinfo_view: Default::default(),
             sensors_view: Default::default(),
             gpu_metrics_view: Default::default(),
@@ -68,6 +70,7 @@ impl NewTuiApp {
         }
 
         layout.add_child(self.vram_usage_view.view(&self.app_amdgpu_top.stat.vram_usage));
+        layout.add_child(self.activity_view.view(&self.app_amdgpu_top.stat.activity));
         layout.add_child(self.fdinfo_view.text.panel("fdinfo"));
 
         if self.app_amdgpu_top.stat.sensors.is_some() {
@@ -106,6 +109,7 @@ impl NewTuiApp {
         }
 
         self.vram_usage_view.set_value(&self.app_amdgpu_top.stat.vram_usage);
+        self.activity_view.set_value(&self.app_amdgpu_top.stat.activity);
 
         if flags.sensor {
             if let Some(ref sensors) = &self.app_amdgpu_top.stat.sensors {
