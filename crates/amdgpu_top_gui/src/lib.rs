@@ -10,10 +10,7 @@ use libamdgpu_top::{
         GpuMetrics,
         MetricsInfo,
     },
-    app::{
-        AppAmdgpuTop,
-        AppOption,
-    },
+    app::AppAmdgpuTop,
     stat::{
         self,
         PerfCounter,
@@ -59,29 +56,30 @@ pub fn run(
         eprintln!("Error while loading languages for library_fluent {error}");
     }
 
-    let mut vec_app: Vec<_> = device_path_list.iter().filter_map(|device_path| {
-        let amdgpu_dev = device_path.init().ok()?;
+    let (mut vec_app, mut suspended_devices) = AppAmdgpuTop::create_app_and_suspended_list(
+        device_path_list,
+        &Default::default(),
+    );
 
-        let mut app = AppAmdgpuTop::new(
-            amdgpu_dev,
-            device_path.clone(),
-            &AppOption { pcie_bw: true },
-        )?;
-
+    for app in vec_app.iter_mut() {
         app.stat.grbm.get_i18n_index(&LANGUAGE_LOADER);
         app.stat.grbm2.get_i18n_index(&LANGUAGE_LOADER);
-
-        Some(app)
-    }).collect();
+    }
 
     {
         let device_paths: Vec<DevicePath> = device_path_list.to_vec();
         stat::spawn_update_index_thread(device_paths, update_process_index_interval);
     }
 
-    let (mut vec_data, vec_device_info): (Vec<_>, Vec<_>) = vec_app.iter().map(|app| (GuiAppData::new(app), app.device_info.clone())).unzip();
+    let mut vec_data: Vec<_> = vec_app.iter().map(|app| GuiAppData::new(app)).collect();
 
     let sample = Sampling::low();
+
+    let selected_pci_bus = if !vec_data.iter().any(|d| selected_pci_bus == d.pci_bus) {
+        vec_data.first().unwrap().pci_bus
+    } else {
+        selected_pci_bus
+    };
 
     let data = vec_data
         .iter()
@@ -90,22 +88,16 @@ pub fn run(
             eprintln!("invalid PCI bus: {selected_pci_bus}");
             panic!();
         });
-    let device_info = vec_device_info
-        .iter()
-        .find(|&d| selected_pci_bus == d.pci_bus)
-        .unwrap_or_else(|| {
-            eprintln!("invalid PCI bus: {selected_pci_bus}");
-            panic!();
-        })
-        .clone();
+    let device_info = data.device_info.clone();
 
     let mut app = MyApp {
         fdinfo_sort: Default::default(),
         reverse_sort: false,
         device_info,
-        vec_device_info,
         buf_data: data.clone(),
+        buf_vec_data: vec_data.clone(),
         arc_data: Arc::new(Mutex::new(vec_data.clone())),
+        device_path_list: device_path_list.to_vec(),
         show_sidepanel: true,
         gl_vendor_info: None,
         rocm_version: libamdgpu_top::get_rocm_version(),
@@ -156,6 +148,23 @@ pub fn run(
                     share_data.clone_from(&vec_data);
                 }
             }
+
+            suspended_devices.retain(|dev| {
+                let is_active = dev.check_if_device_is_active();
+
+                if is_active {
+                    let Ok(amdgpu_dev) = dev.init() else { return true };
+                    let Some(app) = AppAmdgpuTop::new(
+                        amdgpu_dev,
+                        dev.clone(),
+                        &Default::default(),
+                    ) else { return true };
+                    vec_data.push(GuiAppData::new(&app));
+                    vec_app.push(app);
+                }
+
+                !is_active
+            });
         });
     }
 
@@ -201,18 +210,26 @@ impl MyApp {
 
         egui::ComboBox::from_id_source("Device List")
             .selected_text(&selected_text)
-            .show_ui(ui, |ui| for device in &self.vec_device_info {
-                if self.device_info.pci_bus == device.pci_bus {
+            .show_ui(ui, |ui| for device in &self.device_path_list {
+                if self.device_info.pci_bus == device.pci {
                     let _ = ui.add_enabled(
                         false,
                         egui::SelectableLabel::new(true, &selected_text),
                     );
                 } else {
-                    ui.selectable_value(
-                        &mut self.selected_pci_bus,
-                        device.pci_bus,
-                        device.menu_entry(),
-                    );
+                    if self.buf_vec_data.iter().any(|data| data.pci_bus == device.pci) {
+                        ui.selectable_value(
+                            &mut self.selected_pci_bus,
+                            device.pci,
+                            device.menu_entry(),
+                        );
+                    } else {
+                        let label = format!("{} (Suspended)", device.menu_entry());
+                        let _ = ui.add_enabled(
+                            false,
+                            egui::SelectableLabel::new(false, label),
+                        );
+                    }
                 }
             });
     }
@@ -364,24 +381,24 @@ impl MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if !self.pause {
-            let lock = self.arc_data.try_lock();
-            if let Ok(vec_data) = lock {
-                self.buf_data = vec_data
-                    .iter()
-                    .find(|&d| self.selected_pci_bus == d.pci_bus)
-                    .unwrap_or_else(|| {
-                        eprintln!("invalid PCI bus: {}", self.selected_pci_bus);
-                        panic!();
-                    })
-                    .clone();
+            {
+                let lock = self.arc_data.try_lock();
+                if let Ok(vec_data) = lock {
+                    self.buf_vec_data.clone_from(&vec_data);
+                }
             }
 
+            self.buf_data = self.buf_vec_data
+                .iter()
+                .find(|&d| self.selected_pci_bus == d.pci_bus)
+                .unwrap_or_else(|| {
+                    eprintln!("invalid PCI bus: {}", self.selected_pci_bus);
+                    panic!();
+                })
+                .clone();
+
             if self.selected_pci_bus != self.device_info.pci_bus {
-                self.device_info = self.vec_device_info
-                    .iter()
-                    .find(|&d| self.selected_pci_bus == d.pci_bus)
-                    .unwrap()
-                    .clone();
+                self.device_info = self.buf_data.device_info.clone();
             }
         }
 

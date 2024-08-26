@@ -99,6 +99,10 @@ impl DevicePath {
 
         s.starts_with("active")
     }
+
+    pub fn menu_entry(&self) -> String {
+        format!("{} ({})", self.device_name, self.pci)
+    }
 }
 
 impl TryFrom<PCI::BUS_INFO> for DevicePath {

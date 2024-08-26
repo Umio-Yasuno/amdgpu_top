@@ -5,7 +5,7 @@ use egui::{RichText, util::History};
 use egui_plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
 use crate::{BASE, MEDIUM, HISTORY_LENGTH};
 
-use libamdgpu_top::{AppDeviceInfo, ConnectorInfo, PCI};
+use libamdgpu_top::{AppDeviceInfo, ConnectorInfo, DevicePath, PCI};
 use libamdgpu_top::app::{
     AppAmdgpuTop,
     AppAmdgpuTopStat,
@@ -46,6 +46,7 @@ pub struct HistoryData {
 #[derive(Clone)]
 pub struct GuiAppData {
     pub stat: AppAmdgpuTopStat,
+    pub device_info: AppDeviceInfo,
     pub pci_bus: PCI::BUS_INFO,
     pub support_pcie_bw: bool,
     pub history: HistoryData,
@@ -69,6 +70,7 @@ impl GuiAppData {
 
         Self {
             stat: app.stat.clone(),
+            device_info: app.device_info.clone(),
             pci_bus: app.device_info.pci_bus,
             support_pcie_bw: app.stat.arc_pcie_bw.is_some(),
             history: HistoryData {
@@ -144,10 +146,11 @@ impl GuiAppData {
 pub struct MyApp {
     pub fdinfo_sort: FdInfoSortType,
     pub reverse_sort: bool,
-    pub vec_device_info: Vec<AppDeviceInfo>,
     pub device_info: AppDeviceInfo,
     pub buf_data: GuiAppData,
+    pub buf_vec_data: Vec<GuiAppData>,
     pub arc_data: Arc<Mutex<Vec<GuiAppData>>>,
+    pub device_path_list: Vec<DevicePath>,
     pub show_sidepanel: bool,
     pub gl_vendor_info: Option<String>,
     pub rocm_version: Option<String>,
