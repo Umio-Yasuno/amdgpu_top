@@ -63,6 +63,19 @@ impl AppAmdgpuTop {
             apps.push(app);
         }
 
+        if apps.is_empty() && !suspended_devices.is_empty() {
+            let (device_path, other_sus_devs) = suspended_devices.split_first().unwrap();
+            // wake up
+            let amdgpu_dev = device_path.init().unwrap();
+            let app = AppAmdgpuTop::new(
+                amdgpu_dev,
+                device_path.clone(),
+                &Default::default(),
+            ).unwrap();
+            apps.push(app);
+            suspended_devices = other_sus_devs.to_vec();
+        }
+
         (apps, suspended_devices)
     }
 

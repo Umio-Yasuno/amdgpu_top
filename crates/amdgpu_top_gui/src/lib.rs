@@ -61,18 +61,6 @@ pub fn run(
         &Default::default(),
     );
 
-    if vec_app.is_empty() && !suspended_devices.is_empty() {
-        let device_path = suspended_devices.first().unwrap();
-        // wake up
-        let amdgpu_dev = device_path.init().unwrap();
-        let app = AppAmdgpuTop::new(
-            amdgpu_dev,
-            device_path.clone(),
-            &Default::default(),
-        ).unwrap();
-        vec_app.push(app);
-    }
-
     for app in vec_app.iter_mut() {
         app.stat.grbm.get_i18n_index(&LANGUAGE_LOADER);
         app.stat.grbm2.get_i18n_index(&LANGUAGE_LOADER);
