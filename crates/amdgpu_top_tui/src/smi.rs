@@ -204,14 +204,14 @@ impl SmiApp {
     }
 }
 
-struct SuspendedApp {
+struct SuspendedSmiApp {
     device_path: DevicePath,
     index: usize,
     fdinfo_view: AppTextView,
     info_text: Text,
 }
 
-impl SuspendedApp {
+impl SuspendedSmiApp {
     fn new(device_path: DevicePath, index: usize) -> Self {
         let mut info_text: Text = Default::default();
 
@@ -286,7 +286,7 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
     let mut sus_app_devices: Vec<_> = suspended
         .into_iter()
         .enumerate()
-        .map(|(i, device_path)| SuspendedApp::new(device_path.clone(), app_len+i))
+        .map(|(i, device_path)| SuspendedSmiApp::new(device_path.clone(), app_len+i))
         .collect();
 
     let mut siv = cursive::default();
