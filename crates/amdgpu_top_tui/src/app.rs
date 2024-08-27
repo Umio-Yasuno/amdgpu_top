@@ -2,15 +2,17 @@ use cursive::align::HAlign;
 use cursive::views::{LinearLayout, TextView, Panel, ResizedView};
 use cursive::view::SizeConstraint;
 
-use libamdgpu_top::AMDGPU::{DeviceHandle, GPU_INFO, MetricsInfo};
+use libamdgpu_top::AMDGPU::{GPU_INFO, MetricsInfo};
 use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling};
 
 use crate::{TOGGLE_HELP, ToggleOptions, view::*};
 
 use libamdgpu_top::app::{AppAmdgpuTop, AppOption};
 
-pub(crate) struct NewTuiApp {
-    pub app_amdgpu_top: AppAmdgpuTop,
+#[derive(Clone)]
+pub(crate) struct SuspendedTuiApp {
+    pub device_path: DevicePath,
+    pub no_pc: bool,
     pub index: usize,
     pub grbm_view: PerfCounterView,
     pub grbm2_view: PerfCounterView,
@@ -20,27 +22,79 @@ pub(crate) struct NewTuiApp {
     pub sensors_view: AppTextView,
     pub gpu_metrics_view: AppTextView,
     pub ecc_view: AppTextView,
-    pub no_pc: bool,
 }
 
-impl NewTuiApp {
-    pub fn new(
-        amdgpu_dev: DeviceHandle,
-        device_path: DevicePath,
-        no_pc: bool,
-        index: usize,
-    ) -> Option<Self> {
+impl SuspendedTuiApp {
+    pub fn new(device_path: DevicePath, no_pc: bool, index: usize) -> Self {
+        Self {
+            device_path,
+            no_pc,
+            index,
+            grbm_view: PerfCounterView::reserve(index),
+            grbm2_view: PerfCounterView::reserve(index),
+            vram_usage_view: VramUsageView::new(index),
+            activity_view: ActivityView::new(index),
+            fdinfo_view: Default::default(),
+            sensors_view: Default::default(),
+            gpu_metrics_view: Default::default(),
+            ecc_view: Default::default(),
+        }
+    }
+
+    pub fn to_tui_app(&self) -> Option<NewTuiApp> {
+        let amdgpu_dev = self.device_path.init().ok()?;
         let app_amdgpu_top = AppAmdgpuTop::new(
             amdgpu_dev,
-            device_path,
+            self.device_path.clone(),
             &AppOption { pcie_bw: true },
         )?;
 
+        Some(NewTuiApp {
+            app_amdgpu_top,
+            no_pc: self.no_pc,
+            index: self.index,
+            grbm_view: self.grbm_view.clone(),
+            grbm2_view: self.grbm2_view.clone(),
+            vram_usage_view: self.vram_usage_view.clone(),
+            activity_view: self.activity_view.clone(),
+            fdinfo_view: self.fdinfo_view.clone(),
+            sensors_view: self.sensors_view.clone(),
+            gpu_metrics_view: self.gpu_metrics_view.clone(),
+            ecc_view: self.ecc_view.clone(),
+        })
+    }
+
+    pub fn label(&self) -> String {
+        format!("#{:<2} {} (Suspended)", self.index, self.device_path.menu_entry())
+    }
+}
+
+pub(crate) struct NewTuiApp {
+    pub app_amdgpu_top: AppAmdgpuTop,
+    pub no_pc: bool,
+    pub index: usize,
+    pub grbm_view: PerfCounterView,
+    pub grbm2_view: PerfCounterView,
+    pub vram_usage_view: VramUsageView,
+    pub activity_view: ActivityView,
+    pub fdinfo_view: AppTextView,
+    pub sensors_view: AppTextView,
+    pub gpu_metrics_view: AppTextView,
+    pub ecc_view: AppTextView,
+}
+
+impl NewTuiApp {
+    pub fn new_with_app(
+        app_amdgpu_top: AppAmdgpuTop,
+        no_pc: bool,
+        index: usize,
+    ) -> Self {
         let grbm_view = PerfCounterView::new(&app_amdgpu_top.stat.grbm, index);
         let grbm2_view = PerfCounterView::new(&app_amdgpu_top.stat.grbm2, index);
 
-        Some(Self {
+        Self {
             app_amdgpu_top,
+            no_pc,
             index,
             grbm_view,
             grbm2_view,
@@ -50,8 +104,7 @@ impl NewTuiApp {
             sensors_view: Default::default(),
             gpu_metrics_view: Default::default(),
             ecc_view: Default::default(),
-            no_pc,
-        })
+        }
     }
 
     pub fn layout(&self, title: &str) -> ResizedView<LinearLayout> {
@@ -151,6 +204,10 @@ impl NewTuiApp {
         self.fdinfo_view.text.set();
         self.ecc_view.text.set();
         self.gpu_metrics_view.text.set();
+    }
+
+    pub fn label(&self) -> String {
+        format!("#{:<2} {}", self.index, self.app_amdgpu_top.device_path.menu_entry())
     }
 }
 

@@ -3,13 +3,14 @@ use cursive::view::{Nameable, Scrollable};
 use cursive::{event::Key, menu, traits::With};
 use cursive::theme::{BorderStyle, Theme, Palette};
 
-use libamdgpu_top::{DevicePath, Sampling};
+use libamdgpu_top::{app::AppAmdgpuTop, DevicePath, Sampling};
 use libamdgpu_top::stat::{self, FdInfoSortType, PCType};
 
 mod view;
 use view::*;
 
 mod app;
+use app::*;
 
 mod smi;
 pub use smi::run_smi;
@@ -74,12 +75,24 @@ pub fn run(
     no_pc: bool,
     is_dark_mode: bool,
 ) {
+    let title = title.to_string();
     let mut toggle_opt = ToggleOptions { is_dark_mode, ..Default::default() };
 
-    let mut vec_app: Vec<_> = device_path_list.iter().enumerate().filter_map(|(i, device_path)| {
-        let amdgpu_dev = device_path.init().ok()?;
-        app::NewTuiApp::new(amdgpu_dev, device_path.clone(), no_pc, i)
-    }).collect();
+    let (vec_app, suspended_devices) = AppAmdgpuTop::create_app_and_suspended_list(
+        device_path_list,
+        &Default::default(),
+    );
+    let mut vec_app: Vec<_> = vec_app
+        .into_iter()
+        .enumerate()
+        .map(|(i, app)| NewTuiApp::new_with_app(app, no_pc, i))
+        .collect();
+    let app_len = vec_app.len();
+    let mut vec_sus_app: Vec<_> = suspended_devices
+        .into_iter()
+        .enumerate()
+        .map(|(i, app)| SuspendedTuiApp::new(app, no_pc, app_len+i))
+        .collect();
 
     for app in vec_app.iter_mut() {
         app.update(&toggle_opt, &Sampling::low());
@@ -99,23 +112,31 @@ pub fn run(
         menubar.add_subtree(
             "Device List [ESC]",
             menu::Tree::new()
-                .with(|tree| { for app in &vec_app {
-                    let name = app.app_amdgpu_top.device_info.menu_entry();
-                    let index = app.index;
+                .with(|tree| {
+                    for app in &vec_app {
+                        let index = app.index;
 
-                    tree.add_leaf(
-                        name.clone(),
-                        move |siv: &mut cursive::Cursive| {
-                            let screen = siv.screen_mut();
-                            let Some(pos) = screen.find_layer_from_name(&index.to_string())
-                                else { return };
-                            screen.move_to_front(pos);
+                        tree.add_leaf(
+                            app.label(),
+                            move |siv: &mut cursive::Cursive| {
+                                let screen = siv.screen_mut();
+                                let Some(pos) = screen.find_layer_from_name(&index.to_string())
+                                    else { return };
+                                screen.move_to_front(pos);
 
-                            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
-                            opt.select_index = index;
-                        },
-                    );
-                }})
+                                let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+                                opt.select_index = index;
+                            },
+                        );
+                    }
+
+                    for app in &vec_sus_app {
+                        tree.add_leaf(
+                            app.label(),
+                            |_siv: &mut cursive::Cursive| {},
+                        );
+                    }
+                })
                 .delimiter()
                 .leaf("Quit", cursive::Cursive::quit),
         );
@@ -125,7 +146,7 @@ pub fn run(
         let screen = siv.screen_mut();
         for app in &vec_app {
             screen.add_layer(
-                app.layout(title)
+                app.layout(&title)
                     .scrollable()
                     .scroll_x(true)
                     .scroll_y(true)
@@ -136,7 +157,6 @@ pub fn run(
                 toggle_opt.select_index = app.index;
             }
         }
-
         if let Some(pos) = screen.find_layer_from_name(&toggle_opt.select_index.to_string()) {
             screen.move_to_front(pos);
         }
@@ -214,6 +234,60 @@ pub fn run(
 
             if !no_pc { app.app_amdgpu_top.clear_pc(); }
         }
+
+        vec_sus_app.retain(|sus_app| {
+            let is_active = sus_app.device_path.check_if_device_is_active();
+
+            if is_active {
+                let title = title.clone();
+                let s_sus_app = sus_app.clone();
+                let Some(tui_app) = sus_app.to_tui_app() else { return true };
+                vec_app.push(tui_app);
+
+                cb_sink.send(Box::new(move |siv| {
+                    let index = s_sus_app.index;
+                    let label;
+
+                    {
+                        let Some(tui_app) = s_sus_app.to_tui_app() else { return };
+                        label = tui_app.label();
+                        let layout = tui_app.layout(&title)
+                            .scrollable()
+                            .scroll_x(true)
+                            .scroll_y(true)
+                            .with_name(index.to_string());
+
+                        let screen = siv.screen_mut();
+                        let select_index = flags.select_index.to_string();
+                        screen.add_layer(layout);
+                        if let Some(pos) = screen.find_layer_from_name(&select_index) {
+                            screen.move_to_front(pos);
+                        }
+                    }
+
+                    let menubar = siv.menubar();
+                    let subtree = menubar.get_subtree(0).unwrap();
+                    let len = subtree.len();
+                    subtree.remove(len-3);
+
+                    subtree.insert_leaf(
+                        len-3,
+                        label,
+                        move |siv: &mut cursive::Cursive| {
+                            let screen = siv.screen_mut();
+                            let Some(pos) = screen.find_layer_from_name(&index.to_string())
+                                else { return };
+                            screen.move_to_front(pos);
+
+                            let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
+                            opt.select_index = index;
+                        },
+                    );
+                })).unwrap();
+            }
+
+            !is_active
+        });
 
         cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
     });

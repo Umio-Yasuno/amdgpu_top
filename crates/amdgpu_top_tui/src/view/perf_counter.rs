@@ -21,6 +21,12 @@ pub struct PerfCounterView {
 }
 
 impl PerfCounterView {
+    pub fn reserve(index: usize) -> Self {
+        let counters = (0..32).map(|_| Counter::new(0)).collect();
+
+        Self { counters, index }
+    }
+
     pub fn new(pc: &PerfCounter, index: usize) -> Self {
         let counters = (0..pc.index.len()).map(|_| Counter::new(0)).collect();
 
