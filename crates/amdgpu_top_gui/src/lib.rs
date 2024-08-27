@@ -71,7 +71,7 @@ pub fn run(
         stat::spawn_update_index_thread(device_paths, update_process_index_interval);
     }
 
-    let mut vec_data: Vec<_> = vec_app.iter().map(|app| GuiAppData::new(app)).collect();
+    let mut vec_data: Vec<_> = vec_app.iter().map(GuiAppData::new).collect();
 
     let sample = Sampling::low();
 
@@ -216,20 +216,18 @@ impl MyApp {
                         false,
                         egui::SelectableLabel::new(true, &selected_text),
                     );
+                } else if self.buf_vec_data.iter().any(|data| data.pci_bus == device.pci) {
+                    ui.selectable_value(
+                        &mut self.selected_pci_bus,
+                        device.pci,
+                        device.menu_entry(),
+                    );
                 } else {
-                    if self.buf_vec_data.iter().any(|data| data.pci_bus == device.pci) {
-                        ui.selectable_value(
-                            &mut self.selected_pci_bus,
-                            device.pci,
-                            device.menu_entry(),
-                        );
-                    } else {
-                        let label = format!("{} ({})", device.menu_entry(), fl!("suspended"));
-                        let _ = ui.add_enabled(
-                            false,
-                            egui::SelectableLabel::new(false, label),
-                        );
-                    }
+                    let label = format!("{} ({})", device.menu_entry(), fl!("suspended"));
+                    let _ = ui.add_enabled(
+                        false,
+                        egui::SelectableLabel::new(false, label),
+                    );
                 }
             });
     }

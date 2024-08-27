@@ -507,10 +507,7 @@ fn get_fds<T: AsRef<Path>>(pid: i32, device_path: &[T]) -> Vec<i32> {
         let link = fs::read_link(&dir_entry).ok()?;
 
         // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
-        if device_path
-            .into_iter()
-            .any(|path| link.starts_with(path))
-        {
+        if device_path.iter().any(|path| link.starts_with(path)) {
             dir_entry.file_name()?.to_str()?.parse::<i32>().ok()
         } else {
             None

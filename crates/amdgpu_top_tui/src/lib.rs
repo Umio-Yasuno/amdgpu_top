@@ -150,7 +150,7 @@ pub fn run(
                     .scrollable()
                     .scroll_x(true)
                     .scroll_y(true)
-                    .with_name(&app.index.to_string())
+                    .with_name(app.index.to_string())
             );
 
             if app.app_amdgpu_top.device_path.pci == selected_device_path.pci {
