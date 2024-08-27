@@ -4,6 +4,7 @@ pause = Pause
 
 # SidePanel
 ## Device Info
+suspended = Suspended
 device_info = Device Info
 device_name = Device Name
 pci_bus = PCI (domain:bus:dev.func)

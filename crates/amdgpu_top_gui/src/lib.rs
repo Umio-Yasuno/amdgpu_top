@@ -236,7 +236,7 @@ impl MyApp {
                             device.menu_entry(),
                         );
                     } else {
-                        let label = format!("{} (Suspended)", device.menu_entry());
+                        let label = format!("{} ({})", device.menu_entry(), fl!("suspended"));
                         let _ = ui.add_enabled(
                             false,
                             egui::SelectableLabel::new(false, label),
