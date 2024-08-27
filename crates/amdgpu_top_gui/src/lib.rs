@@ -61,6 +61,18 @@ pub fn run(
         &Default::default(),
     );
 
+    if vec_app.is_empty() && !suspended_devices.is_empty() {
+        let device_path = suspended_devices.first().unwrap();
+        // wake up
+        let amdgpu_dev = device_path.init().unwrap();
+        let app = AppAmdgpuTop::new(
+            amdgpu_dev,
+            device_path.clone(),
+            &Default::default(),
+        ).unwrap();
+        vec_app.push(app);
+    }
+
     for app in vec_app.iter_mut() {
         app.stat.grbm.get_i18n_index(&LANGUAGE_LOADER);
         app.stat.grbm2.get_i18n_index(&LANGUAGE_LOADER);
@@ -76,7 +88,6 @@ pub fn run(
     let sample = Sampling::low();
 
     let selected_pci_bus = if !vec_data.iter().any(|d| selected_pci_bus == d.pci_bus) {
-        // TODO: support Intel iGPU (with display output) + AMD dGPU (without display output)?
         vec_data.first().unwrap().pci_bus
     } else {
         selected_pci_bus
