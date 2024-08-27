@@ -41,7 +41,7 @@ impl SuspendedTuiApp {
         }
     }
 
-    pub fn to_tui_app(&self) -> Option<NewTuiApp> {
+    pub fn to_tui_app(&self) -> Option<TuiApp> {
         let amdgpu_dev = self.device_path.init().ok()?;
         let app_amdgpu_top = AppAmdgpuTop::new(
             amdgpu_dev,
@@ -49,7 +49,7 @@ impl SuspendedTuiApp {
             &AppOption { pcie_bw: true },
         )?;
 
-        Some(NewTuiApp {
+        Some(TuiApp {
             app_amdgpu_top,
             no_pc: self.no_pc,
             index: self.index,
@@ -69,7 +69,7 @@ impl SuspendedTuiApp {
     }
 }
 
-pub(crate) struct NewTuiApp {
+pub(crate) struct TuiApp {
     pub app_amdgpu_top: AppAmdgpuTop,
     pub no_pc: bool,
     pub index: usize,
@@ -83,7 +83,7 @@ pub(crate) struct NewTuiApp {
     pub ecc_view: AppTextView,
 }
 
-impl NewTuiApp {
+impl TuiApp {
     pub fn new_with_app(
         app_amdgpu_top: AppAmdgpuTop,
         no_pc: bool,

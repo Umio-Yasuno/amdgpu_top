@@ -85,7 +85,7 @@ pub fn run(
     let mut vec_app: Vec<_> = vec_app
         .into_iter()
         .enumerate()
-        .map(|(i, app)| NewTuiApp::new_with_app(app, no_pc, i))
+        .map(|(i, app)| TuiApp::new_with_app(app, no_pc, i))
         .collect();
     let app_len = vec_app.len();
     let mut vec_sus_app: Vec<_> = suspended_devices
