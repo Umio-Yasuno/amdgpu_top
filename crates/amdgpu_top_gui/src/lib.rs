@@ -76,6 +76,7 @@ pub fn run(
     let sample = Sampling::low();
 
     let selected_pci_bus = if !vec_data.iter().any(|d| selected_pci_bus == d.pci_bus) {
+        // TODO: support Intel iGPU (with display output) + AMD dGPU (without display output)?
         vec_data.first().unwrap().pci_bus
     } else {
         selected_pci_bus
