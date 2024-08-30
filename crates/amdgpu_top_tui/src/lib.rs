@@ -146,7 +146,7 @@ pub fn run(
         let screen = siv.screen_mut();
         for app in &vec_app {
             screen.add_layer(
-                app.layout(&title)
+                app.view(&title)
                     .scrollable()
                     .scroll_x(true)
                     .scroll_y(true)
@@ -240,26 +240,26 @@ pub fn run(
 
             if is_active {
                 let title = title.clone();
-                let s_sus_app = sus_app.clone();
                 let Some(tui_app) = sus_app.to_tui_app() else { return true };
+                let index = tui_app.index;
+                let label = tui_app.label();
+                let info_bar = tui_app.app_amdgpu_top.device_info.info_bar();
+                let stat = tui_app.app_amdgpu_top.stat.clone();
+                let app_layout = tui_app.layout.clone();
+
                 vec_app.push(tui_app);
 
                 cb_sink.send(Box::new(move |siv| {
-                    let index = s_sus_app.index;
-                    let label;
-
                     {
-                        let Some(tui_app) = s_sus_app.to_tui_app() else { return };
-                        label = tui_app.label();
-                        let layout = tui_app.layout(&title)
+                        let view = app_layout
+                            .view(&title, info_bar, &stat)
                             .scrollable()
                             .scroll_x(true)
                             .scroll_y(true)
                             .with_name(index.to_string());
-
                         let screen = siv.screen_mut();
                         let select_index = flags.select_index.to_string();
-                        screen.add_layer(layout);
+                        screen.add_layer(view);
                         if let Some(pos) = screen.find_layer_from_name(&select_index) {
                             screen.move_to_front(pos);
                         }

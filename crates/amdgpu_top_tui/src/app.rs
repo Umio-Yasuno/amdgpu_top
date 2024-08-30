@@ -7,13 +7,12 @@ use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling};
 
 use crate::{TOGGLE_HELP, ToggleOptions, view::*};
 
-use libamdgpu_top::app::{AppAmdgpuTop, AppOption};
+use libamdgpu_top::app::{AppAmdgpuTop, AppAmdgpuTopStat, AppOption};
 
 #[derive(Clone)]
-pub(crate) struct SuspendedTuiApp {
-    pub device_path: DevicePath,
+pub(crate) struct AppLayout {
     pub no_pc: bool,
-    pub index: usize,
+    // pub index: usize,
     pub grbm_view: PerfCounterView,
     pub grbm2_view: PerfCounterView,
     pub vram_usage_view: VramUsageView,
@@ -24,12 +23,10 @@ pub(crate) struct SuspendedTuiApp {
     pub ecc_view: AppTextView,
 }
 
-impl SuspendedTuiApp {
-    pub fn new(device_path: DevicePath, no_pc: bool, index: usize) -> Self {
+impl AppLayout {
+    pub fn new(no_pc: bool, index: usize) -> Self {
         Self {
-            device_path,
             no_pc,
-            index,
             grbm_view: PerfCounterView::reserve(index),
             grbm2_view: PerfCounterView::reserve(index),
             vram_usage_view: VramUsageView::new(index),
@@ -38,6 +35,91 @@ impl SuspendedTuiApp {
             sensors_view: Default::default(),
             gpu_metrics_view: Default::default(),
             ecc_view: Default::default(),
+        }
+    }
+
+    pub fn new_with_app(
+        app_amdgpu_top: &AppAmdgpuTop,
+        no_pc: bool,
+        index: usize,
+    ) -> Self {
+        let grbm_view = PerfCounterView::new(&app_amdgpu_top.stat.grbm, index);
+        let grbm2_view = PerfCounterView::new(&app_amdgpu_top.stat.grbm2, index);
+
+        Self {
+            no_pc,
+            grbm_view,
+            grbm2_view,
+            vram_usage_view: VramUsageView::new(index),
+            activity_view: ActivityView::new(index),
+            fdinfo_view: Default::default(),
+            sensors_view: Default::default(),
+            gpu_metrics_view: Default::default(),
+            ecc_view: Default::default(),
+        }
+    }
+
+    pub fn view(
+        &self,
+        title: &str,
+        info_bar: String,
+        stat: &AppAmdgpuTopStat,
+    ) -> ResizedView<LinearLayout> {
+        let mut layout = LinearLayout::vertical()
+            .child(
+                Panel::new(
+                    TextView::new(info_bar).center()
+                )
+                .title(title)
+                .title_position(HAlign::Center)
+            );
+
+        if !self.no_pc {
+            layout.add_child(self.grbm_view.top_view(&stat.grbm, true));
+            layout.add_child(self.grbm2_view.top_view(&stat.grbm2, true));
+        }
+
+        layout.add_child(self.vram_usage_view.view(&stat.vram_usage));
+        layout.add_child(self.activity_view.view(&stat.activity));
+        layout.add_child(self.fdinfo_view.text.panel("fdinfo"));
+
+        if stat.sensors.is_some() {
+            layout.add_child(self.sensors_view.text.panel("Sensors"));
+        }
+
+        if stat.memory_error_count.is_some() {
+            layout.add_child(self.ecc_view.text.panel("ECC Error Count"));
+        }
+
+        if let Some(metrics) = &stat.metrics {
+            let title = match metrics.get_header() {
+                Some(v) => format!("GPU Metrics v{}.{}", v.format_revision, v.content_revision),
+                None => "GPU Metrics".to_string(),
+            };
+            layout.add_child(self.gpu_metrics_view.text.panel(&title));
+        }
+
+        layout.add_child(TextView::new(TOGGLE_HELP));
+
+        ResizedView::new(SizeConstraint::Full, SizeConstraint::Full, layout)
+    }
+}
+
+#[derive(Clone)]
+pub(crate) struct SuspendedTuiApp {
+    pub device_path: DevicePath,
+    pub no_pc: bool,
+    pub index: usize,
+    pub layout: AppLayout,
+}
+
+impl SuspendedTuiApp {
+    pub fn new(device_path: DevicePath, no_pc: bool, index: usize) -> Self {
+        Self {
+            device_path,
+            no_pc,
+            index,
+            layout: AppLayout::new(no_pc, index),
         }
     }
 
@@ -53,14 +135,7 @@ impl SuspendedTuiApp {
             app_amdgpu_top,
             no_pc: self.no_pc,
             index: self.index,
-            grbm_view: self.grbm_view.clone(),
-            grbm2_view: self.grbm2_view.clone(),
-            vram_usage_view: self.vram_usage_view.clone(),
-            activity_view: self.activity_view.clone(),
-            fdinfo_view: self.fdinfo_view.clone(),
-            sensors_view: self.sensors_view.clone(),
-            gpu_metrics_view: self.gpu_metrics_view.clone(),
-            ecc_view: self.ecc_view.clone(),
+            layout: self.layout.clone(),
         })
     }
 
@@ -73,14 +148,7 @@ pub(crate) struct TuiApp {
     pub app_amdgpu_top: AppAmdgpuTop,
     pub no_pc: bool,
     pub index: usize,
-    pub grbm_view: PerfCounterView,
-    pub grbm2_view: PerfCounterView,
-    pub vram_usage_view: VramUsageView,
-    pub activity_view: ActivityView,
-    pub fdinfo_view: AppTextView,
-    pub sensors_view: AppTextView,
-    pub gpu_metrics_view: AppTextView,
-    pub ecc_view: AppTextView,
+    pub layout: AppLayout,
 }
 
 impl TuiApp {
@@ -89,121 +157,76 @@ impl TuiApp {
         no_pc: bool,
         index: usize,
     ) -> Self {
-        let grbm_view = PerfCounterView::new(&app_amdgpu_top.stat.grbm, index);
-        let grbm2_view = PerfCounterView::new(&app_amdgpu_top.stat.grbm2, index);
+        let layout = AppLayout::new_with_app(&app_amdgpu_top, no_pc, index);
 
         Self {
             app_amdgpu_top,
             no_pc,
             index,
-            grbm_view,
-            grbm2_view,
-            vram_usage_view: VramUsageView::new(index),
-            activity_view: ActivityView::new(index),
-            fdinfo_view: Default::default(),
-            sensors_view: Default::default(),
-            gpu_metrics_view: Default::default(),
-            ecc_view: Default::default(),
+            layout,
         }
     }
 
-    pub fn layout(&self, title: &str) -> ResizedView<LinearLayout> {
-        let mut layout = LinearLayout::vertical()
-            .child(
-                Panel::new(
-                    TextView::new(self.app_amdgpu_top.device_info.info_bar()).center()
-                )
-                .title(title)
-                .title_position(HAlign::Center)
-            );
-
-        if !self.no_pc {
-            layout.add_child(self.grbm_view.top_view(&self.app_amdgpu_top.stat.grbm, true));
-            layout.add_child(self.grbm2_view.top_view(&self.app_amdgpu_top.stat.grbm2, true));
-        }
-
-        layout.add_child(self.vram_usage_view.view(&self.app_amdgpu_top.stat.vram_usage));
-        layout.add_child(self.activity_view.view(&self.app_amdgpu_top.stat.activity));
-        layout.add_child(self.fdinfo_view.text.panel("fdinfo"));
-
-        if self.app_amdgpu_top.stat.sensors.is_some() {
-            layout.add_child(self.sensors_view.text.panel("Sensors"));
-        }
-
-        if self.app_amdgpu_top.stat.memory_error_count.is_some() {
-            layout.add_child(self.ecc_view.text.panel("ECC Error Count"));
-        }
-
-        if let Some(metrics) = &self.app_amdgpu_top.stat.metrics {
-            let title = match metrics.get_header() {
-                Some(v) => format!("GPU Metrics v{}.{}", v.format_revision, v.content_revision),
-                None => "GPU Metrics".to_string(),
-            };
-
-            layout.add_child(self.gpu_metrics_view.text.panel(&title));
-        }
-
-        layout.add_child(TextView::new(TOGGLE_HELP));
-
-        ResizedView::new(SizeConstraint::Full, SizeConstraint::Full, layout)
+    pub fn view(&self, title: &str) -> ResizedView<LinearLayout> {
+        self.layout.view(title, self.app_amdgpu_top.device_info.info_bar(), &self.app_amdgpu_top.stat)
     }
 
     pub fn update(&mut self, flags: &ToggleOptions, sample: &Sampling) {
         self.app_amdgpu_top.update(sample.to_duration());
 
         if flags.fdinfo {
-            let _ = self.fdinfo_view.print_fdinfo(
+            let _ = self.layout.fdinfo_view.print_fdinfo(
                 &mut self.app_amdgpu_top.stat.fdinfo,
                 flags.fdinfo_sort,
                 flags.reverse_sort,
             );
         } else {
-            self.fdinfo_view.text.clear();
+            self.layout.fdinfo_view.text.clear();
         }
 
-        self.vram_usage_view.set_value(&self.app_amdgpu_top.stat.vram_usage);
-        self.activity_view.set_value(&self.app_amdgpu_top.stat.activity);
+        self.layout.vram_usage_view.set_value(&self.app_amdgpu_top.stat.vram_usage);
+        self.layout.activity_view.set_value(&self.app_amdgpu_top.stat.activity);
 
         if flags.sensor {
             if let Some(ref sensors) = &self.app_amdgpu_top.stat.sensors {
-                let _ = self.sensors_view.print_sensors(sensors);
+                let _ = self.layout.sensors_view.print_sensors(sensors);
             }
 
             {
                 if let Some(arc_pcie_bw) = &self.app_amdgpu_top.stat.arc_pcie_bw {
                     let lock = arc_pcie_bw.try_lock();
                     if let Ok(pcie_bw) = &lock {
-                        let _ = self.sensors_view.print_pcie_bw(pcie_bw);
+                        let _ = self.layout.sensors_view.print_pcie_bw(pcie_bw);
                     }
                 }
             }
         } else {
-            self.sensors_view.text.clear();
+            self.layout.sensors_view.text.clear();
         }
 
         if let Some(ecc) = &self.app_amdgpu_top.stat.memory_error_count {
-            let _ = self.ecc_view.print_memory_error_count(ecc);
+            let _ = self.layout.ecc_view.print_memory_error_count(ecc);
         }
 
         if flags.gpu_metrics {
             if let Some(metrics) = &self.app_amdgpu_top.stat.metrics {
-                let _ = self.gpu_metrics_view.print_gpu_metrics(metrics);
+                let _ = self.layout.gpu_metrics_view.print_gpu_metrics(metrics);
             } else {
-                self.gpu_metrics_view.text.clear();
+                self.layout.gpu_metrics_view.text.clear();
             }
         } else {
-            self.gpu_metrics_view.text.clear();
+            self.layout.gpu_metrics_view.text.clear();
         }
 
         if !self.no_pc {
-            self.grbm_view.set_value(&self.app_amdgpu_top.stat.grbm);
-            self.grbm2_view.set_value(&self.app_amdgpu_top.stat.grbm2);
+            self.layout.grbm_view.set_value(&self.app_amdgpu_top.stat.grbm);
+            self.layout.grbm2_view.set_value(&self.app_amdgpu_top.stat.grbm2);
         }
 
-        self.sensors_view.text.set();
-        self.fdinfo_view.text.set();
-        self.ecc_view.text.set();
-        self.gpu_metrics_view.text.set();
+        self.layout.sensors_view.text.set();
+        self.layout.fdinfo_view.text.set();
+        self.layout.ecc_view.text.set();
+        self.layout.gpu_metrics_view.text.set();
     }
 
     pub fn label(&self) -> String {
