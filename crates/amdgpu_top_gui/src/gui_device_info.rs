@@ -42,12 +42,12 @@ impl GuiVideoCapsInfo for (&VideoCapsInfo, &VideoCapsInfo) {
             ] {
                 ui.label(name);
                 if let Some(dec) = decode {
-                    ui.label(&format!("{}x{}", dec.max_width, dec.max_height));
+                    ui.label(format!("{}x{}", dec.max_width, dec.max_height));
                 } else {
                     ui.label(&n_a);
                 }
                 if let Some(enc) = encode {
-                    ui.label(&format!("{}x{}", enc.max_width, enc.max_height));
+                    ui.label(format!("{}x{}", enc.max_width, enc.max_height));
                 } else {
                     ui.label(&n_a);
                 }
