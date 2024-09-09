@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex, LazyLock};
 use std::time::Duration;
 use std::ops::Range;
 use eframe::{egui, Theme};
@@ -39,7 +39,9 @@ const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
 const MEDIUM: FontId = FontId::new(15.0, FontFamily::Monospace);
 const HEADING: FontId = FontId::new(16.0, FontFamily::Monospace);
 const HISTORY_LENGTH: Range<usize> = 0..30; // seconds
-static SIDE_PANEL_STATE_ID: OnceLock<egui::Id> = OnceLock::new();
+static SIDE_PANEL_STATE_ID: LazyLock<egui::Id> = LazyLock::new(|| {
+    egui::Id::new("side_panel_state")
+});
 
 pub fn run(
     app_name: &str,
@@ -197,8 +199,8 @@ pub fn run(
             cc.egui_ctx.set_fonts(fonts);
 
             {
-                let id = SIDE_PANEL_STATE_ID.get_or_init(|| egui::Id::new("side_panel_state"));
-                let s: Option<bool> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(*id));
+                let id = *SIDE_PANEL_STATE_ID;
+                let s: Option<bool> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
 
                 if let Some(s) = s {
                     app.show_sidepanel = s;
@@ -454,7 +456,7 @@ impl eframe::App for MyApp {
         {
             ctx.data_mut(|id_map| {
                 let v = id_map.get_persisted_mut_or_insert_with(
-                    *SIDE_PANEL_STATE_ID.get().unwrap(),
+                    *SIDE_PANEL_STATE_ID,
                     || { self.show_sidepanel },
                 );
                 *v = self.show_sidepanel;
