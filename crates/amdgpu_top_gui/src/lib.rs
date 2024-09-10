@@ -42,6 +42,9 @@ const HISTORY_LENGTH: Range<usize> = 0..30; // seconds
 static SIDE_PANEL_STATE_ID: LazyLock<egui::Id> = LazyLock::new(|| {
     egui::Id::new("side_panel_state")
 });
+static THEME_ID: LazyLock<egui::Id> = LazyLock::new(|| {
+    egui::Id::new("theme")
+});
 
 pub fn run(
     app_name: &str,
@@ -50,7 +53,7 @@ pub fn run(
     selected_pci_bus: PCI::BUS_INFO,
     update_process_index_interval: u64,
     no_pc: bool,
-    is_dark_mode: bool,
+    is_dark_mode: Option<bool>,
 ) {
     let localizer = localizer();
     let requested_languages = DesktopLanguageRequester::requested_languages();
@@ -114,7 +117,7 @@ pub fn run(
         viewport: ViewportBuilder::default()
             .with_inner_size(egui::vec2(1080.0, 840.0))
             .with_app_id(app_name),
-        default_theme: if is_dark_mode { Theme::Dark } else { Theme::Light },
+        default_theme: if is_dark_mode == Some(true) { Theme::Dark } else { Theme::Light },
         ..Default::default()
     };
 
@@ -174,7 +177,7 @@ pub fn run(
     eframe::run_native(
         title_with_version,
         options,
-        Box::new(|cc| {
+        Box::new(move |cc| {
             use eframe::glow::HasContext;
             use crate::egui::FontDefinitions;
             use crate::egui::FontData;
@@ -204,6 +207,24 @@ pub fn run(
 
                 if let Some(s) = s {
                     app.show_sidepanel = s;
+                }
+            }
+
+            if let Some(dark_mode) = is_dark_mode {
+                cc.egui_ctx.data_mut(|id_map| {
+                    let v = id_map.get_persisted_mut_or_insert_with(
+                        *THEME_ID,
+                        || { dark_mode },
+                    );
+                    *v = dark_mode;
+                });
+            } else {
+                let id = *THEME_ID;
+                let s: Option<bool> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
+
+                if let Some(s) = s {
+                    let mode = if s { egui::Visuals::dark() } else { egui::Visuals::light() };
+                    cc.egui_ctx.set_visuals(mode);
                 }
             }
 
@@ -425,6 +446,13 @@ impl eframe::App for MyApp {
         egui::TopBottomPanel::top("menu bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 if let Some(theme) = visuals.light_dark_small_toggle_button(ui) {
+                    ctx.data_mut(|id_map| {
+                        let v = id_map.get_persisted_mut_or_insert_with(
+                            *THEME_ID,
+                            || { theme.dark_mode },
+                        );
+                        *v = theme.dark_mode;
+                    });
                     ctx.set_visuals(theme);
                 };
                 ui.toggle_value(

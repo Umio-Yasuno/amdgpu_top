@@ -153,7 +153,7 @@ fn main() {
             device_path.pci,
             main_opt.update_process_index,
             main_opt.no_pc,
-            main_opt.is_dark_mode != Some(false), // The default theme for GUI is dark.
+            main_opt.is_dark_mode,
         ),
         #[cfg(feature = "json")]
         AppMode::JSON => unreachable!(),
