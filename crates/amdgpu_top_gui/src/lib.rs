@@ -455,10 +455,22 @@ impl eframe::App for MyApp {
                     });
                     ctx.set_visuals(theme);
                 };
-                ui.toggle_value(
+
+                let res = ui.toggle_value(
                     &mut self.show_sidepanel,
                     RichText::new(fl!("info")).font(BASE)).on_hover_text(fl!("toggle_side_panel"),
                 );
+
+                if res.changed() {
+                    ctx.data_mut(|id_map| {
+                        let v = id_map.get_persisted_mut_or_insert_with(
+                            *SIDE_PANEL_STATE_ID,
+                            || { self.show_sidepanel },
+                        );
+                        *v = self.show_sidepanel;
+                    });
+                }
+
                 self.egui_device_list(ui);
 
                 {
@@ -479,16 +491,6 @@ impl eframe::App for MyApp {
 
         if self.show_sidepanel {
             egui::SidePanel::left(egui::Id::new(3)).show(ctx, |ui| self.egui_side_panel(ui));
-        }
-
-        {
-            ctx.data_mut(|id_map| {
-                let v = id_map.get_persisted_mut_or_insert_with(
-                    *SIDE_PANEL_STATE_ID,
-                    || { self.show_sidepanel },
-                );
-                *v = self.show_sidepanel;
-            });
         }
 
         egui::CentralPanel::default().show(ctx, |ui| self.egui_central_panel(ui));
