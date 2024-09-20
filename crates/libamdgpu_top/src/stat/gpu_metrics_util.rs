@@ -26,11 +26,23 @@ pub fn check_metrics_val<T: IsMax + std::fmt::Display>(val: Option<T>) -> String
 }
 
 pub fn check_temp_array(array: Option<Vec<u16>>) -> Option<Vec<u16>> {
-    Some(array?.into_iter().map(|v| if v == u16::MAX { 0 } else { v.saturating_div(100) }).collect())
+    let array = array?;
+
+    if array.iter().all(|x| x == &u16::MAX) {
+        return None;
+    }
+
+    Some(array.into_iter().map(|v| if v == u16::MAX { 0 } else { v.saturating_div(100) }).collect())
 }
 
 pub fn check_power_clock_array(array: Option<Vec<u16>>) -> Option<Vec<u16>> {
-    Some(array?.into_iter().map(|v| if v == u16::MAX { 0 } else { v }).collect())
+    let array = array?;
+
+    if array.iter().all(|x| x == &u16::MAX) {
+        return None;
+    }
+
+    Some(array.into_iter().map(|v| if v == u16::MAX { 0 } else { v }).collect())
 }
 
 pub fn all_clk_helper(v: &[u16]) -> String {
