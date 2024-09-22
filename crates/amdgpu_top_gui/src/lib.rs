@@ -433,6 +433,17 @@ impl eframe::App for MyApp {
             }
         }
 
+        {
+            use crate::egui::{Key, KeyboardShortcut, Modifiers};
+            use crate::egui::viewport::ViewportCommand;
+            pub const CLOSE_KEY: KeyboardShortcut =
+                KeyboardShortcut::new(Modifiers::CTRL, Key::Q);
+
+            if ctx.input_mut(|i| i.consume_shortcut(&CLOSE_KEY)) {
+                ctx.send_viewport_cmd(ViewportCommand::Close);
+            }
+        }
+
         let visuals;
         {
             let mut style = (*ctx.style()).clone();
