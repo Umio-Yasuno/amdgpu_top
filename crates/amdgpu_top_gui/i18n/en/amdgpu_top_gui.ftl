@@ -1,6 +1,7 @@
 info = Info
 toggle_side_panel = Toggle the side panel visibility
 pause = Pause
+quit = Quit
 
 # SidePanel
 ## Device Info

@@ -3,6 +3,7 @@ use std::time::Duration;
 use std::ops::Range;
 use eframe::{egui, Theme};
 use egui::{FontFamily, FontId, RichText, ViewportBuilder};
+use egui::viewport::ViewportCommand;
 use i18n_embed::DesktopLanguageRequester;
 
 use libamdgpu_top::{
@@ -179,8 +180,8 @@ pub fn run(
         options,
         Box::new(move |cc| {
             use eframe::glow::HasContext;
-            use crate::egui::FontDefinitions;
-            use crate::egui::FontData;
+            use egui::FontDefinitions;
+            use egui::FontData;
 
             if let Some(ctx) = &cc.gl {
                 let ver = ctx.version().vendor_info.trim_start_matches("(Core Profile) ");
@@ -434,8 +435,7 @@ impl eframe::App for MyApp {
         }
 
         {
-            use crate::egui::{Key, KeyboardShortcut, Modifiers};
-            use crate::egui::viewport::ViewportCommand;
+            use egui::{Key, KeyboardShortcut, Modifiers};
             pub const CLOSE_KEY: KeyboardShortcut =
                 KeyboardShortcut::new(Modifiers::CTRL, Key::Q);
 
@@ -496,6 +496,13 @@ impl eframe::App for MyApp {
                         &mut self.pause,
                         RichText::new(fl!("pause")).font(BASE),
                     );
+                }
+
+                {
+                    ui.separator();
+                    if ui.button(RichText::new(fl!("quit") + " (Ctrl+Q)").font(BASE)).clicked() {
+                        ctx.send_viewport_cmd(ViewportCommand::Close);
+                    };
                 }
             });
         });
