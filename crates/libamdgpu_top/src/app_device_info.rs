@@ -53,6 +53,7 @@ pub struct AppDeviceInfo {
     pub power_profiles: Vec<PowerProfile>,
     pub gfx_target_version: Option<String>,
     pub ecc_memory: bool,
+    pub has_npu: bool,
 }
 
 impl AppDeviceInfo {
@@ -78,6 +79,8 @@ impl AppDeviceInfo {
         let gfx_target_version = ext_info.get_gfx_target_version().map(|v| v.to_string());
 
         let ecc_memory = RasErrorCount::get_from_sysfs_with_ras_block(&sysfs_path, RasBlock::UMC).is_ok();
+        let has_npu = is_apu
+            && (asic_name == ASIC_NAME::CHIP_GFX1103_R1 || asic_name >= ASIC_NAME::CHIP_GFX1150);
 
         Self {
             ext_info: *ext_info,
@@ -114,6 +117,7 @@ impl AppDeviceInfo {
             power_profiles,
             gfx_target_version,
             ecc_memory,
+            has_npu,
         }
     }
 

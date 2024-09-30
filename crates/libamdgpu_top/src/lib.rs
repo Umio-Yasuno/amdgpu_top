@@ -13,6 +13,7 @@ pub use app_device_info::*;
 
 pub mod stat;
 pub mod app;
+pub mod xdna;
 
 mod device_path;
 pub use device_path::DevicePath;
