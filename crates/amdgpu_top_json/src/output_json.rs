@@ -1,6 +1,7 @@
 use libamdgpu_top::{
     DevicePath,
     stat,
+    xdna,
     AMDGPU::{GpuMetrics, MetricsInfo},
     VramUsage,
     PCI,
@@ -9,6 +10,7 @@ use libamdgpu_top::{
     drmModeModeInfo,
 };
 use stat::{FdInfoStat, FdInfoUsage, GpuActivity, Sensors, PerfCounter, ProcUsage};
+use xdna::{XdnaFdInfoUsage, XdnaFdInfoStat};
 use serde_json::{json, Map, Value};
 use crate::OutputJson;
 
@@ -228,6 +230,61 @@ impl OutputJson for FdInfoStat {
                 json!({
                     "name": pu.name,
                     "usage": pu.usage_json(has_vcn, has_vcn_unified, has_vpe),
+                }),
+            );
+        }
+
+        m.into()
+    }
+}
+
+impl OutputJson for XdnaFdInfoUsage {
+    fn json(&self) -> Value {
+        let mut sub = Map::new();
+        sub.insert(
+            "Total Memory Usage".to_string(),
+            json!({
+                "value": self.total_memory >> 10,
+                "unit": "MiB",
+            }),
+        );
+        sub.insert(
+            "Shared Memory Usage".to_string(),
+            json!({
+                "value": self.shared_memory >> 10,
+                "unit": "MiB",
+            }),
+        );
+        sub.insert(
+            "Active Memory Usage".to_string(),
+            json!({
+                "value": self.active_memory >> 10,
+                "unit": "MiB",
+            }),
+        );
+
+        sub.insert(
+            "NPU".to_string(),
+            json!({
+                "value": self.npu,
+                "unit": "%",
+            })
+        );
+
+        sub.into()
+    }
+}
+
+impl OutputJson for XdnaFdInfoStat {
+    fn json(&self) -> Value {
+        let mut m = Map::new();
+
+        for pu in &self.proc_usage {
+            m.insert(
+                format!("{}", pu.pid),
+                json!({
+                    "name": pu.name,
+                    "usage": pu.usage.json(),
                 }),
             );
         }
