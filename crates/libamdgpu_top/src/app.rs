@@ -1,7 +1,8 @@
 use crate::drmVersion;
 use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, RasBlock, RasErrorCount};
-use crate::{AppDeviceInfo, DevicePath, stat, VramUsage, has_vcn, has_vcn_unified, has_vpe};
+use crate::{AppDeviceInfo, DevicePath, stat, xdna, VramUsage, has_vcn, has_vcn_unified, has_vpe};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
+use xdna::XdnaFdInfoStat;
 use std::mem::ManuallyDrop;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -10,6 +11,8 @@ pub struct AppAmdgpuTop {
     amdgpu_dev: ManuallyDrop<Option<DeviceHandle>>,
     pub device_info: AppDeviceInfo,
     pub device_path: DevicePath,
+    pub xdna_device_path: Option<DevicePath>,
+    pub xdna_fw_version: Option<String>,
     pub stat: AppAmdgpuTopStat,
     buf_interval: Duration,
     no_drop_device_handle: bool,
@@ -25,7 +28,9 @@ pub struct AppAmdgpuTopStat {
     pub metrics: Option<GpuMetrics>,
     pub activity: GpuActivity,
     pub fdinfo: FdInfoStat,
+    pub xdna_fdinfo: XdnaFdInfoStat,
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
+    pub arc_xdna_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
     pub arc_pcie_bw: Option<Arc<Mutex<PcieBw>>>,
     pub memory_error_count: Option<RasErrorCount>,
 }
@@ -127,17 +132,6 @@ impl AppAmdgpuTop {
         let metrics = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path).ok();
         let activity = GpuActivity::get(&sysfs_path, asic_name);
 
-        let arc_proc_index = device_path.arc_proc_index.clone();
-        {
-            let mut proc_index = arc_proc_index.lock().unwrap();
-
-            stat::update_index_by_all_proc(
-                &mut proc_index,
-                &[&device_path.render, &device_path.card],
-                &stat::get_all_processes(),
-            );
-        }
-
         let arc_pcie_bw = if opt.pcie_bw {
             let pcie_bw = PcieBw::new(&sysfs_path);
 
@@ -156,6 +150,7 @@ impl AppAmdgpuTop {
             has_vpe: has_vpe(&amdgpu_dev),
             ..Default::default()
         };
+        let xdna_fdinfo = XdnaFdInfoStat::default();
 
         let mut device_info = AppDeviceInfo::new(
             &amdgpu_dev,
@@ -170,10 +165,52 @@ impl AppAmdgpuTop {
                 device_path.get_gfx_target_version_from_kfd().map(|v| v.to_string());
         }
 
+        let xdna_device_path = if device_info.has_npu {
+            xdna::find_xdna_device()
+        } else {
+            None
+        };
+        let xdna_fw_version = xdna_device_path
+            .as_ref()
+            .and_then(|d| std::fs::read_to_string(d.sysfs_path.join("fw_version")).ok())
+            .map(|mut s| {
+                let _ = s.pop(); // trim '\n'
+                s
+            });
+
+        let arc_proc_index = device_path.arc_proc_index.clone();
+        let arc_xdna_proc_index = xdna_device_path
+            .as_ref()
+            .map(|v| v.arc_proc_index.clone())
+            .unwrap_or_default();
+
+        {
+            let mut proc_index = arc_proc_index.lock().unwrap();
+            let all_procs = stat::get_all_processes();
+
+            stat::update_index_by_all_proc(
+                &mut proc_index,
+                &[&device_path.render, &device_path.card],
+                &all_procs,
+            );
+
+            if let Some(xdna) = xdna_device_path.as_ref() {
+                let mut xdna_proc_index = xdna.arc_proc_index.lock().unwrap();
+
+                stat::update_index_by_all_proc(
+                    &mut xdna_proc_index,
+                    &[&xdna.render, &xdna.card],
+                    &all_procs,
+                );
+            }
+        }
+
         Some(Self {
             amdgpu_dev: ManuallyDrop::new(Some(amdgpu_dev)),
             device_info,
             device_path,
+            xdna_device_path,
+            xdna_fw_version,
             stat: AppAmdgpuTopStat {
                 grbm,
                 grbm2,
@@ -182,7 +219,9 @@ impl AppAmdgpuTop {
                 metrics,
                 activity,
                 fdinfo,
+                xdna_fdinfo,
                 arc_proc_index,
+                arc_xdna_proc_index,
                 arc_pcie_bw,
                 memory_error_count,
             },
@@ -194,12 +233,18 @@ impl AppAmdgpuTop {
 
     pub fn update(&mut self, interval: Duration) {
         {
-            let lock = self.stat.arc_proc_index.try_lock();
-            if let Ok(proc_index) = lock {
-                self.stat.fdinfo.interval = interval + self.buf_interval;
-                self.stat.fdinfo.get_all_proc_usage(&proc_index);
-                self.buf_interval = Duration::ZERO;
+            let fdinfo_lock = self.stat.arc_proc_index.try_lock();
+            let xdna_fdinfo_lock = self.stat.arc_xdna_proc_index.try_lock();
 
+            if let [Ok(proc_index), Ok(xdna_proc_index)] = [fdinfo_lock, xdna_fdinfo_lock] {
+                let fdinfo_interval = interval + self.buf_interval;
+                self.stat.fdinfo.interval = fdinfo_interval;
+                self.stat.xdna_fdinfo.interval = fdinfo_interval;
+
+                self.stat.fdinfo.get_all_proc_usage(&proc_index);
+                self.stat.xdna_fdinfo.get_all_proc_usage(&xdna_proc_index);
+
+                self.buf_interval = Duration::ZERO;
             } else {
                 self.buf_interval += interval;
             }

@@ -26,7 +26,7 @@ mod app;
 use app::{GuiAppData, GuiMemoryErrorCount, GuiGpuMetrics, MyApp};
 
 mod gui_device_info;
-use gui_device_info::{GuiInfo, GuiConnectorInfo, GuiHwIpInfo, GuiIpDiscovery, GuiVbiosInfo, GuiVideoCapsInfo};
+use gui_device_info::{GuiInfo, GuiConnectorInfo, GuiHwIpInfo, GuiIpDiscovery, GuiVbiosInfo, GuiVideoCapsInfo, GuiXdnaInfo};
 
 mod util;
 use util::*;
@@ -86,7 +86,15 @@ pub fn run(
     }
 
     {
-        let device_paths: Vec<DevicePath> = device_path_list.to_vec();
+        let mut device_paths: Vec<DevicePath> = device_path_list.to_vec();
+
+        if let Some(xdna_device_path) = vec_app
+            .iter()
+            .find_map(|app| app.xdna_device_path.as_ref())
+        {
+            device_paths.push(xdna_device_path.clone());
+        }
+
         stat::spawn_update_index_thread(device_paths, update_process_index_interval);
     }
 
@@ -312,6 +320,16 @@ impl MyApp {
                 |ui| self.buf_data.device_info.ui(ui, &self.wgpu_adapter_info, &self.rocm_version),
             );
 
+            if self.buf_data.xdna_device_path.is_some() {
+                ui.add_space(SPACE);
+                collapsing(
+                    ui,
+                    &fl!("xdna_info"),
+                    true,
+                    |ui| self.buf_data.xdna_info(ui),
+                );
+            }
+
             if !self.buf_data.device_info.hw_ip_info_list.is_empty() {
                 ui.add_space(SPACE);
                 collapsing(
@@ -381,6 +399,11 @@ impl MyApp {
             collapsing(ui, &fl!("activity"), true, |ui| self.egui_activity(ui));
             ui.add_space(SPACE);
             collapsing(ui, &fl!("fdinfo"), true, |ui| self.egui_grid_fdinfo(ui));
+
+            if self.buf_data.xdna_device_path.is_some() {
+                ui.add_space(SPACE);
+                collapsing(ui, &fl!("xdna_fdinfo"), true, |ui| self.egui_grid_xdna_fdinfo(ui));
+            }
 
             if self.buf_data.stat.sensors.is_some() {
                 ui.add_space(SPACE);

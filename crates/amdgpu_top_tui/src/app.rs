@@ -18,6 +18,7 @@ pub(crate) struct AppLayout {
     pub vram_usage_view: VramUsageView,
     pub activity_view: ActivityView,
     pub fdinfo_view: AppTextView,
+    pub xdna_fdinfo_view: AppTextView,
     pub sensors_view: AppTextView,
     pub gpu_metrics_view: AppTextView,
     pub ecc_view: AppTextView,
@@ -32,6 +33,7 @@ impl AppLayout {
             vram_usage_view: VramUsageView::new(index),
             activity_view: ActivityView::new(index),
             fdinfo_view: Default::default(),
+            xdna_fdinfo_view: Default::default(),
             sensors_view: Default::default(),
             gpu_metrics_view: Default::default(),
             ecc_view: Default::default(),
@@ -53,6 +55,7 @@ impl AppLayout {
             vram_usage_view: VramUsageView::new(index),
             activity_view: ActivityView::new(index),
             fdinfo_view: Default::default(),
+            xdna_fdinfo_view: Default::default(),
             sensors_view: Default::default(),
             gpu_metrics_view: Default::default(),
             ecc_view: Default::default(),
@@ -64,6 +67,7 @@ impl AppLayout {
         title: &str,
         info_bar: String,
         stat: &AppAmdgpuTopStat,
+        xdna_device_path: &Option<DevicePath>,
     ) -> ResizedView<LinearLayout> {
         let mut layout = LinearLayout::vertical()
             .child(
@@ -97,6 +101,11 @@ impl AppLayout {
                 None => "GPU Metrics".to_string(),
             };
             layout.add_child(self.gpu_metrics_view.text.panel(&title));
+        }
+
+        if let Some(xdna_device_path) = xdna_device_path {
+            let title = format!("XDNA fdinfo - {}", xdna_device_path.device_name);
+            layout.add_child(self.xdna_fdinfo_view.text.panel(&title));
         }
 
         layout.add_child(TextView::new(TOGGLE_HELP));
@@ -168,7 +177,12 @@ impl TuiApp {
     }
 
     pub fn view(&self, title: &str) -> ResizedView<LinearLayout> {
-        self.layout.view(title, self.app_amdgpu_top.device_info.info_bar(), &self.app_amdgpu_top.stat)
+        self.layout.view(
+            title,
+            self.app_amdgpu_top.device_info.info_bar(),
+            &self.app_amdgpu_top.stat,
+            &self.app_amdgpu_top.xdna_device_path,
+        )
     }
 
     pub fn update(&mut self, flags: &ToggleOptions, sample: &Sampling) {
@@ -182,6 +196,10 @@ impl TuiApp {
             );
         } else {
             self.layout.fdinfo_view.text.clear();
+        }
+
+        if self.app_amdgpu_top.xdna_device_path.is_some() {
+            let _ = self.layout.xdna_fdinfo_view.print_xdna_fdinfo(&mut self.app_amdgpu_top.stat.xdna_fdinfo);
         }
 
         self.layout.vram_usage_view.set_value(&self.app_amdgpu_top.stat.vram_usage);
@@ -225,6 +243,7 @@ impl TuiApp {
 
         self.layout.sensors_view.text.set();
         self.layout.fdinfo_view.text.set();
+        self.layout.xdna_fdinfo_view.text.set();
         self.layout.ecc_view.text.set();
         self.layout.gpu_metrics_view.text.set();
     }

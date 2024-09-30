@@ -51,6 +51,8 @@ pub struct GuiAppData {
     pub support_pcie_bw: bool,
     pub history: HistoryData,
     pub vec_connector_info: Vec<ConnectorInfo>,
+    pub xdna_device_path: Option<DevicePath>,
+    pub xdna_fw_version: Option<String>,
 }
 
 impl GuiAppData {
@@ -67,6 +69,8 @@ impl GuiAppData {
         let gfx_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
         let umc_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
         let media_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let xdna_device_path = app.xdna_device_path.clone();
+        let xdna_fw_version = app.xdna_fw_version.clone();
 
         Self {
             stat: app.stat.clone(),
@@ -87,6 +91,8 @@ impl GuiAppData {
                 media_activity,
             },
             vec_connector_info: libamdgpu_top::connector_info(&app.device_path),
+            xdna_device_path,
+            xdna_fw_version,
         }
     }
 
@@ -878,6 +884,34 @@ impl MyApp {
 
                 ui.end_row();
             } // proc_usage
+        });
+    }
+
+    pub fn egui_grid_xdna_fdinfo(&mut self, ui: &mut egui::Ui) {
+        egui::Grid::new("fdinfo").show(ui, |ui| {
+            ui.style_mut().override_font_id = Some(MEDIUM);
+            ui.label(rt_base(format!("{:^15}", fl!("name")))).highlight();
+
+            for (s, align) in [
+                (fl!("pid"), 8),
+                (fl!("memory"), 10),
+                (fl!("npu"), 5),
+            ] {
+                let s = format!("{s:^align$}");
+                let _ = ui.button(rt_base(s));
+            }
+
+            ui.end_row();
+
+            let mib = fl!("mib");
+
+            for pu in &self.buf_data.stat.xdna_fdinfo.proc_usage {
+                ui.label(pu.name.to_string());
+                ui.label(format!("{:>8}", pu.pid));
+                ui.label(format!("{:5} {mib}", pu.usage.total_memory >> 10));
+                ui.label(format!("{:3} %", pu.usage.npu));
+                ui.end_row();
+            }
         });
     }
 

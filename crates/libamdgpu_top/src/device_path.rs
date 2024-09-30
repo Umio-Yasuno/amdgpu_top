@@ -57,7 +57,18 @@ impl DevicePath {
             let pci = name.into_string().ok()?.parse::<PCI::BUS_INFO>().ok()?;
 
             Self::try_from(pci).ok()
+                .map(|mut v| {
+                    v.fill_amdgpu_device_name();
+                    v
+                })
         }).collect()
+    }
+
+    pub fn fill_amdgpu_device_name(&mut self) {
+        if let [Some(did), Some(rid)] = [self.device_id, self.revision_id] {
+            self.device_name = AMDGPU::find_device_name(did, rid)
+                .unwrap_or(AMDGPU::DEFAULT_DEVICE_NAME.to_string());
+        }
     }
 
     pub fn get_gfx_target_version_from_kfd(&self) -> Option<GfxTargetVersion> {
@@ -113,12 +124,7 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
         let card = pci.get_drm_card_path()?;
         let sysfs_path = pci.get_sysfs_path();
         let [device_id, revision_id] = [pci.get_device_id(), pci.get_revision_id()];
-        let device_name = if let [Some(did), Some(rid)] = [device_id, revision_id] {
-            AMDGPU::find_device_name(did, rid)
-                .unwrap_or(AMDGPU::DEFAULT_DEVICE_NAME.to_string())
-        } else {
-            String::new()
-        };
+        let device_name = String::new();
         let arc_proc_index = Arc::new(Mutex::new(Vec::new()));
 
         Ok(Self {

@@ -3,16 +3,12 @@ use std::io::Read;
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
 use std::path::Path;
-use crate::DevicePath;
+use super::ProcInfo;
+use crate::stat;
+
+const KFD_PROC_PATH: &str = "/sys/class/kfd/kfd/proc/";
 
 /// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
-
-#[derive(Debug, Default, Clone)]
-pub struct ProcInfo {
-    pub pid: i32,
-    pub name: String,
-    pub fds: Vec<i32>,
-}
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, PartialOrd)]
 pub struct FdInfoUsage {
@@ -85,14 +81,6 @@ pub struct FdInfoStat {
 }
 
 impl FdInfoStat {
-/*
-    pub fn new(interval: Duration) -> Self {
-        Self {
-            interval,
-            ..Default::default()
-        }
-    }
-*/
     pub fn get_cpu_usage(&mut self, pid: i32, name: &str) -> f32 {
         const OFFSET: usize = 3;
         const HZ: f32 = 100.0;
@@ -139,9 +127,12 @@ impl FdInfoStat {
 
         for fd in &proc_info.fds {
             buf.clear();
-            let path = format!("/proc/{pid}/fdinfo/{fd}");
-            let Ok(mut f) = fs::File::open(&path) else { continue };
-            if f.read_to_string(&mut buf).is_err() { continue }
+
+            {
+                let path = format!("/proc/{pid}/fdinfo/{fd}");
+                let Ok(mut f) = fs::File::open(&path) else { continue };
+                if f.read_to_string(&mut buf).is_err() { continue }
+            }
 
             let mut lines = buf.lines().skip_while(|l| !l.starts_with("drm-client-id"));
             if let Some(id) = lines.next().and_then(FdInfoUsage::id_parse) {
@@ -200,7 +191,7 @@ impl FdInfoStat {
         };
 
         let cpu_usage = self.get_cpu_usage(pid, name);
-        let is_kfd_process = Path::new("/sys/class/kfd/kfd/proc/").join(pid.to_string()).exists();
+        let is_kfd_process = Path::new(KFD_PROC_PATH).join(pid.to_string()).exists();
 
         self.proc_usage.push(ProcUsage {
             pid,
@@ -409,17 +400,7 @@ impl FdInfoUsage {
                 (pre_stat.vcn_jpeg, self.vcn_jpeg),
                 (pre_stat.vpe, self.vpe),
             ]
-            .map(|(pre, cur)| {
-                let usage = if pre == 0 {
-                    0
-                } else {
-                    let tmp = cur.saturating_sub(pre);
-
-                    if tmp.is_negative() { 0 } else { tmp * 100 }
-                } as u128;
-
-                usage.checked_div(interval.as_nanos()).unwrap_or(0) as i64
-            })
+            .map(|(pre, cur)| stat::diff_usage(pre, cur, interval))
         };
 
         /*
@@ -462,105 +443,4 @@ impl FdInfoUsage {
             vpe,
         }
     }
-}
-
-fn get_fds<T: AsRef<Path>>(pid: i32, device_path: &[T]) -> Vec<i32> {
-    let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else { return Vec::new() };
-
-    fd_list.filter_map(|fd_link| {
-        let dir_entry = fd_link.map(|fd_link| fd_link.path()).ok()?;
-        let link = fs::read_link(&dir_entry).ok()?;
-
-        // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
-        if device_path.iter().any(|path| link.starts_with(path)) {
-            dir_entry.file_name()?.to_str()?.parse::<i32>().ok()
-        } else {
-            None
-        }
-    }).collect()
-}
-
-pub fn get_all_processes() -> Vec<i32> {
-    const SYSTEMD_CMDLINE: &[&str] = &[ "/lib/systemd", "/usr/lib/systemd" ];
-
-    let Ok(proc_dir) = fs::read_dir("/proc") else { return Vec::new() };
-
-    proc_dir.filter_map(|dir_entry| {
-        let dir_entry = dir_entry.ok()?;
-        let metadata = dir_entry.metadata().ok()?;
-
-        if !metadata.is_dir() { return None }
-
-        let pid = dir_entry.file_name().to_str()?.parse::<i32>().ok()?;
-
-        if pid == 1 { return None } // init process, systemd
-
-        // filter systemd processes from fdinfo target
-        // gnome-shell share the AMDGPU driver context with systemd processes
-        {
-            let cmdline = fs::read_to_string(format!("/proc/{pid}/cmdline")).ok()?;
-            if SYSTEMD_CMDLINE.iter().any(|path| cmdline.starts_with(path)) {
-                return None;
-            }
-        }
-
-        Some(pid)
-    }).collect()
-}
-
-pub fn update_index_by_all_proc<T: AsRef<Path>>(
-    vec_info: &mut Vec<ProcInfo>,
-    device_path: &[T],
-    all_proc: &[i32],
-) {
-    vec_info.clear();
-
-    for p in all_proc {
-        let pid = *p;
-        let fds = get_fds(pid, device_path);
-
-        if fds.is_empty() { continue }
-
-        // Maximum 16 characters
-        // https://www.kernel.org/doc/html/latest/filesystems/proc.html#proc-pid-comm-proc-pid-task-tid-comm
-        let Ok(mut name) = fs::read_to_string(format!("/proc/{pid}/comm")) else { continue };
-        name.pop(); // trim '\n'
-
-        vec_info.push(ProcInfo { pid, name, fds });
-    }
-}
-
-pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath) {
-    update_index_by_all_proc(
-        vec_info,
-        &[&device_path.render, &device_path.card],
-        &get_all_processes(),
-    );
-}
-
-pub fn spawn_update_index_thread(
-    device_paths: Vec<DevicePath>,
-    interval: u64,
-) {
-    let mut buf_index: Vec<ProcInfo> = Vec::new();
-    let interval = Duration::from_secs(interval);
-
-    std::thread::spawn(move || loop {
-        let all_proc = get_all_processes();
-
-        for device_path in &device_paths {
-            update_index_by_all_proc(
-                &mut buf_index,
-                &[&device_path.render, &device_path.card],
-                &all_proc,
-            );
-
-            let lock = device_path.arc_proc_index.lock();
-            if let Ok(mut index) = lock {
-                index.clone_from(&buf_index);
-            }
-        }
-
-        std::thread::sleep(interval);
-    });
 }

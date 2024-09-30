@@ -189,6 +189,7 @@ impl JsonInfo for AppAmdgpuTop {
             "Video Caps": video_caps,
             "PCIe Link": link_speed_width,
             "Power Profiles": power_profiles,
+            "NPU": self.xdna_device_path.as_ref().map(|x| x.device_name.clone()),
         });
 
         json

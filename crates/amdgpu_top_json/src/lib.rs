@@ -66,7 +66,15 @@ impl JsonApp {
         let duration_time = base_time.elapsed();
 
         {
-            let device_paths: Vec<DevicePath> = device_path_list.to_vec();
+            let mut device_paths: Vec<DevicePath> = device_path_list.to_vec();
+
+            if let Some(xdna_device_path) = vec_device_info
+                .iter()
+                .find_map(|j| j.app.xdna_device_path.as_ref())
+            {
+                device_paths.push(xdna_device_path.clone());
+            }
+
             stat::spawn_update_index_thread(device_paths, update_process_index_interval);
         }
 
@@ -224,6 +232,7 @@ impl JsonDeviceInfo {
             "VRAM": self.app.stat.vram_usage.json(),
             "Sensors": self.app.stat.sensors.as_ref().map(|s| s.json()),
             "fdinfo": self.app.stat.fdinfo.json(),
+            "xdna_fdinfo": self.app.stat.xdna_fdinfo.json(),
             "Total fdinfo": self.app.stat.fdinfo.fold_fdinfo_usage().json(),
             "gpu_metrics": self.app.stat.metrics.as_ref().map(|m| m.json()),
             "gpu_activity": self.app.stat.activity.json(),

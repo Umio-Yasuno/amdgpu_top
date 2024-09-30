@@ -101,7 +101,15 @@ pub fn run(
     toggle_opt.indexes = vec_app.iter().map(|app| app.index).collect();
 
     {
-        let device_paths: Vec<DevicePath> = device_path_list.to_vec();
+        let mut device_paths: Vec<DevicePath> = device_path_list.to_vec();
+
+        if let Some(xdna_device_path) = vec_app
+            .iter()
+            .find_map(|app| app.app_amdgpu_top.xdna_device_path.as_ref())
+        {
+            device_paths.push(xdna_device_path.clone());
+        }
+
         stat::spawn_update_index_thread(device_paths, interval);
     }
 
@@ -245,6 +253,7 @@ pub fn run(
                 let label = tui_app.label();
                 let info_bar = tui_app.app_amdgpu_top.device_info.info_bar();
                 let stat = tui_app.app_amdgpu_top.stat.clone();
+                let xdna_device_path = tui_app.app_amdgpu_top.xdna_device_path.clone();
                 let app_layout = tui_app.layout.clone();
 
                 vec_app.push(tui_app);
@@ -252,7 +261,7 @@ pub fn run(
                 cb_sink.send(Box::new(move |siv| {
                     {
                         let view = app_layout
-                            .view(&title, info_bar, &stat)
+                            .view(&title, info_bar, &stat, &xdna_device_path)
                             .scrollable()
                             .scroll_x(true)
                             .scroll_y(true)
