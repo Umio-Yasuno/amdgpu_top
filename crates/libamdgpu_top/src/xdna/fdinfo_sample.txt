@@ -1,0 +1,13 @@
+# not a actual result
+pos:	0
+flags:	02100002
+mnt_id:	26
+ino:	377
+drm-driver:	amdxdna_accel_driver
+drm-client-id:	287
+drm-pdev:	0000:03:00.0
+pasid:	32794
+drm-total-memory:	8 MiB
+drm-shared-memory:	4096 KiB
+drm-active-memory:	0 KiB
+drm-engine-npu-amdxdna:	76360 ns
