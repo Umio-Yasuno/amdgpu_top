@@ -69,11 +69,7 @@ impl AppDeviceInfo {
             .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
         let resizable_bar = memory_info.check_resizable_bar();
         let is_apu = ext_info.is_apu();
-        let marketing_name = if device_path.device_name.is_empty() {
-            ext_info.find_device_name_or_default()
-        } else {
-            device_path.device_name.clone()
-        };
+        let marketing_name = device_path.device_name.clone();
         let sysfs_path = device_path.sysfs_path.clone();
         let hw_ip_info_list = get_hw_ip_info_list(amdgpu_dev, ext_info.get_chip_class());
         let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);
