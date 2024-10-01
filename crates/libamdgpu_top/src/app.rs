@@ -171,12 +171,23 @@ impl AppAmdgpuTop {
 
         {
             let mut proc_index = arc_proc_index.lock().unwrap();
+            let all_procs = stat::get_all_processes();
 
             stat::update_index_by_all_proc(
                 &mut proc_index,
                 &[&device_path.render, &device_path.card],
-                &stat::get_all_processes(),
+                &all_procs,
             );
+
+            if let Some(xdna) = xdna_device_path.as_ref() {
+                let mut xdna_proc_index = xdna.arc_proc_index.lock().unwrap();
+
+                stat::update_index_by_all_proc(
+                    &mut xdna_proc_index,
+                    &[&xdna.render, &xdna.card],
+                    &all_procs,
+                );
+            }
         }
 
         Some(Self {
