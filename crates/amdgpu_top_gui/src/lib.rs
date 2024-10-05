@@ -1,8 +1,8 @@
 use std::sync::{Arc, Mutex, LazyLock};
 use std::time::Duration;
 use std::ops::Range;
-use eframe::{egui, Theme};
-use egui::{FontFamily, FontId, RichText, ViewportBuilder};
+use eframe::egui;
+use egui::{FontFamily, FontId, Theme, RichText, ViewportBuilder};
 use egui::viewport::ViewportCommand;
 use i18n_embed::DesktopLanguageRequester;
 
@@ -36,6 +36,7 @@ pub use localize::LANGUAGE_LOADER;
 use localize::localizer;
 
 const SPACE: f32 = 8.0;
+const SMALL: FontId = FontId::new(12.0, FontFamily::Monospace);
 const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
 const MEDIUM: FontId = FontId::new(15.0, FontFamily::Monospace);
 const HEADING: FontId = FontId::new(16.0, FontFamily::Monospace);
@@ -118,7 +119,6 @@ pub fn run(
         viewport: ViewportBuilder::default()
             .with_inner_size(egui::vec2(1080.0, 840.0))
             .with_app_id(app_name),
-        default_theme: if is_dark_mode == Some(true) { Theme::Dark } else { Theme::Light },
         ..Default::default()
     };
 
@@ -219,13 +219,16 @@ pub fn run(
                     );
                     *v = dark_mode;
                 });
+
+                let mode = if dark_mode { Theme::Dark } else { Theme::Light };
+                cc.egui_ctx.set_theme(mode);
             } else {
                 let id = *THEME_ID;
                 let s: Option<bool> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
 
                 if let Some(s) = s {
-                    let mode = if s { egui::Visuals::dark() } else { egui::Visuals::light() };
-                    cc.egui_ctx.set_visuals(mode);
+                    let mode = if s { Theme::Dark } else { Theme::Light };
+                    cc.egui_ctx.set_theme(mode);
                 }
             }
 
@@ -242,7 +245,7 @@ impl MyApp {
     fn egui_device_list(&mut self, ui: &mut egui::Ui) {
         let selected_text = self.device_info.menu_entry();
 
-        egui::ComboBox::from_id_source("Device List")
+        egui::ComboBox::from_id_salt("Device List")
             .selected_text(&selected_text)
             .show_ui(ui, |ui| for device in &self.device_path_list {
                 if self.device_info.pci_bus == device.pci {
@@ -444,11 +447,9 @@ impl eframe::App for MyApp {
             }
         }
 
-        let visuals;
         {
             let mut style = (*ctx.style()).clone();
             style.override_font_id = Some(BASE);
-            visuals = style.visuals.clone();
             ctx.set_style(style);
         }
 
@@ -456,16 +457,7 @@ impl eframe::App for MyApp {
 
         egui::TopBottomPanel::top("menu bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                if let Some(theme) = visuals.light_dark_small_toggle_button(ui) {
-                    ctx.data_mut(|id_map| {
-                        let v = id_map.get_persisted_mut_or_insert_with(
-                            *THEME_ID,
-                            || { theme.dark_mode },
-                        );
-                        *v = theme.dark_mode;
-                    });
-                    ctx.set_visuals(theme);
-                };
+                egui::widgets::global_theme_preference_buttons(ui);
 
                 let res = ui.toggle_value(
                     &mut self.show_sidepanel,
@@ -500,7 +492,7 @@ impl eframe::App for MyApp {
 
                 {
                     ui.separator();
-                    if ui.button(RichText::new(fl!("quit") + " (Ctrl+Q)").font(BASE)).clicked() {
+                    if ui.button(RichText::new(fl!("quit") + " (Ctrl+Q)").font(SMALL)).clicked() {
                         ctx.send_viewport_cmd(ViewportCommand::Close);
                     };
                 }
