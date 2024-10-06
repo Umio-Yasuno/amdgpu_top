@@ -48,6 +48,9 @@ static THEME_ID: LazyLock<egui::Id> = LazyLock::new(|| {
     // Light, Dark, System
     egui::Id::new("theme_v2")
 });
+static SIDE_PANEL_ID: LazyLock<egui::Id> = LazyLock::new(|| {
+    egui::Id::new("side_panel")
+});
 
 pub fn run(
     app_name: &str,
@@ -515,7 +518,7 @@ impl eframe::App for MyApp {
         });
 
         if self.show_sidepanel {
-            egui::SidePanel::left(egui::Id::new(3)).show(ctx, |ui| self.egui_side_panel(ui));
+            egui::SidePanel::left(*SIDE_PANEL_ID).show(ctx, |ui| self.egui_side_panel(ui));
         }
 
         egui::CentralPanel::default().show(ctx, |ui| self.egui_central_panel(ui));
