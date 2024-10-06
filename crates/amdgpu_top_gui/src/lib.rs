@@ -45,7 +45,8 @@ static SIDE_PANEL_STATE_ID: LazyLock<egui::Id> = LazyLock::new(|| {
     egui::Id::new("side_panel_state")
 });
 static THEME_ID: LazyLock<egui::Id> = LazyLock::new(|| {
-    egui::Id::new("theme")
+    // Light, Dark, System
+    egui::Id::new("theme_v2")
 });
 
 pub fn run(
@@ -211,24 +212,24 @@ pub fn run(
                 }
             }
 
-            if let Some(dark_mode) = is_dark_mode {
+            if let Some(is_dark_mode) = is_dark_mode {
+                let theme = if is_dark_mode { Theme::Dark } else { Theme::Light };
+
                 cc.egui_ctx.data_mut(|id_map| {
                     let v = id_map.get_persisted_mut_or_insert_with(
                         *THEME_ID,
-                        || { dark_mode },
+                        || { theme },
                     );
-                    *v = dark_mode;
+                    *v = theme;
                 });
 
-                let mode = if dark_mode { Theme::Dark } else { Theme::Light };
-                cc.egui_ctx.set_theme(mode);
+                cc.egui_ctx.set_theme(theme);
             } else {
                 let id = *THEME_ID;
-                let s: Option<bool> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
+                let theme: Option<Theme> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
 
-                if let Some(s) = s {
-                    let mode = if s { Theme::Dark } else { Theme::Light };
-                    cc.egui_ctx.set_theme(mode);
+                if let Some(theme) = theme {
+                    cc.egui_ctx.set_theme(theme);
                 }
             }
 
@@ -457,7 +458,21 @@ impl eframe::App for MyApp {
 
         egui::TopBottomPanel::top("menu bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
+                let pre_theme = ctx.theme();
+
                 egui::widgets::global_theme_preference_buttons(ui);
+
+                let cur_theme = ctx.theme();
+
+                if pre_theme != cur_theme {
+                    ctx.data_mut(|id_map| {
+                        let v = id_map.get_persisted_mut_or_insert_with(
+                            *THEME_ID,
+                            || { cur_theme },
+                        );
+                        *v = cur_theme;
+                    });
+                }
 
                 let res = ui.toggle_value(
                     &mut self.show_sidepanel,
