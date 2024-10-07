@@ -1,3 +1,5 @@
+use std::fmt::Write;
+use std::fs::File;
 use crate::{
     drmModeRes,
     drmModePropType,
@@ -7,7 +9,6 @@ use crate::{
     drmModeModeInfo,
     drm_mode_property_enum,
 };
-use std::fs::File;
 use crate::DevicePath;
 
 #[derive(Debug, Clone)]
@@ -41,6 +42,19 @@ pub struct ModeProp {
     pub name: String,
     pub values: Vec<u64>,
     pub enums: Vec<drm_mode_property_enum>,
+}
+
+impl ModeProp {
+    pub fn enums_string(&self) -> String {
+        let mut s = self.enums.iter().fold(String::new(), |mut s, enum_| {
+            let _ = write!(s, "{:?}={}, ", enum_.name(), enum_.value);
+            s
+        });
+        let len = s.len();
+        let _ = s.split_off(len-2);
+
+        s
+    }
 }
 
 pub fn connector_info(device_path: &DevicePath) -> Vec<ConnectorInfo> {
