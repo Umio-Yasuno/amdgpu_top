@@ -58,6 +58,7 @@ pub enum DumpMode {
     Process,
     Version,
     PPTable,
+    Xdna,
     NoDump,
 }
 
@@ -328,6 +329,9 @@ impl MainOpt {
                 },
                 "--light" | "--light-mode" => {
                     opt.is_dark_mode = Some(false);
+                },
+                "--xdna" => {
+                    opt.dump_mode = DumpMode::Xdna;
                 },
                 _ => {
                     eprintln!("Unknown option: {arg}");

@@ -10,6 +10,7 @@ mod dump_info;
 mod dump_pp_table;
 mod dump_process;
 use dump_process::dump_process;
+mod dump_xdna_device;
 mod drm_info;
 
 fn main() {
@@ -113,6 +114,10 @@ fn main() {
         },
         DumpMode::PPTable => {
             dump_pp_table::dump_all_pp_table(TITLE, &device_path_list);
+            return;
+        },
+        DumpMode::Xdna => {
+            dump_xdna_device::dump_xdna_device();
             return;
         },
         DumpMode::NoDump => match main_opt.opt_dump_mode {
