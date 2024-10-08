@@ -1,10 +1,10 @@
 // ref: https://github.com/amd/xdna-driver/blob/main/src/driver/amdxdna/amdxdna_drm.c
 
 use std::fs;
-
 use crate::DevicePath;
 use crate::PCI;
 
+/*
 const DRIVER_NAME_1: &str = "/sys/bus/pci/drivers/amdxdna_accel_driver";
 
 pub fn get_xdna_device_path() -> Option<DevicePath> {
@@ -14,7 +14,47 @@ pub fn get_xdna_device_path() -> Option<DevicePath> {
         /* 0000:00:00.0 */
         if name.len() < 12 { return None; }
 
-        let pci = name.into_string().ok()?.parse::<PCI::BUS_INFO>().ok()?;
+        let pci: PCI::BUS_INFO = name.into_string().ok()?.parse().ok()?;
+
+        DevicePath::try_from(pci).ok()
+    }).map(|mut v| {
+        v.fill_xdna_device_name();
+        v
+    })
+}
+*/
+
+const PCI_DEVICES_DIR: &str = "/sys/bus/pci/devices";
+const XDNA_DEVICE_IDS: &[u32] = &[
+    0x1502, 
+    0x17F0,
+    0x1569,
+    0x1640,
+];
+
+pub fn find_xdna_device() -> Option<DevicePath> {
+    fs::read_dir(PCI_DEVICES_DIR).ok()?.find_map(|dir_entry| {
+        let path = dir_entry.ok()?.path();
+
+        {
+            let vendor = fs::read_to_string(path.join("vendor")).ok()?;
+
+            if vendor != "0x1022\n" {
+                return None;
+            }
+        }
+
+        {
+            let device = fs::read_to_string(path.join("device")).ok()?;
+            /* "0x1502\n", "0x17F0\n" */
+            let device = u32::from_str_radix(device.get(2..device.len()-1)?, 16).ok()?;
+
+            if XDNA_DEVICE_IDS.contains(&device) {
+                return None;
+            }
+        }
+
+        let pci: PCI::BUS_INFO = path.file_name()?.to_str()?.parse().ok()?;
 
         DevicePath::try_from(pci).ok()
     }).map(|mut v| {
