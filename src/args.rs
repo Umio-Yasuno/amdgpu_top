@@ -64,6 +64,7 @@ pub enum DumpMode {
     Process,
     Version,
     PPTable,
+    Xdna,
     NoDump,
 }
 
@@ -339,6 +340,9 @@ impl MainOpt {
                 "--gl" | "--opengl" => opt.wgpu_backend = GuiWgpuBackend::Gl,
                 #[cfg(feature = "gui")]
                 "--vk" | "--vulkan" => opt.wgpu_backend = GuiWgpuBackend::Vulkan,
+                "--xdna" => {
+                    opt.dump_mode = DumpMode::Xdna;
+                },
                 _ => {
                     eprintln!("Unknown option: {arg}");
                     std::process::exit(1);
