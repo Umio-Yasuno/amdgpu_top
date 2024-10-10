@@ -30,11 +30,8 @@ impl std::ops::Add for XdnaFdInfoUsage {
 fn test_xdna_fdinfo_parse() {
     let mut usage = XdnaFdInfoUsage::default();
     let s = std::fs::read_to_string("src/xdna/fdinfo_sample.txt").unwrap();
-    println!("{s}");
 
-    let mut lines = s.lines().skip_while(|l| !l.starts_with("drm-client-id"));
-
-    println!("id: {}", lines.next().and_then(XdnaFdInfoUsage::id_parse).unwrap());
+    let lines = s.lines().skip_while(|l| !l.starts_with("drm-client-id"));
 
     for l in lines {
         let Some(s) = l.get(0..13) else { continue };
@@ -48,7 +45,14 @@ fn test_xdna_fdinfo_parse() {
         }
     }
 
-    println!("XDNA!: {usage:?}");
+    const RESULT: XdnaFdInfoUsage = XdnaFdInfoUsage {
+        total_memory: 8192,
+        shared_memory: 4096,
+        active_memory: 0,
+        npu: 76360,
+    };
+
+    assert!(usage == RESULT);
 }
 
 impl XdnaFdInfoUsage {
@@ -68,19 +72,22 @@ impl XdnaFdInfoUsage {
     }
 
     pub fn total_memory_usage_parse(&mut self, s: &str) {
-        if let Some(usage) = Self::memory_usage_parse(s, "drm-total-memory:\t".len()) {
+        const TOTAL_MEM_LEN: usize = "drm-total-memory:\t".len();
+        if let Some(usage) = Self::memory_usage_parse(s, TOTAL_MEM_LEN) {
             self.total_memory = usage;
         }
     }
 
     pub fn shared_memory_usage_parse(&mut self, s: &str) {
-        if let Some(usage) = Self::memory_usage_parse(s, "drm-shared-memory:\t".len()) {
+        const SHARED_MEM_LEN: usize = "drm-shared-memory:\t".len();
+        if let Some(usage) = Self::memory_usage_parse(s, SHARED_MEM_LEN) {
             self.shared_memory = usage;
         }
     }
 
     pub fn active_memory_usage_parse(&mut self, s: &str) {
-        if let Some(usage) = Self::memory_usage_parse(s, "drm-active-memory:\t".len()) {
+        const ACTIVE_MEM_LEN: usize = "drm-active-memory:\t".len();
+        if let Some(usage) = Self::memory_usage_parse(s, ACTIVE_MEM_LEN) {
             self.active_memory = usage;
         }
     }
