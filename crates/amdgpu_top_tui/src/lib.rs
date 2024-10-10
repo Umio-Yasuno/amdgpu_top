@@ -215,24 +215,24 @@ pub fn run(
 
         let sample = if flags.high_freq { Sampling::high() } else { Sampling::low() };
 
-        if !no_pc {
-            for _ in 0..sample.count {
-                for app in vec_app.iter_mut() {
-                    if flags.select_index != app.index { continue }
-                    app.app_amdgpu_top.update_pc();
+        {
+            let selected_app = vec_app
+                .iter_mut()
+                .find(|app| flags.select_index == app.index)
+                .unwrap();
+
+            if !no_pc {
+                for _ in 0..sample.count {
+                    selected_app.app_amdgpu_top.update_pc();
+
+                    std::thread::sleep(sample.delay);
                 }
-
-                std::thread::sleep(sample.delay);
+            } else {
+                std::thread::sleep(sample.to_duration());
             }
-        } else {
-            std::thread::sleep(sample.to_duration());
-        }
 
-        for app in vec_app.iter_mut() {
-            if flags.select_index != app.index { continue }
-            app.update(&flags, &sample);
-
-            if !no_pc { app.app_amdgpu_top.clear_pc(); }
+            selected_app.update(&flags, &sample);
+            if !no_pc { selected_app.app_amdgpu_top.clear_pc(); }
         }
 
         vec_sus_app.retain(|sus_app| {
