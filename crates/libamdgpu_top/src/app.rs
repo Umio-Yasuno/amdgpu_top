@@ -271,15 +271,6 @@ impl AppAmdgpuTop {
         }
     }
 
-    pub fn update_pc_with_sampling(&mut self, sample: &Sampling) {
-        self.clear_pc();
-
-        for _ in 0..sample.count {
-            self.update_pc();
-            std::thread::sleep(sample.delay);
-        }
-    }
-
     pub fn clear_pc(&mut self) {
         self.stat.grbm.bits.clear();
         self.stat.grbm2.bits.clear();
