@@ -1,6 +1,6 @@
 use crate::drmVersion;
 use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, RasBlock, RasErrorCount};
-use crate::{AppDeviceInfo, DevicePath, stat, VramUsage, has_vcn, has_vcn_unified, has_vpe, Sampling};
+use crate::{AppDeviceInfo, DevicePath, stat, VramUsage, has_vcn, has_vcn_unified, has_vpe};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use std::mem::ManuallyDrop;
 use std::sync::{Arc, Mutex};
