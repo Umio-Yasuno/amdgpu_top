@@ -80,14 +80,14 @@ impl DevicePath {
 
         // ref: https://github.com/amd/xdna-driver/blob/main/src/driver/amdxdna/amdxdna_pci_drv.c
         self.device_name = match (device_id, revision_id) {
-            (0x1502, 0x0) => "NPU1",
-            (0x17F0, 0x0) => "NPU2",
+            (0x1502, 0x0) => "NPU1".to_string(),
+            (0x17F0, 0x0) => "NPU2".to_string(),
             (0x1569, 0x0) |
-            (0x1640, 0x0) => "NPU3",
-            (0x17F0, 0x10) => "NPU4",
-            (0x17F0, 0x11) => "NPU5",
-            (0x17F0, 0x20) => "NPU6",
-            _ => "NPU",
-        }.to_string();
+            (0x1640, 0x0) => "NPU3".to_string(),
+            (0x17F0, 0x10) => "NPU4".to_string(),
+            (0x17F0, 0x11) => "NPU5".to_string(),
+            (0x17F0, 0x20) => "NPU6".to_string(),
+            _ => format!("NPU ({device_id:#06X}:{revision_id:#04X})"),
+        };
     }
 }
