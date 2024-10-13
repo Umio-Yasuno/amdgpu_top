@@ -8,6 +8,8 @@ mod args;
 use args::{AppMode, DumpMode, OptDumpMode, MainOpt};
 mod dump_info;
 mod dump_pp_table;
+mod dump_process;
+use dump_process::dump_process;
 mod drm_info;
 
 fn main() {
@@ -102,7 +104,7 @@ fn main() {
             return;
         },
         DumpMode::Process => {
-            dump_info::dump_process(TITLE, &device_path_list);
+            dump_process(TITLE, &device_path_list);
             return;
         },
         DumpMode::Version => {
