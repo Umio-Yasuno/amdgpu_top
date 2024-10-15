@@ -20,12 +20,9 @@ pub struct FdInfoUsage {
     pub vram_usage: u64, // KiB
     pub gtt_usage: u64, // KiB
     pub system_cpu_memory_usage: u64, // KiB, from Linux Kernel v6.4
-    pub amd_visible_vram: u64, // KiB, from Linux Kernel v6.4
     pub amd_evicted_vram: u64, // KiB, from Linux Kernel v6.4
-    pub amd_evicted_visible_vram: u64, // KiB, from Linux Kernel v6.4
     pub amd_requested_vram: u64, // KiB, from Linux Kernel v6.4
     pub amd_requested_gtt: u64, // KiB, from Linux Kernel v6.4
-    pub amd_requested_visible_vram: u64, // KiB, from Linux Kernel v6.4
     pub gfx: i64,
     pub compute: i64,
     pub dma: i64,
@@ -47,12 +44,9 @@ impl std::ops::Add for FdInfoUsage {
             vram_usage: self.vram_usage + other.vram_usage,
             gtt_usage: self.gtt_usage + other.gtt_usage,
             system_cpu_memory_usage: self.system_cpu_memory_usage + other.system_cpu_memory_usage,
-            amd_visible_vram: self.amd_visible_vram + other.amd_visible_vram,
             amd_evicted_vram: self.amd_evicted_vram + other.amd_evicted_vram,
-            amd_evicted_visible_vram: self.amd_evicted_visible_vram + other.amd_evicted_visible_vram,
             amd_requested_vram: self.amd_requested_vram + other.amd_requested_vram,
             amd_requested_gtt: self.amd_requested_gtt + other.amd_requested_gtt,
-            amd_requested_visible_vram: self.amd_requested_visible_vram + other.amd_requested_visible_vram,
             gfx: self.gfx + other.gfx,
             compute: self.compute + other.compute,
             dma: self.dma + other.dma,
@@ -163,7 +157,6 @@ impl FdInfoStat {
                 match s {
                     "drm-memory" => stat.mem_usage_parse(l),
                     "drm-engine" => stat.engine_parse(l),
-                    "amd-memory" => stat.visible_vram_parse(l),
                     "amd-evicte" => stat.evicted_vram_parse(l),
                     "amd-reques" => stat.requested_vram_parse(l),
                     _ => {},
@@ -181,21 +174,15 @@ impl FdInfoStat {
                 vram_usage,
                 gtt_usage,
                 system_cpu_memory_usage,
-                amd_visible_vram,
                 amd_evicted_vram,
-                amd_evicted_visible_vram,
                 amd_requested_vram,
-                amd_requested_visible_vram,
                 amd_requested_gtt,
             ] = [
                 stat.vram_usage,
                 stat.gtt_usage,
                 stat.system_cpu_memory_usage,
-                stat.amd_visible_vram,
                 stat.amd_evicted_vram,
-                stat.amd_evicted_visible_vram,
                 stat.amd_requested_vram,
-                stat.amd_requested_visible_vram,
                 stat.amd_requested_gtt,
             ];
 
@@ -205,11 +192,8 @@ impl FdInfoStat {
                 vram_usage,
                 gtt_usage,
                 system_cpu_memory_usage,
-                amd_visible_vram,
                 amd_evicted_vram,
-                amd_evicted_visible_vram,
                 amd_requested_vram,
-                amd_requested_visible_vram,
                 amd_requested_gtt,
                 ..Default::default()
             }
@@ -339,18 +323,9 @@ impl FdInfoUsage {
         };
     }
 
-    pub fn visible_vram_parse(&mut self, s: &str) {
-        const PRE_LEN: usize = "amd-memory-visible-vram:\t".len();
-        let Some(m) = s.get(PRE_LEN..s.len()-Self::KIB)
-            .and_then(|m| m.parse::<u64>().ok()) else { return };
-
-        self.amd_visible_vram += m;
-    }
-
     pub fn evicted_vram_parse(&mut self, s: &str) {
         enum EvictedVramType {
             Vram,
-            VisibleVram,
         }
 
         impl EvictedVramType {
@@ -360,7 +335,6 @@ impl FdInfoUsage {
             fn from_line(s: &str) -> Option<Self> {
                 match s.get(Self::VRAM_TYPE)? {
                     "vram" => Some(Self::Vram),
-                    "visi" => Some(Self::VisibleVram),
                     _ => None
                 }
             }
@@ -368,7 +342,6 @@ impl FdInfoUsage {
             const fn vram_pos(&self) -> usize {
                 match self {
                     Self::Vram => Self::PRE_LEN + "vram:\t".len(),
-                    Self::VisibleVram => Self::PRE_LEN + "visible-vram:\t".len(),
                 }
             }
         }
@@ -379,14 +352,12 @@ impl FdInfoUsage {
 
         match vram_type {
             EvictedVramType::Vram => self.amd_evicted_vram += m,
-            EvictedVramType::VisibleVram => self.amd_evicted_visible_vram += m,
         }
     }
 
     pub fn requested_vram_parse(&mut self, s: &str) {
         enum RequestedVramType {
             Vram,
-            VisibleVram,
             Gtt,
         }
 
@@ -397,7 +368,6 @@ impl FdInfoUsage {
             fn from_line(s: &str) -> Option<Self> {
                 match s.get(Self::VRAM_TYPE)? {
                     "vram" => Some(Self::Vram),
-                    "visi" => Some(Self::VisibleVram),
                     "gtt:" => Some(Self::Gtt),
                     _ => None
                 }
@@ -406,7 +376,6 @@ impl FdInfoUsage {
             const fn vram_pos(&self) -> usize {
                 match self {
                     Self::Vram => Self::PRE_LEN + "vram:\t".len(),
-                    Self::VisibleVram => Self::PRE_LEN + "visible-vram:\t".len(),
                     Self::Gtt => Self::PRE_LEN + "gtt:\t".len(),
                 }
             }
@@ -418,7 +387,6 @@ impl FdInfoUsage {
 
         match vram_type {
             RequestedVramType::Vram => self.amd_requested_vram += m,
-            RequestedVramType::VisibleVram => self.amd_requested_visible_vram += m,
             RequestedVramType::Gtt => self.amd_requested_gtt += m,
         }
     }
@@ -478,12 +446,9 @@ impl FdInfoUsage {
             vram_usage: self.vram_usage,
             gtt_usage: self.gtt_usage,
             system_cpu_memory_usage: self.system_cpu_memory_usage,
-            amd_visible_vram: self.amd_visible_vram,
             amd_evicted_vram: self.amd_evicted_vram,
-            amd_evicted_visible_vram: self.amd_evicted_visible_vram,
             amd_requested_vram: self.amd_requested_vram,
             amd_requested_gtt: self.amd_requested_gtt,
-            amd_requested_visible_vram: self.amd_requested_visible_vram,
             gfx,
             compute,
             dma,
