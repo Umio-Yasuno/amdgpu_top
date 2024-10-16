@@ -7,12 +7,13 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 pub struct AppAmdgpuTop {
-    pub amdgpu_dev: ManuallyDrop<Option<DeviceHandle>>,
+    amdgpu_dev: ManuallyDrop<Option<DeviceHandle>>,
     pub device_info: AppDeviceInfo,
     pub device_path: DevicePath,
     pub stat: AppAmdgpuTopStat,
-    pub buf_interval: Duration,
+    buf_interval: Duration,
     no_drop_device_handle: bool,
+    dynamic_no_pc: bool, // to transition the APU into GFXOFF state
 }
 
 #[derive(Clone)]
@@ -27,6 +28,12 @@ pub struct AppAmdgpuTopStat {
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
     pub arc_pcie_bw: Option<Arc<Mutex<PcieBw>>>,
     pub memory_error_count: Option<RasErrorCount>,
+}
+
+impl AppAmdgpuTopStat {
+    pub fn is_idling(&self) -> bool {
+        self.activity.gfx == Some(0)
+    }
 }
 
 pub struct AppOption {
@@ -181,6 +188,7 @@ impl AppAmdgpuTop {
             },
             buf_interval: Duration::ZERO,
             no_drop_device_handle,
+            dynamic_no_pc: false,
         })
     }
 
@@ -259,12 +267,16 @@ impl AppAmdgpuTop {
             &self.stat.metrics,
         );
 
+        self.dynamic_no_pc = self.device_info.is_apu && self.stat.is_idling();
+
         if self.stat.activity.media.is_none() || self.stat.activity.media == Some(0) {
             self.stat.activity.media = self.stat.fdinfo.fold_fdinfo_usage().media.try_into().ok();
         }
     }
 
     pub fn update_pc(&mut self) {
+        if self.dynamic_no_pc { return }
+
         if let Some(dev) = self.amdgpu_dev.as_ref() {
             self.stat.grbm.read_reg(dev);
             self.stat.grbm2.read_reg(dev);
