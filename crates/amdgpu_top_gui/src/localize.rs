@@ -3,14 +3,14 @@ use i18n_embed::{
     DefaultLocalizer, LanguageLoader, Localizer,
 };
 // use i18n_embed_fl::fl;
-use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
 #[folder = "i18n/"]
 struct Localizations;
 
-pub static LANGUAGE_LOADER: Lazy<FluentLanguageLoader> = Lazy::new(|| {
+pub static LANGUAGE_LOADER: LazyLock<FluentLanguageLoader> = LazyLock::new(|| {
     let loader: FluentLanguageLoader = fluent_language_loader!();
 
     // Load the fallback langauge by default so that users of the
