@@ -74,6 +74,15 @@ jobs:
         run: mold -run cargo install cargo-appimage
       - name: Build binary
         run: mold -run cargo build --release --no-default-features --features="package"
+      - name: Upload binary
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TGZ_NAME="amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-gnu.tar.gz"
+          cp ./target/release/amdgpu_top ./
+          tar czf "$TGZ_NAME" amdgpu_top
+          gh release upload "$VERSION" "$TGZ_NAME"
       - name: Build Deb Package
         shell: bash
         env:
