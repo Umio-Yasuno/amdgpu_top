@@ -8,6 +8,7 @@ flatpak-builder --install repo org.umioyasuno.amdgpu_top.json --user --force-cle
 
 ### Note
 
+ * ref: <https://belmoussaoui.com/blog/8-how-to-flatpak-a-rust-application/>
  * Flatpak dose not allow direct access to `/proc`, so `amdgpu_top` can't get GPU utilization (VRAM, GFX, Compute, Decode, Encode) from `/proc/<PID>/fdinfo`.
     * <https://docs.flatpak.org/en/latest/sandbox-permissions.html#filesystem-access>
  * I recommend using .AppImage package instead of Flatpak package.

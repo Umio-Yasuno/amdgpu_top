@@ -1,7 +1,7 @@
 {
     "app-id": "com.umioyasuno.amdgpu_top",
     "runtime": "org.freedesktop.Platform",
-    "runtime-version": "22.08",
+    "runtime-version": "24.08",
     "sdk": "org.freedesktop.Sdk",
     "sdk-extensions" : [
         "org.freedesktop.Sdk.Extension.rust-stable"
