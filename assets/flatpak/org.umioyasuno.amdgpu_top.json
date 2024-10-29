@@ -1,0 +1,53 @@
+{
+    "app-id": "com.umioyasuno.amdgpu_top",
+    "runtime": "org.freedesktop.Platform",
+    "runtime-version": "22.08",
+    "sdk": "org.freedesktop.Sdk",
+    "sdk-extensions" : [
+        "org.freedesktop.Sdk.Extension.rust-stable"
+    ],
+    "command": "amdgpu_top",
+    "finish-args": [
+        "--filesystem=/sys/bus/pci/devices:ro",
+        "--device=dri"
+    ],
+    "modules": [
+        {
+            "name": "libdrm_amdgpu",
+            "buildsystem": "simple",
+            "build-commands": [
+                "meson build -Dprefix=/app -Damdgpu=enabled -Dintel=disabled -Dnouveau=disabled -Dvmwgfx=disabled -Dradeon=disabled",
+                "ninja -C build install"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://gitlab.freedesktop.org/mesa/drm/-/archive/libdrm-2.4.115/drm-libdrm-2.4.115.tar.gz",
+                    "sha256": "fd8b7c6e4e40d13c32ab67ace2cb6c71e08c9ca53124ff33ccadd74f604117e3"
+                }
+            ]
+        },
+        {
+            "name": "amdgpu_top",
+            "buildsystem": "simple",
+            "build-options": {
+                "append-path": "/usr/lib/sdk/rust-stable/bin",
+                "env": {
+                    "CARGO_HOME": "/run/build/amdgpu_top/cargo"
+                }
+            },
+            "build-commands": [
+                "cargo --offline fetch --manifest-path Cargo.toml --verbose",
+                "RUSTFLAGS=\"-L /app/lib\" cargo --offline build --no-default-features",
+                "install -Dm755 ./target/debug/amdgpu_top -t /app/bin/"
+            ],
+            "sources": [
+                {
+                    "type": "dir",
+                    "path": "../../"
+                },
+                "generated-sources.json"
+            ]
+        }
+    ]
+}
