@@ -1,2 +1,5 @@
 /target
 /icon.png
+/assets/flatpak/.flatpak-builder
+/assets/flatpak/repo
+/assets/flatpak/generated-sources.json
