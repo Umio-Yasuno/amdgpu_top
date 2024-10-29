@@ -1,6 +1,6 @@
 use std::fmt::Write;
 use std::sync::{Arc, Mutex};
-use eframe::egui;
+use eframe::{egui, wgpu::AdapterInfo};
 use egui::{RichText, util::History};
 use egui_plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
 use crate::{BASE, MEDIUM, HISTORY_LENGTH};
@@ -152,7 +152,7 @@ pub struct MyApp {
     pub arc_data: Arc<Mutex<Vec<GuiAppData>>>,
     pub device_path_list: Vec<DevicePath>,
     pub show_sidepanel: bool,
-    pub gl_vendor_info: Option<String>,
+    pub wgpu_adapter_info: Option<AdapterInfo>,
     pub rocm_version: Option<String>,
     pub selected_pci_bus: PCI::BUS_INFO,
     pub no_pc: bool,

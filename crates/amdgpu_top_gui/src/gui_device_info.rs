@@ -1,4 +1,4 @@
-use eframe::egui;
+use eframe::{egui, wgpu::AdapterInfo};
 use crate::{
     app::grid,
     AppDeviceInfo,
@@ -140,8 +140,8 @@ impl GuiVbiosInfo for VbiosInfo {
 }
 
 pub trait GuiInfo {
-    fn ui(&self, ui: &mut egui::Ui, gl_vendor_info: &Option<String>, rocm_version: &Option<String>);
-    fn device_info(&self, ui: &mut egui::Ui, gl_vendor_info: &Option<String>, rocm_version: &Option<String>);
+    fn ui(&self, ui: &mut egui::Ui, wgpu_adapter_info: &Option<AdapterInfo>, rocm_version: &Option<String>);
+    fn device_info(&self, ui: &mut egui::Ui, wgpu_adapater_info: &Option<AdapterInfo>, rocm_version: &Option<String>);
     fn gfx_info(&self, ui: &mut egui::Ui);
     fn memory_info(&self, ui: &mut egui::Ui);
     fn cache_info(&self, ui: &mut egui::Ui);
@@ -155,11 +155,11 @@ impl GuiInfo for AppDeviceInfo {
     fn ui(
         &self,
         ui: &mut egui::Ui,
-        gl_vendor_info: &Option<String>,
+        wgpu_adapter_info: &Option<AdapterInfo>,
         rocm_version: &Option<String>,
     ) {
         egui::Grid::new("app_device_info").show(ui, |ui| {
-            self.device_info(ui, gl_vendor_info, rocm_version);
+            self.device_info(ui, wgpu_adapter_info, rocm_version);
             self.gfx_info(ui);
             self.memory_info(ui);
             self.cache_info(ui);
@@ -179,7 +179,7 @@ impl GuiInfo for AppDeviceInfo {
     fn device_info(
         &self,
         ui: &mut egui::Ui,
-        gl_vendor_info: &Option<String>,
+        wgpu_adapter_info: &Option<AdapterInfo>,
         rocm_version: &Option<String>,
     ) {
         let dev_id = format!("{:#0X}.{:#0X}", self.ext_info.device_id(), self.ext_info.pci_rev_id());
@@ -190,9 +190,13 @@ impl GuiInfo for AppDeviceInfo {
             (&fl!("did_rid"), &dev_id),
         ]);
 
-        if let Some(gl) = gl_vendor_info {
-            ui.label(&fl!("opengl_driver_ver"));
-            ui.label(gl);
+        if let Some(adapter_info) = wgpu_adapter_info {
+            ui.label(&fl!("vulkan_driver_name"));
+            ui.label(&adapter_info.driver);
+            ui.end_row();
+
+            ui.label(&fl!("vulkan_driver_version"));
+            ui.label(&adapter_info.driver_info);
             ui.end_row();
         }
 

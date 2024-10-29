@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex, LazyLock};
 use std::time::Duration;
 use std::ops::Range;
-use eframe::egui;
+use eframe::{egui, egui_wgpu, wgpu};
 use egui::{FontFamily, FontId, Theme, RichText, ViewportBuilder};
 use egui::viewport::ViewportCommand;
 use i18n_embed::DesktopLanguageRequester;
@@ -102,7 +102,7 @@ pub fn run(
         });
     let device_info = data.device_info.clone();
 
-    let mut app = MyApp {
+    let mut gui_app = MyApp {
         fdinfo_sort: Default::default(),
         reverse_sort: false,
         device_info,
@@ -111,7 +111,7 @@ pub fn run(
         arc_data: Arc::new(Mutex::new(vec_data.clone())),
         device_path_list: device_path_list.to_vec(),
         show_sidepanel: true,
-        gl_vendor_info: None,
+        wgpu_adapter_info: None,
         rocm_version: libamdgpu_top::get_rocm_version(),
         selected_pci_bus,
         no_pc,
@@ -123,12 +123,19 @@ pub fn run(
         viewport: ViewportBuilder::default()
             .with_inner_size(egui::vec2(1080.0, 840.0))
             .with_app_id(app_name),
+        wgpu_options: {
+            let mut options = egui_wgpu::WgpuConfiguration::default();
+            options.supported_backends = wgpu::Backends::VULKAN;
+            options.power_preference = wgpu::PowerPreference::LowPower; // use APU if it is available
+
+            options
+        },
         ..Default::default()
     };
 
     {
         let now = std::time::Instant::now();
-        let share_data = app.arc_data.clone();
+        let share_data = gui_app.arc_data.clone();
 
         std::thread::spawn(move || loop {
             if !no_pc {
@@ -183,13 +190,18 @@ pub fn run(
         title_with_version,
         options,
         Box::new(move |cc| {
-            use eframe::glow::HasContext;
             use egui::FontDefinitions;
             use egui::FontData;
 
-            if let Some(ctx) = &cc.gl {
-                let ver = ctx.version().vendor_info.trim_start_matches("(Core Profile) ");
-                app.gl_vendor_info = Some(ver.to_string());
+            if let Some(render_state) = &cc.wgpu_render_state {
+                gui_app.wgpu_adapter_info = render_state.available_adapters
+                    .iter()
+                    .find_map(|adapter| {
+                        let info = adapter.get_info();
+
+                        if info.vendor == 0x1002 { Some(info) } else { None }
+                    })
+                    .clone();
             }
 
             let mut fonts = FontDefinitions::default();
@@ -211,7 +223,7 @@ pub fn run(
                 let s: Option<bool> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
 
                 if let Some(s) = s {
-                    app.show_sidepanel = s;
+                    gui_app.show_sidepanel = s;
                 }
             }
 
@@ -236,7 +248,7 @@ pub fn run(
                 }
             }
 
-            Ok(Box::new(app))
+            Ok(Box::new(gui_app))
         }),
     ).unwrap_or_else(|err| {
         eprintln!("{}", fl!("failed_to_set_up_gui"));
@@ -280,7 +292,7 @@ impl MyApp {
                 ui,
                 &fl!("device_info"),
                 true,
-                |ui| self.device_info.ui(ui, &self.gl_vendor_info, &self.rocm_version),
+                |ui| self.device_info.ui(ui, &self.wgpu_adapter_info, &self.rocm_version),
             );
 
             if !self.device_info.hw_ip_info_list.is_empty() {
