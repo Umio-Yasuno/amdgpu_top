@@ -132,6 +132,7 @@ pub fn run(
             .with_app_id(app_name),
         wgpu_options: {
             let mut options = egui_wgpu::WgpuConfiguration::default();
+            // In the case of the Vulkan backend, this app may wake up the suspended devices.
             options.supported_backends = match gui_wgpu_backend {
                 GuiWgpuBackend::Gl => wgpu::Backends::GL,
                 GuiWgpuBackend::Vulkan => wgpu::Backends::VULKAN,
