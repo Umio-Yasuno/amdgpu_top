@@ -333,7 +333,9 @@ impl MainOpt {
                 "--light" | "--light-mode" => {
                     opt.is_dark_mode = Some(false);
                 },
+                #[cfg(feature = "gui")]
                 "--gl" | "--opengl" => opt.wgpu_backend = GuiWgpuBackend::Gl,
+                #[cfg(feature = "gui")]
                 "--vk" | "--vulkan" => opt.wgpu_backend = GuiWgpuBackend::Vulkan,
                 _ => {
                     eprintln!("Unknown option: {arg}");
