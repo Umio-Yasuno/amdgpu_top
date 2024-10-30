@@ -52,6 +52,12 @@ static SIDE_PANEL_ID: LazyLock<egui::Id> = LazyLock::new(|| {
     egui::Id::new("side_panel")
 });
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum GuiWgpuBackend {
+    Gl,
+    Vulkan,
+}
+
 pub fn run(
     app_name: &str,
     title_with_version: &str,
@@ -60,6 +66,7 @@ pub fn run(
     update_process_index_interval: u64,
     no_pc: bool,
     is_dark_mode: Option<bool>,
+    gui_wgpu_backend: GuiWgpuBackend,
 ) {
     let localizer = localizer();
     let requested_languages = DesktopLanguageRequester::requested_languages();
@@ -125,7 +132,10 @@ pub fn run(
             .with_app_id(app_name),
         wgpu_options: {
             let mut options = egui_wgpu::WgpuConfiguration::default();
-            options.supported_backends = wgpu::Backends::VULKAN;
+            options.supported_backends = match gui_wgpu_backend {
+                GuiWgpuBackend::Gl => wgpu::Backends::GL,
+                GuiWgpuBackend::Vulkan => wgpu::Backends::VULKAN,
+            };
             options.power_preference = wgpu::PowerPreference::LowPower; // use APU if it is available
 
             options

@@ -156,6 +156,7 @@ fn main() {
             main_opt.update_process_index,
             main_opt.no_pc,
             main_opt.is_dark_mode,
+            main_opt.wgpu_backend,
         ),
         #[cfg(feature = "json")]
         AppMode::JSON => unreachable!(),

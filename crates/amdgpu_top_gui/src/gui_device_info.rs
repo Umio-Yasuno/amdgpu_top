@@ -1,4 +1,4 @@
-use eframe::{egui, wgpu::AdapterInfo};
+use eframe::{egui, wgpu::{self, AdapterInfo}};
 use crate::{
     app::grid,
     AppDeviceInfo,
@@ -191,13 +191,23 @@ impl GuiInfo for AppDeviceInfo {
         ]);
 
         if let Some(adapter_info) = wgpu_adapter_info {
-            ui.label(&fl!("vulkan_driver_name"));
-            ui.label(&adapter_info.driver);
-            ui.end_row();
+            match adapter_info.backend {
+                wgpu::Backend::Gl => {
+                    ui.label(&fl!("opengl_driver_ver"));
+                    ui.label(&adapter_info.driver_info);
+                    ui.end_row();
+                },
+                wgpu::Backend::Vulkan => {
+                    ui.label(&fl!("vulkan_driver_name"));
+                    ui.label(&adapter_info.driver);
+                    ui.end_row();
 
-            ui.label(&fl!("vulkan_driver_version"));
-            ui.label(&adapter_info.driver_info);
-            ui.end_row();
+                    ui.label(&fl!("vulkan_driver_version"));
+                    ui.label(&adapter_info.driver_info);
+                    ui.end_row();
+                },
+                _ => {},
+            }
         }
 
         if let Some(rocm) = rocm_version {

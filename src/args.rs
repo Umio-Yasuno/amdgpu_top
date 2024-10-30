@@ -1,4 +1,6 @@
 use libamdgpu_top::PCI;
+#[cfg(feature = "gui")]
+use amdgpu_top_gui::GuiWgpuBackend;
 
 pub struct MainOpt {
     pub instance: Option<usize>, // index
@@ -14,6 +16,7 @@ pub struct MainOpt {
     pub no_pc: bool,
     pub is_dark_mode: Option<bool>,
     pub decode_gpu_metrics: Option<String>,
+    pub wgpu_backend: GuiWgpuBackend,
 }
 
 impl Default for MainOpt {
@@ -32,6 +35,7 @@ impl Default for MainOpt {
             no_pc: false,
             is_dark_mode: None,
             decode_gpu_metrics: None,
+            wgpu_backend: GuiWgpuBackend::Gl,
         }
     }
 }
@@ -329,6 +333,8 @@ impl MainOpt {
                 "--light" | "--light-mode" => {
                     opt.is_dark_mode = Some(false);
                 },
+                "--gl" | "--opengl" => opt.wgpu_backend = GuiWgpuBackend::Gl,
+                "--vk" | "--vulkan" => opt.wgpu_backend = GuiWgpuBackend::Vulkan,
                 _ => {
                     eprintln!("Unknown option: {arg}");
                     std::process::exit(1);
