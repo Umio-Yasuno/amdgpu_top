@@ -16,6 +16,7 @@ pub struct MainOpt {
     pub no_pc: bool,
     pub is_dark_mode: Option<bool>,
     pub decode_gpu_metrics: Option<String>,
+    #[cfg(feature = "gui")]
     pub wgpu_backend: GuiWgpuBackend,
 }
 
@@ -35,6 +36,7 @@ impl Default for MainOpt {
             no_pc: false,
             is_dark_mode: None,
             decode_gpu_metrics: None,
+            #[cfg(feature = "gui")]
             wgpu_backend: GuiWgpuBackend::Gl,
         }
     }
