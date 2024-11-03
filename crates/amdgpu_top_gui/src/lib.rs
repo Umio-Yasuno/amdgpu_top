@@ -130,16 +130,15 @@ pub fn run(
         viewport: ViewportBuilder::default()
             .with_inner_size(egui::vec2(1080.0, 840.0))
             .with_app_id(app_name),
-        wgpu_options: {
-            let mut options = egui_wgpu::WgpuConfiguration::default();
+        wgpu_options: egui_wgpu::WgpuConfiguration {
             // In the case of the Vulkan backend, this app may wake up the suspended devices.
-            options.supported_backends = match gui_wgpu_backend {
+            supported_backends: match gui_wgpu_backend {
                 GuiWgpuBackend::Gl => wgpu::Backends::GL,
                 GuiWgpuBackend::Vulkan => wgpu::Backends::VULKAN,
-            };
-            options.power_preference = wgpu::PowerPreference::LowPower; // use APU if it is available
-
-            options
+            },
+            // use APU if it is available
+            power_preference: wgpu::PowerPreference::LowPower,
+            ..Default::default()
         },
         ..Default::default()
     };
