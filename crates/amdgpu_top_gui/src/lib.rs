@@ -107,12 +107,10 @@ pub fn run(
             eprintln!("invalid PCI bus: {selected_pci_bus}");
             panic!();
         });
-    let device_info = data.device_info.clone();
 
     let mut gui_app = MyApp {
         fdinfo_sort: Default::default(),
         reverse_sort: false,
-        device_info,
         buf_data: data.clone(),
         buf_vec_data: vec_data.clone(),
         arc_data: Arc::new(Mutex::new(vec_data.clone())),
@@ -269,12 +267,12 @@ pub fn run(
 
 impl MyApp {
     fn egui_device_list(&mut self, ui: &mut egui::Ui) {
-        let selected_text = self.device_info.menu_entry();
+        let selected_text = self.buf_data.device_info.menu_entry();
 
         egui::ComboBox::from_id_salt("Device List")
             .selected_text(&selected_text)
             .show_ui(ui, |ui| for device in &self.device_path_list {
-                if self.device_info.pci_bus == device.pci {
+                if self.buf_data.device_info.pci_bus == device.pci {
                     let _ = ui.add_enabled(
                         false,
                         egui::SelectableLabel::new(true, &selected_text),
@@ -302,35 +300,35 @@ impl MyApp {
                 ui,
                 &fl!("device_info"),
                 true,
-                |ui| self.device_info.ui(ui, &self.wgpu_adapter_info, &self.rocm_version),
+                |ui| self.buf_data.device_info.ui(ui, &self.wgpu_adapter_info, &self.rocm_version),
             );
 
-            if !self.device_info.hw_ip_info_list.is_empty() {
+            if !self.buf_data.device_info.hw_ip_info_list.is_empty() {
                 ui.add_space(SPACE);
                 collapsing(
                     ui,
                     &fl!("hw_ip_info"),
                     false,
-                    |ui| self.device_info.hw_ip_info_list.ui(ui),
+                    |ui| self.buf_data.device_info.hw_ip_info_list.ui(ui),
                 );
             }
 
-            if !self.device_info.ip_die_entries.is_empty() {
+            if !self.buf_data.device_info.ip_die_entries.is_empty() {
                 ui.add_space(SPACE);
                 collapsing(
                     ui,
                     &fl!("ip_discovery_table"),
                     false,
-                    |ui| self.device_info.ip_die_entries.ui(ui),
+                    |ui| self.buf_data.device_info.ip_die_entries.ui(ui),
                 );
             }
 
-            if let (Some(dec), Some(enc)) = (&self.device_info.decode, &self.device_info.encode) {
+            if let (Some(dec), Some(enc)) = (&self.buf_data.device_info.decode, &self.buf_data.device_info.encode) {
                 ui.add_space(SPACE);
                 collapsing(ui, &fl!("video_caps_info"), false, |ui| (dec, enc).ui(ui));
             }
 
-            if let Some(vbios) = &self.device_info.vbios {
+            if let Some(vbios) = &self.buf_data.device_info.vbios {
                 ui.add_space(SPACE);
                 collapsing(ui, &fl!("vbios_info"), false, |ui| vbios.ui(ui));
             }
@@ -457,10 +455,6 @@ impl eframe::App for MyApp {
                     panic!();
                 })
                 .clone();
-
-            if self.selected_pci_bus != self.device_info.pci_bus {
-                self.device_info = self.buf_data.device_info.clone();
-            }
         }
 
         {
