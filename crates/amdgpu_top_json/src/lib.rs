@@ -1,9 +1,10 @@
 use libamdgpu_top::{DevicePath, stat};
 use libamdgpu_top::app::*;
 use serde_json::{json, Value};
+use std::net::TcpStream;
 use std::time::{Duration, Instant};
 use std::path::PathBuf;
-use std::io::Write;
+use std::io::{Read, Write};
 
 mod output_json;
 mod dump;

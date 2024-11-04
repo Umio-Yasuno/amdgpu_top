@@ -11,6 +11,7 @@ mod dump_pp_table;
 mod dump_process;
 use dump_process::dump_process;
 mod drm_info;
+mod server;
 
 fn main() {
     let main_opt = MainOpt::parse();
@@ -49,6 +50,23 @@ fn main() {
             (list, device_path)
         }
     };
+
+    #[cfg(feature = "json")]
+    if let Some(addr) = main_opt.gui_server {
+        let mut j = amdgpu_top_json::JsonApp::new(
+            &device_path_list,
+            main_opt.refresh_period,
+            main_opt.update_process_index,
+            0, // main_opt.json_iterations,
+            main_opt.no_pc,
+        );
+
+        server::gui_server(&addr, TITLE, &mut j);
+        return;
+    } else if let Some(addr) = main_opt.gui_client {
+        server::gui_client(&addr);
+        return;
+    }
 
     #[cfg(feature = "json")]
     if let AppMode::JSON = main_opt.app_mode { match main_opt.dump_mode {

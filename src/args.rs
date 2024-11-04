@@ -1,3 +1,5 @@
+use std::net::SocketAddr;
+
 use libamdgpu_top::PCI;
 #[cfg(feature = "gui")]
 use amdgpu_top_gui::GuiWgpuBackend;
@@ -18,6 +20,8 @@ pub struct MainOpt {
     pub decode_gpu_metrics: Option<String>,
     #[cfg(feature = "gui")]
     pub wgpu_backend: GuiWgpuBackend,
+    pub gui_server: Option<SocketAddr>,
+    pub gui_client: Option<SocketAddr>,
 }
 
 impl Default for MainOpt {
@@ -38,6 +42,8 @@ impl Default for MainOpt {
             decode_gpu_metrics: None,
             #[cfg(feature = "gui")]
             wgpu_backend: GuiWgpuBackend::Gl,
+            gui_server: None,
+            gui_client: None,
         }
     }
 }
@@ -334,6 +340,24 @@ impl MainOpt {
                 "--gl" | "--opengl" => opt.wgpu_backend = GuiWgpuBackend::Gl,
                 #[cfg(feature = "gui")]
                 "--vk" | "--vulkan" => opt.wgpu_backend = GuiWgpuBackend::Vulkan,
+                "--gui-server" => {
+                    opt.gui_server = if let Some(s) = args.get(idx+1) {
+                        Some(s.parse().unwrap())
+                    } else {
+                        eprintln!("missing argument: \"--gui-server <String>\"");
+                        std::process::exit(1);
+                    };
+                    skip = true;
+                },
+                "--gui-client" => {
+                    opt.gui_client = if let Some(s) = args.get(idx+1) {
+                        Some(s.parse().unwrap())
+                    } else {
+                        eprintln!("missing argument: \"--gui-client <String>\"");
+                        std::process::exit(1);
+                    };
+                    skip = true;
+                },
                 _ => {
                     eprintln!("Unknown option: {arg}");
                     std::process::exit(1);
