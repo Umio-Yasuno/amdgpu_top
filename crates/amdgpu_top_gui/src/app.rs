@@ -160,6 +160,22 @@ pub struct MyApp {
     pub full_fdinfo_list: bool,
 }
 
+#[cfg(feature = "json")]
+use amdgpu_top_json::Value;
+
+#[cfg(feature = "json")]
+#[derive(Debug, Clone)]
+pub struct JsonDataError;
+
+#[cfg(feature = "json")]
+impl TryFrom<Value> for MyApp {
+    type Error = JsonDataError;
+
+    fn try_from(value: Value) -> Result<Self, Self::Error> {
+        unreachable!();
+    }
+}
+
 pub fn grid(ui: &mut egui::Ui, v: &[(&str, &str)]) {
     for (name, val) in v {
         ui.label(*name);

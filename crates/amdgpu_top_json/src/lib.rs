@@ -1,6 +1,6 @@
 use libamdgpu_top::{DevicePath, stat};
 use libamdgpu_top::app::*;
-use serde_json::{json, Value};
+pub use serde_json::{json, Value};
 use std::time::{Duration, Instant};
 use std::path::PathBuf;
 use std::io::Write;

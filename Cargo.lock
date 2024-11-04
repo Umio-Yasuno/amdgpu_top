@@ -79,6 +79,7 @@ dependencies = [
 name = "amdgpu_top_gui"
 version = "0.9.2"
 dependencies = [
+ "amdgpu_top_json",
  "eframe",
  "egui_plot",
  "i18n-embed",

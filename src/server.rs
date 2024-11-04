@@ -69,7 +69,7 @@ pub fn gui_client(addr: &SocketAddr) {
     let mut buf = String::new();
     let mut stream_read = BufReader::new(stream.try_clone().unwrap());
 
-    for _ in 0..1 {
+    for _ in 0..4 {
         buf.clear();
         let Ok(_) = stream.write(b"d") else { continue };
         let Ok(_) = stream_read.read_line(&mut buf) else { continue };
