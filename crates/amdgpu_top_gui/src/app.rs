@@ -146,7 +146,6 @@ impl GuiAppData {
 pub struct MyApp {
     pub fdinfo_sort: FdInfoSortType,
     pub reverse_sort: bool,
-    pub device_info: AppDeviceInfo,
     pub buf_data: GuiAppData,
     pub buf_vec_data: Vec<GuiAppData>,
     pub arc_data: Arc<Mutex<Vec<GuiAppData>>>,
@@ -919,7 +918,7 @@ impl MyApp {
                     "GFX_SCLK",
                     // some AMD GPUs support DS (Deep Sleep) state
                     0,
-                    self.device_info.max_gpu_clk,
+                    self.buf_data.device_info.max_gpu_clk,
                     fl!("mhz"),
                 ),
                 (
@@ -928,7 +927,7 @@ impl MyApp {
                     "GFX_MCLK",
                     // some AMD GPUs support DS (Deep Sleep) state
                     0,
-                    self.device_info.max_mem_clk,
+                    self.buf_data.device_info.max_mem_clk,
                     fl!("mhz"),
                 ),
                 (
