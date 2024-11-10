@@ -187,4 +187,4 @@ activity = Activity
 throttle_status = Throttle Status
 throttling_log = Throttling Log
 
-failed_to_set_up_gui = Failed to set up a graphics context (OpenGL).
+failed_to_set_up_gui = Failed to set up a graphics context.
