@@ -205,26 +205,35 @@ pub fn run(
                 gui_app.wgpu_adapter_info = render_state.available_adapters
                     .iter()
                     .find_map(|adapter| {
-                        let info = adapter.get_info();
+                        let mut info = adapter.get_info();
+                        if let Some((_, driver_ver)) = info
+                            .driver_info
+                            .rfind("Mesa")
+                            .and_then(|idx| info.driver_info.split_at_checked(idx))
+                        {
+                            info.driver_info = driver_ver.to_string();
+                        }
 
                         if info.vendor == 0x1002 { Some(info) } else { None }
                     })
                     .clone();
             }
 
-            let mut fonts = FontDefinitions::default();
+            {
+                let mut fonts = FontDefinitions::default();
 
-            fonts.font_data.insert(
-                "BIZUDGothic".to_string(),
-                FontData::from_static(include_bytes!("../fonts/BIZUDGothic-Regular.ttf")),
-            );
+                fonts.font_data.insert(
+                    "BIZUDGothic".to_string(),
+                    FontData::from_static(include_bytes!("../fonts/BIZUDGothic-Regular.ttf")),
+                );
 
-            fonts.families.get_mut(&FontFamily::Proportional).unwrap()
-                .insert(3, "BIZUDGothic".to_owned());
-            fonts.families.get_mut(&FontFamily::Monospace).unwrap()
-                .insert(3, "BIZUDGothic".to_owned());
+                fonts.families.get_mut(&FontFamily::Proportional).unwrap()
+                    .insert(3, "BIZUDGothic".to_owned());
+                fonts.families.get_mut(&FontFamily::Monospace).unwrap()
+                    .insert(3, "BIZUDGothic".to_owned());
 
-            cc.egui_ctx.set_fonts(fonts);
+                cc.egui_ctx.set_fonts(fonts);
+            }
 
             {
                 let id = *SIDE_PANEL_STATE_ID;
