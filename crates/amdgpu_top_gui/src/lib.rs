@@ -86,7 +86,15 @@ pub fn run(
     }
 
     {
-        let device_paths: Vec<DevicePath> = device_path_list.to_vec();
+        let mut device_paths: Vec<DevicePath> = device_path_list.to_vec();
+
+        if let Some(xdna_device_path) = vec_app
+            .iter()
+            .find_map(|app| app.xdna_device_path.as_ref())
+        {
+            device_paths.push(xdna_device_path.clone());
+        }
+
         stat::spawn_update_index_thread(device_paths, update_process_index_interval);
     }
 

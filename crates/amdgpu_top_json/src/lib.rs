@@ -68,7 +68,10 @@ impl JsonApp {
         {
             let mut device_paths: Vec<DevicePath> = device_path_list.to_vec();
 
-            if let Some(xdna_device_path) = vec_device_info.iter().find_map(|j| j.app.xdna_device_path.as_ref()) {
+            if let Some(xdna_device_path) = vec_device_info
+                .iter()
+                .find_map(|j| j.app.xdna_device_path.as_ref())
+            {
                 device_paths.push(xdna_device_path.clone());
             }
 
