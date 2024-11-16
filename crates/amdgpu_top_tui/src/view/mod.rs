@@ -3,6 +3,7 @@ pub const PC_BAR_WIDTH: usize = 35;
 pub const VRAM_LABEL_WIDTH: usize = 6;
 
 mod fdinfo;
+mod xdna_fdinfo;
 // pub use fdinfo::*;
 
 mod gpu_metrics;

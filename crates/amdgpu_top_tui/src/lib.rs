@@ -253,6 +253,7 @@ pub fn run(
                 let label = tui_app.label();
                 let info_bar = tui_app.app_amdgpu_top.device_info.info_bar();
                 let stat = tui_app.app_amdgpu_top.stat.clone();
+                let xdna_device_path = tui_app.app_amdgpu_top.xdna_device_path.clone();
                 let app_layout = tui_app.layout.clone();
 
                 vec_app.push(tui_app);
@@ -260,7 +261,7 @@ pub fn run(
                 cb_sink.send(Box::new(move |siv| {
                     {
                         let view = app_layout
-                            .view(&title, info_bar, &stat)
+                            .view(&title, info_bar, &stat, &xdna_device_path)
                             .scrollable()
                             .scroll_x(true)
                             .scroll_y(true)
