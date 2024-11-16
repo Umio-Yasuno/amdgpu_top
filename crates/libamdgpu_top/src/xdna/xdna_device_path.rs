@@ -77,17 +77,8 @@ impl DevicePath {
         let [Some(device_id), Some(revision_id)] = [self.device_id, self.revision_id] else {
             return;
         };
-
-        // ref: https://github.com/amd/xdna-driver/blob/main/src/driver/amdxdna/amdxdna_pci_drv.c
-        self.device_name = match (device_id, revision_id) {
-            (0x1502, 0x0) => "NPU1".to_string(),
-            (0x17F0, 0x0) => "NPU2".to_string(),
-            (0x1569, 0x0) |
-            (0x1640, 0x0) => "NPU3".to_string(),
-            (0x17F0, 0x10) => "NPU4".to_string(),
-            (0x17F0, 0x11) => "NPU5".to_string(),
-            (0x17F0, 0x20) => "NPU6".to_string(),
-            _ => format!("NPU ({device_id:#06X}:{revision_id:#04X})"),
-        };
+        // ref: https://github.com/amd/xdna-driver/blob/main/src/driver/doc/sysfs-driver-amd-aie
+        self.device_name = std::fs::read_to_string(self.sysfs_path.join("vbnv"))
+            .unwrap_or(format!("RyzenAI-npu ({device_id:#06X}:{revision_id:#04X})"));
     }
 }
