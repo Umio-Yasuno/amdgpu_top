@@ -12,6 +12,7 @@ pub struct AppAmdgpuTop {
     pub device_info: AppDeviceInfo,
     pub device_path: DevicePath,
     pub xdna_device_path: Option<DevicePath>,
+    pub xdna_fw_version: Option<String>,
     pub stat: AppAmdgpuTopStat,
     buf_interval: Duration,
     no_drop_device_handle: bool,
@@ -169,6 +170,13 @@ impl AppAmdgpuTop {
         } else {
             None
         };
+        let xdna_fw_version = xdna_device_path
+            .as_ref()
+            .and_then(|d| std::fs::read_to_string(d.sysfs_path.join("fw_version")).ok())
+            .map(|mut s| {
+                let _ = s.pop(); // trim '\n'
+                s
+            });
 
         let arc_proc_index = device_path.arc_proc_index.clone();
         let arc_xdna_proc_index = xdna_device_path
@@ -202,6 +210,7 @@ impl AppAmdgpuTop {
             device_info,
             device_path,
             xdna_device_path,
+            xdna_fw_version,
             stat: AppAmdgpuTopStat {
                 grbm,
                 grbm2,
