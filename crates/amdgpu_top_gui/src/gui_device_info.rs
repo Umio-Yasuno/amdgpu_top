@@ -1,6 +1,6 @@
 use eframe::{egui, wgpu::{self, AdapterInfo}};
 use crate::{
-    app::grid,
+    app::{grid, GuiAppData},
     AppDeviceInfo,
     util::*,
     fl,
@@ -476,6 +476,33 @@ impl GuiModeProp for &(ModeProp, u64) {
                     _ => {},
                 }
             });
+        });
+    }
+}
+
+
+pub trait GuiXdnaInfo {
+    fn xdna_info(&self, ui: &mut egui::Ui);
+}
+
+impl GuiXdnaInfo for GuiAppData {
+    fn xdna_info(&self, ui: &mut egui::Ui) {
+        egui::Grid::new("xdna_npu_info").show(ui, |ui| {
+            let Some(ref xdna_device_path) = self.xdna_device_path else { return };
+
+            ui.label(fl!("pci_bus"));
+            ui.label(xdna_device_path.pci.to_string());
+            ui.end_row();
+
+            ui.label(fl!("device_name"));
+            ui.label(xdna_device_path.device_name.clone());
+            ui.end_row();
+
+            if let Some(ref ver) = self.xdna_fw_version {
+                ui.label(fl!("fw_version"));
+                ui.label(ver.clone());
+                ui.end_row();
+            }
         });
     }
 }

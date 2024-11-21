@@ -7,6 +7,7 @@ quit = Quit
 ## Device Info
 suspended = Suspended
 device_info = Device Info
+xdna_info = XDNA NPU Info
 device_name = Device Name
 pci_bus = PCI (domain:bus:dev.func)
 did_rid = DeviceID:RevID
@@ -32,6 +33,8 @@ total_cu = Total CU
 peak_gp = Peak Pixel Fill-Rate
 gpu_clock = GPU Clock
 peak_fp32 = Peak FP32
+npu = NPU
+fw_version = FW Version
 
 enabled = Enabled
 disabled = Disabled
@@ -148,6 +151,7 @@ usable = usable
 fdinfo = fdinfo
 fdinfo_plot = fdinfo Plot
 full_fdinfo_list = Full list
+xdna_fdinfo = XDNA fdinfo
 vram_plot = VRAM Plot
 cpu = CPU
 gfx = GFX
