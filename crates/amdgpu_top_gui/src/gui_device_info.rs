@@ -1,6 +1,7 @@
 use eframe::{egui, wgpu::{self, AdapterInfo}};
 use crate::{
-    app::{grid, GuiAppData},
+    app::grid,
+    GuiAppData,
     AppDeviceInfo,
     util::*,
     fl,
@@ -479,7 +480,6 @@ impl GuiModeProp for &(ModeProp, u64) {
         });
     }
 }
-
 
 pub trait GuiXdnaInfo {
     fn xdna_info(&self, ui: &mut egui::Ui);

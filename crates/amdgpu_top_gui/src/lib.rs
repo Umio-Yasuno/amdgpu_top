@@ -22,8 +22,14 @@ use libamdgpu_top::{
     PCI,
 };
 
+mod gui_app_data;
+use gui_app_data::GuiAppData;
+
 mod app;
-use app::{GuiAppData, GuiMemoryErrorCount, GuiGpuMetrics, MyApp};
+use app::{GuiMemoryErrorCount, MyApp};
+
+mod gui_gpu_metrics;
+use gui_gpu_metrics::GuiGpuMetrics;
 
 mod gui_device_info;
 use gui_device_info::{GuiInfo, GuiConnectorInfo, GuiHwIpInfo, GuiIpDiscovery, GuiVbiosInfo, GuiVideoCapsInfo, GuiXdnaInfo};
