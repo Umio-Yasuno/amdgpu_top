@@ -80,6 +80,12 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 **\-\-light**, **\-\-light-mode**
 :   Set to the light mode. (TUI/GUI)
 
+**\-\-gl**, **\-\-opengl**
+:   Use OpenGL API to the GUI backend.
+
+**\-\-vk**, **\-\-vulkan**
+:   Use Vulkan API to the GUI backend, and use APU/iGPU for GUI rendering if it is available.
+
 **\-d**, **\-\-dump**
 :   Dump AMDGPU info. (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps) This option can be combined with the "-J" option.
 

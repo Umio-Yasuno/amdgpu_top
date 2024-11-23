@@ -101,6 +101,11 @@ FLAGS:
        Set to the dark mode. (TUI/GUI)
    --light, --light-mode
        Set to the light mode. (TUI/GUI)
+   --gl, --opengl
+       Use OpenGL API to the GUI backend.
+   --vk, --vulkan
+       Use Vulkan API to the GUI backend,
+       and use APU/iGPU for GUI rendering if it is available.
    -V, --version
        Print version information.
    -h, --help
