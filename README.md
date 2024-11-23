@@ -200,10 +200,10 @@ sudo apt install libdrm-dev
 
 | Features       | Size (stripped) |
 | :------------- | :-------------: |
-| json           | ~852K |
-| tui            | ~1.3M |
-| json, tui      | ~1.4M |
-| json, tui, gui | ~14M  |
+| json           | ~1.1M |
+| tui            | ~1.5M |
+| json, tui      | ~1.7M |
+| json, tui, gui | ~18M  |
 
 ## References
  * [Tom St Denis / umr · GitLab](https://gitlab.freedesktop.org/tomstdenis/umr/)
