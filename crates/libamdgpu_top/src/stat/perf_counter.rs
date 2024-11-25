@@ -129,7 +129,7 @@ impl PCAcc {
         *self += Self::from(reg)
     }
 
-    pub fn get(&self, index: usize) -> u8 {
+    fn get(&self, index: usize) -> u8 {
         self.0[index]
     }
 }
