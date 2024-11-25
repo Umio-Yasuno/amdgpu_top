@@ -41,11 +41,11 @@ impl OutputJson for PerfCounter {
     fn json(&self) -> Value {
         let mut m = Map::new();
 
-        for (label, idx) in &self.index {
+        for pc_index in &self.pc_index {
             m.insert(
-                label.to_string(),
+                pc_index.name.clone(),
                 json!({
-                    "value": self.bits.get(*idx),
+                    "value": pc_index.usage,
                     "unit": "%",
                 }),
             );

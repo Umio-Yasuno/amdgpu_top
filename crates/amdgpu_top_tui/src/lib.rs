@@ -239,6 +239,10 @@ pub fn run(
                 std::thread::sleep(sample.to_duration());
             }
 
+            if !no_pc {
+                selected_app.app_amdgpu_top.update_pc_usage();
+            }
+
             selected_app.update(&flags, &sample);
             if !no_pc { selected_app.app_amdgpu_top.clear_pc(); }
         }

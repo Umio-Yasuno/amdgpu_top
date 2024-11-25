@@ -104,7 +104,7 @@ impl GuiAppData {
         let pcie_bw_history: History<(u64, u64)> = History::new(HISTORY_LENGTH, f32::INFINITY);
         let throttling_history = History::new(HISTORY_LENGTH, f32::INFINITY);
         let [grbm_history, grbm2_history] = [&app.stat.grbm, &app.stat.grbm2].map(|pc| {
-            vec![History::<u8>::new(HISTORY_LENGTH, f32::INFINITY); pc.index.len()]
+            vec![History::<u8>::new(HISTORY_LENGTH, f32::INFINITY); pc.pc_index.len()]
         });
         let gfx_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
         let umc_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
@@ -157,8 +157,8 @@ impl GuiAppData {
                 (&self.stat.grbm, &mut self.history.grbm_history),
                 (&self.stat.grbm2, &mut self.history.grbm2_history),
             ] {
-                for ((_name, pos), h) in pc.index.iter().zip(history.iter_mut()) {
-                    h.add(secs, pc.bits.get(*pos));
+                for (pc_index, h) in pc.pc_index.iter().zip(history.iter_mut()) {
+                    h.add(secs, pc_index.usage);
                 }
             }
         }

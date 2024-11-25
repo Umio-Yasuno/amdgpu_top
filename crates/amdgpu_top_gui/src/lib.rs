@@ -172,6 +172,12 @@ pub fn run(
                 std::thread::sleep(sample.to_duration());
             }
 
+            if !no_pc {
+                for app in vec_app.iter_mut() {
+                    app.update_pc_usage();
+                }
+            }
+
             for app in vec_app.iter_mut() {
                 app.update(sample.to_duration());
             }
@@ -589,8 +595,8 @@ trait I18nPerfCounter {
 
 impl I18nPerfCounter for PerfCounter {
     fn get_i18n_index(&mut self, loader: &FluentLanguageLoader) {
-        for (ref mut name, _) in self.index.iter_mut() {
-            *name = loader.get(&name.replace(' ', "_").replace('/', ""));
+        for pc_index in self.pc_index.iter_mut() {
+            pc_index.name = loader.get(&pc_index.name.replace(' ', "_").replace('/', ""));
         }
     }
 }

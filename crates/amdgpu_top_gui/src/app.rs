@@ -76,17 +76,17 @@ impl MyApp {
         let mut n = 1;
 
         egui::Grid::new(pc_name).spacing(SPACING).show(ui, |ui| {
-            for ((name, pos), history) in pc.index.iter().zip(history.iter()) {
-                egui::Grid::new(name).show(ui, |ui| {
-                    let usage = pc.bits.get(*pos);
-                    ui.label(format!("{name} {usage:3}%"));
+            for (pc_index, history) in pc.pc_index.iter().zip(history.iter()) {
+                egui::Grid::new(&pc_index.name).show(ui, |ui| {
+                    let usage = pc_index.usage;
+                    ui.label(format!("{} {usage:3}%", &pc_index.name));
                     ui.end_row();
 
                     let points: PlotPoints = history.iter()
                         .map(|(i, val)| [i, val as f64]).collect();
                     let line = Line::new(points).fill(0.0);
 
-                    default_plot(name)
+                    default_plot(&pc_index.name)
                         .allow_scroll(false)
                         .include_y(0.0)
                         .include_y(100.0)

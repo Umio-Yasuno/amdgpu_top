@@ -7,23 +7,20 @@ use libdrm_amdgpu_sys::AMDGPU::{
 use crate::stat;
 
 #[derive(Clone, Debug)]
+pub struct PCIndex {
+    pub name: String,
+    index: usize,
+    pub usage: u8, // %
+}
+
+#[derive(Clone, Debug)]
 pub struct PerfCounter {
     pub pc_type: PCType,
-    pub bits: PCAcc,
-    pub index: Vec<(String, usize)>,
+    bits: PCAcc,
+    pub pc_index: Vec<PCIndex>,
 }
 
 impl PerfCounter {
-    pub fn new(pc_type: PCType, s: &[(&str, usize)]) -> Self {
-        let index = s.iter().map(|(name, idx)| (name.to_string(), *idx)).collect();
-
-        Self {
-            pc_type,
-            bits: PCAcc::default(),
-            index,
-        }
-    }
-
     pub fn new_with_chip_class(pc_type: PCType, chip_class: CHIP_CLASS) -> Self {
         let index = match pc_type {
             PCType::GRBM => {
@@ -44,12 +41,41 @@ impl PerfCounter {
             },
         };
 
-        Self::new(pc_type, index)
+        let pc_index = index
+            .iter()
+            .map(|(name, idx)| {
+                let index = *idx;
+
+                assert!(index < 32);
+
+                PCIndex {
+                    name: name.to_string(),
+                    index,
+                    usage: 0,
+                }
+            })
+            .collect();
+
+        Self {
+            pc_type,
+            bits: PCAcc::default(),
+            pc_index,
+        }
     }
 
     pub fn read_reg(&mut self, amdgpu_dev: &DeviceHandle) {
         if let Ok(out) = amdgpu_dev.read_mm_registers(self.pc_type.offset()) {
             self.bits.acc(out);
+        }
+    }
+
+    pub fn clear_pc(&mut self) {
+        self.bits.clear();
+    }
+
+    pub fn update_pc_usage(&mut self) {
+        for PCIndex { name: _name, index, usage } in self.pc_index.iter_mut() {
+            *usage = self.bits.get(*index);
         }
     }
 }
@@ -104,7 +130,7 @@ impl PCAcc {
     }
 
     pub fn get(&self, index: usize) -> u8 {
-        unsafe { *self.0.get_unchecked(index) }
+        self.0[index]
     }
 }
 

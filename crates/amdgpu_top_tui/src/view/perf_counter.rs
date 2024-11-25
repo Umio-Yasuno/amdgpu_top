@@ -28,7 +28,7 @@ impl PerfCounterView {
     }
 
     pub fn new(pc: &PerfCounter, index: usize) -> Self {
-        let counters = (0..pc.index.len()).map(|_| Counter::new(0)).collect();
+        let counters = (0..pc.pc_index.len()).map(|_| Counter::new(0)).collect();
 
         Self { counters, index }
     }
@@ -42,12 +42,12 @@ impl PerfCounterView {
             format!("[{val:^width$}]", width = PC_BAR_WIDTH - 2, val = format!("{value:3} %"))
         };
 
-        for (c, (name, _)) in self.counters.iter().zip(pc.index.iter()) {
+        for (c, pc_index) in self.counters.iter().zip(pc.pc_index.iter()) {
             sub_layout.add_child(
                 FixedLayout::new()
                     .child(
                         Rect::from_size((0,0), (LEFT_LEN+1, 1)),
-                        TextView::new(format!("{name:>LEFT_LEN$}:")),
+                        TextView::new(format!("{:>LEFT_LEN$}:", pc_index.name)),
                     )
                     .child(
                         Rect::from_size((LEFT_LEN+2,0), (PC_BAR_WIDTH, 1)),
@@ -68,8 +68,8 @@ impl PerfCounterView {
     }
 
     pub fn set_value(&self, pc: &PerfCounter) {
-        for (c, (_, pos)) in self.counters.iter().zip(pc.index.iter()) {
-            c.set(pc.bits.get(*pos) as usize)
+        for (c, pc_index) in self.counters.iter().zip(pc.pc_index.iter()) {
+            c.set(pc_index.usage as usize)
         }
     }
 }

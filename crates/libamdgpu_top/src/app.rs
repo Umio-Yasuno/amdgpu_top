@@ -329,8 +329,13 @@ impl AppAmdgpuTop {
     }
 
     pub fn clear_pc(&mut self) {
-        self.stat.grbm.bits.clear();
-        self.stat.grbm2.bits.clear();
+        self.stat.grbm.clear_pc();
+        self.stat.grbm2.clear_pc();
+    }
+
+    pub fn update_pc_usage(&mut self) {
+        self.stat.grbm.update_pc_usage();
+        self.stat.grbm2.update_pc_usage();
     }
 
     pub fn get_drm_version_struct(&mut self) -> Option<drmVersion> {
