@@ -118,7 +118,7 @@ impl PCType {
 }
 
 #[derive(Clone, Default, Debug)]
-pub struct PCAcc([u8; 32]);
+struct PCAcc([u8; 32]);
 
 impl PCAcc {
     pub fn clear(&mut self) {
