@@ -14,6 +14,7 @@ pub(crate) const GRBM_INDEX: &[(&str, usize)] = &[
     ("Vertex Grouper / Tessellator", 17),
     ("Input Assembly", 19),
     ("Work Distributor", 21),
+    // ("Barycentric Interpolator", 23),
 ];
 
 pub(crate) const GFX10_GRBM_INDEX: &[(&str, usize)] = &[
@@ -27,10 +28,11 @@ pub(crate) const GFX10_GRBM_INDEX: &[(&str, usize)] = &[
     ("Depth Block", 26),
     ("Color Block", 30),
     ("Geometry Engine", 21),
+    // ("Barycentric Interpolator", 23),
 ];
 
 pub(crate) const GRBM2_INDEX: &[(&str, usize)] = &[
-    ("RunList Controller", 24),
+    ("Ring List Controller", 24),
     ("Texture Cache", 25),
     // ("Texture Cache Resident", 26),
     ("Command Processor -  Fetcher", 28),
@@ -39,7 +41,7 @@ pub(crate) const GRBM2_INDEX: &[(&str, usize)] = &[
 ];
 
 pub(crate) const GFX9_GRBM2_INDEX: &[(&str, usize)] = &[
-    ("RunList Controller", 24),
+    ("Ring List Controller", 24),
     ("Texture Cache", 25),
     // ("Texture Cache Resident", 26),
     ("Unified Translation Cache Level-2", 15), // UTCL2
@@ -48,12 +50,11 @@ pub(crate) const GFX9_GRBM2_INDEX: &[(&str, usize)] = &[
     ("Command Processor -  Fetcher", 28), // CPF
     ("Command Processor -  Compute", 29), // CPC
     ("Command Processor - Graphics", 30), // CPG
-    // ("CPAXI_BUSY", 31),
 ];
 
 pub(crate) const GFX10_GRBM2_INDEX: &[(&str, usize)] = &[
-    ("RunList Controller", 24),
-    // ("TCP_BUSY", 25), // TCP, Texture Cache Private?, Pipe?
+    ("Ring List Controller", 24),
+    ("Texture Cache per Pipe", 25),
     ("Unified Translation Cache Level-2", 15), // UTCL2
     ("Efficiency Arbiter", 16), // EA
     ("Render Backend Memory Interface", 17), // RMI
@@ -61,12 +62,11 @@ pub(crate) const GFX10_GRBM2_INDEX: &[(&str, usize)] = &[
     ("Command Processor -  Fetcher", 28), // CPF
     ("Command Processor -  Compute", 29), // CPC
     ("Command Processor - Graphics", 30), // CPG
-    // ("CPAXI_BUSY", 31),
 ];
 
 pub(crate) const GFX10_3_GRBM2_INDEX: &[(&str, usize)] = &[
-    ("RunList Controller", 26),
-    // ("TCP_BUSY", 27), // TCP, Texture Cache Private?, Pipe?
+    ("Ring List Controller", 26),
+    ("Texture Cache per Pipe", 27),
     ("Unified Translation Cache Level-2", 15), // UTCL2
     ("Efficiency Arbiter", 16), // EA
     ("Render Backend Memory Interface", 17), // RMI
@@ -74,19 +74,17 @@ pub(crate) const GFX10_3_GRBM2_INDEX: &[(&str, usize)] = &[
     ("Command Processor -  Fetcher", 28), // CPF
     ("Command Processor -  Compute", 29), // CPC
     ("Command Processor - Graphics", 30), // CPG
-    // ("CPAXI_BUSY", 31),
 ];
 
 pub(crate) const GFX12_GRBM2_INDEX: &[(&str, usize)] = &[
-    ("RunList Controller", 26),
-    // ("TCP_BUSY", 27), // TCP, Texture Cache Private?, Pipe?
+    ("Ring List Controller", 26),
+    ("Texture Cache per Pipe", 27),
     ("Unified Translation Cache Level-2", 15), // UTCL2
     ("Efficiency Arbiter", 16), // EA
     ("SDMA", 21),
     ("Command Processor -  Fetcher", 28), // CPF
     ("Command Processor -  Compute", 29), // CPC
     ("Command Processor - Graphics", 30), // CPG
-    // ("CPAXI_BUSY", 31),
 ];
 
 mod perf_counter;
