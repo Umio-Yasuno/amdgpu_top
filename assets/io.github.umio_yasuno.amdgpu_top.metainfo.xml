@@ -34,6 +34,30 @@
   </screenshots>
 
   <releases>
+    <release version="0.10.0" date="2024-11-28">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>Support for AMD XDNA NPU</li>
+          <li>Update libdrm_amdgpu_sys </li>
+          <li>Update GRBM2_INDEX</li>
+          <li>Remove amd_.*_visible_vram fields in FdInfoUsage</li>
+          <li>Stop using get_unchecked</li>
+          <li>Implement dynamic_no_pc</li>
+          <li>Add --gl and --vk options</li>
+        </ul>
+        <ul>
+          <li>gui: Support for the Close shortcut key</li>
+          <li>gui: Add the Quit button</li>
+          <li>gui: Update eframe to v0.29</li>
+          <li>gui: Update versions of i18n-embed and i18n-embed-fl</li>
+          <li>gui: Use LazyLock instead of once_cell</li>
+          <li>Use wgpu feature</li>
+        </ul>
+      </description>
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.9.2</url>
+    </release>
+
     <release version="0.9.2" date="2024-09-14">
       <description>
         <p>Changelog</p>
