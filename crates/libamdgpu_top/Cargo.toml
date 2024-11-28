@@ -11,4 +11,4 @@ authors.workspace = true
 
 [dependencies]
 anyhow = { version = "1.0.*" }
-libdrm_amdgpu_sys = { version = "0.7.5", git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs" }
+libdrm_amdgpu_sys = { version = "0.7.6", git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs" }
