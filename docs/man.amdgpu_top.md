@@ -74,6 +74,9 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 **\-\-drm_info**, **\-\-drm-info**
 :   Dump DRM info. Inspired by https://gitlab.freedesktop.org/emersion/drm_info
 
+**\-\-xdna**
+:   Dump XDNA NPU info.
+
 **\-\-dark**, **\-\-dark-mode**
 :   Set to the dark mode. (TUI/GUI)
 

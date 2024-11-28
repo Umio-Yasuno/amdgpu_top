@@ -114,6 +114,8 @@ const HELP_MSG: &str = concat!(
     "   --drm_info, --drm-info\n",
     "       Dump DRM info.\n",
     "       Inspired by https://gitlab.freedesktop.org/emersion/drm_info\n",
+    "   --xdna\n",
+    "       Dump XDNA NPU info.\n",
     "   --dark, --dark-mode\n",
     "       Set to the dark mode. (TUI/GUI)\n",
     "   --light, --light-mode\n",
