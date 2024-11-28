@@ -1,7 +1,7 @@
 // ref: https://github.com/amd/xdna-driver/blob/main/src/driver/amdxdna/amdxdna_drm.c
 // ref: https://github.com/amd/xdna-driver/blob/main/src/driver/amdxdna/amdxdna_pci_drv.c
 
-use std::fs;
+use std::{fs, io};
 use std::path::Path;
 use crate::{DevicePath, PCI};
 
@@ -80,5 +80,13 @@ impl DevicePath {
         // ref: https://github.com/amd/xdna-driver/blob/main/src/driver/doc/sysfs-driver-amd-aie
         self.device_name = std::fs::read_to_string(self.sysfs_path.join("vbnv"))
             .unwrap_or(format!("RyzenAI-npu ({device_id:#06X}:{revision_id:#04X})"));
+    }
+
+    pub fn get_xdna_fw_version(&self) -> io::Result<String> {
+        std::fs::read_to_string(self.sysfs_path.join("fw_version"))
+            .map(|mut s| {
+                let _ = s.pop(); // trim '\n'
+                s
+            })
     }
 }

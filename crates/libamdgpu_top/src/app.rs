@@ -170,13 +170,7 @@ impl AppAmdgpuTop {
         } else {
             None
         };
-        let xdna_fw_version = xdna_device_path
-            .as_ref()
-            .and_then(|d| std::fs::read_to_string(d.sysfs_path.join("fw_version")).ok())
-            .map(|mut s| {
-                let _ = s.pop(); // trim '\n'
-                s
-            });
+        let xdna_fw_version = xdna_device_path.as_ref().and_then(|d| d.get_xdna_fw_version().ok());
 
         let arc_proc_index = device_path.arc_proc_index.clone();
         let arc_xdna_proc_index = xdna_device_path

@@ -10,6 +10,10 @@ pub fn dump_xdna_device() {
 
     println!("{xdna_device:#?}");
 
+    if let Ok(fw_ver) = xdna_device.get_xdna_fw_version() {
+        println!("FW Version: {fw_ver}");
+    }
+
     let mut xdna_proc_index = xdna_device.arc_proc_index.lock().unwrap();
 
     stat::update_index_by_all_proc(
