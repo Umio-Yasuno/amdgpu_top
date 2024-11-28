@@ -1,20 +1,7 @@
 // GRBM: Graphics Register Bus Management
 // ref: https://rocmdocs.amd.com/en/develop/understand/gpu_arch/mi200_performance_counters.html
 
-pub const GFX10_GRBM_INDEX: &[(&str, usize)] = &[
-    ("Graphics Pipe", 31),
-    ("Texture Pipe", 14),
-    // ("Command Processor", 29),
-    // ("Global Data Share", 15),
-    ("Shader Export", 20),
-    ("Shader Processor Interpolator", 22),
-    ("Primitive Assembly", 25),
-    ("Depth Block", 26),
-    ("Color Block", 30),
-    ("Geometry Engine", 21),
-];
-
-pub const GRBM_INDEX: &[(&str, usize)] = &[
+pub(crate) const GRBM_INDEX: &[(&str, usize)] = &[
     ("Graphics Pipe", 31),
     ("Texture Pipe", 14),
     // ("Command Processor", 29),
@@ -29,7 +16,20 @@ pub const GRBM_INDEX: &[(&str, usize)] = &[
     ("Work Distributor", 21),
 ];
 
-pub const GRBM2_INDEX: &[(&str, usize)] = &[
+pub(crate) const GFX10_GRBM_INDEX: &[(&str, usize)] = &[
+    ("Graphics Pipe", 31),
+    ("Texture Pipe", 14),
+    // ("Command Processor", 29),
+    // ("Global Data Share", 15),
+    ("Shader Export", 20),
+    ("Shader Processor Interpolator", 22),
+    ("Primitive Assembly", 25),
+    ("Depth Block", 26),
+    ("Color Block", 30),
+    ("Geometry Engine", 21),
+];
+
+pub(crate) const GRBM2_INDEX: &[(&str, usize)] = &[
     ("RunList Controller", 24),
     ("Texture Cache", 25),
     // ("Texture Cache Resident", 26),
@@ -38,7 +38,7 @@ pub const GRBM2_INDEX: &[(&str, usize)] = &[
     ("Command Processor - Graphics", 30),
 ];
 
-pub const GFX9_GRBM2_INDEX: &[(&str, usize)] = &[
+pub(crate) const GFX9_GRBM2_INDEX: &[(&str, usize)] = &[
     ("RunList Controller", 24),
     ("Texture Cache", 25),
     // ("Texture Cache Resident", 26),
@@ -51,9 +51,22 @@ pub const GFX9_GRBM2_INDEX: &[(&str, usize)] = &[
     // ("CPAXI_BUSY", 31),
 ];
 
-pub const GFX10_GRBM2_INDEX: &[(&str, usize)] = &[
+pub(crate) const GFX10_GRBM2_INDEX: &[(&str, usize)] = &[
     ("RunList Controller", 24),
     // ("TCP_BUSY", 25), // TCP, Texture Cache Private?, Pipe?
+    ("Unified Translation Cache Level-2", 15), // UTCL2
+    ("Efficiency Arbiter", 16), // EA
+    ("Render Backend Memory Interface", 17), // RMI
+    ("SDMA", 21),
+    ("Command Processor -  Fetcher", 28), // CPF
+    ("Command Processor -  Compute", 29), // CPC
+    ("Command Processor - Graphics", 30), // CPG
+    // ("CPAXI_BUSY", 31),
+];
+
+pub(crate) const GFX10_3_GRBM2_INDEX: &[(&str, usize)] = &[
+    ("RunList Controller", 26),
+    // ("TCP_BUSY", 27), // TCP, Texture Cache Private?, Pipe?
     ("Unified Translation Cache Level-2", 15), // UTCL2
     ("Efficiency Arbiter", 16), // EA
     ("Render Backend Memory Interface", 17), // RMI
