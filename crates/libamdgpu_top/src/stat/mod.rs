@@ -77,6 +77,18 @@ pub(crate) const GFX10_3_GRBM2_INDEX: &[(&str, usize)] = &[
     // ("CPAXI_BUSY", 31),
 ];
 
+pub(crate) const GFX12_GRBM2_INDEX: &[(&str, usize)] = &[
+    ("RunList Controller", 26),
+    // ("TCP_BUSY", 27), // TCP, Texture Cache Private?, Pipe?
+    ("Unified Translation Cache Level-2", 15), // UTCL2
+    ("Efficiency Arbiter", 16), // EA
+    ("SDMA", 21),
+    ("Command Processor -  Fetcher", 28), // CPF
+    ("Command Processor -  Compute", 29), // CPC
+    ("Command Processor - Graphics", 30), // CPG
+    // ("CPAXI_BUSY", 31),
+];
+
 mod perf_counter;
 pub use perf_counter::*;
 

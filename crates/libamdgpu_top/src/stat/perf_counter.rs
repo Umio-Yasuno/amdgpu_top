@@ -31,7 +31,9 @@ impl PerfCounter {
                 }
             },
             PCType::GRBM2 => {
-                if CHIP_CLASS::GFX10_3 <= chip_class {
+                if CHIP_CLASS::GFX12 <= chip_class {
+                    stat::GFX12_GRBM2_INDEX
+                } else if CHIP_CLASS::GFX10_3 <= chip_class {
                     stat::GFX10_3_GRBM2_INDEX
                 } else if CHIP_CLASS::GFX10 <= chip_class {
                     stat::GFX10_GRBM2_INDEX
