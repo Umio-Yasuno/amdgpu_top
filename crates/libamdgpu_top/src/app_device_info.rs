@@ -79,8 +79,11 @@ impl AppDeviceInfo {
         let gfx_target_version = ext_info.get_gfx_target_version().map(|v| v.to_string());
 
         let ecc_memory = RasErrorCount::get_from_sysfs_with_ras_block(&sysfs_path, RasBlock::UMC).is_ok();
-        let has_npu = is_apu
-            && (asic_name == ASIC_NAME::CHIP_GFX1103_R1 || asic_name >= ASIC_NAME::CHIP_GFX1150);
+        let has_npu = is_apu && match asic_name {
+            ASIC_NAME::CHIP_GFX1103_R1 |
+            ASIC_NAME::CHIP_GFX1103_R1X => true,
+            _ => asic_name >= ASIC_NAME::CHIP_GFX1150,
+        };
 
         Self {
             ext_info: *ext_info,
