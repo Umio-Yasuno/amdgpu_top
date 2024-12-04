@@ -133,7 +133,9 @@ Work_Distributor = Work Distributor
 
 ## GRBM2
 RunList_Controller = RunList Controller
+Ring_List_Controller = Ring List Controller
 Texture_Cache = Texture Cache
+Texture_Cache_per_Pipe = Texture Cache per Pipe
 Unified_Translation_Cache_Level-2 = Unified Translation Cache Level-2
 Efficiency_Arbiter = Efficiency Arbiter
 Render_Backend_Memory_Interface = Render Backend Memory Interface
