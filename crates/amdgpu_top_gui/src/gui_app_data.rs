@@ -26,6 +26,7 @@ pub struct HistoryData {
     pub gfx_activity: History<u16>,
     pub umc_activity: History<u16>,
     pub media_activity: History<u16>,
+    pub core_temp: Option<Vec<History<u16>>>,
     pub core_power_mw: Option<Vec<History<u16>>>,
 }
 
@@ -112,10 +113,15 @@ impl GuiAppData {
         let umc_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
         let media_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
 
+        let checked_core_temp = app.stat.metrics
+            .as_ref()
+            .and_then(|m| gpu_metrics_util::check_temp_array(m.get_temperature_core()));
         let checked_core_power_mw = app.stat.metrics
             .as_ref()
             .and_then(|m| gpu_metrics_util::check_power_clock_array(m.get_average_core_power()));
 
+        let core_temp =
+            checked_core_temp.map(|c| vec![History::<u16>::new(HISTORY_LENGTH, f32::INFINITY); c.len()]);
         let core_power_mw =
             checked_core_power_mw.map(|p| vec![History::<u16>::new(HISTORY_LENGTH, f32::INFINITY); p.len()]);
 
@@ -139,6 +145,7 @@ impl GuiAppData {
                 gfx_activity,
                 umc_activity,
                 media_activity,
+                core_temp,
                 core_power_mw,
             },
             vec_connector_info: libamdgpu_top::connector_info(&app.device_path),
@@ -196,6 +203,17 @@ impl GuiAppData {
         }
         if let Some(media) = self.stat.activity.media {
             self.history.media_activity.add(secs, media);
+        }
+
+        if let Some(ref mut history_core_temp) = self.history.core_temp {
+            if let Some(core_temp) = self.stat.metrics
+                .as_ref()
+                .and_then(|m| gpu_metrics_util::check_temp_array(m.get_temperature_core()))
+            {
+                for (history, v) in history_core_temp.iter_mut().zip(core_temp.iter()) {
+                    history.add(secs, *v);
+                }
+            }
         }
 
         if let Some(ref mut history_core_power_mw) = self.history.core_power_mw {

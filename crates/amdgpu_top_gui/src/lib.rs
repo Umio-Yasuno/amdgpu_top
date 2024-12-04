@@ -478,6 +478,7 @@ impl MyApp {
                         ui.add_space(SPACE);
                         collapsing(ui, &header, true, |ui| {
                             metrics.v2_ui(ui);
+                            collapsing_plot(ui, &fl!("cpu_temp_plot"), true, |ui| self.egui_core_temp_plot(ui));
                             collapsing_plot(ui, &fl!("cpu_power_plot"), true, |ui| self.egui_core_power_plot(ui));
                         });
                     },
@@ -486,6 +487,7 @@ impl MyApp {
                         ui.add_space(SPACE);
                         collapsing(ui, &header, true, |ui| {
                             metrics.v3_ui(ui);
+                            collapsing_plot(ui, &fl!("cpu_temp_plot"), true, |ui| self.egui_core_temp_plot(ui));
                             collapsing_plot(ui, &fl!("cpu_power_plot"), true, |ui| self.egui_core_power_plot(ui));
                         });
                     },

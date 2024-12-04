@@ -618,7 +618,8 @@ impl MyApp {
             format!("{:.1}s : {name} {:.0} mW", val.x, val.y)
         };
 
-        default_plot("Core Power Plot")
+        Plot::new("Core Power Plot")
+            .allow_zoom(false)
             .allow_scroll(false)
             .show_axes([false, true])
             .label_formatter(label_fmt)
@@ -631,6 +632,29 @@ impl MyApp {
             });
     }
 
+    pub fn egui_core_temp_plot(&self, ui: &mut egui::Ui) {
+        let Some(core_temp) = &self.buf_data.history.core_temp else { return };
+        let all_core_temp: Vec<Vec<[f64; 2]>> = core_temp
+            .iter()
+            .map(|history| history.iter().map(|(i, mw)| [i, mw as f64]).collect())
+            .collect();
+        let label_fmt = |name: &str, val: &PlotPoint| {
+            format!("{:.1}s : {name} {:.0} C", val.x, val.y)
+        };
+
+        Plot::new("Core Temperature Plot")
+            .allow_zoom(false)
+            .allow_scroll(false)
+            .show_axes([false, true])
+            .include_y(0.0)
+            .label_formatter(label_fmt)
+            .height(PLOT_HEIGHT)
+            .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
+            .legend(Legend::default().position(Corner::LeftTop))
+            .show(ui, |plot_ui| for (i, temp_c) in all_core_temp.into_iter().enumerate() {
+                plot_ui.line(Line::new(PlotPoints::new(temp_c)).name(format!("Core{i}")))
+            });
+    }
 }
 
 fn default_plot(id: &str) -> Plot {

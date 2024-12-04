@@ -155,6 +155,7 @@ fdinfo_plot = fdinfo Plot
 full_fdinfo_list = Full list
 xdna_fdinfo = XDNA fdinfo
 vram_plot = VRAM Plot
+cpu_temp_plot = CPU Core Temperature Plot
 cpu_power_plot = CPU Core Power Plot
 cpu = CPU
 gfx = GFX
