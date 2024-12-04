@@ -57,6 +57,9 @@ static THEME_ID: LazyLock<egui::Id> = LazyLock::new(|| {
 static SIDE_PANEL_ID: LazyLock<egui::Id> = LazyLock::new(|| {
     egui::Id::new("side_panel")
 });
+static PCI_BUS_ID: LazyLock<egui::Id> = LazyLock::new(|| {
+    egui::Id::new("pci_bus")
+});
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum GuiWgpuBackend {
@@ -120,12 +123,13 @@ pub fn run(
         .unwrap_or_else(|| {
             eprintln!("invalid PCI bus: {selected_pci_bus}");
             panic!();
-        });
+        })
+        .clone();
 
     let mut gui_app = MyApp {
         fdinfo_sort: Default::default(),
         reverse_sort: false,
-        buf_data: data.clone(),
+        buf_data: data,
         buf_vec_data: vec_data.clone(),
         arc_data: Arc::new(Mutex::new(vec_data.clone())),
         device_path_list: device_path_list.to_vec(),
@@ -261,6 +265,17 @@ pub fn run(
 
                 if let Some(s) = s {
                     gui_app.show_sidepanel = s;
+                }
+            }
+
+            {
+                let id = *PCI_BUS_ID;
+                let s: Option<String> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
+
+                if let Some(pci_bus) = s.and_then(|s| s.parse::<PCI::BUS_INFO>().ok()) {
+                    if gui_app.buf_vec_data.iter().any(|d| pci_bus == d.pci_bus) {
+                        gui_app.selected_pci_bus = pci_bus;
+                    }
                 }
             }
 
@@ -560,7 +575,23 @@ impl eframe::App for MyApp {
                     });
                 }
 
-                self.egui_device_list(ui);
+                {
+                    let pre_pci_bus = self.selected_pci_bus;
+
+                    self.egui_device_list(ui);
+
+                    if pre_pci_bus != self.selected_pci_bus {
+                        let cur_pci_bus = self.selected_pci_bus.to_string();
+
+                        ctx.data_mut(|id_map| {
+                            let v = id_map.get_persisted_mut_or_insert_with(
+                                *PCI_BUS_ID,
+                                || { cur_pci_bus.clone() },
+                            );
+                            *v = cur_pci_bus;
+                        });
+                    }
+                }
 
                 {
                     ui.separator();
