@@ -10,6 +10,7 @@ use libamdgpu_top::AMDGPU::{MetricsInfo, ThrottleStatus};
 use libamdgpu_top::stat::{
     FdInfoUsage,
     Sensors,
+    gpu_metrics_util,
 };
 
 #[derive(Clone)]
@@ -25,6 +26,7 @@ pub struct HistoryData {
     pub gfx_activity: History<u16>,
     pub umc_activity: History<u16>,
     pub media_activity: History<u16>,
+    pub core_power_mw: Option<Vec<History<u16>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -109,6 +111,14 @@ impl GuiAppData {
         let gfx_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
         let umc_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
         let media_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
+
+        let checked_core_power_mw = app.stat.metrics
+            .as_ref()
+            .and_then(|m| gpu_metrics_util::check_power_clock_array(m.get_average_core_power()));
+
+        let core_power_mw =
+            checked_core_power_mw.map(|p| vec![History::<u16>::new(HISTORY_LENGTH, f32::INFINITY); p.len()]);
+
         let xdna_device_path = app.xdna_device_path.clone();
         let xdna_fw_version = app.xdna_fw_version.clone();
 
@@ -129,6 +139,7 @@ impl GuiAppData {
                 gfx_activity,
                 umc_activity,
                 media_activity,
+                core_power_mw,
             },
             vec_connector_info: libamdgpu_top::connector_info(&app.device_path),
             xdna_device_path,
@@ -185,6 +196,17 @@ impl GuiAppData {
         }
         if let Some(media) = self.stat.activity.media {
             self.history.media_activity.add(secs, media);
+        }
+
+        if let Some(ref mut history_core_power_mw) = self.history.core_power_mw {
+            if let Some(core_power_mw) = self.stat.metrics
+                .as_ref()
+                .and_then(|m| gpu_metrics_util::check_power_clock_array(m.get_average_core_power()))
+            {
+                for (history, v) in history_core_power_mw.iter_mut().zip(core_power_mw.iter()) {
+                    history.add(secs, *v);
+                }
+            }
         }
     }
 }

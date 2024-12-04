@@ -607,6 +607,30 @@ impl MyApp {
                 plot_ui.line(media);
             });
     }
+
+    pub fn egui_core_power_plot(&self, ui: &mut egui::Ui) {
+        let Some(core_power_mw) = &self.buf_data.history.core_power_mw else { return };
+        let all_core_power_mw: Vec<Vec<[f64; 2]>> = core_power_mw
+            .iter()
+            .map(|history| history.iter().map(|(i, mw)| [i, mw as f64]).collect())
+            .collect();
+        let label_fmt = |name: &str, val: &PlotPoint| {
+            format!("{:.1}s : {name} {:.0} mW", val.x, val.y)
+        };
+
+        default_plot("Core Power Plot")
+            .allow_scroll(false)
+            .show_axes([false, true])
+            .label_formatter(label_fmt)
+            .auto_bounds([true, true].into())
+            .height(PLOT_HEIGHT)
+            .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
+            .legend(Legend::default().position(Corner::LeftTop))
+            .show(ui, |plot_ui| for (i, mw) in all_core_power_mw.into_iter().enumerate() {
+                plot_ui.line(Line::new(PlotPoints::new(mw)).name(format!("Core{i}")))
+            });
+    }
+
 }
 
 fn default_plot(id: &str) -> Plot {

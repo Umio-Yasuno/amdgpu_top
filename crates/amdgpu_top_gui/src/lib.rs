@@ -454,17 +454,25 @@ impl MyApp {
                         ui.add_space(SPACE);
                         collapsing(ui, &header, true, |ui| metrics.v1_ui(ui));
                     },
+                    /* APU */
                     GpuMetrics::V2_0(_) |
                     GpuMetrics::V2_1(_) |
                     GpuMetrics::V2_2(_) |
                     GpuMetrics::V2_3(_) |
                     GpuMetrics::V2_4(_) => {
                         ui.add_space(SPACE);
-                        collapsing(ui, &header, true, |ui| metrics.v2_ui(ui));
+                        collapsing(ui, &header, true, |ui| {
+                            metrics.v2_ui(ui);
+                            collapsing_plot(ui, &fl!("cpu_power_plot"), true, |ui| self.egui_core_power_plot(ui));
+                        });
                     },
+                    /* APU */
                     GpuMetrics::V3_0(_) => {
                         ui.add_space(SPACE);
-                        collapsing(ui, &header, true, |ui| metrics.v3_ui(ui));
+                        collapsing(ui, &header, true, |ui| {
+                            metrics.v3_ui(ui);
+                            collapsing_plot(ui, &fl!("cpu_power_plot"), true, |ui| self.egui_core_power_plot(ui));
+                        });
                     },
                     _ => {},
                 }
