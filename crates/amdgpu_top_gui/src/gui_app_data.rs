@@ -26,6 +26,10 @@ pub struct HistoryData {
     pub gfx_activity: History<u16>,
     pub umc_activity: History<u16>,
     pub media_activity: History<u16>,
+    pub vclk: History<u16>,
+    pub dclk: History<u16>,
+    pub vclk1: History<u16>,
+    pub dclk1: History<u16>,
     pub core_temp: Option<Vec<History<u16>>>,
     pub core_power_mw: Option<Vec<History<u16>>>,
 }
@@ -113,6 +117,11 @@ impl GuiAppData {
         let umc_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
         let media_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
 
+        let vclk = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let dclk = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let vclk1 = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let dclk1 = History::new(HISTORY_LENGTH, f32::INFINITY);
+
         let checked_core_temp = app.stat.metrics
             .as_ref()
             .and_then(|m| gpu_metrics_util::check_temp_array(m.get_temperature_core()));
@@ -145,6 +154,10 @@ impl GuiAppData {
                 gfx_activity,
                 umc_activity,
                 media_activity,
+                vclk,
+                dclk,
+                vclk1,
+                dclk1,
                 core_temp,
                 core_power_mw,
             },
@@ -203,6 +216,19 @@ impl GuiAppData {
         }
         if let Some(media) = self.stat.activity.media {
             self.history.media_activity.add(secs, media);
+        }
+
+        if let Some(vclk) = self.stat.metrics.as_ref().and_then(|m| m.get_current_vclk()) {
+            self.history.vclk.add(secs, vclk);
+        }
+        if let Some(dclk) = self.stat.metrics.as_ref().and_then(|m| m.get_current_dclk()) {
+            self.history.dclk.add(secs, dclk);
+        }
+        if let Some(vclk1) = self.stat.metrics.as_ref().and_then(|m| m.get_current_vclk1()) {
+            self.history.vclk1.add(secs, vclk1);
+        }
+        if let Some(dclk1) = self.stat.metrics.as_ref().and_then(|m| m.get_current_dclk1()) {
+            self.history.dclk1.add(secs, dclk1);
         }
 
         if let Some(ref mut history_core_temp) = self.history.core_temp {

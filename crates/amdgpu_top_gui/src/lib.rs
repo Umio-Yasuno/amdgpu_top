@@ -468,6 +468,7 @@ impl MyApp {
                     GpuMetrics::V1_5(_) => {
                         ui.add_space(SPACE);
                         collapsing(ui, &header, true, |ui| metrics.v1_ui(ui));
+                        collapsing_plot(ui, &fl!("vclk_dclk_plot"), true, |ui| self.egui_vclk_dclk_plot(ui));
                     },
                     /* APU */
                     GpuMetrics::V2_0(_) |
@@ -480,6 +481,7 @@ impl MyApp {
                             metrics.v2_ui(ui);
                             collapsing_plot(ui, &fl!("cpu_temp_plot"), true, |ui| self.egui_core_temp_plot(ui));
                             collapsing_plot(ui, &fl!("cpu_power_plot"), true, |ui| self.egui_core_power_plot(ui));
+                            collapsing_plot(ui, &fl!("vclk_dclk_plot"), true, |ui| self.egui_vclk_dclk_plot(ui));
                         });
                     },
                     /* APU */
@@ -489,6 +491,7 @@ impl MyApp {
                             metrics.v3_ui(ui);
                             collapsing_plot(ui, &fl!("cpu_temp_plot"), true, |ui| self.egui_core_temp_plot(ui));
                             collapsing_plot(ui, &fl!("cpu_power_plot"), true, |ui| self.egui_core_power_plot(ui));
+                            collapsing_plot(ui, &fl!("vclk_dclk_plot"), true, |ui| self.egui_vclk_dclk_plot(ui));
                         });
                     },
                     _ => {},

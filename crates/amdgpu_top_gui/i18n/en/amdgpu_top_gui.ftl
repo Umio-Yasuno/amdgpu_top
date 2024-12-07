@@ -157,6 +157,7 @@ xdna_fdinfo = XDNA fdinfo
 vram_plot = VRAM Plot
 cpu_temp_plot = CPU Core Temperature Plot
 cpu_power_plot = CPU Core Power Plot
+vclk_dclk_plot = VCLK/DCLK Plot
 cpu = CPU
 gfx = GFX
 compute = Compute

@@ -655,6 +655,41 @@ impl MyApp {
                 plot_ui.line(Line::new(PlotPoints::new(temp_c)).name(format!("Core{i}")))
             });
     }
+
+    pub fn egui_vclk_dclk_plot(&self, ui: &mut egui::Ui) {
+        let [vclk, dclk, vclk1, dclk1] = [
+            &self.buf_data.history.vclk,
+            &self.buf_data.history.dclk,
+            &self.buf_data.history.vclk1,
+            &self.buf_data.history.dclk1,
+        ].map(|history| history.iter().map(|(i, clk)| [i, clk as f64]).collect::<Vec<[f64; 2]>>());
+        let label_fmt = |name: &str, val: &PlotPoint| {
+            format!("{:.1}s : {name} {:.0} MHz", val.x, val.y)
+        };
+
+        Plot::new("VCLK/DCLK Plot")
+            .allow_zoom(false)
+            .allow_scroll(false)
+            .show_axes([false, true])
+            .include_y(0.0)
+            .label_formatter(label_fmt)
+            .height(PLOT_HEIGHT)
+            .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
+            .legend(Legend::default().position(Corner::LeftTop))
+            .show(ui, |plot_ui| {
+                for (clk, name) in [
+                    (vclk, "VCLK"),
+                    (dclk, "DCLK"),
+                    (vclk1, "VCLK1"),
+                    (dclk1, "DCLK1"),
+                ] {
+                    if !clk.is_empty() {
+                        plot_ui.line(Line::new(PlotPoints::new(clk)).name(name))
+                    }
+                }
+            });
+    }
+
 }
 
 fn default_plot(id: &str) -> Plot {
