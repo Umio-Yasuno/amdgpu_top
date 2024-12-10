@@ -41,6 +41,7 @@ fn parse_sysfs_hex<P: AsRef<Path>>(path: P) -> Option<u32> {
 }
 
 fn is_amd_signal_processing(vendor: u32, class: u32) -> bool {
+    // 0x11: Signal Processing Controller, 0x80: Other
     vendor == 0x1022 && class == 0x118000
 }
 
