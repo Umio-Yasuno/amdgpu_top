@@ -12,3 +12,4 @@ authors.workspace = true
 [dependencies]
 libamdgpu_top = { workspace = true }
 cursive = { version = "0.20", default-features = false, features = ["crossterm-backend"] }
+termsize = "0.1.9"

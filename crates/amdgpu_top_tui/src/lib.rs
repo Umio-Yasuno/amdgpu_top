@@ -54,19 +54,6 @@ impl Default for ToggleOptions {
 
 type Opt = Arc<Mutex<ToggleOptions>>;
 
-/*
-pub const TOGGLE_HELP: &str = concat!(
-    " (g)rbm g(r)bm2 (v)ram_usage (f)dinfo \n",
-    " se(n)sor (m)etrics (h)igh_freq (q)uit \n",
-    " (P): sort_by_pid (V): sort_by_vram (G): sort_by_gfx\n (M): sort_by_media (R): reverse"
-);
-*/
-pub const TOGGLE_HELP: &str = concat!(
-    " (g)rbm g(r)bm2 (v)ram_usage (f)dinfo\n se(n)sor (m)etrics (h)igh_freq (q)uit \n",
-    " (P): sort_by_pid (V): sort_by_vram (G): sort_by_gfx\n (M): sort_by_media (R): reverse \n",
-    " (T): switch theme (light/dark)",
-);
-
 pub fn run(
     title: &str,
     selected_device_path: DevicePath,

@@ -5,9 +5,17 @@ use cursive::view::SizeConstraint;
 use libamdgpu_top::AMDGPU::{GPU_INFO, MetricsInfo};
 use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling};
 
-use crate::{TOGGLE_HELP, ToggleOptions, view::*};
+use crate::{ToggleOptions, view::*};
 
 use libamdgpu_top::app::{AppAmdgpuTop, AppAmdgpuTopStat, AppOption};
+
+const WIDE_TERM_COLS: u16 = 150;
+
+pub const TOGGLE_HELP: &str = concat!(
+    " (g)rbm g(r)bm2 (v)ram_usage (f)dinfo se(n)sor (m)etrics (h)igh_freq (q)uit \n",
+    " (P): sort_by_pid (V): sort_by_vram (G): sort_by_gfx (M): sort_by_media (R): reverse \n",
+    " (T): switch theme (light/dark)",
+);
 
 #[derive(Clone)]
 pub(crate) struct AppLayout {
@@ -69,6 +77,7 @@ impl AppLayout {
         stat: &AppAmdgpuTopStat,
         xdna_device_path: &Option<DevicePath>,
     ) -> ResizedView<LinearLayout> {
+        let is_wide_term = termsize::get().map(|s| s.cols >= WIDE_TERM_COLS).unwrap_or_default();
         let mut layout = LinearLayout::vertical()
             .child(
                 Panel::new(
@@ -79,28 +88,75 @@ impl AppLayout {
             );
 
         if !self.no_pc {
-            layout.add_child(self.grbm_view.top_view(&stat.grbm, true));
-            layout.add_child(self.grbm2_view.top_view(&stat.grbm2, true));
+            let grbm_view = self.grbm_view.top_view(&stat.grbm, true);
+            let grbm2_view = self.grbm2_view.top_view(&stat.grbm2, true);
+
+            if is_wide_term {
+                layout.add_child(
+                    LinearLayout::horizontal()
+                        .child(grbm_view)
+                        .child(grbm2_view)
+                );
+            } else {
+                layout.add_child(grbm_view);
+                layout.add_child(grbm2_view);
+            }
         }
 
-        layout.add_child(self.vram_usage_view.view(&stat.vram_usage));
-        layout.add_child(self.activity_view.view(&stat.activity));
+        {
+            let vram_usage_view = self.vram_usage_view.view(&stat.vram_usage);
+            let activity_view = self.activity_view.view(&stat.activity);
+
+            if is_wide_term {
+                layout.add_child(
+                    LinearLayout::horizontal()
+                        .child(vram_usage_view)
+                        .child(activity_view)
+                );
+            } else {
+                layout.add_child(vram_usage_view);
+                layout.add_child(activity_view);
+            }
+        }
+
         layout.add_child(self.fdinfo_view.text.panel("fdinfo"));
 
-        if stat.sensors.is_some() {
-            layout.add_child(self.sensors_view.text.panel("Sensors"));
+        {
+            let sensors_view = stat.sensors.as_ref().map(|_| self.sensors_view.text.panel("Sensors"));
+            let metrics_view = stat.metrics.as_ref().map(|m| {
+                let title = match m.get_header() {
+                    Some(v) => format!("GPU Metrics v{}.{}", v.format_revision, v.content_revision),
+                    None => "GPU Metrics".to_string(),
+                };
+
+                self.gpu_metrics_view.text.panel(&title)
+            });
+
+            if is_wide_term {
+                let mut h_layout = LinearLayout::horizontal();
+
+                if let Some(sensors_view) = sensors_view {
+                    h_layout.add_child(sensors_view);
+                }
+
+                if let Some(metrics_view) = metrics_view {
+                    h_layout.add_child(metrics_view);
+                }
+
+                layout.add_child(h_layout);
+            } else {
+                if let Some(sensors_view) = sensors_view {
+                    layout.add_child(sensors_view);
+                }
+
+                if let Some(metrics_view) = metrics_view {
+                    layout.add_child(metrics_view);
+                }
+            }
         }
 
         if stat.memory_error_count.is_some() {
             layout.add_child(self.ecc_view.text.panel("ECC Error Count"));
-        }
-
-        if let Some(metrics) = &stat.metrics {
-            let title = match metrics.get_header() {
-                Some(v) => format!("GPU Metrics v{}.{}", v.format_revision, v.content_revision),
-                None => "GPU Metrics".to_string(),
-            };
-            layout.add_child(self.gpu_metrics_view.text.panel(&title));
         }
 
         if let Some(xdna_device_path) = xdna_device_path {
@@ -110,7 +166,7 @@ impl AppLayout {
 
         layout.add_child(TextView::new(TOGGLE_HELP));
 
-        ResizedView::new(SizeConstraint::Full, SizeConstraint::Full, layout)
+        ResizedView::new(SizeConstraint::Free, SizeConstraint::Full, layout)
     }
 }
 
