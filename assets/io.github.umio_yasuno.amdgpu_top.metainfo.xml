@@ -34,6 +34,28 @@
   </screenshots>
 
   <releases>
+    <release version="0.10.1" date="2024-12-14">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>Include CHIP_GFX1103_R1X (Hawk Point1) in has_npu condition</li>
+          <li>Update libdrm_amdgpu_sys, fix CHIP_CLASS check for GFX12</li>
+          <li>Add description of --xdna option</li>
+        </ul>
+        <ul>
+          <li>tui: Add new layout for wide term (150 or more columns)</li>
+        </ul>
+        <ul>
+          <li>gui: Fix "No localization for id"</li>
+          <li>gui: Add CPU Core Power Plot</li>
+          <li>gui: Add CPU Temperature Plot</li>
+          <li>gui: Add VCLK/DCLK Plot</li>
+          <li>gui: Persist selected PCI bus</li>
+        </ul>
+      </description>
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.10.1</url>
+    </release>
+
     <release version="0.10.0" date="2024-11-28">
       <description>
         <p>Changelog</p>
