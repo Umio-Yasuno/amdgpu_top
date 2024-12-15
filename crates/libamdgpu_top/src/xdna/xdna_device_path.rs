@@ -80,6 +80,10 @@ impl DevicePath {
         };
         // ref: https://github.com/amd/xdna-driver/blob/main/src/driver/doc/sysfs-driver-amd-aie
         self.device_name = std::fs::read_to_string(self.sysfs_path.join("vbnv"))
+            .map(|mut s| {
+                let _ = s.pop(); // trim '\n'
+                s
+            })
             .unwrap_or(format!("RyzenAI-npu ({device_id:#06X}:{revision_id:#04X})"));
     }
 
