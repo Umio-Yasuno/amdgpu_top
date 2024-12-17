@@ -3,7 +3,7 @@ use cursive::view::{Nameable, Scrollable};
 use cursive::{event::Key, menu, traits::With};
 use cursive::theme::{BorderStyle, Theme, Palette};
 
-use libamdgpu_top::{app::AppAmdgpuTop, DevicePath, Sampling};
+use libamdgpu_top::{app::AppAmdgpuTop, DevicePath, Sampling, UiArgs};
 use libamdgpu_top::stat::{self, FdInfoSortType, PCType};
 
 mod view;
@@ -56,17 +56,22 @@ type Opt = Arc<Mutex<ToggleOptions>>;
 
 pub fn run(
     title: &str,
-    selected_device_path: DevicePath,
-    device_path_list: &[DevicePath],
-    interval: u64,
-    no_pc: bool,
-    is_dark_mode: bool,
+    UiArgs {
+        selected_device_path,
+        device_path_list,
+        update_process_index,
+        no_pc,
+        is_dark_mode,
+        hide_fdinfo,
+        ..
+    }: UiArgs,
 ) {
+    let is_dark_mode = is_dark_mode == Some(true); // The default theme for TUI is light.
     let title = title.to_string();
-    let mut toggle_opt = ToggleOptions { is_dark_mode, ..Default::default() };
+    let mut toggle_opt = ToggleOptions { is_dark_mode, fdinfo: !hide_fdinfo, ..Default::default() };
 
     let (vec_app, suspended_devices) = AppAmdgpuTop::create_app_and_suspended_list(
-        device_path_list,
+        &device_path_list,
         &Default::default(),
     );
     let mut vec_app: Vec<_> = vec_app
@@ -88,7 +93,7 @@ pub fn run(
     toggle_opt.indexes = vec_app.iter().map(|app| app.index).collect();
 
     {
-        let mut device_paths: Vec<DevicePath> = device_path_list.to_vec();
+        let mut device_paths: Vec<DevicePath> = device_path_list;
 
         if let Some(xdna_device_path) = vec_app
             .iter()
@@ -97,7 +102,7 @@ pub fn run(
             device_paths.push(xdna_device_path.clone());
         }
 
-        stat::spawn_update_index_thread(device_paths, interval);
+        stat::spawn_update_index_thread(device_paths, update_process_index);
     }
 
     let mut siv = cursive::default();

@@ -83,6 +83,9 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 **\-\-light**, **\-\-light-mode**
 :   Set to the light mode. (TUI/GUI)
 
+**\-\-hide-fdinfo**
+:   Hide fdinfo panel and launch. (TUI)
+
 **\-\-gl**, **\-\-opengl**
 :   Use OpenGL API to the GUI backend.
 

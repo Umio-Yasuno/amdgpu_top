@@ -24,6 +24,23 @@ pub use drm_mode::*;
 mod ppfeaturemask;
 pub use ppfeaturemask::*;
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum GuiWgpuBackend {
+    Gl,
+    Vulkan,
+}
+
+#[derive(Debug, Clone)]
+pub struct UiArgs {
+    pub selected_device_path: DevicePath,
+    pub device_path_list: Vec<DevicePath>,
+    pub update_process_index: u64,
+    pub no_pc: bool,
+    pub is_dark_mode: Option<bool>, // TUI, GUI
+    pub hide_fdinfo: bool, // TUI
+    pub gui_wgpu_backend: GuiWgpuBackend,
+}
+
 pub struct Sampling {
     pub count: usize,
     pub delay: Duration,

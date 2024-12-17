@@ -18,7 +18,9 @@ use libamdgpu_top::{
     },
     AppDeviceInfo,
     DevicePath,
+    GuiWgpuBackend,
     Sampling,
+    UiArgs,
     PCI,
 };
 
@@ -61,22 +63,20 @@ static PCI_BUS_ID: LazyLock<egui::Id> = LazyLock::new(|| {
     egui::Id::new("pci_bus")
 });
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum GuiWgpuBackend {
-    Gl,
-    Vulkan,
-}
-
 pub fn run(
     app_name: &str,
     title_with_version: &str,
-    device_path_list: &[DevicePath],
-    selected_pci_bus: PCI::BUS_INFO,
-    update_process_index_interval: u64,
-    no_pc: bool,
-    is_dark_mode: Option<bool>,
-    gui_wgpu_backend: GuiWgpuBackend,
+    UiArgs {
+        selected_device_path,
+        device_path_list,
+        update_process_index,
+        no_pc,
+        is_dark_mode,
+        gui_wgpu_backend,
+        ..
+    }: UiArgs,
 ) {
+    let selected_pci_bus = selected_device_path.pci;
     let localizer = localizer();
     let requested_languages = DesktopLanguageRequester::requested_languages();
 
@@ -85,7 +85,7 @@ pub fn run(
     }
 
     let (mut vec_app, mut suspended_devices) = AppAmdgpuTop::create_app_and_suspended_list(
-        device_path_list,
+        &device_path_list,
         &Default::default(),
     );
 
@@ -104,7 +104,7 @@ pub fn run(
             device_paths.push(xdna_device_path.clone());
         }
 
-        stat::spawn_update_index_thread(device_paths, update_process_index_interval);
+        stat::spawn_update_index_thread(device_paths, update_process_index);
     }
 
     let mut vec_data: Vec<_> = vec_app.iter().map(GuiAppData::new).collect();

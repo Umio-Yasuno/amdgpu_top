@@ -1,6 +1,4 @@
-use libamdgpu_top::PCI;
-#[cfg(feature = "gui")]
-use amdgpu_top_gui::GuiWgpuBackend;
+use libamdgpu_top::{GuiWgpuBackend, PCI};
 
 pub struct MainOpt {
     pub instance: Option<usize>, // index
@@ -16,7 +14,7 @@ pub struct MainOpt {
     pub no_pc: bool,
     pub is_dark_mode: Option<bool>,
     pub decode_gpu_metrics: Option<String>,
-    #[cfg(feature = "gui")]
+    pub hide_fdinfo: bool,
     pub wgpu_backend: GuiWgpuBackend,
 }
 
@@ -36,7 +34,7 @@ impl Default for MainOpt {
             no_pc: false,
             is_dark_mode: None,
             decode_gpu_metrics: None,
-            #[cfg(feature = "gui")]
+            hide_fdinfo: false,
             wgpu_backend: GuiWgpuBackend::Gl,
         }
     }
@@ -120,6 +118,8 @@ const HELP_MSG: &str = concat!(
     "       Set to the dark mode. (TUI/GUI)\n",
     "   --light, --light-mode\n",
     "       Set to the light mode. (TUI/GUI)\n",
+    "   --hide-fdinfo\n",
+    "       Hide fdinfo panel and launch. (TUI)\n",
     "   --gl, --opengl\n",
     "       Use OpenGL API to the GUI backend.\n",
     "   --vk, --vulkan\n",
@@ -343,9 +343,8 @@ impl MainOpt {
                 "--light" | "--light-mode" => {
                     opt.is_dark_mode = Some(false);
                 },
-                #[cfg(feature = "gui")]
+                "--hide-fdinfo" => opt.hide_fdinfo = true,
                 "--gl" | "--opengl" => opt.wgpu_backend = GuiWgpuBackend::Gl,
-                #[cfg(feature = "gui")]
                 "--vk" | "--vulkan" => opt.wgpu_backend = GuiWgpuBackend::Vulkan,
                 "--xdna" => {
                     opt.dump_mode = DumpMode::Xdna;

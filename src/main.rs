@@ -1,4 +1,4 @@
-use libamdgpu_top::DevicePath;
+use libamdgpu_top::{DevicePath, UiArgs};
 
 #[cfg(feature = "gui")]
 const APP_NAME: &str = env!("CARGO_PKG_NAME");
@@ -133,36 +133,30 @@ fn main() {
         },
     }
 
+    let ui_args = UiArgs {
+        selected_device_path: device_path,
+        device_path_list,
+        update_process_index: main_opt.update_process_index,
+        no_pc: main_opt.no_pc,
+        is_dark_mode: main_opt.is_dark_mode,
+        hide_fdinfo: main_opt.hide_fdinfo,
+        gui_wgpu_backend: main_opt.wgpu_backend,
+    };
+
     match main_opt.app_mode {
         AppMode::TUI => {
             #[cfg(feature = "tui")]
             {
-                amdgpu_top_tui::run(
-                    TITLE,
-                    device_path,
-                    &device_path_list,
-                    main_opt.update_process_index,
-                    main_opt.no_pc,
-                    main_opt.is_dark_mode == Some(true), // The default theme for TUI is light.
-                )
+                amdgpu_top_tui::run(TITLE, ui_args)
             }
             #[cfg(not(feature = "tui"))]
             {
                 eprintln!("\"tui\" feature is not enabled for this build.");
-                dump_info::dump(&device_path, main_opt.opt_dump_mode);
+                dump_info::dump(&ui_args.device_path, main_opt.opt_dump_mode);
             }
         },
         #[cfg(feature = "gui")]
-        AppMode::GUI => amdgpu_top_gui::run(
-            APP_NAME,
-            TITLE,
-            &device_path_list,
-            device_path.pci,
-            main_opt.update_process_index,
-            main_opt.no_pc,
-            main_opt.is_dark_mode,
-            main_opt.wgpu_backend,
-        ),
+        AppMode::GUI => amdgpu_top_gui::run(APP_NAME, TITLE, ui_args),
         #[cfg(feature = "json")]
         AppMode::JSON => unreachable!(),
         #[cfg(feature = "json")]
@@ -189,21 +183,17 @@ fn main() {
 
             let mut j = amdgpu_top_json::JsonApp::new(
                 TITLE,
-                &device_path_list,
+                &ui_args.device_path_list,
                 main_opt.refresh_period,
-                main_opt.update_process_index,
+                ui_args.update_process_index,
                 main_opt.json_iterations,
-                main_opt.no_pc,
+                ui_args.no_pc,
             );
 
             j.run_fifo(path);
         },
         #[cfg(feature = "tui")]
-        AppMode::SMI => amdgpu_top_tui::run_smi(
-            TITLE,
-            &device_path_list,
-            main_opt.update_process_index,
-        ),
+        AppMode::SMI => amdgpu_top_tui::run_smi(TITLE, ui_args),
     }
 }
 

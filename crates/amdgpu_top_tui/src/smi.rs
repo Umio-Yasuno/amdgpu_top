@@ -4,7 +4,7 @@ use cursive::view::{Nameable, Scrollable};
 use cursive::views::{HideableView, LinearLayout, TextContent, TextView, Panel};
 
 use libamdgpu_top::AMDGPU::MetricsInfo;
-use libamdgpu_top::{stat, DevicePath, Sampling};
+use libamdgpu_top::{stat, DevicePath, Sampling, UiArgs};
 use stat::{GfxoffMonitor, GfxoffStatus, FdInfoSortType};
 
 use crate::{Text, AppTextView};
@@ -271,10 +271,17 @@ impl SuspendedSmiApp {
     }
 }
 
-pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
+pub fn run_smi(
+    title: &str,
+    UiArgs {
+        device_path_list,
+        update_process_index,
+        ..
+    }: UiArgs,
+) {
     let sample = Sampling::low();
     let (vec_app, suspended) = AppAmdgpuTop::create_app_and_suspended_list(
-        device_path_list,
+        &device_path_list,
         &Default::default(),
     );
     let mut vec_app: Vec<_> = vec_app
@@ -331,7 +338,7 @@ pub fn run_smi(title: &str, device_path_list: &[DevicePath], interval: u64) {
 
     {
         let device_paths: Vec<DevicePath> = device_path_list.to_vec();
-        stat::spawn_update_index_thread(device_paths, interval);
+        stat::spawn_update_index_thread(device_paths, update_process_index);
     }
 
     siv.add_global_callback('q', cursive::Cursive::quit);
