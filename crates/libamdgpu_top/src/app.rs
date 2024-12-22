@@ -35,12 +35,6 @@ pub struct AppAmdgpuTopStat {
     pub memory_error_count: Option<RasErrorCount>,
 }
 
-impl AppAmdgpuTopStat {
-    pub fn is_idling(&self) -> bool {
-        self.activity.gfx == Some(0)
-    }
-}
-
 pub struct AppOption {
     pub pcie_bw: bool,
 }
@@ -245,6 +239,7 @@ impl AppAmdgpuTop {
         }
         {
             let proc_len = self.stat.fdinfo.proc_usage.len();
+            let pre_activity = &self.stat.activity;
 
             // running GPU process is only "amdgpu_top"
             // TODO: those checks may not be enough
@@ -252,6 +247,7 @@ impl AppAmdgpuTop {
                 && self.amdgpu_dev.is_some()
                 && !self.no_drop_device_handle
                 && !self.device_info.is_apu
+                && pre_activity.is_all_idling()
             {
                 unsafe { ManuallyDrop::drop(&mut self.amdgpu_dev); }
                 self.amdgpu_dev = ManuallyDrop::new(None);
@@ -306,7 +302,7 @@ impl AppAmdgpuTop {
             &self.stat.metrics,
         );
 
-        self.dynamic_no_pc = self.device_info.is_apu && self.stat.is_idling();
+        self.dynamic_no_pc = self.device_info.is_apu && self.stat.activity.is_gfx_idling();
 
         if self.stat.activity.media.is_none() || self.stat.activity.media == Some(0) {
             self.stat.activity.media = self.stat.fdinfo.fold_fdinfo_usage().media.try_into().ok();

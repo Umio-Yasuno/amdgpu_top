@@ -72,4 +72,16 @@ impl GpuActivity {
 
         Self { gfx, umc, media: None }
     }
+
+    pub fn is_gfx_idling(&self) -> bool {
+        let gfx = self.gfx.unwrap_or(0);
+
+        gfx == 0
+    }
+
+    pub fn is_all_idling(&self) -> bool {
+        let [gfx, umc, media] = [self.gfx, self.umc, self.media].map(|v| v.unwrap_or(0));
+
+        gfx == 0 && umc == 0 && media == 0
+    }
 }
