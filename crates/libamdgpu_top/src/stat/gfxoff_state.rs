@@ -1,7 +1,7 @@
-/// ref: https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gfxoff
+// ref: https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gfxoff
 
-/// AMD APU/GPU exits GFXOFF state by reading the performance counter (GRBM, GRBM2),  
-/// so useful only in SMI mode.
+// AMD APU/GPU exits GFXOFF state by reading the performance counter (GRBM, GRBM2),  
+// so useful only in SMI mode.
 
 use std::io::{self, Read};
 use std::path::PathBuf;

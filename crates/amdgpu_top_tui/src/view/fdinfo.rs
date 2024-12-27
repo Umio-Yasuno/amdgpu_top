@@ -3,7 +3,7 @@ use crate::Opt;
 
 use libamdgpu_top::stat::{FdInfoStat, FdInfoSortType};
 
-/// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
+// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
 
 const PROC_NAME_LEN: usize = 16;
 const PID_MAX_LEN: usize = 7; // 2^22

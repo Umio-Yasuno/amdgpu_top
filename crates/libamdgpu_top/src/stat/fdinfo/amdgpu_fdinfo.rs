@@ -8,7 +8,7 @@ use crate::stat;
 
 const KFD_PROC_PATH: &str = "/sys/class/kfd/kfd/proc/";
 
-/// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
+// ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, PartialOrd)]
 pub struct FdInfoUsage {
