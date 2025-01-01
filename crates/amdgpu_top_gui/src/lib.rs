@@ -95,7 +95,7 @@ pub fn run(
     }
 
     {
-        let mut device_paths: Vec<DevicePath> = device_path_list.to_vec();
+        let mut device_paths: Vec<DevicePath> = device_path_list.clone();
 
         if let Some(xdna_device_path) = vec_app
             .iter()
@@ -132,7 +132,7 @@ pub fn run(
         buf_data: data,
         buf_vec_data: vec_data.clone(),
         arc_data: Arc::new(Mutex::new(vec_data.clone())),
-        device_path_list: device_path_list.to_vec(),
+        device_path_list,
         show_sidepanel: true,
         wgpu_adapter_info: None,
         rocm_version: libamdgpu_top::get_rocm_version(),
@@ -172,14 +172,12 @@ pub fn run(
 
                     std::thread::sleep(sample.delay);
                 }
-            } else {
-                std::thread::sleep(sample.to_duration());
-            }
 
-            if !no_pc {
                 for app in vec_app.iter_mut() {
                     app.update_pc_usage();
                 }
+            } else {
+                std::thread::sleep(sample.to_duration());
             }
 
             for app in vec_app.iter_mut() {
@@ -549,35 +547,41 @@ impl eframe::App for MyApp {
 
         egui::TopBottomPanel::top("menu bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                let pre_theme = ctx.theme();
+                {
+                    let pre_theme = ctx.theme();
 
-                egui::widgets::global_theme_preference_buttons(ui);
+                    egui::widgets::global_theme_preference_buttons(ui);
 
-                let cur_theme = ctx.theme();
+                    let cur_theme = ctx.theme();
 
-                if pre_theme != cur_theme {
-                    ctx.data_mut(|id_map| {
-                        let v = id_map.get_persisted_mut_or_insert_with(
-                            *THEME_ID,
-                            || { cur_theme },
-                        );
-                        *v = cur_theme;
-                    });
+                    if pre_theme != cur_theme {
+                        ctx.data_mut(|id_map| {
+                            let v = id_map.get_persisted_mut_or_insert_with(
+                                *THEME_ID,
+                                || { cur_theme },
+                            );
+                            *v = cur_theme;
+                        });
+                    }
                 }
 
-                let res = ui.toggle_value(
-                    &mut self.show_sidepanel,
-                    RichText::new(fl!("info")).font(BASE)).on_hover_text(fl!("toggle_side_panel"),
-                );
+                {
+                    let res = ui.toggle_value(
+                        &mut self.show_sidepanel,
+                        RichText::new(fl!("info"))
+                            .font(BASE))
+                            .on_hover_text(fl!("toggle_side_panel"),
+                    );
 
-                if res.changed() {
-                    ctx.data_mut(|id_map| {
-                        let v = id_map.get_persisted_mut_or_insert_with(
-                            *SIDE_PANEL_STATE_ID,
-                            || { self.show_sidepanel },
-                        );
-                        *v = self.show_sidepanel;
-                    });
+                    if res.changed() {
+                        ctx.data_mut(|id_map| {
+                            let v = id_map.get_persisted_mut_or_insert_with(
+                                *SIDE_PANEL_STATE_ID,
+                                || { self.show_sidepanel },
+                            );
+                            *v = self.show_sidepanel;
+                        });
+                    }
                 }
 
                 {
@@ -598,26 +602,20 @@ impl eframe::App for MyApp {
                     }
                 }
 
-                {
-                    ui.separator();
-                    egui::gui_zoom::zoom_menu_buttons(ui);
-                    ui.label(format!("{:>3.0}%", ui.ctx().zoom_factor() * 100.0));
-                }
+                ui.separator();
+                egui::gui_zoom::zoom_menu_buttons(ui);
+                ui.label(format!("{:>3.0}%", ui.ctx().zoom_factor() * 100.0));
 
-                {
-                    ui.separator();
-                    ui.toggle_value(
-                        &mut self.pause,
-                        RichText::new(fl!("pause")).font(BASE),
-                    );
-                }
+                ui.separator();
+                ui.toggle_value(
+                    &mut self.pause,
+                    RichText::new(fl!("pause")).font(BASE),
+                );
 
-                {
-                    ui.separator();
-                    if ui.button(RichText::new(fl!("quit") + " (Ctrl+Q)").font(SMALL)).clicked() {
-                        ctx.send_viewport_cmd(ViewportCommand::Close);
-                    };
-                }
+                ui.separator();
+                if ui.button(RichText::new(fl!("quit") + " (Ctrl+Q)").font(SMALL)).clicked() {
+                    ctx.send_viewport_cmd(ViewportCommand::Close);
+                };
             });
         });
 

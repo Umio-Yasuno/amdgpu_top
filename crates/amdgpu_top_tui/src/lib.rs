@@ -227,12 +227,10 @@ pub fn run(
 
                     std::thread::sleep(sample.delay);
                 }
+
+                selected_app.app_amdgpu_top.update_pc_usage();
             } else {
                 std::thread::sleep(sample.to_duration());
-            }
-
-            if !no_pc {
-                selected_app.app_amdgpu_top.update_pc_usage();
             }
 
             selected_app.update(&flags, &sample);

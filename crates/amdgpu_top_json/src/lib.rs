@@ -107,14 +107,12 @@ impl JsonApp {
                 }
                 std::thread::sleep(self.delay);
             }
-        } else {
-            std::thread::sleep(self.delay * 100);
-        }
 
-        if !self.no_pc {
             for device in self.vec_device_info.iter_mut() {
                 device.app.update_pc_usage();
             }
+        } else {
+            std::thread::sleep(self.delay * 100);
         }
 
         for device in self.vec_device_info.iter_mut() {
