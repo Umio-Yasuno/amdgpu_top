@@ -1,5 +1,4 @@
 use libamdgpu_top::{
-    AMDGPU::GPU_INFO,
     DevicePath,
     has_vcn,
     has_vcn_unified,
@@ -11,7 +10,6 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
 
     for device_path in list {
         let Ok(amdgpu_dev) = device_path.init() else { continue };
-        let Ok(ext_info) = amdgpu_dev.device_info() else { continue };
         let Ok(memory_info) = amdgpu_dev.memory_info() else { continue };
 
         let mut proc_index: Vec<ProcInfo> = Vec::new();
@@ -32,7 +30,7 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
         println!(
             "{} ({}), VRAM {:5}/{:5} MiB, GTT {:5}/{:5} MiB",
             device_path.pci,
-            ext_info.find_device_name_or_default(),
+            device_path.device_name,
             memory_info.vram.heap_usage >> 20,
             total_vram_mib,
             memory_info.gtt.heap_usage >> 20,
