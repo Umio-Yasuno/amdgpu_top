@@ -43,7 +43,7 @@ impl DevicePath {
     }
 
     pub fn get_device_path_list() -> Vec<Self> {
-        let amdgpu_devices = fs::read_dir("/sys/bus/pci/drivers/amdgpu").unwrap_or_else(|_| {
+        let amdgpu_devices = fs::read_dir("/sys/bus/pci/drivers/amdgpu/").unwrap_or_else(|_| {
             eprintln!("The AMDGPU driver is not loaded.");
             panic!();
         });
@@ -52,7 +52,7 @@ impl DevicePath {
             let name = v.ok()?.file_name();
 
             /* 0000:00:00.0 */
-            if name.len() < 12 { return None; }
+            if name.len() != 12 { return None; }
 
             let pci = name.into_string().ok()?.parse::<PCI::BUS_INFO>().ok()?;
 
