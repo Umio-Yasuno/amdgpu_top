@@ -174,7 +174,7 @@ impl AppAmdgpuTop {
 
         {
             let mut proc_index = arc_proc_index.lock().unwrap();
-            let all_procs = stat::get_all_processes();
+            let all_procs = stat::get_process_list();
 
             stat::update_index_by_all_proc(
                 &mut proc_index,

@@ -10,7 +10,7 @@ pub struct XdnaFdInfoUsage {
     pub active_memory: u64, // KiB
     // pub resident_memory: u64,
     // pub purgeable_memory: u64,
-    pub npu: i64, // ns
+    pub npu: i64, // ns, %
 }
 
 impl std::ops::Add for XdnaFdInfoUsage {
@@ -108,6 +108,7 @@ impl XdnaFdInfoUsage {
         pre_stat: &Self,
         interval: &Duration,
     ) -> Self {
+        // ns -> %
         let npu = stat::diff_usage(pre_stat.npu, self.npu, interval);
 
         Self {

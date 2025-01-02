@@ -26,7 +26,7 @@ fn get_fds<T: AsRef<Path>>(pid: i32, device_path: &[T]) -> Vec<i32> {
     }).collect()
 }
 
-pub fn get_all_processes() -> Vec<i32> {
+pub fn get_process_list() -> Vec<i32> {
     const SYSTEMD_CMDLINE: &[&str] = &[ "/lib/systemd", "/usr/lib/systemd" ];
 
     let Ok(proc_dir) = fs::read_dir("/proc") else { return Vec::new() };
@@ -80,7 +80,7 @@ pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath) {
     update_index_by_all_proc(
         vec_info,
         &[&device_path.render, &device_path.card],
-        &get_all_processes(),
+        &get_process_list(),
     );
 }
 
@@ -92,7 +92,7 @@ pub fn spawn_update_index_thread(
     let interval = Duration::from_secs(interval);
 
     std::thread::spawn(move || loop {
-        let all_proc = get_all_processes();
+        let all_proc = get_process_list();
 
         for device_path in &device_paths {
             update_index_by_all_proc(
@@ -111,17 +111,15 @@ pub fn spawn_update_index_thread(
     });
 }
 
-pub fn diff_usage(pre: i64, cur: i64, interval: &Duration) -> i64 {
-    use std::ops::Mul;
-
-    let diff_ns = if pre == 0 || cur < pre {
+// Calculate usage (%) from previous and current usage (ns)
+pub fn diff_usage(pre_usage_ns: i64, cur_usage_ns: i64, interval: &Duration) -> i64 {
+    let diff_ns = if pre_usage_ns == 0 || cur_usage_ns < pre_usage_ns {
         return 0;
     } else {
-        cur.saturating_sub(pre) as u128
+        cur_usage_ns.saturating_sub(pre_usage_ns) as u128
     };
 
-    diff_ns
-        .mul(100)
+    (diff_ns * 100)
         .checked_div(interval.as_nanos())
         .unwrap_or(0) as i64
 }

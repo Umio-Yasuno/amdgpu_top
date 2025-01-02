@@ -19,17 +19,17 @@ pub struct FdInfoUsage {
     pub amd_evicted_vram: u64, // KiB, from Linux Kernel v6.4
     pub amd_requested_vram: u64, // KiB, from Linux Kernel v6.4
     pub amd_requested_gtt: u64, // KiB, from Linux Kernel v6.4
-    pub gfx: i64,
-    pub compute: i64,
-    pub dma: i64,
-    pub dec: i64,
-    pub enc: i64,
-    pub uvd_enc: i64,
-    pub vcn_jpeg: i64,
-    pub media: i64,
-    pub total_dec: i64,
-    pub total_enc: i64,
-    pub vpe: i64,
+    pub gfx: i64, // ns, %
+    pub compute: i64, // ns, %
+    pub dma: i64, // ns, %
+    pub dec: i64, // ns, %
+    pub enc: i64, // ns, %
+    pub uvd_enc: i64, // ns, %
+    pub vcn_jpeg: i64, // ns, %
+    pub media: i64, // ns, %
+    pub total_dec: i64, // ns, %
+    pub total_enc: i64, // ns, %
+    pub vpe: i64, // ns, %
 }
 
 impl std::ops::Add for FdInfoUsage {
@@ -56,213 +56,6 @@ impl std::ops::Add for FdInfoUsage {
             vpe: self.vpe + other.vpe,
         }
     }
-}
-
-#[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd)]
-pub struct ProcUsage {
-    pub pid: i32,
-    pub name: String,
-    pub ids_count: usize,
-    pub usage: FdInfoUsage,
-    pub cpu_usage: i64, // %
-    pub is_kfd_process: bool,
-}
-
-#[derive(Clone, Default)]
-pub struct FdInfoStat {
-    pub pid_map: HashMap<i32, FdInfoUsage>,
-    pub drm_client_ids: HashSet<usize>,
-    pub proc_usage: Vec<ProcUsage>,
-    pub interval: Duration,
-    pub cpu_time_map: HashMap<i32, f32>, // sec
-    pub has_vcn: bool,
-    pub has_vcn_unified: bool,
-    pub has_vpe: bool,
-}
-
-impl FdInfoStat {
-    pub fn get_cpu_usage(&mut self, pid: i32, name: &str) -> f32 {
-        const OFFSET: usize = 3;
-        const HZ: f32 = 100.0;
-        let Ok(s) = std::fs::read_to_string(format!("/proc/{pid}/stat")) else { return 0.0 };
-        // for process names with spaces
-        let len = format!("{pid} ({name}) ").len();
-
-        let split: Vec<&str> = if let Some(s) = s.get(len..) {
-            s.split(' ').collect()
-        } else {
-            return 0.0;
-        };
-
-        // ref: https://man7.org/linux/man-pages/man5/proc.5.html
-        let [utime, stime] = [
-            split.get(14-OFFSET),
-            split.get(15-OFFSET),
-        ].map(|t| t.and_then(|tt|
-                tt.parse::<f32>().ok()
-            ).unwrap_or(0.0)
-        );
-
-        // ref: https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat
-        let total_time = (utime + stime) / HZ; // sec = (tick + tick) / HZ
-
-        if let Some(pre_cpu_time) = self.cpu_time_map.get_mut(&pid) {
-            let tmp = total_time - *pre_cpu_time;
-            *pre_cpu_time = total_time;
-
-            tmp * 100.0 / self.interval.as_secs_f32()
-        } else {
-            self.cpu_time_map.insert(pid, total_time);
-
-            0.0
-        }
-    }
-
-    pub fn get_proc_usage(&mut self, proc_info: &ProcInfo) {
-        let pid = proc_info.pid;
-        let name = &proc_info.name;
-        let mut stat = FdInfoUsage::default();
-        let mut buf = String::new();
-        let mut ids_count = 0usize;
-
-        for fd in &proc_info.fds {
-            buf.clear();
-
-            {
-                let path = format!("/proc/{pid}/fdinfo/{fd}");
-                let Ok(mut f) = fs::File::open(&path) else { continue };
-                if f.read_to_string(&mut buf).is_err() { continue }
-            }
-
-            let mut lines = buf.lines().skip_while(|l| !l.starts_with("drm-client-id"));
-            if let Some(id) = lines.next().and_then(FdInfoUsage::id_parse) {
-                ids_count += 1;
-                if !self.drm_client_ids.insert(id) { continue }
-            } else {
-                continue;
-            }
-
-            for l in lines {
-                let Some(s) = l.get(0..10) else { continue };
-
-                match s {
-                    "drm-memory" => stat.mem_usage_parse(l),
-                    "drm-engine" => stat.engine_parse(l),
-                    "amd-evicte" => stat.evicted_vram_parse(l),
-                    "amd-reques" => stat.requested_vram_parse(l),
-                    _ => {},
-                }
-            }
-        }
-
-        let diff = if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
-            let tmp = stat.calc_usage(pre_stat, &self.interval, self.has_vcn, self.has_vcn_unified);
-            *pre_stat = stat;
-
-            tmp
-        } else {
-            let [
-                vram_usage,
-                gtt_usage,
-                system_cpu_memory_usage,
-                amd_evicted_vram,
-                amd_requested_vram,
-                amd_requested_gtt,
-            ] = [
-                stat.vram_usage,
-                stat.gtt_usage,
-                stat.system_cpu_memory_usage,
-                stat.amd_evicted_vram,
-                stat.amd_requested_vram,
-                stat.amd_requested_gtt,
-            ];
-
-            self.pid_map.insert(pid, stat);
-
-            FdInfoUsage {
-                vram_usage,
-                gtt_usage,
-                system_cpu_memory_usage,
-                amd_evicted_vram,
-                amd_requested_vram,
-                amd_requested_gtt,
-                ..Default::default()
-            }
-        };
-
-        let cpu_usage = self.get_cpu_usage(pid, name);
-        let is_kfd_process = Path::new(KFD_PROC_PATH).join(pid.to_string()).exists();
-
-        self.proc_usage.push(ProcUsage {
-            pid,
-            name: name.to_string(),
-            ids_count,
-            usage: diff,
-            cpu_usage: cpu_usage as i64,
-            is_kfd_process,
-        });
-    }
-
-    pub fn get_all_proc_usage(&mut self, proc_index: &[ProcInfo]) {
-        self.proc_usage.clear();
-        self.drm_client_ids.clear();
-        for pu in proc_index {
-            self.get_proc_usage(pu);
-        }
-    }
-
-    pub fn fold_fdinfo_usage(&self) -> FdInfoUsage {
-        self.proc_usage.iter().fold(FdInfoUsage::default(), |acc, pu| acc + pu.usage)
-    }
-
-    pub fn sort_proc_usage(&mut self, sort: FdInfoSortType, reverse: bool) {
-        self.proc_usage.sort_by(|a, b|
-            match (sort, reverse) {
-                (FdInfoSortType::PID, false) => b.pid.cmp(&a.pid),
-                (FdInfoSortType::PID, true) => a.pid.cmp(&b.pid),
-                (FdInfoSortType::KFD, false) => b.is_kfd_process.cmp(&a.is_kfd_process),
-                (FdInfoSortType::KFD, true) => a.is_kfd_process.cmp(&b.is_kfd_process),
-                (FdInfoSortType::VRAM, false) => b.usage.vram_usage.cmp(&a.usage.vram_usage),
-                (FdInfoSortType::VRAM, true) => a.usage.vram_usage.cmp(&b.usage.vram_usage),
-                (FdInfoSortType::GTT, false) => b.usage.gtt_usage.cmp(&a.usage.gtt_usage),
-                (FdInfoSortType::GTT, true) => a.usage.gtt_usage.cmp(&b.usage.gtt_usage),
-                (FdInfoSortType::CPU, false) => b.cpu_usage.cmp(&a.cpu_usage),
-                (FdInfoSortType::CPU, true) => a.cpu_usage.cmp(&b.cpu_usage),
-                (FdInfoSortType::GFX, false) => b.usage.gfx.cmp(&a.usage.gfx),
-                (FdInfoSortType::GFX, true) => a.usage.gfx.cmp(&b.usage.gfx),
-                (FdInfoSortType::Compute, false) => b.usage.gfx.cmp(&a.usage.compute),
-                (FdInfoSortType::Compute, true) => a.usage.gfx.cmp(&b.usage.compute),
-                (FdInfoSortType::DMA, false) => b.usage.gfx.cmp(&a.usage.dma),
-                (FdInfoSortType::DMA, true) => a.usage.gfx.cmp(&b.usage.dma),
-                (FdInfoSortType::Decode, false) => b.usage.total_dec.cmp(&a.usage.total_dec),
-                (FdInfoSortType::Decode, true) => a.usage.total_dec.cmp(&b.usage.total_dec),
-                (FdInfoSortType::Encode, false) => b.usage.total_enc.cmp(&a.usage.total_enc),
-                (FdInfoSortType::Encode, true) => a.usage.total_enc.cmp(&b.usage.total_enc),
-                (FdInfoSortType::MediaEngine, false) => b.usage.media.cmp(&a.usage.media),
-                (FdInfoSortType::MediaEngine, true) => a.usage.media.cmp(&b.usage.media),
-                (FdInfoSortType::VPE, false) => b.usage.media.cmp(&a.usage.vpe),
-                (FdInfoSortType::VPE, true) => a.usage.media.cmp(&b.usage.vpe),
-            }
-        );
-    }
-}
-
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-#[allow(clippy::upper_case_acronyms)]
-pub enum FdInfoSortType {
-    PID,
-    KFD,
-    #[default]
-    VRAM,
-    GTT,
-    CPU,
-    GFX,
-    Compute,
-    DMA, // SDMA, System DMA Engine
-    Decode,
-    Encode,
-    MediaEngine,
-    VPE, // Video Processing Engine
 }
 
 impl FdInfoUsage {
@@ -442,5 +235,169 @@ impl FdInfoUsage {
             total_enc,
             vpe,
         }
+    }
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd)]
+pub struct ProcUsage {
+    pub pid: i32,
+    pub name: String,
+    pub ids_count: usize,
+    pub usage: FdInfoUsage,
+    pub cpu_usage: i64, // %
+    pub is_kfd_process: bool,
+}
+
+#[derive(Clone, Default)]
+pub struct FdInfoStat {
+    pub pid_map: HashMap<i32, FdInfoUsage>,
+    pub drm_client_ids: HashSet<usize>,
+    pub proc_usage: Vec<ProcUsage>,
+    pub interval: Duration,
+    pub cpu_time_map: HashMap<i32, f32>, // sec
+    pub has_vcn: bool,
+    pub has_vcn_unified: bool,
+    pub has_vpe: bool,
+}
+
+impl FdInfoStat {
+    pub fn get_cpu_usage(&mut self, pid: i32, name: &str) -> f32 {
+        const OFFSET: usize = 3;
+        const HZ: f32 = 100.0;
+        let Ok(s) = std::fs::read_to_string(format!("/proc/{pid}/stat")) else { return 0.0 };
+        // for process names with spaces
+        let len = format!("{pid} ({name}) ").len();
+
+        let split: Vec<&str> = if let Some(s) = s.get(len..) {
+            s.split(' ').collect()
+        } else {
+            return 0.0;
+        };
+
+        // ref: https://man7.org/linux/man-pages/man5/proc.5.html
+        let [utime, stime] = [
+            split.get(14-OFFSET),
+            split.get(15-OFFSET),
+        ].map(|t| t.and_then(|tt|
+                tt.parse::<f32>().ok()
+            ).unwrap_or(0.0)
+        );
+
+        // ref: https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat
+        let total_time = (utime + stime) / HZ; // sec = (tick + tick) / HZ
+
+        if let Some(pre_cpu_time) = self.cpu_time_map.get_mut(&pid) {
+            let tmp = total_time - *pre_cpu_time;
+            *pre_cpu_time = total_time;
+
+            tmp * 100.0 / self.interval.as_secs_f32()
+        } else {
+            self.cpu_time_map.insert(pid, total_time);
+
+            0.0
+        }
+    }
+
+    pub fn get_proc_usage(&mut self, proc_info: &ProcInfo) {
+        let pid = proc_info.pid;
+        let mut stat = FdInfoUsage::default();
+        let mut buf = String::new();
+        let mut ids_count = 0usize;
+
+        for fd in &proc_info.fds {
+            buf.clear();
+
+            {
+                let path = format!("/proc/{pid}/fdinfo/{fd}");
+                let Ok(mut f) = fs::File::open(&path) else { continue };
+                if f.read_to_string(&mut buf).is_err() { continue }
+            }
+
+            let mut lines = buf.lines().skip_while(|l| !l.starts_with("drm-client-id"));
+            if let Some(id) = lines.next().and_then(FdInfoUsage::id_parse) {
+                ids_count += 1;
+                if !self.drm_client_ids.insert(id) { continue }
+            } else {
+                continue;
+            }
+
+            for l in lines {
+                let Some(s) = l.get(0..10) else { continue };
+
+                match s {
+                    "drm-memory" => stat.mem_usage_parse(l),
+                    "drm-engine" => stat.engine_parse(l),
+                    "amd-evicte" => stat.evicted_vram_parse(l),
+                    "amd-reques" => stat.requested_vram_parse(l),
+                    _ => {},
+                }
+            }
+        }
+
+        let usage = if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
+            // ns -> %
+            let usage_per = stat.calc_usage(
+                pre_stat,
+                &self.interval,
+                self.has_vcn,
+                self.has_vcn_unified,
+            );
+            *pre_stat = stat;
+
+            usage_per
+        } else {
+            let [
+                vram_usage,
+                gtt_usage,
+                system_cpu_memory_usage,
+                amd_evicted_vram,
+                amd_requested_vram,
+                amd_requested_gtt,
+            ] = [
+                stat.vram_usage,
+                stat.gtt_usage,
+                stat.system_cpu_memory_usage,
+                stat.amd_evicted_vram,
+                stat.amd_requested_vram,
+                stat.amd_requested_gtt,
+            ];
+
+            self.pid_map.insert(pid, stat);
+
+            FdInfoUsage {
+                vram_usage,
+                gtt_usage,
+                system_cpu_memory_usage,
+                amd_evicted_vram,
+                amd_requested_vram,
+                amd_requested_gtt,
+                ..Default::default()
+            }
+        };
+
+        let name = proc_info.name.clone();
+        let cpu_usage = self.get_cpu_usage(pid, &name) as i64;
+        let is_kfd_process = Path::new(KFD_PROC_PATH).join(pid.to_string()).exists();
+
+        self.proc_usage.push(ProcUsage {
+            pid,
+            name,
+            ids_count,
+            usage,
+            cpu_usage,
+            is_kfd_process,
+        });
+    }
+
+    pub fn get_all_proc_usage(&mut self, proc_index: &[ProcInfo]) {
+        self.proc_usage.clear();
+        self.drm_client_ids.clear();
+        for pu in proc_index {
+            self.get_proc_usage(pu);
+        }
+    }
+
+    pub fn fold_fdinfo_usage(&self) -> FdInfoUsage {
+        self.proc_usage.iter().fold(FdInfoUsage::default(), |acc, pu| acc + pu.usage)
     }
 }

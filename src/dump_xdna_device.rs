@@ -19,7 +19,7 @@ pub fn dump_xdna_device() {
     stat::update_index_by_all_proc(
         &mut xdna_proc_index,
         &[&xdna_device.render, &xdna_device.card],
-        &stat::get_all_processes(),
+        &stat::get_process_list(),
     );
 
     let mut xdna_fdinfo = xdna::XdnaFdInfoStat::default();
