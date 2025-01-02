@@ -301,7 +301,7 @@ impl FdInfoStat {
     pub fn get_proc_usage(&mut self, proc_info: &ProcInfo) {
         let pid = proc_info.pid;
         let mut stat = FdInfoUsage::default();
-        let mut buf = String::new();
+        let mut buf = String::with_capacity(2048);
         let mut ids_count = 0usize;
 
         for fd in &proc_info.fds {

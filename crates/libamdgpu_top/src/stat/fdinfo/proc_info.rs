@@ -1,6 +1,7 @@
+use std::io::Read;
 use std::fs;
 use std::time::Duration;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use crate::DevicePath;
 
 #[derive(Debug, Default, Clone)]
@@ -10,16 +11,21 @@ pub struct ProcInfo {
     pub fds: Vec<i32>,
 }
 
-fn get_fds<T: AsRef<Path>>(pid: i32, device_path: &[T]) -> Vec<i32> {
-    let Ok(fd_list) = fs::read_dir(format!("/proc/{pid}/fd/")) else { return Vec::new() };
+fn get_fds<T: AsRef<Path>>(fd_dir_path: &mut PathBuf, device_path: &[T]) -> Vec<i32> {
+    let Ok(fd_list) = fs::read_dir(&fd_dir_path) else { return Vec::new() };
 
-    fd_list.filter_map(|fd_link| {
-        let dir_entry = fd_link.map(|fd_link| fd_link.path()).ok()?;
-        let link = fs::read_link(&dir_entry).ok()?;
+    fd_list.filter_map(|dir_entry| {
+        let fd = dir_entry.ok()?.file_name();
+        let link = {
+            fd_dir_path.push(fd.clone());
+            let link = fs::read_link(&fd_dir_path).ok()?;
+            fd_dir_path.pop();
+            link
+        };
 
         // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
         if device_path.iter().any(|path| link.starts_with(path)) {
-            dir_entry.file_name()?.to_str()?.parse::<i32>().ok()
+            fd.to_str()?.parse::<i32>().ok()
         } else {
             None
         }
@@ -27,9 +33,10 @@ fn get_fds<T: AsRef<Path>>(pid: i32, device_path: &[T]) -> Vec<i32> {
 }
 
 pub fn get_process_list() -> Vec<i32> {
-    const SYSTEMD_CMDLINE: &[&str] = &[ "/lib/systemd", "/usr/lib/systemd" ];
+    const SYSTEMD_CMDLINE: &[&[u8]] = &[ b"/lib/systemd", b"/usr/lib/systemd" ];
 
     let Ok(proc_dir) = fs::read_dir("/proc") else { return Vec::new() };
+    let mut buf_cmdline = [0u8; 16];
 
     proc_dir.filter_map(|dir_entry| {
         let dir_entry = dir_entry.ok()?;
@@ -44,8 +51,11 @@ pub fn get_process_list() -> Vec<i32> {
         // filter systemd processes from fdinfo target
         // gnome-shell share the AMDGPU driver context with systemd processes
         {
-            let cmdline = fs::read_to_string(format!("/proc/{pid}/cmdline")).ok()?;
-            if SYSTEMD_CMDLINE.iter().any(|path| cmdline.starts_with(path)) {
+            buf_cmdline = Default::default();
+            let mut f = fs::File::open(format!("/proc/{pid}/cmdline")).ok()?;
+            f.read_exact(&mut buf_cmdline).ok()?;
+
+            if SYSTEMD_CMDLINE.iter().any(|path| buf_cmdline.starts_with(path)) {
                 return None;
             }
         }
@@ -61,16 +71,30 @@ pub fn update_index_by_all_proc<T: AsRef<Path>>(
 ) {
     vec_info.clear();
 
+    let mut buf_path = PathBuf::with_capacity(32);
+    let mut buf_name = String::with_capacity(16);
+
     for p in all_proc {
+        buf_path.clear();
+        buf_name.clear();
+
         let pid = *p;
-        let fds = get_fds(pid, device_path);
+
+        buf_path.push("/proc");
+        buf_path.push(pid.to_string());
+
+        let fds = get_fds(&mut buf_path.join("fd/"), device_path);
 
         if fds.is_empty() { continue }
 
+        buf_path.push("comm");
+
         // Maximum 16 characters
         // https://www.kernel.org/doc/html/latest/filesystems/proc.html#proc-pid-comm-proc-pid-task-tid-comm
-        let Ok(mut name) = fs::read_to_string(format!("/proc/{pid}/comm")) else { continue };
-        name.pop(); // trim '\n'
+        let Ok(mut f) = fs::File::open(&buf_path) else { continue };
+        if f.read_to_string(&mut buf_name).is_err() { continue }
+        buf_name.pop(); // trim '\n'
+        let name = buf_name.clone();
 
         vec_info.push(ProcInfo { pid, name, fds });
     }
