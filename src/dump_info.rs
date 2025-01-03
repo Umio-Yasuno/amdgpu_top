@@ -102,12 +102,15 @@ pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
     }
 
     if let OptDumpMode::GpuMetrics = opt_dump_mode {
-        if let Ok(m) = amdgpu_dev.get_gpu_metrics() {
+        if let Ok(m) = GpuMetrics::get_from_sysfs_path(&device_path.sysfs_path) {
             println!("\nGPU Metrics: {m:#?}");
         } else {
             println!("\nGPU Metrics: Not Supported");
         }
-    } else if let Some(h) = amdgpu_dev.get_gpu_metrics().ok().and_then(|m| m.get_header()) {
+    } else if let Some(h) = GpuMetrics::get_from_sysfs_path(&device_path.sysfs_path)
+        .ok()
+        .and_then(|m| m.get_header())
+    {
         println!("\nGPU Metrics Version: v{}.{}", h.format_revision, h.content_revision);
     }
 

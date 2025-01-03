@@ -123,7 +123,7 @@ impl AppAmdgpuTop {
         let memory_error_count = RasErrorCount::get_from_sysfs_with_ras_block(&sysfs_path, RasBlock::UMC).ok();
 
         let sensors = Sensors::new(&amdgpu_dev, &pci_bus, &ext_info);
-        let metrics = amdgpu_dev.get_gpu_metrics_from_sysfs_path(&sysfs_path).ok();
+        let metrics = GpuMetrics::get_from_sysfs_path(&device_path.sysfs_path).ok();
         let activity = GpuActivity::get(&sysfs_path, asic_name);
 
         let arc_pcie_bw = if opt.pcie_bw {

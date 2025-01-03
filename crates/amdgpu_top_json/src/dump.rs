@@ -2,6 +2,7 @@ use libamdgpu_top::{
     AMDGPU::{
         VIDEO_CAPS::CODEC,
         GPU_INFO,
+        GpuMetrics,
     },
     app::AppAmdgpuTop,
     DevicePath,
@@ -26,8 +27,7 @@ pub fn drm_info_json(device_path_list: &[DevicePath]) {
 
 pub fn gpu_metrics_json(_title: &str, device_path_list: &[DevicePath]) {
     let vec_metrics_json: Vec<Value> = device_path_list.iter().filter_map(|device_path| {
-        let amdgpu_dev = device_path.init().ok()?;
-        let metrics = amdgpu_dev.get_gpu_metrics().ok()?.json();
+        let metrics = GpuMetrics::get_from_sysfs_path(&device_path.sysfs_path).ok()?.json();
 
         Some(json!({
             "device_path": device_path.json(),
