@@ -263,25 +263,15 @@ pub struct FdInfoStat {
 impl FdInfoStat {
     pub fn get_cpu_usage(&mut self, pid: i32, name: &str) -> f32 {
         const OFFSET: usize = 3;
+        // ref: https://manpages.org/proc/5
+        const UTIME: usize = 14 - OFFSET;
         const HZ: f32 = 100.0;
         let Ok(s) = std::fs::read_to_string(format!("/proc/{pid}/stat")) else { return 0.0 };
         // for process names with spaces
-        let len = format!("{pid} ({name}) ").len();
-
-        let split: Vec<&str> = if let Some(s) = s.get(len..) {
-            s.split(' ').collect()
-        } else {
-            return 0.0;
-        };
-
-        // ref: https://man7.org/linux/man-pages/man5/proc.5.html
-        let [utime, stime] = [
-            split.get(14-OFFSET),
-            split.get(15-OFFSET),
-        ].map(|t| t.and_then(|tt|
-                tt.parse::<f32>().ok()
-            ).unwrap_or(0.0)
-        );
+        let s = s.trim_start_matches(&format!("{pid} ({name}) "));
+        let mut split = s.split(' ').skip(UTIME);
+        let [utime, stime] = [split.next(), split.next()]
+            .map(|t| t.and_then(|tt| tt.parse::<f32>().ok()).unwrap_or(0.0));
 
         // ref: https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat
         let total_time = (utime + stime) / HZ; // sec = (tick + tick) / HZ
@@ -290,7 +280,7 @@ impl FdInfoStat {
             let tmp = total_time - *pre_cpu_time;
             *pre_cpu_time = total_time;
 
-            tmp * 100.0 / self.interval.as_secs_f32()
+            (tmp * 100.0 / self.interval.as_secs_f32()).ceil()
         } else {
             self.cpu_time_map.insert(pid, total_time);
 
