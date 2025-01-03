@@ -7,8 +7,13 @@ edition.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+default = []
+libdrm_link = ["libdrm_amdgpu_sys/link_drm"]
+libdrm_dynamic_loading = ["libdrm_amdgpu_sys/dynamic_loading"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anyhow = { version = "1.0" }
-libdrm_amdgpu_sys = { version = "0.7.7", git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs" }
+libdrm_amdgpu_sys = { version = "0.8.0", git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs", default-features = false }
