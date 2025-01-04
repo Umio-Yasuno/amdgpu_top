@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context};
 use crate::{
+    LibDrmAmdgpu,
     AMDGPU::{
         self,
         DeviceHandle,
@@ -15,6 +16,7 @@ use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct DevicePath {
+    pub libdrm_amdgpu: Option<LibDrmAmdgpu>,
     pub render: PathBuf,
     pub card: PathBuf,
     pub pci: PCI::BUS_INFO,
@@ -30,11 +32,15 @@ impl DevicePath {
         let (amdgpu_dev, _major, _minor) = {
             use std::os::unix::io::IntoRawFd;
 
+            let libdrm_amdgpu = self.libdrm_amdgpu
+                .as_ref()
+                .ok_or("Error loading libdrm.so and libdrm_amdgpu.so")
+                .map_err(|v| anyhow!(v))?;
             // need write option for GUI context
             // https://gitlab.freedesktop.org/mesa/mesa/-/issues/2424
             let f = fs::OpenOptions::new().read(true).write(true).open(&self.render)?;
 
-            DeviceHandle::init(f.into_raw_fd())
+            libdrm_amdgpu.init_device_handle(f.into_raw_fd())
                 .map_err(|v| anyhow!(v))
                 .context("Failed to DeviceHandle::init")?
         };
@@ -43,6 +49,7 @@ impl DevicePath {
     }
 
     pub fn get_device_path_list() -> Vec<Self> {
+        let libdrm_amdgpu = LibDrmAmdgpu::new().ok();
         let amdgpu_devices = fs::read_dir("/sys/bus/pci/drivers/amdgpu/").unwrap_or_else(|_| {
             eprintln!("The AMDGPU driver is not loaded.");
             panic!();
@@ -58,6 +65,7 @@ impl DevicePath {
 
             Self::try_from(pci).ok()
                 .map(|mut v| {
+                    v.libdrm_amdgpu = libdrm_amdgpu.clone();
                     v.fill_amdgpu_device_name();
                     v
                 })
@@ -128,6 +136,7 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
         let arc_proc_index = Arc::new(Mutex::new(Vec::new()));
 
         Ok(Self {
+            libdrm_amdgpu: None,
             render,
             card,
             pci,
