@@ -12,6 +12,8 @@ const NPU_LABEL: &str = "NPU";
 use crate::AppTextView;
 
 impl AppTextView {
+    // pub const XDNA_FDINFO_TITLE: &str = "XDNA fdinfo";
+
     pub fn print_xdna_fdinfo(
         &mut self,
         stat: &mut XdnaFdInfoStat,
@@ -59,4 +61,11 @@ impl AppTextView {
 
         Ok(())
     }
+/*
+    pub fn xdna_fdinfo_name(index: usize) -> String {
+        format!("{} {index}", Self::XDNA_FDINFO_TITLE)
+    }
+*/
+    // TODO: cb
+    // No one has tested the functionality for XDNA
 }
