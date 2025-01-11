@@ -81,6 +81,7 @@ impl VramUsageView {
 
     pub fn cb(siv: &mut cursive::Cursive) {
         use crate::{toggle_view, Opt};
+        use cursive::views::LinearLayout;
 
         let indexes = {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
@@ -91,7 +92,7 @@ impl VramUsageView {
 
         for i in &indexes {
             let name = Self::vram_view_name(*i);
-            siv.call_on_name(&name, toggle_view);
+            siv.call_on_name(&name, toggle_view::<LinearLayout>);
         }
     }
 }

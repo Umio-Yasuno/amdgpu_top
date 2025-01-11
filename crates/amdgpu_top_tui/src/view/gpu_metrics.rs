@@ -1,5 +1,4 @@
 use std::fmt::{self, Write};
-use crate::Opt;
 use libamdgpu_top::AMDGPU::{GpuMetrics, MetricsInfo};
 use libamdgpu_top::stat::{gpu_metrics_util::*, GpuActivity};
 
@@ -12,6 +11,8 @@ const L3_TEMP_LABEL: &str = "L3 Cache Temp (C)";
 const L3_CLOCK_LABEL: &str = "L3 Cache Clock (MHz)";
 
 impl AppTextView {
+    pub const GPU_METRICS_TITLE: &str = "GPU Metrics";
+
     pub fn print_gpu_metrics(&mut self, metrics: &GpuMetrics) -> Result<(), fmt::Error> {
         self.text.clear();
 
@@ -401,11 +402,24 @@ impl AppTextView {
         Ok(())
     }
 
+    pub fn gpu_metrics_name(index: usize) -> String {
+        format!("{} {index}", Self::GPU_METRICS_TITLE)
+    }
 
     pub fn cb_gpu_metrics(siv: &mut cursive::Cursive) {
-        {
+        use crate::{toggle_view, Opt};
+        use cursive::views::TextView;
+
+        let indexes = {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.gpu_metrics ^= true;
+
+            opt.indexes.clone()
+        };
+
+        for i in &indexes {
+            let name = Self::gpu_metrics_name(*i);
+            siv.call_on_name(&name, toggle_view::<TextView>);
         }
     }
 }

@@ -80,6 +80,7 @@ pub fn pc_view_name(pc_type: PCType, index: usize) -> String {
 
 pub fn pc_type_cb(pc_type: PCType) -> impl Fn(&mut cursive::Cursive) {
     use crate::{toggle_view, ToggleOptions, Opt};
+    use cursive::views::LinearLayout;
 
     let toggle = match pc_type {
         PCType::GRBM => |opt: &mut ToggleOptions| {
@@ -102,7 +103,7 @@ pub fn pc_type_cb(pc_type: PCType) -> impl Fn(&mut cursive::Cursive) {
 
         for i in &indexes {
             let name = pc_view_name(pc_type, *i);
-            siv.call_on_name(&name, toggle_view);
+            siv.call_on_name(&name, toggle_view::<LinearLayout>);
         }
     }
 }

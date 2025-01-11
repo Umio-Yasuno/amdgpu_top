@@ -25,6 +25,8 @@ const KFD_LABEL: &str = "KFD";
 use crate::AppTextView;
 
 impl AppTextView {
+    pub const FDINFO_TITLE: &str = "fdinfo";
+
     pub fn print_fdinfo(
         &mut self,
         stat: &mut FdInfoStat,
@@ -104,10 +106,24 @@ impl AppTextView {
         Ok(())
     }
 
+    pub fn fdinfo_name(index: usize) -> String {
+        format!("{} {index}", Self::FDINFO_TITLE)
+    }
+
     pub fn cb(siv: &mut cursive::Cursive) {
-        {
+        use crate::{toggle_view, Opt};
+        use cursive::views::TextView;
+
+        let indexes = {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.fdinfo ^= true;
+
+            opt.indexes.clone()
+        };
+
+        for i in &indexes {
+            let name = Self::fdinfo_name(*i);
+            siv.call_on_name(&name, toggle_view::<TextView>);
         }
     }
 

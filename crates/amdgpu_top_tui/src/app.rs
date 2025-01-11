@@ -20,7 +20,7 @@ pub const TOGGLE_HELP: &str = concat!(
 #[derive(Clone)]
 pub(crate) struct AppLayout {
     pub no_pc: bool,
-    // pub index: usize,
+    pub index: usize,
     pub grbm_view: PerfCounterView,
     pub grbm2_view: PerfCounterView,
     pub vram_usage_view: VramUsageView,
@@ -36,6 +36,7 @@ impl AppLayout {
     pub fn new(no_pc: bool, index: usize) -> Self {
         Self {
             no_pc,
+            index,
             grbm_view: PerfCounterView::reserve(index),
             grbm2_view: PerfCounterView::reserve(index),
             vram_usage_view: VramUsageView::new(index),
@@ -58,6 +59,7 @@ impl AppLayout {
 
         Self {
             no_pc,
+            index,
             grbm_view,
             grbm2_view,
             vram_usage_view: VramUsageView::new(index),
@@ -119,17 +121,21 @@ impl AppLayout {
             }
         }
 
-        layout.add_child(self.fdinfo_view.text.panel("fdinfo"));
+        layout.add_child(self.fdinfo_view.text.hideable_panel(AppTextView::FDINFO_TITLE, true, self.index));
 
         {
-            let sensors_view = stat.sensors.as_ref().map(|_| self.sensors_view.text.panel("Sensors"));
+            let sensors_view = stat.sensors.as_ref().map(|_| self.sensors_view.text.hideable_panel("Sensors", true, self.index));
             let metrics_view = stat.metrics.as_ref().map(|m| {
                 let title = match m.get_header() {
                     Some(v) => format!("GPU Metrics v{}.{}", v.format_revision, v.content_revision),
                     None => "GPU Metrics".to_string(),
                 };
 
-                self.gpu_metrics_view.text.panel(&title)
+                self.gpu_metrics_view.text.hideable_panel_with_name(
+                    &title,
+                    true,
+                    AppTextView::gpu_metrics_name(self.index),
+                )
             });
 
             if is_wide_term {
@@ -156,12 +162,12 @@ impl AppLayout {
         }
 
         if stat.memory_error_count.is_some() {
-            layout.add_child(self.ecc_view.text.panel("ECC Error Count"));
+            layout.add_child(self.ecc_view.text.hideable_panel("ECC Error Count", true, self.index));
         }
 
         if let Some(xdna_device_path) = xdna_device_path {
             let title = format!("XDNA fdinfo - {}", xdna_device_path.device_name);
-            layout.add_child(self.xdna_fdinfo_view.text.panel(&title));
+            layout.add_child(self.xdna_fdinfo_view.text.hideable_panel(&title, true, self.index));
         }
 
         layout.add_child(TextView::new(TOGGLE_HELP));
@@ -244,15 +250,11 @@ impl TuiApp {
     pub fn update(&mut self, flags: &ToggleOptions, sample: &Sampling) {
         self.app_amdgpu_top.update(sample.to_duration());
 
-        if flags.fdinfo {
-            let _ = self.layout.fdinfo_view.print_fdinfo(
-                &mut self.app_amdgpu_top.stat.fdinfo,
-                flags.fdinfo_sort,
-                flags.reverse_sort,
-            );
-        } else {
-            self.layout.fdinfo_view.text.clear();
-        }
+        let _ = self.layout.fdinfo_view.print_fdinfo(
+            &mut self.app_amdgpu_top.stat.fdinfo,
+            flags.fdinfo_sort,
+            flags.reverse_sort,
+        );
 
         if self.app_amdgpu_top.xdna_device_path.is_some() {
             let _ = self.layout.xdna_fdinfo_view.print_xdna_fdinfo(&mut self.app_amdgpu_top.stat.xdna_fdinfo);
@@ -261,35 +263,25 @@ impl TuiApp {
         self.layout.vram_usage_view.set_value(&self.app_amdgpu_top.stat.vram_usage);
         self.layout.activity_view.set_value(&self.app_amdgpu_top.stat.activity);
 
-        if flags.sensor {
-            if let Some(ref sensors) = &self.app_amdgpu_top.stat.sensors {
-                let _ = self.layout.sensors_view.print_sensors(sensors);
-            }
+        if let Some(ref sensors) = &self.app_amdgpu_top.stat.sensors {
+            let _ = self.layout.sensors_view.print_sensors(sensors);
+        }
 
-            {
-                if let Some(arc_pcie_bw) = &self.app_amdgpu_top.stat.arc_pcie_bw {
-                    let lock = arc_pcie_bw.try_lock();
-                    if let Ok(pcie_bw) = &lock {
-                        let _ = self.layout.sensors_view.print_pcie_bw(pcie_bw);
-                    }
+        {
+            if let Some(arc_pcie_bw) = &self.app_amdgpu_top.stat.arc_pcie_bw {
+                let lock = arc_pcie_bw.try_lock();
+                if let Ok(pcie_bw) = &lock {
+                    let _ = self.layout.sensors_view.print_pcie_bw(pcie_bw);
                 }
             }
-        } else {
-            self.layout.sensors_view.text.clear();
         }
 
         if let Some(ecc) = &self.app_amdgpu_top.stat.memory_error_count {
             let _ = self.layout.ecc_view.print_memory_error_count(ecc);
         }
 
-        if flags.gpu_metrics {
-            if let Some(metrics) = &self.app_amdgpu_top.stat.metrics {
-                let _ = self.layout.gpu_metrics_view.print_gpu_metrics(metrics);
-            } else {
-                self.layout.gpu_metrics_view.text.clear();
-            }
-        } else {
-            self.layout.gpu_metrics_view.text.clear();
+        if let Some(metrics) = &self.app_amdgpu_top.stat.metrics {
+            let _ = self.layout.gpu_metrics_view.print_gpu_metrics(metrics);
         }
 
         if !self.no_pc {

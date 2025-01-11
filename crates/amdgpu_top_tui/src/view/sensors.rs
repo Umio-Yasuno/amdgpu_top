@@ -1,6 +1,5 @@
 use super::PANEL_WIDTH;
 use std::fmt::{self, Write};
-use crate::Opt;
 
 use libamdgpu_top::stat::{Sensors, PcieBw};
 
@@ -9,6 +8,8 @@ const WIDTH: usize = PANEL_WIDTH / 2;
 use crate::AppTextView;
 
 impl AppTextView {
+    pub const SENSORS_TITLE: &str = "Sensors";
+
     pub fn print_sensors(&mut self, sensors: &Sensors) -> Result<(), fmt::Error> {
         const NAME_LEN: usize = 10;
         const VAL_LEN: usize = 5;
@@ -123,10 +124,24 @@ impl AppTextView {
         Ok(())
     }
 
+    pub fn sensors_name(index: usize) -> String {
+        format!("{} {index}", Self::SENSORS_TITLE)
+    }
+
     pub fn cb_sensors(siv: &mut cursive::Cursive) {
-        {
+        use crate::{toggle_view, Opt};
+        use cursive::views::TextView;
+
+        let indexes = {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.sensor ^= true;
+
+            opt.indexes.clone()
+        };
+
+        for i in &indexes {
+            let name = Self::sensors_name(*i);
+            siv.call_on_name(&name, toggle_view::<TextView>);
         }
     }
 }
