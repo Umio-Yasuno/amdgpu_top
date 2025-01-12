@@ -12,9 +12,10 @@ use libamdgpu_top::app::{AppAmdgpuTop, AppAmdgpuTopStat, AppOption};
 const WIDE_TERM_COLS: u16 = 150;
 
 pub const TOGGLE_HELP: &str = concat!(
-    " (g)rbm g(r)bm2 (v)ram_usage (f)dinfo se(n)sor (m)etrics (h)igh_freq (q)uit \n",
-    " (P): sort_by_pid (V): sort_by_vram (G): sort_by_gfx (M): sort_by_media (R): reverse \n",
-    " (T): switch theme (light/dark)",
+    " (g)rbm g(r)bm2 (v)ram_usage (a)ctivity (f)dinfo se(n)sor (m)etrics \n",
+    " (P): sort_by_pid (V): sort_by_vram (G): sort_by_gfx (M): sort_by_media \n",
+    " (R): reverse sort (T): switch theme (light/dark) \n",
+    " (h)igh_freq (q)uit \n",
 );
 
 #[derive(Clone)]
