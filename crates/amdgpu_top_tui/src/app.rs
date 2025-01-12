@@ -91,8 +91,8 @@ impl AppLayout {
             );
 
         if !self.no_pc {
-            let grbm_view = self.grbm_view.top_view(&stat.grbm, true);
-            let grbm2_view = self.grbm2_view.top_view(&stat.grbm2, true);
+            let grbm_view = self.grbm_view.resized_panel(&stat.grbm);
+            let grbm2_view = self.grbm2_view.resized_panel(&stat.grbm2);
 
             if is_wide_term {
                 layout.add_child(
@@ -107,8 +107,8 @@ impl AppLayout {
         }
 
         {
-            let vram_usage_view = self.vram_usage_view.view(&stat.vram_usage);
-            let activity_view = self.activity_view.view(&stat.activity);
+            let vram_usage_view = self.vram_usage_view.resized_panel(&stat.vram_usage);
+            let activity_view = self.activity_view.resized_panel(&stat.activity);
 
             if is_wide_term {
                 layout.add_child(
@@ -122,19 +122,18 @@ impl AppLayout {
             }
         }
 
-        layout.add_child(self.fdinfo_view.text.hideable_panel(AppTextView::FDINFO_TITLE, true, self.index));
+        layout.add_child(self.fdinfo_view.text.resized_panel(AppTextView::FDINFO_TITLE, self.index));
 
         {
-            let sensors_view = stat.sensors.as_ref().map(|_| self.sensors_view.text.hideable_panel("Sensors", true, self.index));
+            let sensors_view = stat.sensors.as_ref().map(|_| self.sensors_view.text.resized_panel("Sensors", self.index));
             let metrics_view = stat.metrics.as_ref().map(|m| {
                 let title = match m.get_header() {
                     Some(v) => format!("GPU Metrics v{}.{}", v.format_revision, v.content_revision),
                     None => "GPU Metrics".to_string(),
                 };
 
-                self.gpu_metrics_view.text.hideable_panel_with_name(
+                self.gpu_metrics_view.text.resized_panel_with_name(
                     &title,
-                    true,
                     AppTextView::gpu_metrics_name(self.index),
                 )
             });
@@ -163,12 +162,12 @@ impl AppLayout {
         }
 
         if stat.memory_error_count.is_some() {
-            layout.add_child(self.ecc_view.text.hideable_panel("ECC Error Count", true, self.index));
+            layout.add_child(self.ecc_view.text.resized_panel("ECC Error Count", self.index));
         }
 
         if let Some(xdna_device_path) = xdna_device_path {
             let title = format!("XDNA fdinfo - {}", xdna_device_path.device_name);
-            layout.add_child(self.xdna_fdinfo_view.text.hideable_panel(&title, true, self.index));
+            layout.add_child(self.xdna_fdinfo_view.text.resized_panel(&title, self.index));
         }
 
         layout.add_child(TextView::new(TOGGLE_HELP));

@@ -1,18 +1,18 @@
 use cursive::views::{
     FixedLayout,
-    HideableView,
     LinearLayout,
     Panel,
     ProgressBar,
+    ResizedView,
     TextView,
 };
-use cursive::view::Nameable;
+use cursive::view::{Nameable, SizeConstraint};
 use cursive::utils::Counter;
 use cursive::Rect;
 use cursive::align::HAlign;
 
 use libamdgpu_top::stat::{PCType, PerfCounter};
-use super::{PANEL_WIDTH, PC_BAR_WIDTH, TopView};
+use super::{PANEL_WIDTH, PC_BAR_WIDTH, ResizedPanel};
 
 #[derive(Clone, Debug)]
 pub struct PerfCounterView {
@@ -33,7 +33,7 @@ impl PerfCounterView {
         Self { counters, index }
     }
 
-    pub fn top_view(&self, pc: &PerfCounter, visible: bool) -> TopView {
+    pub fn resized_panel(&self, pc: &PerfCounter) -> ResizedPanel {
         const LEFT_LEN: usize = PANEL_WIDTH - PC_BAR_WIDTH;
 
         let title = pc.pc_type.to_string();
@@ -58,13 +58,15 @@ impl PerfCounterView {
             );
         }
 
-        Panel::new(
-            HideableView::new(sub_layout)
-                .visible(visible)
-                .with_name(pc_view_name(pc.pc_type, self.index))
-        )
-        .title(title)
-        .title_position(HAlign::Left)
+        let panel = Panel::new(sub_layout)
+            .title(title)
+            .title_position(HAlign::Left);
+
+        ResizedView::new(
+            SizeConstraint::Free,
+            SizeConstraint::Free,
+            panel,
+        ).with_name(pc_view_name(pc.pc_type, self.index))
     }
 
     pub fn set_value(&self, pc: &PerfCounter) {
@@ -79,31 +81,38 @@ pub fn pc_view_name(pc_type: PCType, index: usize) -> String {
 }
 
 pub fn pc_type_cb(pc_type: PCType) -> impl Fn(&mut cursive::Cursive) {
-    use crate::{toggle_view, ToggleOptions, Opt};
+    use crate::{set_min_height, set_visible_height, ToggleOptions, Opt};
     use cursive::views::LinearLayout;
 
     let toggle = match pc_type {
-        PCType::GRBM => |opt: &mut ToggleOptions| {
+        PCType::GRBM => |opt: &mut ToggleOptions| -> bool {
             opt.grbm ^= true;
+            opt.grbm
         },
         PCType::GRBM2 => |opt: &mut ToggleOptions| {
             opt.grbm2 ^= true;
+            opt.grbm2
         },
     };
 
     move |siv: &mut cursive::Cursive| {
+        let visible;
         let indexes = {
             let opt = siv.user_data::<Opt>().unwrap();
             let mut opt = opt.lock().unwrap();
 
-            toggle(&mut opt);
+            visible = toggle(&mut opt);
 
             opt.indexes.clone()
         };
 
         for i in &indexes {
             let name = pc_view_name(pc_type, *i);
-            siv.call_on_name(&name, toggle_view::<LinearLayout>);
+            if visible {
+                siv.call_on_name(&name, set_visible_height::<LinearLayout>);
+            } else {
+                siv.call_on_name(&name, set_min_height::<LinearLayout>);
+            }
         }
     }
 }

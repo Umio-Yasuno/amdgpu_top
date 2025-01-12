@@ -129,19 +129,26 @@ impl AppTextView {
     }
 
     pub fn cb_sensors(siv: &mut cursive::Cursive) {
-        use crate::{toggle_view, Opt};
+        use crate::{set_min_height, set_visible_height, Opt};
         use cursive::views::TextView;
 
+        let visible;
         let indexes = {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.sensor ^= true;
+
+            visible = opt.sensor;
 
             opt.indexes.clone()
         };
 
         for i in &indexes {
             let name = Self::sensors_name(*i);
-            siv.call_on_name(&name, toggle_view::<TextView>);
+            if visible {
+                siv.call_on_name(&name, set_visible_height::<TextView>);
+            } else {
+                siv.call_on_name(&name, set_min_height::<TextView>);
+            }
         }
     }
 }

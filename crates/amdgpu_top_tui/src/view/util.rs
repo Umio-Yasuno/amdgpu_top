@@ -1,13 +1,13 @@
 use cursive::View;
 use cursive::align::HAlign;
-use cursive::view::Nameable;
+use cursive::view::{Nameable, SizeConstraint};
 use cursive::views::{
-    HideableView,
     LinearLayout,
     NamedView,
     TextContent,
     TextView,
-    Panel
+    Panel,
+    ResizedView,
 };
 
 #[derive(Clone)]
@@ -25,32 +25,30 @@ impl Text {
         self.content.set_content(&self.buf);
     }
 
-    pub fn hideable_panel(
+    pub fn resized_panel(
         &self,
         title: &str,
-        visible: bool,
         index: usize,
-    ) -> Panel<NamedView<HideableView<TextView>>> {
-        self.hideable_panel_with_name(title, visible, format!("{title} {index}"))
+    ) -> NamedView<ResizedView<Panel<TextView>>> {
+        self.resized_panel_with_name(title, format!("{title} {index}"))
     }
 
-    pub fn hideable_panel_with_name(
+    pub fn resized_panel_with_name(
         &self,
         title: &str,
-        visible: bool,
         name: String,
-    ) -> Panel<NamedView<HideableView<TextView>>> {
+    ) -> NamedView<ResizedView<Panel<TextView>>> {
         let v = TextView::new_with_content(self.content.clone()).no_wrap();
+        let panel = Panel::new(v)
+            .title(title)
+            .title_position(HAlign::Left);
 
-        Panel::new(
-            HideableView::new(v)
-                .visible(visible)
-                .with_name(name)
-        )
-        .title(title)
-        .title_position(HAlign::Left)
+        ResizedView::new(
+            SizeConstraint::Free,
+            SizeConstraint::Free,
+            panel,
+        ).with_name(name)
     }
-
 }
 
 impl Default for Text {
@@ -62,8 +60,12 @@ impl Default for Text {
     }
 }
 
-pub type TopView = Panel<NamedView<HideableView<LinearLayout>>>;
+pub type ResizedPanel = NamedView<ResizedView<Panel<LinearLayout>>>;
 
-pub fn toggle_view<V: View>(view: &mut HideableView<V>) {
-    view.set_visible(!view.is_visible());
+pub fn set_visible_height<V: View>(view: &mut ResizedView<Panel<V>>) {
+    view.set_height(SizeConstraint::Free);
+}
+
+pub fn set_min_height<V: View>(view: &mut ResizedView<Panel<V>>) {
+    view.set_height(SizeConstraint::Fixed(1));
 }

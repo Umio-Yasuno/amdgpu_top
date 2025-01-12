@@ -1,16 +1,16 @@
 use cursive::views::{
     FixedLayout,
-    HideableView,
     LinearLayout,
     Panel,
     ProgressBar,
+    ResizedView,
     TextView,
 };
-use cursive::view::Nameable;
+use cursive::view::{Nameable, SizeConstraint};
 use cursive::utils::Counter;
 use cursive::Rect;
 use cursive::align::HAlign;
-use super::{PANEL_WIDTH, VRAM_LABEL_WIDTH, TopView};
+use super::{PANEL_WIDTH, VRAM_LABEL_WIDTH, ResizedPanel};
 use libamdgpu_top::VramUsage;
 
 const TITLE: &str = "Memory Usage";
@@ -31,7 +31,7 @@ impl VramUsageView {
         }
     }
 
-    pub fn view(&self, usage: &VramUsage) -> TopView {
+    pub fn resized_panel(&self, usage: &VramUsage) -> ResizedPanel {
         const BAR_WIDTH: usize = PANEL_WIDTH / 2 - VRAM_LABEL_WIDTH;
 
         let title = TITLE.to_string();
@@ -62,12 +62,15 @@ impl VramUsageView {
             );
         }
 
-        Panel::new(
-            HideableView::new(sub_layout)
-                .with_name(Self::vram_view_name(self.index))
-        )
-        .title(title)
-        .title_position(HAlign::Left)
+        let panel = Panel::new(sub_layout)
+            .title(title)
+            .title_position(HAlign::Left);
+
+        ResizedView::new(
+            SizeConstraint::Free,
+            SizeConstraint::Free,
+            panel,
+        ).with_name(Self::vram_view_name(self.index))
     }
 
     pub fn set_value(&self, usage: &VramUsage) {
@@ -80,19 +83,26 @@ impl VramUsageView {
     }
 
     pub fn cb(siv: &mut cursive::Cursive) {
-        use crate::{toggle_view, Opt};
+        use crate::{set_min_height, set_visible_height, Opt};
         use cursive::views::LinearLayout;
 
+        let visible;
         let indexes = {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
             opt.vram ^= true;
+
+            visible = opt.vram;
 
             opt.indexes.clone()
         };
 
         for i in &indexes {
             let name = Self::vram_view_name(*i);
-            siv.call_on_name(&name, toggle_view::<LinearLayout>);
+            if visible {
+                siv.call_on_name(&name, set_visible_height::<LinearLayout>);
+            } else {
+                siv.call_on_name(&name, set_min_height::<LinearLayout>);
+            }
         }
     }
 }
