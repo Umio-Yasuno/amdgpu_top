@@ -110,7 +110,7 @@ impl AppTextView {
         format!("{} {index}", Self::FDINFO_TITLE)
     }
 
-    pub fn cb(siv: &mut cursive::Cursive) {
+    pub fn cb_fdinfo(siv: &mut cursive::Cursive) {
         use crate::{toggle_view, Opt};
         use cursive::views::TextView;
 

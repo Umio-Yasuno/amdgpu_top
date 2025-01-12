@@ -176,7 +176,7 @@ pub fn run(
         }
         siv.add_global_callback('v', VramUsageView::cb);
         siv.add_global_callback('a', ActivityView::cb);
-        siv.add_global_callback('f', AppTextView::cb);
+        siv.add_global_callback('f', AppTextView::cb_fdinfo);
         siv.add_global_callback('R', AppTextView::cb_reverse_sort);
         siv.add_global_callback('P', AppTextView::cb_sort_by_pid);
         siv.add_global_callback('V', AppTextView::cb_sort_by_vram);
@@ -201,6 +201,10 @@ pub fn run(
             siv.set_theme(if is_dark_mode { dark_mode() } else { Theme::default() });
         });
         siv.add_global_callback(Key::Esc, |siv| siv.select_menubar());
+    }
+
+    if hide_fdinfo {
+        AppTextView::cb_fdinfo(&mut siv);
     }
 
     let cb_sink = siv.cb_sink().clone();
