@@ -171,6 +171,13 @@ AMD Radeon Graphics (0000:08:00.0): GFX: 0%, MediaEngine: 0%, Memory: null%
 ### fdinfo description
 fdinfo for the AMDGPU driver shows hardware IP usage per process.  
 
+### VRAM
+### GTT
+Graphics Translation Tables.  
+
+### KFD
+The process of using the AMDKFD driver.  
+
 #### GFX
 GFX engine.  
 
