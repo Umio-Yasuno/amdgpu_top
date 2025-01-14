@@ -11,6 +11,7 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
    * [Options](#options)
    * [Commands for TUI](#commands-for-tui)
    * [Example of using JSON mode](#example-of-using-json-mode)
+   * [fdinfo description](#fdinfo-description)
  * [Installation](#installation)
    * [Packages](#packages)
    * [Build from source](#build-from-source)
@@ -166,6 +167,39 @@ AMD Radeon RX 6600 (0000:03:00.0): GFX: 3%, MediaEngine: 0%, Memory: 2%
 AMD Radeon Graphics (0000:08:00.0): GFX: 0%, MediaEngine: 0%, Memory: null%
 ...
 ```
+
+### fdinfo description
+fdinfo for the AMDGPU driver shows hardware IP usage per process.  
+
+#### GFX
+GFX engine.  
+
+#### Compute/COMP
+Compute engine.  
+The AMDKFD driver dose not track queues and does not show them in fdinfo.  
+
+#### DMA
+DMA/SDMA (System DMA) engine.  
+
+#### Decode/DEC
+Media decoder.  
+This is not show on RDNA 4.  
+
+#### Encode/ENC
+Media encoder.  
+This is not show on RDNA 4.  
+
+#### VCN, Media
+Media engine.  
+From VCN4, the encoding queue and decoding queue have been unified.  
+The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.  
+
+#### JPEG
+JPEG decoder.  
+
+#### VPE
+Video Processor Engine.  
+ref: <https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/amd/vpelib/README.md?ref_type=heads>  
 
 ## Installation
 ### Packages
