@@ -277,6 +277,7 @@ Please refer to [pop-os/popsicle](https://github.com/pop-os/popsicle#translators
 ### Supported Languages
  * [en](./crates/amdgpu_top_gui/i18n/en/amdgpu_top_gui.ftl)
  * [ja (partial)](./crates/amdgpu_top_gui/i18n/ja/amdgpu_top_gui.ftl)
+ * [ka](./crates/amdgpu_top_gui/i18n/ka/amdgpu_top_gui.ftl)
 
 ## Alternatives
 If `amdgpu_top` is not enough for you or you don't like it, try the following applications.
