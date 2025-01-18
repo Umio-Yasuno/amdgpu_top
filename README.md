@@ -244,6 +244,11 @@ cargo install --locked --path . --no-default-features --features="tui"
 sudo apt install libdrm-dev
 ```
 
+##### Fedora
+```
+sudo dnf install libdrm-devel
+```
+
 ## Binary Size
 
 | Features       | Size (stripped) |
