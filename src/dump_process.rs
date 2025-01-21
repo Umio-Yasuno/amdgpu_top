@@ -8,12 +8,19 @@ use libamdgpu_top::{
 pub fn dump_process(title: &str, list: &[DevicePath]) {
     println!("{title}\n");
 
+    let process_list = stat::get_process_list();
+
     for device_path in list {
         let Ok(amdgpu_dev) = device_path.init() else { continue };
         let Ok(memory_info) = amdgpu_dev.memory_info() else { continue };
 
         let mut proc_index: Vec<ProcInfo> = Vec::new();
-        stat::update_index(&mut proc_index, device_path);
+
+        stat::update_index_by_all_proc(
+            &mut proc_index,
+            &[&device_path.render, &device_path.card],
+            &process_list,
+        );
 
         let mut fdinfo = FdInfoStat {
             has_vcn: has_vcn(&amdgpu_dev),
@@ -70,5 +77,3 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
         println!();
     }
 }
-
-
