@@ -13,34 +13,38 @@ pub struct ProcInfo {
 
 fn get_fds<T: AsRef<Path>>(fd_dir_path: &mut PathBuf, device_path: &[T]) -> Vec<i32> {
     let Ok(fd_list) = fs::read_dir(&fd_dir_path) else { return Vec::new() };
+    let mut fds: Vec<i32> = Vec::with_capacity(16);
 
-    fd_list.filter_map(|dir_entry| {
-        let fd = dir_entry.ok()?.file_name();
+    for dir_entry in fd_list {
+        let Ok(dir_entry) = dir_entry else { continue };
+        let fd = dir_entry.file_name();
         let link = {
             fd_dir_path.push(fd.clone());
-            let link = fs::read_link(&fd_dir_path).ok()?;
+            let Ok(link) = fs::read_link(&fd_dir_path) else { continue };
             fd_dir_path.pop();
             link
         };
 
         // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
         if device_path.iter().any(|path| link.starts_with(path)) {
-            fd.to_str()?.parse::<i32>().ok()
-        } else {
-            None
+            if let Some(fd) = fd.to_str().and_then(|s| s.parse::<i32>().ok()) {
+                fds.push(fd);
+            }
         }
-    }).collect()
+    }
+
+    fds
 }
 
 pub fn get_process_list() -> Vec<i32> {
     const SYSTEMD_CMDLINE: &[&[u8]] = &[ b"/lib/systemd", b"/usr/lib/systemd" ];
 
     let Ok(proc_dir) = fs::read_dir("/proc") else { return Vec::new() };
-    let mut buf_cmdline = [0u8; 16];
+    let mut proc_list: Vec<i32> = Vec::with_capacity(128);
 
-    proc_dir.filter_map(|dir_entry| {
-        let dir_entry = dir_entry.ok()?;
+    fn filter_proc(dir_entry: &std::fs::DirEntry) -> Option<i32> {
         let metadata = dir_entry.metadata().ok()?;
+        let mut buf_cmdline = [0u8; 16];
 
         if !metadata.is_dir() { return None }
 
@@ -51,7 +55,6 @@ pub fn get_process_list() -> Vec<i32> {
         // filter systemd processes from fdinfo target
         // gnome-shell share the AMDGPU driver context with systemd processes
         {
-            buf_cmdline = Default::default();
             let mut f = fs::File::open(format!("/proc/{pid}/cmdline")).ok()?;
             f.read_exact(&mut buf_cmdline).ok()?;
 
@@ -61,7 +64,16 @@ pub fn get_process_list() -> Vec<i32> {
         }
 
         Some(pid)
-    }).collect()
+    }
+
+    for dir_entry in proc_dir {
+        let Ok(dir_entry) = dir_entry else { continue };
+        if let Some(pid) = filter_proc(&dir_entry) {
+            proc_list.push(pid);
+        }
+    }
+
+    proc_list
 }
 
 pub fn update_index_by_all_proc<T: AsRef<Path>>(
