@@ -25,6 +25,7 @@ pub struct DevicePath {
     pub revision_id: Option<u32>,
     pub device_name: String,
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
+    config_pm: bool,
 }
 
 impl DevicePath {
@@ -113,14 +114,12 @@ impl DevicePath {
     }
 
     pub fn check_if_device_is_active(&self) -> bool {
-        let mut path = self.sysfs_path.join("power");
-
-        // for CONFIG_PM disabled
-        if !path.exists() {
+        // for env where CONFIG_PM is disabled
+        if !self.config_pm {
             return true;
         }
 
-        path.push("runtime_status");
+        let path = self.sysfs_path.join("power/runtime_status");
         let Ok(s) = std::fs::read_to_string(path) else { return false };
 
         s.starts_with("active")
@@ -141,6 +140,7 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
         let [device_id, revision_id] = [pci.get_device_id(), pci.get_revision_id()];
         let device_name = String::new();
         let arc_proc_index = Arc::new(Mutex::new(Vec::new()));
+        let config_pm = sysfs_path.join("power").exists();
 
         Ok(Self {
             libdrm_amdgpu: None,
@@ -152,6 +152,7 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
             revision_id,
             device_name,
             arc_proc_index,
+            config_pm,
         })
     }
 }
