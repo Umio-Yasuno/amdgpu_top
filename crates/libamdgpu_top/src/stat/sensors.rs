@@ -216,11 +216,3 @@ impl Sensors {
         self.average_power.clone().or(self.input_power.clone())
     }
 }
-
-pub fn check_if_device_is_active<P: Into<PathBuf>>(sysfs_path: P) -> bool {
-    let Ok(s) = fs::read_to_string(sysfs_path.into().join("power/runtime_status")) else {
-        return false;
-    };
-
-    s.starts_with("active")
-}

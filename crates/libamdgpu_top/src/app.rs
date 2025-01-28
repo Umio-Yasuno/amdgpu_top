@@ -253,7 +253,7 @@ impl AppAmdgpuTop {
                 self.amdgpu_dev = ManuallyDrop::new(None);
             } else if proc_len > 1
                 && self.amdgpu_dev.is_none()
-                && stat::check_if_device_is_active(&self.device_info.sysfs_path)
+                && self.device_path.check_if_device_is_active()
             {
                 self.amdgpu_dev = ManuallyDrop::new(self.device_path.init().ok());
             }

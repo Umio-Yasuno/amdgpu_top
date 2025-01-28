@@ -113,7 +113,14 @@ impl DevicePath {
     }
 
     pub fn check_if_device_is_active(&self) -> bool {
-        let path = self.sysfs_path.join("power/runtime_status");
+        let mut path = self.sysfs_path.join("power");
+
+        // for CONFIG_PM disabled
+        if !path.exists() {
+            return true;
+        }
+
+        path.push("runtime_status");
         let Ok(s) = std::fs::read_to_string(path) else { return false };
 
         s.starts_with("active")
