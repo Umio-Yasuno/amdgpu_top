@@ -10,8 +10,11 @@ permissions:
 
 jobs:
   create-release:
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
     name: create-release
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Get the tag name
@@ -46,9 +49,18 @@ jobs:
       APPIMAGETOOL: tools/appimagetool
       VERSION: ${{needs.create-release.outputs.version}}
       PKG_VER: ${{needs.create-release.outputs.pkg_ver}}
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-22.04-arm]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - name: Runner Arch
+        run: |
+          # https://stackoverflow.com/questions/52996949/how-can-i-find-the-current-rust-compilers-default-llvm-target-triple
+          echo "RUSTC_HOST_ARCH=$(rustc -vV | sed -n 's|host: ||p')" >> $GITHUB_ENV
+      - name: Print Runner Arch
+        run: echo "$RUSTC_HOST_ARCH"
       - name: Check Version env
         run: |
           if [ "$PKG_VER" == "" ]; then
@@ -64,7 +76,11 @@ jobs:
       - name: Download appimagetool
         run: |
           mkdir tools
-          curl -o $APPIMAGETOOL -L -O https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
+            curl -o $APPIMAGETOOL -L -O https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          else
+            curl -o $APPIMAGETOOL -L -O https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-aarch64.AppImage
+          fi
           chmod +x $APPIMAGETOOL
       - name: Install cargo-deb
         run: mold -run cargo install cargo-deb
@@ -79,24 +95,40 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TGZ_NAME="amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-gnu.tar.gz"
-          cp ./target/release/amdgpu_top ./
-          tar czf "$TGZ_NAME" amdgpu_top
-          gh release upload "$VERSION" "$TGZ_NAME"
+          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
+            cp ./target/release/amdgpu_top ./
+            tar czf "amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-gnu.tar.gz" amdgpu_top
+            gh release upload --clobber "$VERSION" "amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-gnu.tar.gz"
+          else
+            cp ./target/release/amdgpu_top ./
+            tar czf "amdgpu_top-${{ env.PKG_VER }}-aarch64-unknown-linux-gnu.tar.gz" amdgpu_top
+            gh release upload --clobber "$VERSION" "amdgpu_top-${{ env.PKG_VER }}-aarch64-unknown-linux-gnu.tar.gz"
+          fi
+
       - name: Build Deb Package
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mold -run cargo deb -- --no-default-features --features="package"
-          gh release upload "$VERSION" ./target/debian/amdgpu-top_${{ env.PKG_VER }}-1_amd64.deb
+
+          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
+            gh release upload --clobber "$VERSION" ./target/debian/amdgpu-top_${{ env.PKG_VER }}-1_amd64.deb
+          else
+            gh release upload --clobber "$VERSION" ./target/debian/amdgpu-top_${{ env.PKG_VER }}-1_arm64.deb
+          fi
       - name: Build RPM Pakcage
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mold -run cargo generate-rpm
-          gh release upload "$VERSION" ./target/generate-rpm/amdgpu_top-${{ env.PKG_VER }}-1.x86_64.rpm
+
+          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
+            gh release upload --clobber "$VERSION" ./target/generate-rpm/amdgpu_top-${{ env.PKG_VER }}-1.x86_64.rpm
+          else
+            gh release upload --clobber "$VERSION" ./target/generate-rpm/amdgpu_top-${{ env.PKG_VER }}-1.aarch64.rpm
+          fi
       - name: Build AppImage
         shell: bash
         env:
@@ -104,13 +136,25 @@ jobs:
         run: |
           PATH=$PATH:$PWD/tools/
           mold -run cargo appimage --no-default-features --features="package"
-          cp ./target/appimage/amdgpu_top.AppImage amdgpu_top-x86_64.AppImage
-          gh release upload "$VERSION" amdgpu_top-x86_64.AppImage
+
+          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
+            cp ./target/appimage/amdgpu_top.AppImage amdgpu_top-x86_64.AppImage
+            gh release upload --clobber "$VERSION" amdgpu_top-x86_64.AppImage
+          else
+            cp ./target/appimage/amdgpu_top.AppImage amdgpu_top-aarch64.AppImage
+            gh release upload --clobber "$VERSION" amdgpu_top-aarch64.AppImage
+          fi
       - name: Build Deb Package without GUI
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mold -run cargo deb -- --no-default-features --features="tui, json"
-          mv ./target/debian/amdgpu-top{,_without_gui}_${{ env.PKG_VER }}-1_amd64.deb
-          gh release upload "$VERSION" ./target/debian/amdgpu-top_without_gui_${{ env.PKG_VER }}-1_amd64.deb
+
+          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
+            mv ./target/debian/amdgpu-top{,_without_gui}_${{ env.PKG_VER }}-1_amd64.deb
+            gh release upload --clobber "$VERSION" ./target/debian/amdgpu-top_without_gui_${{ env.PKG_VER }}-1_amd64.deb
+          else
+            mv ./target/debian/amdgpu-top{,_without_gui}_${{ env.PKG_VER }}-1_arm64.deb
+            gh release upload --clobber "$VERSION" ./target/debian/amdgpu-top_without_gui_${{ env.PKG_VER }}-1_arm64.deb
+          fi
