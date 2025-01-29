@@ -2,75 +2,61 @@
 // ref: https://github.com/amd/xdna-driver/blob/main/src/driver/amdxdna/amdxdna_pci_drv.c
 
 use std::{fs, io};
-use std::path::Path;
+use std::sync::{Arc, Mutex};
+use std::path::PathBuf;
 use crate::{DevicePath, PCI};
 
-/*
-const DRIVER_NAME_1: &str = "/sys/bus/pci/drivers/amdxdna_accel_driver";
+pub fn find_xdna_device() -> Option<DevicePath> {
+    let [accel, sysfs_path] = find_accel_path_and_sysfs_path()?;
+    let pci: PCI::BUS_INFO = sysfs_path.file_name()?.to_str()?.parse().ok()?;
+    let render = PathBuf::new();
+    let card = PathBuf::new();
+    let [device_id, revision_id] = [pci.get_device_id(), pci.get_revision_id()];
+    let device_name = String::new();
+    let arc_proc_index = Arc::new(Mutex::new(Vec::new()));
+    let config_pm = sysfs_path.join("power").exists();
 
-pub fn get_xdna_device_path() -> Option<DevicePath> {
-    fs::read_dir(DRIVER_NAME_1).ok()?.find_map(|v| {
-        let name = v.ok()?.file_name();
-
-        /* 0000:00:00.0 */
-        if name.len() < 12 { return None; }
-
-        let pci: PCI::BUS_INFO = name.into_string().ok()?.parse().ok()?;
-
-        DevicePath::try_from(pci).ok()
-    }).map(|mut v| {
-        v.fill_xdna_device_name();
-        v
+    Some(DevicePath {
+        libdrm_amdgpu: None,
+        render,
+        card,
+        accel,
+        pci,
+        sysfs_path,
+        device_id,
+        revision_id,
+        device_name,
+        arc_proc_index,
+        config_pm,
     })
 }
-*/
 
-const PCI_DEVICES_DIR: &str = "/sys/bus/pci/devices";
-const VENDOR_AMD: u32 = 0x1022;
-const VENDOR_ATI: u32 = 0x1002;
-const XDNA_NPU3_DEVICES: &[(u32, u32)] = &[
-    /* (vendor, device) */
-    (VENDOR_AMD, 0x1569),
-    (VENDOR_ATI, 0x1640),
-];
 
-fn parse_sysfs_hex<P: AsRef<Path>>(path: P) -> Option<u32> {
-    let s = fs::read_to_string(path.as_ref()).ok()?;
+fn find_accel_path_and_sysfs_path() -> Option<[PathBuf; 2]> {
+    const ACCEL_MAJOR: usize = 261;
+    const MAX_MINOR: usize = 64;
 
-    u32::from_str_radix(s.get(2..s.len()-1)?, 16).ok()
-}
+    for i in 0..MAX_MINOR {
+        let accel_path = PathBuf::from(format!("/dev/accel/accel{i}"));
+        // let sysfs_path = PathBuf::from(format!("/sys/class/accel/accel{i}"));
 
-fn is_amd_signal_processing(vendor: u32, class: u32) -> bool {
-    // 0x11: Signal Processing Controller, 0x80: Other
-    vendor == 0x1022 && class == 0x118000
-}
-
-pub fn find_xdna_device() -> Option<DevicePath> {
-    fs::read_dir(PCI_DEVICES_DIR).ok()?.find_map(|dir_entry| {
-        let path = dir_entry.ok()?.path();
-
-        {
-            let vendor = parse_sysfs_hex(path.join("vendor"))?;
-
-            if !&[VENDOR_AMD, VENDOR_ATI].contains(&vendor) {
-                return None;
-            }
-
-            let device = parse_sysfs_hex(path.join("device"))?;
-            let class = parse_sysfs_hex(path.join("class"))?;
-
-            if !XDNA_NPU3_DEVICES.contains(&(vendor, device)) && !is_amd_signal_processing(vendor, class) {
-                return None;
-            }
+        if !accel_path.exists() {
+            continue;
         }
 
-        let pci: PCI::BUS_INFO = path.file_name()?.to_str()?.parse().ok()?;
+        // ref: https://github.com/intel/linux-npu-driver/blob/93fb54b9d42e7f0f6590f9134aaac92bbf226909/umd/vpu_driver/source/os_interface/vpu_driver_api.cpp#L357
+        let sysfs_path = PathBuf::from(format!("/sys/dev/char/{ACCEL_MAJOR}:{i}/device/"));
+        let sysfs_path = fs::canonicalize(sysfs_path).ok()?;
+        let device_type_path = sysfs_path.join("device_type");
+        let vbnv_path = sysfs_path.join("vbnv");
 
-        DevicePath::try_from(pci).ok()
-    }).map(|mut v| {
-        v.fill_xdna_device_name();
-        v
-    })
+        // ref: https://github.com/amd/xdna-driver/blob/main/src/shim/pcidrv.cpp
+        if device_type_path.exists() && vbnv_path.exists() {
+            return Some([accel_path, sysfs_path]);
+        }
+    }
+
+    None
 }
 
 impl DevicePath {
@@ -85,6 +71,12 @@ impl DevicePath {
                 s
             })
             .unwrap_or(format!("RyzenAI-npu ({device_id:#06X}:{revision_id:#04X})"));
+    }
+
+    pub fn is_xdna(&self) -> bool {
+        self.render.as_os_str().is_empty()
+        && self.card.as_os_str().is_empty()
+        && !self.accel.as_os_str().is_empty()
     }
 
     pub fn get_xdna_fw_version(&self) -> io::Result<String> {

@@ -19,13 +19,14 @@ pub struct DevicePath {
     pub libdrm_amdgpu: Option<LibDrmAmdgpu>,
     pub render: PathBuf,
     pub card: PathBuf,
+    pub accel: PathBuf,
     pub pci: PCI::BUS_INFO,
     pub sysfs_path: PathBuf,
     pub device_id: Option<u32>,
     pub revision_id: Option<u32>,
     pub device_name: String,
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
-    config_pm: bool,
+    pub config_pm: bool,
 }
 
 impl DevicePath {
@@ -128,6 +129,12 @@ impl DevicePath {
     pub fn menu_entry(&self) -> String {
         format!("{} ({})", self.device_name, self.pci)
     }
+
+    pub fn is_amdgpu(&self) -> bool {
+        !self.render.as_os_str().is_empty()
+        && !self.card.as_os_str().is_empty()
+        && self.accel.as_os_str().is_empty()
+    }
 }
 
 impl TryFrom<PCI::BUS_INFO> for DevicePath {
@@ -136,6 +143,7 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
     fn try_from(pci: PCI::BUS_INFO) -> Result<Self, Self::Error> {
         let render = pci.get_drm_render_path()?;
         let card = pci.get_drm_card_path()?;
+        let accel = PathBuf::new();
         let sysfs_path = pci.get_sysfs_path();
         let [device_id, revision_id] = [pci.get_device_id(), pci.get_revision_id()];
         let device_name = String::new();
@@ -146,6 +154,7 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
             libdrm_amdgpu: None,
             render,
             card,
+            accel,
             pci,
             sysfs_path,
             device_id,
@@ -162,6 +171,7 @@ impl fmt::Debug for DevicePath {
         fmt.debug_struct("DevicePath")
             .field("render", &self.render)
             .field("card", &self.card)
+            .field("accel", &self.accel)
             .field("pci", &self.pci.to_string())
             .field("sysfs_path", &self.sysfs_path)
             .field("device_id", &self.device_id)

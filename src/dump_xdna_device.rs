@@ -18,7 +18,7 @@ pub fn dump_xdna_device() {
 
     stat::update_index_by_all_proc(
         &mut xdna_proc_index,
-        &[&xdna_device.render, &xdna_device.card],
+        &[&xdna_device.accel],
         &stat::get_process_list(),
     );
 

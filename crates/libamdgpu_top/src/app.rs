@@ -187,7 +187,7 @@ impl AppAmdgpuTop {
 
                 stat::update_index_by_all_proc(
                     &mut xdna_proc_index,
-                    &[&xdna.render, &xdna.card],
+                    &[&xdna.accel],
                     &all_procs,
                 );
             }

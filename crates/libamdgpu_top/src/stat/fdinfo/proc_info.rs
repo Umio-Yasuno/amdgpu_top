@@ -112,13 +112,20 @@ pub fn update_index_by_all_proc<T: AsRef<Path>>(
     }
 }
 
+/*
 pub fn update_index(vec_info: &mut Vec<ProcInfo>, device_path: &DevicePath) {
+    let paths = if device_path.is_amdgpu() {
+        vec![&device_path.render, &device_path.card]
+    } else {
+        vec![&device_path.accel]
+    };
     update_index_by_all_proc(
         vec_info,
-        &[&device_path.render, &device_path.card],
+        &paths,
         &get_process_list(),
     );
 }
+*/
 
 pub fn spawn_update_index_thread(
     device_paths: Vec<DevicePath>,
@@ -131,9 +138,15 @@ pub fn spawn_update_index_thread(
         let all_proc = get_process_list();
 
         for device_path in &device_paths {
+            let paths: &[&PathBuf] = if device_path.is_amdgpu() {
+                &[&device_path.render, &device_path.card]
+            } else {
+                &[&device_path.accel]
+            };
+
             update_index_by_all_proc(
                 &mut buf_index,
-                &[&device_path.render, &device_path.card],
+                &paths,
                 &all_proc,
             );
 
