@@ -4,7 +4,7 @@
 use std::{fs, io};
 use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
-use crate::{DevicePath, PCI};
+use crate::{DeviceType, DevicePath, PCI};
 
 pub fn find_xdna_device() -> Option<DevicePath> {
     let [accel, sysfs_path] = find_accel_path_and_sysfs_path()?;
@@ -28,6 +28,7 @@ pub fn find_xdna_device() -> Option<DevicePath> {
         device_name,
         arc_proc_index,
         config_pm,
+        device_type: DeviceType::AMDXDNA,
     })
 }
 
@@ -71,12 +72,6 @@ impl DevicePath {
                 s
             })
             .unwrap_or(format!("RyzenAI-npu ({device_id:#06X}:{revision_id:#04X})"));
-    }
-
-    pub fn is_xdna(&self) -> bool {
-        self.render.as_os_str().is_empty()
-        && self.card.as_os_str().is_empty()
-        && !self.accel.as_os_str().is_empty()
     }
 
     pub fn get_xdna_fw_version(&self) -> io::Result<String> {

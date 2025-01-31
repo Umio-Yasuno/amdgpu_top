@@ -10,9 +10,16 @@ use crate::{
 };
 use crate::stat::ProcInfo;
 use std::path::PathBuf;
-use std::fs;
+use std::{fs, io};
 use std::fmt;
 use std::sync::{Arc, Mutex};
+use std::os::unix::io::RawFd;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DeviceType {
+    AMDGPU,
+    AMDXDNA,
+}
 
 #[derive(Clone)]
 pub struct DevicePath {
@@ -27,27 +34,42 @@ pub struct DevicePath {
     pub device_name: String,
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
     pub config_pm: bool,
+    pub device_type: DeviceType,
 }
 
 impl DevicePath {
     pub fn init(&self) -> anyhow::Result<DeviceHandle> {
         let (amdgpu_dev, _major, _minor) = {
-            use std::os::unix::io::IntoRawFd;
-
             let libdrm_amdgpu = self.libdrm_amdgpu
                 .as_ref()
                 .ok_or("Error loading libdrm.so and libdrm_amdgpu.so")
                 .map_err(|v| anyhow!(v))?;
-            // need write option for GUI context
-            // https://gitlab.freedesktop.org/mesa/mesa/-/issues/2424
-            let f = fs::OpenOptions::new().read(true).write(true).open(&self.render)?;
+            let fd = self.get_fd()?;
 
-            libdrm_amdgpu.init_device_handle(f.into_raw_fd())
+            libdrm_amdgpu.init_device_handle(fd)
                 .map_err(|v| anyhow!(v))
                 .context("Failed to DeviceHandle::init")?
         };
 
         Ok(amdgpu_dev)
+    }
+
+    pub fn get_fd(&self) -> io::Result<RawFd> {
+        use std::os::unix::io::IntoRawFd;
+
+        let device = if self.is_amdgpu() {
+            &self.render
+        } else {
+            &self.accel
+        };
+
+        // need write option for GUI context
+        // https://gitlab.freedesktop.org/mesa/mesa/-/issues/2424
+        fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(device)
+            .map(|f| f.into_raw_fd())
     }
 
     pub fn get_device_path_list() -> Vec<Self> {
@@ -131,9 +153,11 @@ impl DevicePath {
     }
 
     pub fn is_amdgpu(&self) -> bool {
-        !self.render.as_os_str().is_empty()
-        && !self.card.as_os_str().is_empty()
-        && self.accel.as_os_str().is_empty()
+        self.device_type == DeviceType::AMDGPU
+    }
+
+    pub fn is_xdna(&self) -> bool {
+        self.device_type == DeviceType::AMDXDNA
     }
 }
 
@@ -162,6 +186,7 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
             device_name,
             arc_proc_index,
             config_pm,
+            device_type: DeviceType::AMDGPU,
         })
     }
 }
@@ -177,6 +202,7 @@ impl fmt::Debug for DevicePath {
             .field("device_id", &self.device_id)
             .field("revision_id", &self.revision_id)
             .field("device_name", &self.device_name)
+            .field("device_type", &self.device_type)
             .finish()
     }
 }

@@ -16,7 +16,7 @@ pub mod app;
 pub mod xdna;
 
 mod device_path;
-pub use device_path::DevicePath;
+pub use device_path::{DeviceType, DevicePath};
 
 mod drm_mode;
 pub use drm_mode::*;
