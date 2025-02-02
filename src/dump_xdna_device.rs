@@ -36,4 +36,10 @@ pub fn dump_xdna_device() {
     if let Ok(s) = std::fs::read_to_string(format!("/proc/self/fdinfo/{fd}")) {
         println!("fdinfo (raw):\n{s}");
     }
+
+    unsafe {
+        println!("{:#?}", xdna::get_xdna_clock_metadata(fd));
+        println!("{:#?}", xdna::get_xdna_hardware_version(fd));
+        println!("{:#?}", xdna::get_xdna_firmware_version(fd));
+    }
 }
