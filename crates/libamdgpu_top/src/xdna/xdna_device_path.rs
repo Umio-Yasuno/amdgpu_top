@@ -12,7 +12,12 @@ pub fn find_xdna_device() -> Option<DevicePath> {
     let render = PathBuf::new();
     let card = PathBuf::new();
     let [device_id, revision_id] = [pci.get_device_id(), pci.get_revision_id()];
-    let device_name = String::new();
+    let device_name = fs::read_to_string(sysfs_path.join("vbnv"))
+        .map(|mut s| {
+            let _ = s.pop(); // trim '\n'
+            s
+        })
+        .unwrap_or_default();
     let arc_proc_index = Arc::new(Mutex::new(Vec::new()));
     let config_pm = sysfs_path.join("power").exists();
 
@@ -31,7 +36,6 @@ pub fn find_xdna_device() -> Option<DevicePath> {
         device_type: DeviceType::AMDXDNA,
     })
 }
-
 
 fn find_accel_path_and_sysfs_path() -> Option<[PathBuf; 2]> {
     const ACCEL_MAJOR: usize = 261;
@@ -61,19 +65,6 @@ fn find_accel_path_and_sysfs_path() -> Option<[PathBuf; 2]> {
 }
 
 impl DevicePath {
-    pub fn fill_xdna_device_name(&mut self) {
-        let [Some(device_id), Some(revision_id)] = [self.device_id, self.revision_id] else {
-            return;
-        };
-        // ref: https://github.com/amd/xdna-driver/blob/main/src/driver/doc/sysfs-driver-amd-aie
-        self.device_name = std::fs::read_to_string(self.sysfs_path.join("vbnv"))
-            .map(|mut s| {
-                let _ = s.pop(); // trim '\n'
-                s
-            })
-            .unwrap_or(format!("RyzenAI-npu ({device_id:#06X}:{revision_id:#04X})"));
-    }
-
     pub fn get_xdna_fw_version(&self) -> io::Result<String> {
         std::fs::read_to_string(self.sysfs_path.join("fw_version"))
             .map(|mut s| {
