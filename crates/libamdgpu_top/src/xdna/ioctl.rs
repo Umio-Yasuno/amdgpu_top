@@ -110,12 +110,13 @@ unsafe fn get_xdna_info<T>(fd: i32, param: u32) -> Result<T, Errno> {
     let _ = arg.assume_init();
     let info = info.assume_init();
 
-    r.and_then(|_| Ok(info))
+    r.map(|_| info)
 }
 
-pub unsafe fn get_xdna_clock_metadata(fd: i32) -> Result<XdnaClockMetadata, Errno> {
-    let clock_metadata: amdxdna_drm_query_clock_metadata =
-        get_xdna_info(fd, DRM_AMDXDNA_QUERY_CLOCK_METADATA)?;
+pub fn get_xdna_clock_metadata(fd: i32) -> Result<XdnaClockMetadata, Errno> {
+    let clock_metadata: amdxdna_drm_query_clock_metadata = unsafe {
+        get_xdna_info(fd, DRM_AMDXDNA_QUERY_CLOCK_METADATA)?
+    };
 
     let clock_metadata = XdnaClockMetadata {
         mp_npu_clock: XdnaClock::from(clock_metadata.mp_npu_clock),
@@ -125,15 +126,17 @@ pub unsafe fn get_xdna_clock_metadata(fd: i32) -> Result<XdnaClockMetadata, Errn
     Ok(clock_metadata)
 }
 
-pub unsafe fn get_xdna_hardware_version(fd: i32) -> Result<amdxdna_drm_query_aie_version, Errno> {
-    get_xdna_info(fd, DRM_AMDXDNA_QUERY_AIE_VERSION)
+pub fn get_xdna_hardware_version(fd: i32) -> Result<amdxdna_drm_query_aie_version, Errno> {
+    unsafe { get_xdna_info(fd, DRM_AMDXDNA_QUERY_AIE_VERSION) }
 }
 
-pub unsafe fn get_xdna_firmware_version(fd: i32) -> Result<amdxdna_drm_query_firmware_version, Errno> {
-    get_xdna_info(fd, DRM_AMDXDNA_QUERY_FIRMWARE_VERSION)
+pub fn get_xdna_firmware_version(fd: i32) -> Result<amdxdna_drm_query_firmware_version, Errno> {
+    unsafe { get_xdna_info(fd, DRM_AMDXDNA_QUERY_FIRMWARE_VERSION) }
 }
 
-pub unsafe fn get_xdna_power_mode(fd: i32) -> Result<XdnaPowerMode, Errno> {
-    get_xdna_info::<amdxdna_drm_get_power_mode>(fd, DRM_AMDXDNA_GET_POWER_MODE)
-        .and_then(|v| Ok(XdnaPowerMode::from(v.power_mode as u32)))
+pub fn get_xdna_power_mode(fd: i32) -> Result<XdnaPowerMode, Errno> {
+    unsafe {
+        get_xdna_info::<amdxdna_drm_get_power_mode>(fd, DRM_AMDXDNA_GET_POWER_MODE)
+            .map(|v| XdnaPowerMode::from(v.power_mode as u32))
+    }
 }
