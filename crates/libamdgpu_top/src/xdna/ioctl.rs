@@ -10,11 +10,18 @@ mod bindings {
 use bindings::{
     DRM_IOCTL_BASE,
     DRM_COMMAND_BASE,
-    amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_FIRMWARE_VERSION as DRM_AMDXDNA_QUERY_FIRMWARE_VERSION,
+    amdxdna_drm_get_info,
+    amdxdna_drm_get_power_mode,
+    amdxdna_drm_ioctl_id_DRM_AMDXDNA_GET_INFO as DRM_AMDXDNA_GET_INFO,
     amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_AIE_VERSION as DRM_AMDXDNA_QUERY_AIE_VERSION,
     amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_CLOCK_METADATA as DRM_AMDXDNA_QUERY_CLOCK_METADATA,
-    amdxdna_drm_ioctl_id_DRM_AMDXDNA_GET_INFO as DRM_AMDXDNA_GET_INFO,
-    amdxdna_drm_get_info,
+    amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_FIRMWARE_VERSION as DRM_AMDXDNA_QUERY_FIRMWARE_VERSION,
+    amdxdna_drm_get_param_DRM_AMDXDNA_GET_POWER_MODE as DRM_AMDXDNA_GET_POWER_MODE,
+    amdxdna_power_mode_type_POWER_MODE_DEFAULT,
+    amdxdna_power_mode_type_POWER_MODE_LOW,
+    amdxdna_power_mode_type_POWER_MODE_MEDIUM,
+    amdxdna_power_mode_type_POWER_MODE_HIGH,
+    amdxdna_power_mode_type_POWER_MODE_TURBO,
 };
 pub use bindings::{
     amdxdna_drm_query_clock,
@@ -54,6 +61,30 @@ impl From<amdxdna_drm_query_clock> for XdnaClock {
 pub struct XdnaClockMetadata {
     pub mp_npu_clock: XdnaClock,
     pub h_clock: XdnaClock,
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum XdnaPowerMode {
+    POWER_MODE_DEFAULT = amdxdna_power_mode_type_POWER_MODE_DEFAULT,
+    POWER_MODE_LOW = amdxdna_power_mode_type_POWER_MODE_LOW,
+    POWER_MODE_MEDIUM = amdxdna_power_mode_type_POWER_MODE_MEDIUM,
+    POWER_MODE_HIGH = amdxdna_power_mode_type_POWER_MODE_HIGH,
+    POWER_MODE_TURBO = amdxdna_power_mode_type_POWER_MODE_TURBO,
+    Invalid(u32),
+}
+
+impl From<u32> for XdnaPowerMode {
+    fn from(v: u32) -> Self {
+        match v {
+            amdxdna_power_mode_type_POWER_MODE_DEFAULT => Self::POWER_MODE_DEFAULT,
+            amdxdna_power_mode_type_POWER_MODE_LOW => Self::POWER_MODE_LOW,
+            amdxdna_power_mode_type_POWER_MODE_MEDIUM => Self::POWER_MODE_MEDIUM,
+            amdxdna_power_mode_type_POWER_MODE_HIGH => Self::POWER_MODE_HIGH,
+            amdxdna_power_mode_type_POWER_MODE_TURBO => Self::POWER_MODE_TURBO,
+            _ => Self::Invalid(v),
+        }
+    }
 }
 
 unsafe fn get_xdna_info<T>(fd: i32, param: u32) -> Result<T, Errno> {
@@ -100,4 +131,9 @@ pub unsafe fn get_xdna_hardware_version(fd: i32) -> Result<amdxdna_drm_query_aie
 
 pub unsafe fn get_xdna_firmware_version(fd: i32) -> Result<amdxdna_drm_query_firmware_version, Errno> {
     get_xdna_info(fd, DRM_AMDXDNA_QUERY_FIRMWARE_VERSION)
+}
+
+pub unsafe fn get_xdna_power_mode(fd: i32) -> Result<XdnaPowerMode, Errno> {
+    get_xdna_info::<amdxdna_drm_get_power_mode>(fd, DRM_AMDXDNA_GET_POWER_MODE)
+        .and_then(|v| Ok(XdnaPowerMode::from(v.power_mode as u32)))
 }
