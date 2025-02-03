@@ -13,6 +13,7 @@ use bindings::{
     amdxdna_drm_get_info,
     amdxdna_drm_get_power_mode,
     amdxdna_drm_ioctl_id_DRM_AMDXDNA_GET_INFO as DRM_AMDXDNA_GET_INFO,
+    amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_AIE_METADATA as DRM_AMDXDNA_QUERY_AIE_METADATA,
     amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_AIE_VERSION as DRM_AMDXDNA_QUERY_AIE_VERSION,
     amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_CLOCK_METADATA as DRM_AMDXDNA_QUERY_CLOCK_METADATA,
     amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_FIRMWARE_VERSION as DRM_AMDXDNA_QUERY_FIRMWARE_VERSION,
@@ -24,9 +25,10 @@ use bindings::{
     amdxdna_power_mode_type_POWER_MODE_TURBO,
 };
 pub use bindings::{
+    amdxdna_drm_query_aie_metadata,
+    amdxdna_drm_query_aie_version,
     amdxdna_drm_query_clock,
     amdxdna_drm_query_clock_metadata,
-    amdxdna_drm_query_aie_version,
     amdxdna_drm_query_firmware_version,
 };
 
@@ -139,4 +141,8 @@ pub fn get_xdna_power_mode(fd: i32) -> Result<XdnaPowerMode, Errno> {
         get_xdna_info::<amdxdna_drm_get_power_mode>(fd, DRM_AMDXDNA_GET_POWER_MODE)
             .map(|v| XdnaPowerMode::from(v.power_mode as u32))
     }
+}
+
+pub fn get_xdna_metadata(fd: i32) -> Result<amdxdna_drm_query_aie_metadata, Errno> {
+    unsafe { get_xdna_info(fd, DRM_AMDXDNA_QUERY_AIE_METADATA) }
 }
