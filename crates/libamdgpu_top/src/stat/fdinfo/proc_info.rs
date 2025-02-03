@@ -56,7 +56,7 @@ pub fn get_process_list() -> Vec<i32> {
         // gnome-shell share the AMDGPU driver context with systemd processes
         {
             let mut f = fs::File::open(format!("/proc/{pid}/cmdline")).ok()?;
-            f.read_exact(&mut buf_cmdline).ok()?;
+            let _ = f.read_exact(&mut buf_cmdline);
 
             if SYSTEMD_CMDLINE.iter().any(|path| buf_cmdline.starts_with(path)) {
                 return None;
