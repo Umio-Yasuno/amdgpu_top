@@ -34,6 +34,33 @@
   </screenshots>
 
   <releases>
+    <release version="0.10.2" date="2025-02-03">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>reduce allocations and improve dump commands</li>
+          <li>support for dynamic loading of libdrm and libdrm_amdgpu (amdgpu_top remains a dynamic link)</li>
+          <li>specify rev of libdrm_amdgpu_sys</li>
+          <li>add fdinfo description in README.md</li>
+          <li>Add remark to build on Fedora (#117)</li>
+          <li>update release.yml</li>
+          <li>update DevicePath::check_if_device_is_active for env where CONFIG_PM is disabled</li>
+        </ul>
+        <ul>
+          <li>xdna: fix the detection of XDNA NPU</li>
+          <li>xdna: impl ioctl for amdxdna-driver</li>
+        </ul>
+        <ul>
+          <li>tui: add "--hide-fdinfo" option for TUI mode</li>
+          <li>tui: hideable_panel</li>
+          <li>tui: collapsible view in one row</li>
+        </ul>
+        <ul>
+          <li>gui: Add Georgian tranlsation (#116)</li>
+        </ul>
+      </description>
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.10.2</url>
+    </release>
     <release version="0.10.1" date="2024-12-14">
       <description>
         <p>Changelog</p>
