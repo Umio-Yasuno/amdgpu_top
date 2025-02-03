@@ -34,6 +34,17 @@
   </screenshots>
 
   <releases>
+    <release version="0.10.3" date="2025-02-04">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>fix filter_proc when short cmdline</li>
+          <li>update dump_xdna_device</li>
+        </ul>
+      </description>
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.10.3</url>
+    </release>
+
     <release version="0.10.2" date="2025-02-03">
       <description>
         <p>Changelog</p>
@@ -61,6 +72,7 @@
       </description>
       <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.10.2</url>
     </release>
+
     <release version="0.10.1" date="2024-12-14">
       <description>
         <p>Changelog</p>
