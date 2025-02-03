@@ -27,13 +27,12 @@ pub fn dump_xdna_device() {
     let mut xdna_fdinfo = xdna::XdnaFdInfoStat::default();
     xdna_fdinfo.get_all_proc_usage(&xdna_proc_index);
 
-    if !xdna_fdinfo.proc_usage.is_empty() {
-        println!("{:#?}", xdna_fdinfo.proc_usage);
-    } else {
-        println!("This amdxdna driver version dose not support DRM client usage stats.");
-    }
+    println!("{:#?}", xdna_fdinfo.proc_usage);
 
     if let Ok(s) = std::fs::read_to_string(format!("/proc/self/fdinfo/{fd}")) {
+        if !s.contains("drm-engine-npu-amdxdna:") {
+            println!("This amdxdna driver version dose not support DRM client usage stats.");
+        }
         println!("fdinfo (raw):\n{s}");
     }
 
