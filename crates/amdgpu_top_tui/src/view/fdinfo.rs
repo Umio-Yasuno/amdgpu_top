@@ -63,9 +63,7 @@ impl AppTextView {
 
     pub fn print_fdinfo_usage(&mut self, stat: &FdInfoStat) -> Result<(), fmt::Error> {
         for pu in &stat.proc_usage {
-            if pu.ids_count == 0 {
-                continue;
-            }
+            if pu.ids_count == 0 { continue; }
 
             let utf16_count = pu.name.encode_utf16().count();
             let name_len = if pu.name.len() != utf16_count {

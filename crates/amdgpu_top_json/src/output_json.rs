@@ -225,9 +225,7 @@ impl OutputJson for FdInfoStat {
         let has_vpe = self.has_vpe;
 
         for pu in &self.proc_usage {
-            if pu.ids_count == 0 {
-                continue;
-            }
+            if pu.ids_count == 0 { continue; }
 
             m.insert(
                 format!("{}", pu.pid),
@@ -284,9 +282,7 @@ impl OutputJson for XdnaFdInfoStat {
         let mut m = Map::new();
 
         for pu in &self.proc_usage {
-            if pu.ids_count == 0 {
-                continue;
-            }
+            if pu.ids_count == 0 { continue; }
 
             m.insert(
                 format!("{}", pu.pid),

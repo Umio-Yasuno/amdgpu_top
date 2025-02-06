@@ -256,9 +256,7 @@ impl MyApp {
             let mib = fl!("mib");
 
             for pu in &self.buf_data.stat.fdinfo.proc_usage {
-                if pu.ids_count == 0 {
-                    continue;
-                }
+                if pu.ids_count == 0 { continue; }
 
                 ui.label(pu.name.to_string());
                 ui.label(format!("{:>8}", pu.pid));
@@ -309,9 +307,7 @@ impl MyApp {
             let mib = fl!("mib");
 
             for pu in &self.buf_data.stat.xdna_fdinfo.proc_usage {
-                if pu.ids_count > 0 {
-                    continue;
-                }
+                if pu.ids_count == 0 { continue; }
 
                 ui.label(pu.name.to_string());
                 ui.label(format!("{:>8}", pu.pid));
