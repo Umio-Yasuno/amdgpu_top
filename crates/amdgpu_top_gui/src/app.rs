@@ -309,7 +309,7 @@ impl MyApp {
             let mib = fl!("mib");
 
             for pu in &self.buf_data.stat.xdna_fdinfo.proc_usage {
-                if pu.ids_count {
+                if pu.ids_count > 0 {
                     continue;
                 }
 
