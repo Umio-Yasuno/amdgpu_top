@@ -1,0 +1,11 @@
+name: check
+on: [push, pull_request]
+
+jobs:
+  check:
+    name: cargo check
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo check
