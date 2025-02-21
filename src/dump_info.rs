@@ -156,13 +156,13 @@ fn sensors_info(sensors: &Sensors) {
         println!(
             "{PCIE_LABEL} {:PCIE_LEN$}: Gen{}x{:<2} - Gen{}x{:<2}",
             "(DPM, Min-Max)",
-            min.gen,
+            min.r#gen,
             min.width,
-            max.gen,
+            max.r#gen,
             max.width,
         );
     } else if let Some(max) = &sensors.max_dpm_link {
-        println!("{PCIE_LABEL} {:PCIE_LEN$}: Gen{}x{:<2}", "(DPM, Max)", max.gen, max.width);
+        println!("{PCIE_LABEL} {:PCIE_LEN$}: Gen{}x{:<2}", "(DPM, Max)", max.r#gen, max.width);
     }
 
     for (link, label) in [
@@ -170,7 +170,7 @@ fn sensors_info(sensors: &Sensors) {
         (&sensors.max_system_link, "(System, Max)"),
     ] {
         let Some(link) = link else { continue };
-        println!("{PCIE_LABEL} {label:PCIE_LEN$}: Gen{}x{:<2}", link.gen, link.width);
+        println!("{PCIE_LABEL} {label:PCIE_LEN$}: Gen{}x{:<2}", link.r#gen, link.width);
     }
 }
 

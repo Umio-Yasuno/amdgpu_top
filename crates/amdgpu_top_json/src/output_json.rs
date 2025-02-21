@@ -435,7 +435,7 @@ impl OutputJson for GpuActivity {
 impl OutputJson for PCI::LINK {
     fn json(&self) -> Value {
         json!({
-            "gen": self.gen,
+            "gen": self.r#gen,
             "width": self.width,
         })
     }

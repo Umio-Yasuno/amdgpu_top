@@ -452,13 +452,13 @@ impl MyApp {
             let min_max = if let [Some(min), Some(max)] = [sensors.min_dpm_link, sensors.max_dpm_link] {
                 format!(
                     " (Gen{}x{} - Gen{}x{})",
-                    min.gen,
+                    min.r#gen,
                     min.width,
-                    max.gen,
+                    max.r#gen,
                     max.width,
                 )
             } else if let Some(max) = sensors.max_dpm_link {
-                format!(" ({} Gen{}x{})", fl!("max"), max.gen, max.width)
+                format!(" ({} Gen{}x{})", fl!("max"), max.r#gen, max.width)
             } else {
                 String::new()
             };
@@ -466,7 +466,7 @@ impl MyApp {
             ui.label(format!(
                 "{} => Gen{}x{} {min_max}",
                 fl!("pcie_link_speed"),
-                cur.gen,
+                cur.r#gen,
                 cur.width,
             ));
         }

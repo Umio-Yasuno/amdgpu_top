@@ -366,23 +366,23 @@ impl GuiInfo for AppDeviceInfo {
         let dpm = fl!("dpm");
         if let [Some(min), Some(max)] = [&self.min_dpm_link, &self.max_dpm_link] {
             ui.label(format!("{pcie_link_speed} ({dpm})"));
-            ui.label(format!("Gen{}x{} - Gen{}x{}", min.gen, min.width, max.gen, max.width));
+            ui.label(format!("Gen{}x{} - Gen{}x{}", min.r#gen, min.width, max.r#gen, max.width));
             ui.end_row();
         } else if let Some(max) = &self.max_dpm_link {
             ui.label(format!("{pcie_link_speed} ({dpm}, {fl_max})"));
-            ui.label(format!("Gen{}x{}", max.gen, max.width));
+            ui.label(format!("Gen{}x{}", max.r#gen, max.width));
             ui.end_row();
         }
 
         if let Some(gpu) = &self.max_gpu_link {
             ui.label(format!("{pcie_link_speed} ({}, {fl_max})", fl!("gpu")));
-            ui.label(format!("Gen{}x{}", gpu.gen, gpu.width));
+            ui.label(format!("Gen{}x{}", gpu.r#gen, gpu.width));
             ui.end_row();
         }
 
         if let Some(system) = &self.max_system_link {
             ui.label(format!("{pcie_link_speed} ({}, {fl_max})", fl!("system")));
-            ui.label(format!("Gen{}x{}", system.gen, system.width));
+            ui.label(format!("Gen{}x{}", system.r#gen, system.width));
             ui.end_row();
         }
     }

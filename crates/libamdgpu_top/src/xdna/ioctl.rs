@@ -89,7 +89,7 @@ impl From<u32> for XdnaPowerMode {
     }
 }
 
-unsafe fn get_xdna_info<T>(fd: i32, param: u32) -> Result<T, Errno> {
+unsafe fn get_xdna_info<T>(fd: i32, param: u32) -> Result<T, Errno> { unsafe {
     ioctl_readwrite!(
         xdna_get_info,
         DRM_IOCTL_BASE,
@@ -113,7 +113,7 @@ unsafe fn get_xdna_info<T>(fd: i32, param: u32) -> Result<T, Errno> {
     let info = info.assume_init();
 
     r.map(|_| info)
-}
+}}
 
 pub fn get_xdna_clock_metadata(fd: i32) -> Result<XdnaClockMetadata, Errno> {
     let clock_metadata: amdxdna_drm_query_clock_metadata = unsafe {

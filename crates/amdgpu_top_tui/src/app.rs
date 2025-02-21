@@ -263,7 +263,7 @@ impl TuiApp {
         self.layout.vram_usage_view.set_value(&self.app_amdgpu_top.stat.vram_usage);
         self.layout.activity_view.set_value(&self.app_amdgpu_top.stat.activity);
 
-        if let Some(ref sensors) = &self.app_amdgpu_top.stat.sensors {
+        if let Some(sensors) = &self.app_amdgpu_top.stat.sensors {
             let _ = self.layout.sensors_view.print_sensors(sensors);
         }
 

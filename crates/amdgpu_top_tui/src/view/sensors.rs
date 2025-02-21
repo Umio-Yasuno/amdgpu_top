@@ -82,19 +82,19 @@ impl AppTextView {
         }
 
         if let Some(cur) = sensors.current_link {
-            write!(self.text.buf, " PCIe Link Speed => Gen{}x{:<2}", cur.gen, cur.width)?;
+            write!(self.text.buf, " PCIe Link Speed => Gen{}x{:<2}", cur.r#gen, cur.width)?;
 
             if let [Some(min), Some(max)] = [sensors.min_dpm_link, sensors.max_dpm_link] {
                 write!(
                     self.text.buf,
                     " (Gen{}x{} - Gen{}x{})",
-                    min.gen,
+                    min.r#gen,
                     min.width,
-                    max.gen,
+                    max.r#gen,
                     max.width,
                 )?;
             } else if let Some(max) = sensors.max_dpm_link {
-                write!(self.text.buf, " (Max. Gen{}x{})", max.gen, max.width)?;
+                write!(self.text.buf, " (Max. Gen{}x{})", max.r#gen, max.width)?;
             }
 
             writeln!(self.text.buf)?;
