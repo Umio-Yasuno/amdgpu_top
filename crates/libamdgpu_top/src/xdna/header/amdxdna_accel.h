@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Copyright (C) 2022-2024, Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025, Advanced Micro Devices, Inc.
  */
 
 #ifndef AMDXDNA_ACCEL_H_
@@ -26,6 +26,12 @@ extern "C" {
 #define AMDXDNA_INVALID_BO_HANDLE	0
 #define AMDXDNA_INVALID_FENCE_HANDLE	0
 
+#define POWER_MODE_DEFAULT	0
+#define POWER_MODE_LOW		1
+#define POWER_MODE_MEDIUM	2
+#define POWER_MODE_HIGH		3
+#define POWER_MODE_TURBO	4
+
 /*
  * The interface can grow/extend over time.
  * On each struct amdxdna_drm_*, to support potential extension, we defined it
@@ -41,41 +47,37 @@ extern "C" {
  * We don't have extension now. The extension struct will define in the future.
  */
 
-enum amdxdna_drm_ioctl_id {
-	DRM_AMDXDNA_CREATE_HWCTX,
-	DRM_AMDXDNA_DESTROY_HWCTX,
-	DRM_AMDXDNA_CONFIG_HWCTX,
-	DRM_AMDXDNA_CREATE_BO,
-	DRM_AMDXDNA_GET_BO_INFO,
-	DRM_AMDXDNA_SYNC_BO,
-	DRM_AMDXDNA_EXEC_CMD,
-	DRM_AMDXDNA_GET_INFO,
-	DRM_AMDXDNA_SET_STATE,
-	DRM_AMDXDNA_WAIT_CMD,
-};
+#define	DRM_AMDXDNA_CREATE_CTX		0
+#define	DRM_AMDXDNA_DESTROY_CTX		1
+#define	DRM_AMDXDNA_CONFIG_CTX		2
+#define	DRM_AMDXDNA_CREATE_BO		3
+#define	DRM_AMDXDNA_GET_BO_INFO		4
+#define	DRM_AMDXDNA_SYNC_BO		5
+#define	DRM_AMDXDNA_EXEC_CMD		6
+#define	DRM_AMDXDNA_GET_INFO		7
+#define	DRM_AMDXDNA_SET_STATE		8
+#define	DRM_AMDXDNA_WAIT_CMD		9
 
-enum amdxdna_device_type {
-	AMDXDNA_DEV_TYPE_UNKNOWN = -1,
-	AMDXDNA_DEV_TYPE_KMQ,
-	AMDXDNA_DEV_TYPE_UMQ,
-};
+#define	AMDXDNA_DEV_TYPE_UNKNOWN	-1
+#define	AMDXDNA_DEV_TYPE_KMQ		0
+#define	AMDXDNA_DEV_TYPE_UMQ		1
 
 /*
- * Enum for priority in application's QoS. Values copied from Window shim layer.
- * AMDXDNA_QOS_DEFAULT_PRIORITY: Default priority.
+ * Define priority in application's QoS.
+ * AMDXDNA_QOS_DEFAULT_PRIORITY: Driver decide priority for client.
  * AMDXDNA_QOS_REALTIME_PRIORITY: Real time clients.
  * AMDXDNA_QOS_HIGH_PRIORITY: Best effort foreground clients.
  * AMDXDNA_QOS_NORMAL_PRIORITY: Best effort or background clients.
  * AMDXDNA_QOS_LOW_PRIORITY: Clients that can wait indefinite amount of time for
  *                           completion.
  */
-enum amdxdna_qos_priority {
-	AMDXDNA_QOS_DEFAULT_PRIORITY = 0x0,
-	AMDXDNA_QOS_REALTIME_PRIORITY = 0x100,
-	AMDXDNA_QOS_HIGH_PRIORITY = 0x180,
-	AMDXDNA_QOS_NORMAL_PRIORITY = 0x200,
-	AMDXDNA_QOS_LOW_PRIORITY = 0x280
-};
+#define	AMDXDNA_QOS_DEFAULT_PRIORITY	0
+#define	AMDXDNA_QOS_REALTIME_PRIORITY	1
+#define	AMDXDNA_QOS_HIGH_PRIORITY	2
+#define	AMDXDNA_QOS_NORMAL_PRIORITY	3
+#define	AMDXDNA_QOS_LOW_PRIORITY	4
+/* The maximum number of priority */
+#define	AMDXDNA_NUM_PRIORITY		4
 
 /**
  * struct qos_info - QoS information for driver.
@@ -98,7 +100,7 @@ struct amdxdna_qos_info {
 };
 
 /**
- * struct amdxdna_drm_create_hwctx - Create hardware context.
+ * struct amdxdna_drm_create_ctx - Create context.
  * @ext: MBZ.
  * @ext_flags: MBZ.
  * @qos_p: Address of QoS info.
@@ -108,10 +110,10 @@ struct amdxdna_qos_info {
  * @num_tiles: Number of AIE tiles.
  * @mem_size: Size of AIE tile memory.
  * @umq_doorbell: Returned offset of doorbell associated with UMQ.
- * @handle: Returned hardware context handle.
+ * @handle: Returned context handle.
  * @syncobj_handle: The drm timeline syncobj handle for command completion notification.
  */
-struct amdxdna_drm_create_hwctx {
+struct amdxdna_drm_create_ctx {
 	__u64 ext;
 	__u64 ext_flags;
 	__u64 qos_p;
@@ -126,11 +128,11 @@ struct amdxdna_drm_create_hwctx {
 };
 
 /**
- * struct amdxdna_drm_destroy_hwctx - Destroy hardware context.
- * @handle: Hardware context handle.
+ * struct amdxdna_drm_destroy_ctx - Destroy context.
+ * @handle: Context handle.
  * @pad: Structure padding.
  */
-struct amdxdna_drm_destroy_hwctx {
+struct amdxdna_drm_destroy_ctx {
 	__u32 handle;
 	__u32 pad;
 };
@@ -148,28 +150,21 @@ struct amdxdna_cu_config {
 };
 
 /**
- * struct amdxdna_hwctx_param_config_cu - configuration for CUs in hardware context
+ * struct amdxdna_ctx_param_config_cu - configuration for CUs in context
  * @num_cus: Number of CUs to configure.
  * @pad: Structure padding.
  * @cu_configs: Array of CU configurations of struct amdxdna_cu_config.
  */
-struct amdxdna_hwctx_param_config_cu {
+struct amdxdna_ctx_param_config_cu {
 	__u16 num_cus;
 	__u16 pad[3];
 	struct amdxdna_cu_config cu_configs[];
 };
 
-enum amdxdna_drm_config_hwctx_param {
-	DRM_AMDXDNA_HWCTX_CONFIG_CU,
-	DRM_AMDXDNA_HWCTX_ASSIGN_DBG_BUF,
-	DRM_AMDXDNA_HWCTX_REMOVE_DBG_BUF,
-};
-
 /**
- * struct amdxdna_drm_config_hwctx - Configure hardware context.
- * @handle: hardware context handle.
- * @param_type: Value in enum amdxdna_drm_config_hwctx_param. Specifies the
- *              structure passed in via param_val.
+ * struct amdxdna_drm_config_ctx - Configure context.
+ * @handle: Context handle.
+ * @param_type: Specifies the structure passed in via param_val.
  * @param_val: A structure specified by the param_type struct member.
  * @param_val_size: Size of the parameter buffer pointed to by the param_val.
  *		    If param_val is not a pointer, driver can ignore this.
@@ -178,28 +173,26 @@ enum amdxdna_drm_config_hwctx_param {
  * Note: if the param_val is a pointer pointing to a buffer, the maximum size
  * of the buffer is 4KiB(PAGE_SIZE).
  */
-struct amdxdna_drm_config_hwctx {
+struct amdxdna_drm_config_ctx {
 	__u32 handle;
+#define DRM_AMDXDNA_CTX_CONFIG_CU	0
+#define	DRM_AMDXDNA_CTX_ASSIGN_DBG_BUF	1
+#define	DRM_AMDXDNA_CTX_REMOVE_DBG_BUF	2
 	__u32 param_type;
 	__u64 param_val;
 	__u32 param_val_size;
 	__u32 pad;
 };
 
-/*
- * AMDXDNA_BO_SHMEM:	DRM GEM SHMEM bo
- * AMDXDNA_BO_DEV_HEAP: Shared host memory to device as heap memory
- * AMDXDNA_BO_DEV_BO:	Allocated from BO_DEV_HEAP
- * AMDXDNA_BO_CMD:	User and driver accessible bo
- * AMDXDNA_BO_DMA:	DRM GEM DMA bo
+/**
+ * struct amdxdna_bo_va_entry - virtual address list entry
+ *
+ * @vaddr: Virtual address
+ * @len: Length of memory segment
  */
-enum amdxdna_bo_type {
-	AMDXDNA_BO_INVALID = 0,
-	AMDXDNA_BO_SHMEM,
-	AMDXDNA_BO_DEV_HEAP,
-	AMDXDNA_BO_DEV,
-	AMDXDNA_BO_CMD,
-	AMDXDNA_BO_DMA,
+struct amdxdna_bo_va_entry {
+	__u64	vaddr;
+	__u64	len;
 };
 
 /**
@@ -214,6 +207,20 @@ struct amdxdna_drm_create_bo {
 	__u64	flags;
 	__u64	vaddr;
 	__u64	size;
+/*
+ * AMDXDNA_BO_SHARE:	Regular BO shared between user and device
+ * AMDXDNA_BO_DEV_HEAP: Shared host memory to device as heap memory
+ * AMDXDNA_BO_DEV_BO:	Allocated from BO_DEV_HEAP
+ * AMDXDNA_BO_CMD:	User and driver accessible bo
+ * AMDXDNA_BO_DMA:	DRM GEM DMA bo
+ */
+#define	AMDXDNA_BO_INVALID	0
+#define	AMDXDNA_BO_SHARE	1
+#define	AMDXDNA_BO_DEV_HEAP	2
+#define	AMDXDNA_BO_DEV		3
+#define	AMDXDNA_BO_CMD		4
+#define	AMDXDNA_BO_DMA		5
+#define	AMDXDNA_BO_GUEST	6
 	__u32	type;
 	__u32	handle;
 };
@@ -254,18 +261,12 @@ struct amdxdna_drm_sync_bo {
 	__u64 size;
 };
 
-enum amdxdna_cmd_type {
-	AMDXDNA_CMD_SUBMIT_EXEC_BUF = 0,
-	AMDXDNA_CMD_SUBMIT_DEPENDENCY,
-	AMDXDNA_CMD_SUBMIT_SIGNAL,
-};
-
 /**
  * struct amdxdna_drm_exec_cmd - Execute command.
  * @ext: MBZ.
  * @ext_flags: MBZ.
- * @hwctx: Hardware context handle.
- * @type: One of command type in enum amdxdna_cmd_type.
+ * @ctx: Context handle.
+ * @type: Command type.
  * @cmd_handles: Array of command handles or the command handle itself
  *               in case of just one.
  * @args: Array of arguments for all command handles.
@@ -276,7 +277,10 @@ enum amdxdna_cmd_type {
 struct amdxdna_drm_exec_cmd {
 	__u64 ext;
 	__u64 ext_flags;
-	__u32 hwctx;
+	__u32 ctx;
+#define	AMDXDNA_CMD_SUBMIT_EXEC_BUF	0
+#define	AMDXDNA_CMD_SUBMIT_DEPENDENCY	1
+#define	AMDXDNA_CMD_SUBMIT_SIGNAL	2
 	__u32 type;
 	__u64 cmd_handles;
 	__u64 args;
@@ -288,14 +292,14 @@ struct amdxdna_drm_exec_cmd {
 /**
  * struct amdxdna_drm_wait_cmd - Wait exectuion command.
  *
- * @hwctx: hardware context handle.
+ * @ctx: Context handle.
  * @timeout: timeout in ms, 0 implies infinite wait.
  * @seq: sequence number of the command returned by execute command.
  *
  * Wait a command specified by seq to be completed.
  */
 struct amdxdna_drm_wait_cmd {
-	__u32 hwctx;
+	__u32 ctx;
 	__u32 timeout;
 	__u64 seq;
 };
@@ -382,10 +386,6 @@ struct amdxdna_drm_query_clock_metadata {
 	struct amdxdna_drm_query_clock h_clock;
 };
 
-enum amdxdna_sensor_type {
-	AMDXDNA_SENSOR_TYPE_POWER
-};
-
 /**
  * struct amdxdna_drm_query_sensor - The data for single sensor.
  * @label: The name for a sensor.
@@ -396,7 +396,7 @@ enum amdxdna_sensor_type {
  * @status: The sensor status.
  * @units: The sensor units.
  * @unitm: Translates value member variables into the correct unit via (pow(10, unitm) * value).
- * @type: The sensor type from enum amdxdna_sensor_type.
+ * @type: The sensor type.
  * @pad: Structure padding.
  */
 struct amdxdna_drm_query_sensor {
@@ -408,16 +408,17 @@ struct amdxdna_drm_query_sensor {
 	__u8  status[64];
 	__u8  units[16];
 	__s8  unitm;
+#define AMDXDNA_SENSOR_TYPE_POWER 0
 	__u8  type;
 	__u8  pad[6];
 };
 
 /**
- * struct amdxdna_drm_query_hwctx - The data for single context.
+ * struct amdxdna_drm_query_ctx - The data for single context.
  * @context_id: The ID for this context.
  * @start_col: The starting column for the partition assigned to this context.
  * @num_col: The number of columns in the partition assigned to this context.
- * @pad: Structure padding.
+ * @nwctx_id: Hardware context ID.
  * @pid: The Process ID of the process that created this context.
  * @command_submissions: The number of commands submitted to this context.
  * @command_completions: The number of commands completed by this context.
@@ -425,18 +426,20 @@ struct amdxdna_drm_query_sensor {
  * @preemptions: The number of times this context has been preempted by another context in the
  *               same partition.
  * @errors: The errors for this context.
+ * @priority: Context priority
  */
-struct amdxdna_drm_query_hwctx {
+struct amdxdna_drm_query_ctx {
 	__u32 context_id;
 	__u32 start_col;
 	__u32 num_col;
-	__u32 pad;
+	__u32 hwctx_id;
 	__s64 pid;
 	__u64 command_submissions;
 	__u64 command_completions;
 	__u64 migrations;
 	__u64 preemptions;
 	__u64 errors;
+	__u64 priority;
 };
 
 /**
@@ -475,17 +478,9 @@ struct amdxdna_drm_aie_reg {
 	__u32 val;
 };
 
-enum amdxdna_power_mode_type {
-	POWER_MODE_DEFAULT, /**< Fallback to calculated DPM */
-	POWER_MODE_LOW,     /**< Set frequency to lowest DPM */
-	POWER_MODE_MEDIUM,  /**< Set frequency to medium DPM */
-	POWER_MODE_HIGH,    /**< Set frequency to highest DPM */
-	POWER_MODE_TURBO,   /**< More power, more performance */
-};
-
 /**
  * struct amdxdna_drm_get_power_mode - Get the power mode of the AIE hardware
- * @power_mode: The sensor type from enum amdxdna_power_mode_type
+ * @power_mode: Returned current power mode
  * @pad: MBZ.
  */
 struct amdxdna_drm_get_power_mode {
@@ -518,28 +513,25 @@ struct amdxdna_drm_get_force_preempt_state {
 	__u8 pad[7];
 };
 
-enum amdxdna_drm_get_param {
-	DRM_AMDXDNA_QUERY_AIE_STATUS,
-	DRM_AMDXDNA_QUERY_AIE_METADATA,
-	DRM_AMDXDNA_QUERY_AIE_VERSION,
-	DRM_AMDXDNA_QUERY_CLOCK_METADATA,
-	DRM_AMDXDNA_QUERY_SENSORS,
-	DRM_AMDXDNA_QUERY_HW_CONTEXTS,
-	DRM_AMDXDNA_READ_AIE_MEM,
-	DRM_AMDXDNA_READ_AIE_REG,
-	DRM_AMDXDNA_QUERY_FIRMWARE_VERSION,
-	DRM_AMDXDNA_GET_POWER_MODE,
-	DRM_AMDXDNA_QUERY_TELEMETRY,
-	DRM_AMDXDNA_GET_FORCE_PREEMPT_STATE,
-};
-
 /**
  * struct amdxdna_drm_get_info - Get some information from the AIE hardware.
- * @param: Value in enum amdxdna_drm_get_param. Specifies the structure passed in the buffer.
+ * @param: Specifies the structure passed in the buffer.
  * @buffer_size: Size of the input buffer. Size needed/written by the kernel.
  * @buffer: A structure specified by the param struct member.
  */
 struct amdxdna_drm_get_info {
+#define	DRM_AMDXDNA_QUERY_AIE_STATUS		0
+#define	DRM_AMDXDNA_QUERY_AIE_METADATA		1
+#define	DRM_AMDXDNA_QUERY_AIE_VERSION		2
+#define	DRM_AMDXDNA_QUERY_CLOCK_METADATA	3
+#define	DRM_AMDXDNA_QUERY_SENSORS		4
+#define	DRM_AMDXDNA_QUERY_HW_CONTEXTS		5
+#define	DRM_AMDXDNA_READ_AIE_MEM		6
+#define	DRM_AMDXDNA_READ_AIE_REG		7
+#define	DRM_AMDXDNA_QUERY_FIRMWARE_VERSION	8
+#define	DRM_AMDXDNA_GET_POWER_MODE		9
+#define	DRM_AMDXDNA_QUERY_TELEMETRY		10
+#define	DRM_AMDXDNA_GET_FORCE_PREEMPT_STATE	11
 	__u32 param; /* in */
 	__u32 buffer_size; /* in/out */
 	__u64 buffer; /* in/out */
@@ -547,7 +539,7 @@ struct amdxdna_drm_get_info {
 
 /**
  * struct amdxdna_drm_set_power_mode - Set the power mode of the AIE hardware
- * @power_mode: The sensor type from enum amdxdna_power_mode_type
+ * @power_mode: The target power mode to be set
  * @pad: MBZ.
  */
 struct amdxdna_drm_set_power_mode {
@@ -566,36 +558,33 @@ struct amdxdna_drm_set_force_preempt_state {
 	__u8 pad[7];
 };
 
-enum amdxdna_drm_set_param {
-	DRM_AMDXDNA_SET_POWER_MODE,
-	DRM_AMDXDNA_WRITE_AIE_MEM,
-	DRM_AMDXDNA_WRITE_AIE_REG,
-	DRM_AMDXDNA_SET_FORCE_PREEMPT,
-};
-
 /**
  * struct amdxdna_drm_set_state - Set the state of some component within the AIE hardware.
- * @param: Value in enum amdxdna_drm_set_param. Specifies the structure passed in the buffer.
+ * @param: Specifies the structure passed in the buffer.
  * @buffer_size: Size of the input buffer.
  * @buffer: A structure specified by the param struct member.
  */
 struct amdxdna_drm_set_state {
+#define	DRM_AMDXDNA_SET_POWER_MODE		0
+#define	DRM_AMDXDNA_WRITE_AIE_MEM		1
+#define	DRM_AMDXDNA_WRITE_AIE_REG		2
+#define	DRM_AMDXDNA_SET_FORCE_PREEMPT		3
 	__u32 param; /* in */
 	__u32 buffer_size; /* in */
 	__u64 buffer; /* in */
 };
 
-#define DRM_IOCTL_AMDXDNA_CREATE_HWCTX \
-	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDXDNA_CREATE_HWCTX, \
-		 struct amdxdna_drm_create_hwctx)
+#define DRM_IOCTL_AMDXDNA_CREATE_CTX \
+	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDXDNA_CREATE_CTX, \
+		 struct amdxdna_drm_create_ctx)
 
-#define DRM_IOCTL_AMDXDNA_DESTROY_HWCTX \
-	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDXDNA_DESTROY_HWCTX, \
-		 struct amdxdna_drm_destroy_hwctx)
+#define DRM_IOCTL_AMDXDNA_DESTROY_CTX \
+	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDXDNA_DESTROY_CTX, \
+		 struct amdxdna_drm_destroy_ctx)
 
-#define DRM_IOCTL_AMDXDNA_CONFIG_HWCTX \
-	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDXDNA_CONFIG_HWCTX, \
-		 struct amdxdna_drm_config_hwctx)
+#define DRM_IOCTL_AMDXDNA_CONFIG_CTX \
+	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDXDNA_CONFIG_CTX, \
+		 struct amdxdna_drm_config_ctx)
 
 #define DRM_IOCTL_AMDXDNA_CREATE_BO \
 	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDXDNA_CREATE_BO, \

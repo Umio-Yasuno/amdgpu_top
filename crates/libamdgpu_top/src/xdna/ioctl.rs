@@ -12,17 +12,17 @@ use bindings::{
     DRM_COMMAND_BASE,
     amdxdna_drm_get_info,
     amdxdna_drm_get_power_mode,
-    amdxdna_drm_ioctl_id_DRM_AMDXDNA_GET_INFO as DRM_AMDXDNA_GET_INFO,
-    amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_AIE_METADATA as DRM_AMDXDNA_QUERY_AIE_METADATA,
-    amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_AIE_VERSION as DRM_AMDXDNA_QUERY_AIE_VERSION,
-    amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_CLOCK_METADATA as DRM_AMDXDNA_QUERY_CLOCK_METADATA,
-    amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_FIRMWARE_VERSION as DRM_AMDXDNA_QUERY_FIRMWARE_VERSION,
-    amdxdna_drm_get_param_DRM_AMDXDNA_GET_POWER_MODE as DRM_AMDXDNA_GET_POWER_MODE,
-    amdxdna_power_mode_type_POWER_MODE_DEFAULT,
-    amdxdna_power_mode_type_POWER_MODE_LOW,
-    amdxdna_power_mode_type_POWER_MODE_MEDIUM,
-    amdxdna_power_mode_type_POWER_MODE_HIGH,
-    amdxdna_power_mode_type_POWER_MODE_TURBO,
+    DRM_AMDXDNA_GET_INFO,
+    DRM_AMDXDNA_QUERY_AIE_METADATA,
+    DRM_AMDXDNA_QUERY_AIE_VERSION,
+    DRM_AMDXDNA_QUERY_CLOCK_METADATA,
+    DRM_AMDXDNA_QUERY_FIRMWARE_VERSION,
+    DRM_AMDXDNA_GET_POWER_MODE,
+    POWER_MODE_DEFAULT,
+    POWER_MODE_LOW,
+    POWER_MODE_MEDIUM,
+    POWER_MODE_HIGH,
+    POWER_MODE_TURBO,
 };
 pub use bindings::{
     amdxdna_drm_query_aie_metadata,
@@ -68,22 +68,22 @@ pub struct XdnaClockMetadata {
 #[repr(u32)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum XdnaPowerMode {
-    POWER_MODE_DEFAULT = amdxdna_power_mode_type_POWER_MODE_DEFAULT,
-    POWER_MODE_LOW = amdxdna_power_mode_type_POWER_MODE_LOW,
-    POWER_MODE_MEDIUM = amdxdna_power_mode_type_POWER_MODE_MEDIUM,
-    POWER_MODE_HIGH = amdxdna_power_mode_type_POWER_MODE_HIGH,
-    POWER_MODE_TURBO = amdxdna_power_mode_type_POWER_MODE_TURBO,
+    DEFAULT = POWER_MODE_DEFAULT,
+    LOW = POWER_MODE_LOW,
+    MEDIUM = POWER_MODE_MEDIUM,
+    HIGH = POWER_MODE_HIGH,
+    TURBO = POWER_MODE_TURBO,
     Invalid(u32),
 }
 
 impl From<u32> for XdnaPowerMode {
     fn from(v: u32) -> Self {
         match v {
-            amdxdna_power_mode_type_POWER_MODE_DEFAULT => Self::POWER_MODE_DEFAULT,
-            amdxdna_power_mode_type_POWER_MODE_LOW => Self::POWER_MODE_LOW,
-            amdxdna_power_mode_type_POWER_MODE_MEDIUM => Self::POWER_MODE_MEDIUM,
-            amdxdna_power_mode_type_POWER_MODE_HIGH => Self::POWER_MODE_HIGH,
-            amdxdna_power_mode_type_POWER_MODE_TURBO => Self::POWER_MODE_TURBO,
+            POWER_MODE_DEFAULT => Self::DEFAULT,
+            POWER_MODE_LOW => Self::LOW,
+            POWER_MODE_MEDIUM => Self::MEDIUM,
+            POWER_MODE_HIGH => Self::HIGH,
+            POWER_MODE_TURBO => Self::TURBO,
             _ => Self::Invalid(v),
         }
     }

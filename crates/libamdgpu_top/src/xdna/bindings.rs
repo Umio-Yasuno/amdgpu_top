@@ -256,8 +256,62 @@ pub const AMDXDNA_INVALID_ADDR: i32 = -1;
 pub const AMDXDNA_INVALID_CTX_HANDLE: u32 = 0;
 pub const AMDXDNA_INVALID_BO_HANDLE: u32 = 0;
 pub const AMDXDNA_INVALID_FENCE_HANDLE: u32 = 0;
+pub const POWER_MODE_DEFAULT: u32 = 0;
+pub const POWER_MODE_LOW: u32 = 1;
+pub const POWER_MODE_MEDIUM: u32 = 2;
+pub const POWER_MODE_HIGH: u32 = 3;
+pub const POWER_MODE_TURBO: u32 = 4;
+pub const DRM_AMDXDNA_CREATE_CTX: u32 = 0;
+pub const DRM_AMDXDNA_DESTROY_CTX: u32 = 1;
+pub const DRM_AMDXDNA_CONFIG_CTX: u32 = 2;
+pub const DRM_AMDXDNA_CREATE_BO: u32 = 3;
+pub const DRM_AMDXDNA_GET_BO_INFO: u32 = 4;
+pub const DRM_AMDXDNA_SYNC_BO: u32 = 5;
+pub const DRM_AMDXDNA_EXEC_CMD: u32 = 6;
+pub const DRM_AMDXDNA_GET_INFO: u32 = 7;
+pub const DRM_AMDXDNA_SET_STATE: u32 = 8;
+pub const DRM_AMDXDNA_WAIT_CMD: u32 = 9;
+pub const AMDXDNA_DEV_TYPE_UNKNOWN: i32 = -1;
+pub const AMDXDNA_DEV_TYPE_KMQ: u32 = 0;
+pub const AMDXDNA_DEV_TYPE_UMQ: u32 = 1;
+pub const AMDXDNA_QOS_DEFAULT_PRIORITY: u32 = 0;
+pub const AMDXDNA_QOS_REALTIME_PRIORITY: u32 = 1;
+pub const AMDXDNA_QOS_HIGH_PRIORITY: u32 = 2;
+pub const AMDXDNA_QOS_NORMAL_PRIORITY: u32 = 3;
+pub const AMDXDNA_QOS_LOW_PRIORITY: u32 = 4;
+pub const AMDXDNA_NUM_PRIORITY: u32 = 4;
+pub const DRM_AMDXDNA_CTX_CONFIG_CU: u32 = 0;
+pub const DRM_AMDXDNA_CTX_ASSIGN_DBG_BUF: u32 = 1;
+pub const DRM_AMDXDNA_CTX_REMOVE_DBG_BUF: u32 = 2;
+pub const AMDXDNA_BO_INVALID: u32 = 0;
+pub const AMDXDNA_BO_SHARE: u32 = 1;
+pub const AMDXDNA_BO_DEV_HEAP: u32 = 2;
+pub const AMDXDNA_BO_DEV: u32 = 3;
+pub const AMDXDNA_BO_CMD: u32 = 4;
+pub const AMDXDNA_BO_DMA: u32 = 5;
+pub const AMDXDNA_BO_GUEST: u32 = 6;
 pub const SYNC_DIRECT_TO_DEVICE: u32 = 0;
 pub const SYNC_DIRECT_FROM_DEVICE: u32 = 1;
+pub const AMDXDNA_CMD_SUBMIT_EXEC_BUF: u32 = 0;
+pub const AMDXDNA_CMD_SUBMIT_DEPENDENCY: u32 = 1;
+pub const AMDXDNA_CMD_SUBMIT_SIGNAL: u32 = 2;
+pub const AMDXDNA_SENSOR_TYPE_POWER: u32 = 0;
+pub const DRM_AMDXDNA_QUERY_AIE_STATUS: u32 = 0;
+pub const DRM_AMDXDNA_QUERY_AIE_METADATA: u32 = 1;
+pub const DRM_AMDXDNA_QUERY_AIE_VERSION: u32 = 2;
+pub const DRM_AMDXDNA_QUERY_CLOCK_METADATA: u32 = 3;
+pub const DRM_AMDXDNA_QUERY_SENSORS: u32 = 4;
+pub const DRM_AMDXDNA_QUERY_HW_CONTEXTS: u32 = 5;
+pub const DRM_AMDXDNA_READ_AIE_MEM: u32 = 6;
+pub const DRM_AMDXDNA_READ_AIE_REG: u32 = 7;
+pub const DRM_AMDXDNA_QUERY_FIRMWARE_VERSION: u32 = 8;
+pub const DRM_AMDXDNA_GET_POWER_MODE: u32 = 9;
+pub const DRM_AMDXDNA_QUERY_TELEMETRY: u32 = 10;
+pub const DRM_AMDXDNA_GET_FORCE_PREEMPT_STATE: u32 = 11;
+pub const DRM_AMDXDNA_SET_POWER_MODE: u32 = 0;
+pub const DRM_AMDXDNA_WRITE_AIE_MEM: u32 = 1;
+pub const DRM_AMDXDNA_WRITE_AIE_REG: u32 = 2;
+pub const DRM_AMDXDNA_SET_FORCE_PREEMPT: u32 = 3;
 pub type __s8 = ::std::os::raw::c_schar;
 pub type __u8 = ::std::os::raw::c_uchar;
 pub type __s16 = ::std::os::raw::c_short;
@@ -2608,27 +2662,6 @@ pub type drm_agp_binding_t = drm_agp_binding;
 pub type drm_agp_info_t = drm_agp_info;
 pub type drm_scatter_gather_t = drm_scatter_gather;
 pub type drm_set_version_t = drm_set_version;
-pub const amdxdna_drm_ioctl_id_DRM_AMDXDNA_CREATE_HWCTX: amdxdna_drm_ioctl_id = 0;
-pub const amdxdna_drm_ioctl_id_DRM_AMDXDNA_DESTROY_HWCTX: amdxdna_drm_ioctl_id = 1;
-pub const amdxdna_drm_ioctl_id_DRM_AMDXDNA_CONFIG_HWCTX: amdxdna_drm_ioctl_id = 2;
-pub const amdxdna_drm_ioctl_id_DRM_AMDXDNA_CREATE_BO: amdxdna_drm_ioctl_id = 3;
-pub const amdxdna_drm_ioctl_id_DRM_AMDXDNA_GET_BO_INFO: amdxdna_drm_ioctl_id = 4;
-pub const amdxdna_drm_ioctl_id_DRM_AMDXDNA_SYNC_BO: amdxdna_drm_ioctl_id = 5;
-pub const amdxdna_drm_ioctl_id_DRM_AMDXDNA_EXEC_CMD: amdxdna_drm_ioctl_id = 6;
-pub const amdxdna_drm_ioctl_id_DRM_AMDXDNA_GET_INFO: amdxdna_drm_ioctl_id = 7;
-pub const amdxdna_drm_ioctl_id_DRM_AMDXDNA_SET_STATE: amdxdna_drm_ioctl_id = 8;
-pub const amdxdna_drm_ioctl_id_DRM_AMDXDNA_WAIT_CMD: amdxdna_drm_ioctl_id = 9;
-pub type amdxdna_drm_ioctl_id = ::std::os::raw::c_uint;
-pub const amdxdna_device_type_AMDXDNA_DEV_TYPE_UNKNOWN: amdxdna_device_type = -1;
-pub const amdxdna_device_type_AMDXDNA_DEV_TYPE_KMQ: amdxdna_device_type = 0;
-pub const amdxdna_device_type_AMDXDNA_DEV_TYPE_UMQ: amdxdna_device_type = 1;
-pub type amdxdna_device_type = ::std::os::raw::c_int;
-pub const amdxdna_qos_priority_AMDXDNA_QOS_DEFAULT_PRIORITY: amdxdna_qos_priority = 0;
-pub const amdxdna_qos_priority_AMDXDNA_QOS_REALTIME_PRIORITY: amdxdna_qos_priority = 256;
-pub const amdxdna_qos_priority_AMDXDNA_QOS_HIGH_PRIORITY: amdxdna_qos_priority = 384;
-pub const amdxdna_qos_priority_AMDXDNA_QOS_NORMAL_PRIORITY: amdxdna_qos_priority = 512;
-pub const amdxdna_qos_priority_AMDXDNA_QOS_LOW_PRIORITY: amdxdna_qos_priority = 640;
-pub type amdxdna_qos_priority = ::std::os::raw::c_uint;
 #[doc = " struct qos_info - QoS information for driver.\n @gops: Giga operations per second.\n @fps: Frames per second.\n @dma_bandwidth: DMA bandwidtha.\n @latency: Frame response latency.\n @frame_exec_time: Frame execution time.\n @priority: Request priority.\n\n User program can provide QoS hints to driver."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2657,10 +2690,10 @@ const _: () = {
     ["Offset of field: amdxdna_qos_info::priority"]
         [::std::mem::offset_of!(amdxdna_qos_info, priority) - 20usize];
 };
-#[doc = " struct amdxdna_drm_create_hwctx - Create hardware context.\n @ext: MBZ.\n @ext_flags: MBZ.\n @qos_p: Address of QoS info.\n @umq_bo: BO handle for user mode queue(UMQ).\n @log_buf_bo: BO handle for log buffer.\n @max_opc: Maximum operations per cycle.\n @num_tiles: Number of AIE tiles.\n @mem_size: Size of AIE tile memory.\n @umq_doorbell: Returned offset of doorbell associated with UMQ.\n @handle: Returned hardware context handle.\n @syncobj_handle: The drm timeline syncobj handle for command completion notification."]
+#[doc = " struct amdxdna_drm_create_ctx - Create context.\n @ext: MBZ.\n @ext_flags: MBZ.\n @qos_p: Address of QoS info.\n @umq_bo: BO handle for user mode queue(UMQ).\n @log_buf_bo: BO handle for log buffer.\n @max_opc: Maximum operations per cycle.\n @num_tiles: Number of AIE tiles.\n @mem_size: Size of AIE tile memory.\n @umq_doorbell: Returned offset of doorbell associated with UMQ.\n @handle: Returned context handle.\n @syncobj_handle: The drm timeline syncobj handle for command completion notification."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct amdxdna_drm_create_hwctx {
+pub struct amdxdna_drm_create_ctx {
     pub ext: __u64,
     pub ext_flags: __u64,
     pub qos_p: __u64,
@@ -2675,50 +2708,48 @@ pub struct amdxdna_drm_create_hwctx {
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of amdxdna_drm_create_hwctx"]
-        [::std::mem::size_of::<amdxdna_drm_create_hwctx>() - 56usize];
-    ["Alignment of amdxdna_drm_create_hwctx"]
-        [::std::mem::align_of::<amdxdna_drm_create_hwctx>() - 8usize];
-    ["Offset of field: amdxdna_drm_create_hwctx::ext"]
-        [::std::mem::offset_of!(amdxdna_drm_create_hwctx, ext) - 0usize];
-    ["Offset of field: amdxdna_drm_create_hwctx::ext_flags"]
-        [::std::mem::offset_of!(amdxdna_drm_create_hwctx, ext_flags) - 8usize];
-    ["Offset of field: amdxdna_drm_create_hwctx::qos_p"]
-        [::std::mem::offset_of!(amdxdna_drm_create_hwctx, qos_p) - 16usize];
-    ["Offset of field: amdxdna_drm_create_hwctx::umq_bo"]
-        [::std::mem::offset_of!(amdxdna_drm_create_hwctx, umq_bo) - 24usize];
-    ["Offset of field: amdxdna_drm_create_hwctx::log_buf_bo"]
-        [::std::mem::offset_of!(amdxdna_drm_create_hwctx, log_buf_bo) - 28usize];
-    ["Offset of field: amdxdna_drm_create_hwctx::max_opc"]
-        [::std::mem::offset_of!(amdxdna_drm_create_hwctx, max_opc) - 32usize];
-    ["Offset of field: amdxdna_drm_create_hwctx::num_tiles"]
-        [::std::mem::offset_of!(amdxdna_drm_create_hwctx, num_tiles) - 36usize];
-    ["Offset of field: amdxdna_drm_create_hwctx::mem_size"]
-        [::std::mem::offset_of!(amdxdna_drm_create_hwctx, mem_size) - 40usize];
-    ["Offset of field: amdxdna_drm_create_hwctx::umq_doorbell"]
-        [::std::mem::offset_of!(amdxdna_drm_create_hwctx, umq_doorbell) - 44usize];
-    ["Offset of field: amdxdna_drm_create_hwctx::handle"]
-        [::std::mem::offset_of!(amdxdna_drm_create_hwctx, handle) - 48usize];
-    ["Offset of field: amdxdna_drm_create_hwctx::syncobj_handle"]
-        [::std::mem::offset_of!(amdxdna_drm_create_hwctx, syncobj_handle) - 52usize];
+    ["Size of amdxdna_drm_create_ctx"][::std::mem::size_of::<amdxdna_drm_create_ctx>() - 56usize];
+    ["Alignment of amdxdna_drm_create_ctx"]
+        [::std::mem::align_of::<amdxdna_drm_create_ctx>() - 8usize];
+    ["Offset of field: amdxdna_drm_create_ctx::ext"]
+        [::std::mem::offset_of!(amdxdna_drm_create_ctx, ext) - 0usize];
+    ["Offset of field: amdxdna_drm_create_ctx::ext_flags"]
+        [::std::mem::offset_of!(amdxdna_drm_create_ctx, ext_flags) - 8usize];
+    ["Offset of field: amdxdna_drm_create_ctx::qos_p"]
+        [::std::mem::offset_of!(amdxdna_drm_create_ctx, qos_p) - 16usize];
+    ["Offset of field: amdxdna_drm_create_ctx::umq_bo"]
+        [::std::mem::offset_of!(amdxdna_drm_create_ctx, umq_bo) - 24usize];
+    ["Offset of field: amdxdna_drm_create_ctx::log_buf_bo"]
+        [::std::mem::offset_of!(amdxdna_drm_create_ctx, log_buf_bo) - 28usize];
+    ["Offset of field: amdxdna_drm_create_ctx::max_opc"]
+        [::std::mem::offset_of!(amdxdna_drm_create_ctx, max_opc) - 32usize];
+    ["Offset of field: amdxdna_drm_create_ctx::num_tiles"]
+        [::std::mem::offset_of!(amdxdna_drm_create_ctx, num_tiles) - 36usize];
+    ["Offset of field: amdxdna_drm_create_ctx::mem_size"]
+        [::std::mem::offset_of!(amdxdna_drm_create_ctx, mem_size) - 40usize];
+    ["Offset of field: amdxdna_drm_create_ctx::umq_doorbell"]
+        [::std::mem::offset_of!(amdxdna_drm_create_ctx, umq_doorbell) - 44usize];
+    ["Offset of field: amdxdna_drm_create_ctx::handle"]
+        [::std::mem::offset_of!(amdxdna_drm_create_ctx, handle) - 48usize];
+    ["Offset of field: amdxdna_drm_create_ctx::syncobj_handle"]
+        [::std::mem::offset_of!(amdxdna_drm_create_ctx, syncobj_handle) - 52usize];
 };
-#[doc = " struct amdxdna_drm_destroy_hwctx - Destroy hardware context.\n @handle: Hardware context handle.\n @pad: Structure padding."]
+#[doc = " struct amdxdna_drm_destroy_ctx - Destroy context.\n @handle: Context handle.\n @pad: Structure padding."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct amdxdna_drm_destroy_hwctx {
+pub struct amdxdna_drm_destroy_ctx {
     pub handle: __u32,
     pub pad: __u32,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of amdxdna_drm_destroy_hwctx"]
-        [::std::mem::size_of::<amdxdna_drm_destroy_hwctx>() - 8usize];
-    ["Alignment of amdxdna_drm_destroy_hwctx"]
-        [::std::mem::align_of::<amdxdna_drm_destroy_hwctx>() - 4usize];
-    ["Offset of field: amdxdna_drm_destroy_hwctx::handle"]
-        [::std::mem::offset_of!(amdxdna_drm_destroy_hwctx, handle) - 0usize];
-    ["Offset of field: amdxdna_drm_destroy_hwctx::pad"]
-        [::std::mem::offset_of!(amdxdna_drm_destroy_hwctx, pad) - 4usize];
+    ["Size of amdxdna_drm_destroy_ctx"][::std::mem::size_of::<amdxdna_drm_destroy_ctx>() - 8usize];
+    ["Alignment of amdxdna_drm_destroy_ctx"]
+        [::std::mem::align_of::<amdxdna_drm_destroy_ctx>() - 4usize];
+    ["Offset of field: amdxdna_drm_destroy_ctx::handle"]
+        [::std::mem::offset_of!(amdxdna_drm_destroy_ctx, handle) - 0usize];
+    ["Offset of field: amdxdna_drm_destroy_ctx::pad"]
+        [::std::mem::offset_of!(amdxdna_drm_destroy_ctx, pad) - 4usize];
 };
 #[doc = " struct amdxdna_cu_config - configuration for one CU\n @cu_bo: CU configuration buffer bo handle.\n @cu_func: Function of a CU.\n @pad: Structure padding."]
 #[repr(C)]
@@ -2739,38 +2770,31 @@ const _: () = {
     ["Offset of field: amdxdna_cu_config::pad"]
         [::std::mem::offset_of!(amdxdna_cu_config, pad) - 5usize];
 };
-#[doc = " struct amdxdna_hwctx_param_config_cu - configuration for CUs in hardware context\n @num_cus: Number of CUs to configure.\n @pad: Structure padding.\n @cu_configs: Array of CU configurations of struct amdxdna_cu_config."]
+#[doc = " struct amdxdna_ctx_param_config_cu - configuration for CUs in context\n @num_cus: Number of CUs to configure.\n @pad: Structure padding.\n @cu_configs: Array of CU configurations of struct amdxdna_cu_config."]
 #[repr(C)]
 #[derive(Debug)]
-pub struct amdxdna_hwctx_param_config_cu {
+pub struct amdxdna_ctx_param_config_cu {
     pub num_cus: __u16,
     pub pad: [__u16; 3usize],
     pub cu_configs: __IncompleteArrayField<amdxdna_cu_config>,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of amdxdna_hwctx_param_config_cu"]
-        [::std::mem::size_of::<amdxdna_hwctx_param_config_cu>() - 8usize];
-    ["Alignment of amdxdna_hwctx_param_config_cu"]
-        [::std::mem::align_of::<amdxdna_hwctx_param_config_cu>() - 4usize];
-    ["Offset of field: amdxdna_hwctx_param_config_cu::num_cus"]
-        [::std::mem::offset_of!(amdxdna_hwctx_param_config_cu, num_cus) - 0usize];
-    ["Offset of field: amdxdna_hwctx_param_config_cu::pad"]
-        [::std::mem::offset_of!(amdxdna_hwctx_param_config_cu, pad) - 2usize];
-    ["Offset of field: amdxdna_hwctx_param_config_cu::cu_configs"]
-        [::std::mem::offset_of!(amdxdna_hwctx_param_config_cu, cu_configs) - 8usize];
+    ["Size of amdxdna_ctx_param_config_cu"]
+        [::std::mem::size_of::<amdxdna_ctx_param_config_cu>() - 8usize];
+    ["Alignment of amdxdna_ctx_param_config_cu"]
+        [::std::mem::align_of::<amdxdna_ctx_param_config_cu>() - 4usize];
+    ["Offset of field: amdxdna_ctx_param_config_cu::num_cus"]
+        [::std::mem::offset_of!(amdxdna_ctx_param_config_cu, num_cus) - 0usize];
+    ["Offset of field: amdxdna_ctx_param_config_cu::pad"]
+        [::std::mem::offset_of!(amdxdna_ctx_param_config_cu, pad) - 2usize];
+    ["Offset of field: amdxdna_ctx_param_config_cu::cu_configs"]
+        [::std::mem::offset_of!(amdxdna_ctx_param_config_cu, cu_configs) - 8usize];
 };
-pub const amdxdna_drm_config_hwctx_param_DRM_AMDXDNA_HWCTX_CONFIG_CU:
-    amdxdna_drm_config_hwctx_param = 0;
-pub const amdxdna_drm_config_hwctx_param_DRM_AMDXDNA_HWCTX_ASSIGN_DBG_BUF:
-    amdxdna_drm_config_hwctx_param = 1;
-pub const amdxdna_drm_config_hwctx_param_DRM_AMDXDNA_HWCTX_REMOVE_DBG_BUF:
-    amdxdna_drm_config_hwctx_param = 2;
-pub type amdxdna_drm_config_hwctx_param = ::std::os::raw::c_uint;
-#[doc = " struct amdxdna_drm_config_hwctx - Configure hardware context.\n @handle: hardware context handle.\n @param_type: Value in enum amdxdna_drm_config_hwctx_param. Specifies the\n              structure passed in via param_val.\n @param_val: A structure specified by the param_type struct member.\n @param_val_size: Size of the parameter buffer pointed to by the param_val.\n\t\t    If param_val is not a pointer, driver can ignore this.\n @pad: Structure padding.\n\n Note: if the param_val is a pointer pointing to a buffer, the maximum size\n of the buffer is 4KiB(PAGE_SIZE)."]
+#[doc = " struct amdxdna_drm_config_ctx - Configure context.\n @handle: Context handle.\n @param_type: Specifies the structure passed in via param_val.\n @param_val: A structure specified by the param_type struct member.\n @param_val_size: Size of the parameter buffer pointed to by the param_val.\n\t\t    If param_val is not a pointer, driver can ignore this.\n @pad: Structure padding.\n\n Note: if the param_val is a pointer pointing to a buffer, the maximum size\n of the buffer is 4KiB(PAGE_SIZE)."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct amdxdna_drm_config_hwctx {
+pub struct amdxdna_drm_config_ctx {
     pub handle: __u32,
     pub param_type: __u32,
     pub param_val: __u64,
@@ -2779,28 +2803,36 @@ pub struct amdxdna_drm_config_hwctx {
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of amdxdna_drm_config_hwctx"]
-        [::std::mem::size_of::<amdxdna_drm_config_hwctx>() - 24usize];
-    ["Alignment of amdxdna_drm_config_hwctx"]
-        [::std::mem::align_of::<amdxdna_drm_config_hwctx>() - 8usize];
-    ["Offset of field: amdxdna_drm_config_hwctx::handle"]
-        [::std::mem::offset_of!(amdxdna_drm_config_hwctx, handle) - 0usize];
-    ["Offset of field: amdxdna_drm_config_hwctx::param_type"]
-        [::std::mem::offset_of!(amdxdna_drm_config_hwctx, param_type) - 4usize];
-    ["Offset of field: amdxdna_drm_config_hwctx::param_val"]
-        [::std::mem::offset_of!(amdxdna_drm_config_hwctx, param_val) - 8usize];
-    ["Offset of field: amdxdna_drm_config_hwctx::param_val_size"]
-        [::std::mem::offset_of!(amdxdna_drm_config_hwctx, param_val_size) - 16usize];
-    ["Offset of field: amdxdna_drm_config_hwctx::pad"]
-        [::std::mem::offset_of!(amdxdna_drm_config_hwctx, pad) - 20usize];
+    ["Size of amdxdna_drm_config_ctx"][::std::mem::size_of::<amdxdna_drm_config_ctx>() - 24usize];
+    ["Alignment of amdxdna_drm_config_ctx"]
+        [::std::mem::align_of::<amdxdna_drm_config_ctx>() - 8usize];
+    ["Offset of field: amdxdna_drm_config_ctx::handle"]
+        [::std::mem::offset_of!(amdxdna_drm_config_ctx, handle) - 0usize];
+    ["Offset of field: amdxdna_drm_config_ctx::param_type"]
+        [::std::mem::offset_of!(amdxdna_drm_config_ctx, param_type) - 4usize];
+    ["Offset of field: amdxdna_drm_config_ctx::param_val"]
+        [::std::mem::offset_of!(amdxdna_drm_config_ctx, param_val) - 8usize];
+    ["Offset of field: amdxdna_drm_config_ctx::param_val_size"]
+        [::std::mem::offset_of!(amdxdna_drm_config_ctx, param_val_size) - 16usize];
+    ["Offset of field: amdxdna_drm_config_ctx::pad"]
+        [::std::mem::offset_of!(amdxdna_drm_config_ctx, pad) - 20usize];
 };
-pub const amdxdna_bo_type_AMDXDNA_BO_INVALID: amdxdna_bo_type = 0;
-pub const amdxdna_bo_type_AMDXDNA_BO_SHMEM: amdxdna_bo_type = 1;
-pub const amdxdna_bo_type_AMDXDNA_BO_DEV_HEAP: amdxdna_bo_type = 2;
-pub const amdxdna_bo_type_AMDXDNA_BO_DEV: amdxdna_bo_type = 3;
-pub const amdxdna_bo_type_AMDXDNA_BO_CMD: amdxdna_bo_type = 4;
-pub const amdxdna_bo_type_AMDXDNA_BO_DMA: amdxdna_bo_type = 5;
-pub type amdxdna_bo_type = ::std::os::raw::c_uint;
+#[doc = " struct amdxdna_bo_va_entry - virtual address list entry\n\n @vaddr: Virtual address\n @len: Length of memory segment"]
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct amdxdna_bo_va_entry {
+    pub vaddr: __u64,
+    pub len: __u64,
+}
+#[allow(clippy::unnecessary_operation, clippy::identity_op)]
+const _: () = {
+    ["Size of amdxdna_bo_va_entry"][::std::mem::size_of::<amdxdna_bo_va_entry>() - 16usize];
+    ["Alignment of amdxdna_bo_va_entry"][::std::mem::align_of::<amdxdna_bo_va_entry>() - 8usize];
+    ["Offset of field: amdxdna_bo_va_entry::vaddr"]
+        [::std::mem::offset_of!(amdxdna_bo_va_entry, vaddr) - 0usize];
+    ["Offset of field: amdxdna_bo_va_entry::len"]
+        [::std::mem::offset_of!(amdxdna_bo_va_entry, len) - 8usize];
+};
 #[doc = " struct amdxdna_drm_create_bo - Create a buffer object.\n @flags: Buffer flags. MBZ.\n @vaddr: User VA of buffer if applied. MBZ.\n @size: Size in bytes.\n @type: Buffer type.\n @handle: Returned DRM buffer object handle."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2881,17 +2913,13 @@ const _: () = {
     ["Offset of field: amdxdna_drm_sync_bo::size"]
         [::std::mem::offset_of!(amdxdna_drm_sync_bo, size) - 16usize];
 };
-pub const amdxdna_cmd_type_AMDXDNA_CMD_SUBMIT_EXEC_BUF: amdxdna_cmd_type = 0;
-pub const amdxdna_cmd_type_AMDXDNA_CMD_SUBMIT_DEPENDENCY: amdxdna_cmd_type = 1;
-pub const amdxdna_cmd_type_AMDXDNA_CMD_SUBMIT_SIGNAL: amdxdna_cmd_type = 2;
-pub type amdxdna_cmd_type = ::std::os::raw::c_uint;
-#[doc = " struct amdxdna_drm_exec_cmd - Execute command.\n @ext: MBZ.\n @ext_flags: MBZ.\n @hwctx: Hardware context handle.\n @type: One of command type in enum amdxdna_cmd_type.\n @cmd_handles: Array of command handles or the command handle itself\n               in case of just one.\n @args: Array of arguments for all command handles.\n @cmd_count: Number of command handles in the cmd_handles array.\n @arg_count: Number of arguments in the args array.\n @seq: Returned sequence number for this command."]
+#[doc = " struct amdxdna_drm_exec_cmd - Execute command.\n @ext: MBZ.\n @ext_flags: MBZ.\n @ctx: Context handle.\n @type: Command type.\n @cmd_handles: Array of command handles or the command handle itself\n               in case of just one.\n @args: Array of arguments for all command handles.\n @cmd_count: Number of command handles in the cmd_handles array.\n @arg_count: Number of arguments in the args array.\n @seq: Returned sequence number for this command."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct amdxdna_drm_exec_cmd {
     pub ext: __u64,
     pub ext_flags: __u64,
-    pub hwctx: __u32,
+    pub ctx: __u32,
     pub type_: __u32,
     pub cmd_handles: __u64,
     pub args: __u64,
@@ -2907,8 +2935,8 @@ const _: () = {
         [::std::mem::offset_of!(amdxdna_drm_exec_cmd, ext) - 0usize];
     ["Offset of field: amdxdna_drm_exec_cmd::ext_flags"]
         [::std::mem::offset_of!(amdxdna_drm_exec_cmd, ext_flags) - 8usize];
-    ["Offset of field: amdxdna_drm_exec_cmd::hwctx"]
-        [::std::mem::offset_of!(amdxdna_drm_exec_cmd, hwctx) - 16usize];
+    ["Offset of field: amdxdna_drm_exec_cmd::ctx"]
+        [::std::mem::offset_of!(amdxdna_drm_exec_cmd, ctx) - 16usize];
     ["Offset of field: amdxdna_drm_exec_cmd::type_"]
         [::std::mem::offset_of!(amdxdna_drm_exec_cmd, type_) - 20usize];
     ["Offset of field: amdxdna_drm_exec_cmd::cmd_handles"]
@@ -2922,11 +2950,11 @@ const _: () = {
     ["Offset of field: amdxdna_drm_exec_cmd::seq"]
         [::std::mem::offset_of!(amdxdna_drm_exec_cmd, seq) - 48usize];
 };
-#[doc = " struct amdxdna_drm_wait_cmd - Wait exectuion command.\n\n @hwctx: hardware context handle.\n @timeout: timeout in ms, 0 implies infinite wait.\n @seq: sequence number of the command returned by execute command.\n\n Wait a command specified by seq to be completed."]
+#[doc = " struct amdxdna_drm_wait_cmd - Wait exectuion command.\n\n @ctx: Context handle.\n @timeout: timeout in ms, 0 implies infinite wait.\n @seq: sequence number of the command returned by execute command.\n\n Wait a command specified by seq to be completed."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct amdxdna_drm_wait_cmd {
-    pub hwctx: __u32,
+    pub ctx: __u32,
     pub timeout: __u32,
     pub seq: __u64,
 }
@@ -2934,8 +2962,8 @@ pub struct amdxdna_drm_wait_cmd {
 const _: () = {
     ["Size of amdxdna_drm_wait_cmd"][::std::mem::size_of::<amdxdna_drm_wait_cmd>() - 16usize];
     ["Alignment of amdxdna_drm_wait_cmd"][::std::mem::align_of::<amdxdna_drm_wait_cmd>() - 8usize];
-    ["Offset of field: amdxdna_drm_wait_cmd::hwctx"]
-        [::std::mem::offset_of!(amdxdna_drm_wait_cmd, hwctx) - 0usize];
+    ["Offset of field: amdxdna_drm_wait_cmd::ctx"]
+        [::std::mem::offset_of!(amdxdna_drm_wait_cmd, ctx) - 0usize];
     ["Offset of field: amdxdna_drm_wait_cmd::timeout"]
         [::std::mem::offset_of!(amdxdna_drm_wait_cmd, timeout) - 4usize];
     ["Offset of field: amdxdna_drm_wait_cmd::seq"]
@@ -3081,9 +3109,7 @@ const _: () = {
     ["Offset of field: amdxdna_drm_query_clock_metadata::h_clock"]
         [::std::mem::offset_of!(amdxdna_drm_query_clock_metadata, h_clock) - 24usize];
 };
-pub const amdxdna_sensor_type_AMDXDNA_SENSOR_TYPE_POWER: amdxdna_sensor_type = 0;
-pub type amdxdna_sensor_type = ::std::os::raw::c_uint;
-#[doc = " struct amdxdna_drm_query_sensor - The data for single sensor.\n @label: The name for a sensor.\n @input: The current value of the sensor.\n @max: The maximum value possible for the sensor.\n @average: The average value of the sensor.\n @highest: The highest recorded sensor value for this driver load for the sensor.\n @status: The sensor status.\n @units: The sensor units.\n @unitm: Translates value member variables into the correct unit via (pow(10, unitm) * value).\n @type: The sensor type from enum amdxdna_sensor_type.\n @pad: Structure padding."]
+#[doc = " struct amdxdna_drm_query_sensor - The data for single sensor.\n @label: The name for a sensor.\n @input: The current value of the sensor.\n @max: The maximum value possible for the sensor.\n @average: The average value of the sensor.\n @highest: The highest recorded sensor value for this driver load for the sensor.\n @status: The sensor status.\n @units: The sensor units.\n @unitm: Translates value member variables into the correct unit via (pow(10, unitm) * value).\n @type: The sensor type.\n @pad: Structure padding."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct amdxdna_drm_query_sensor {
@@ -3125,46 +3151,49 @@ const _: () = {
     ["Offset of field: amdxdna_drm_query_sensor::pad"]
         [::std::mem::offset_of!(amdxdna_drm_query_sensor, pad) - 162usize];
 };
-#[doc = " struct amdxdna_drm_query_hwctx - The data for single context.\n @context_id: The ID for this context.\n @start_col: The starting column for the partition assigned to this context.\n @num_col: The number of columns in the partition assigned to this context.\n @pad: Structure padding.\n @pid: The Process ID of the process that created this context.\n @command_submissions: The number of commands submitted to this context.\n @command_completions: The number of commands completed by this context.\n @migrations: The number of times this context has been moved to a different partition.\n @preemptions: The number of times this context has been preempted by another context in the\n               same partition.\n @errors: The errors for this context."]
+#[doc = " struct amdxdna_drm_query_ctx - The data for single context.\n @context_id: The ID for this context.\n @start_col: The starting column for the partition assigned to this context.\n @num_col: The number of columns in the partition assigned to this context.\n @nwctx_id: Hardware context ID.\n @pid: The Process ID of the process that created this context.\n @command_submissions: The number of commands submitted to this context.\n @command_completions: The number of commands completed by this context.\n @migrations: The number of times this context has been moved to a different partition.\n @preemptions: The number of times this context has been preempted by another context in the\n               same partition.\n @errors: The errors for this context.\n @priority: Context priority"]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct amdxdna_drm_query_hwctx {
+pub struct amdxdna_drm_query_ctx {
     pub context_id: __u32,
     pub start_col: __u32,
     pub num_col: __u32,
-    pub pad: __u32,
+    pub hwctx_id: __u32,
     pub pid: __s64,
     pub command_submissions: __u64,
     pub command_completions: __u64,
     pub migrations: __u64,
     pub preemptions: __u64,
     pub errors: __u64,
+    pub priority: __u64,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of amdxdna_drm_query_hwctx"][::std::mem::size_of::<amdxdna_drm_query_hwctx>() - 64usize];
-    ["Alignment of amdxdna_drm_query_hwctx"]
-        [::std::mem::align_of::<amdxdna_drm_query_hwctx>() - 8usize];
-    ["Offset of field: amdxdna_drm_query_hwctx::context_id"]
-        [::std::mem::offset_of!(amdxdna_drm_query_hwctx, context_id) - 0usize];
-    ["Offset of field: amdxdna_drm_query_hwctx::start_col"]
-        [::std::mem::offset_of!(amdxdna_drm_query_hwctx, start_col) - 4usize];
-    ["Offset of field: amdxdna_drm_query_hwctx::num_col"]
-        [::std::mem::offset_of!(amdxdna_drm_query_hwctx, num_col) - 8usize];
-    ["Offset of field: amdxdna_drm_query_hwctx::pad"]
-        [::std::mem::offset_of!(amdxdna_drm_query_hwctx, pad) - 12usize];
-    ["Offset of field: amdxdna_drm_query_hwctx::pid"]
-        [::std::mem::offset_of!(amdxdna_drm_query_hwctx, pid) - 16usize];
-    ["Offset of field: amdxdna_drm_query_hwctx::command_submissions"]
-        [::std::mem::offset_of!(amdxdna_drm_query_hwctx, command_submissions) - 24usize];
-    ["Offset of field: amdxdna_drm_query_hwctx::command_completions"]
-        [::std::mem::offset_of!(amdxdna_drm_query_hwctx, command_completions) - 32usize];
-    ["Offset of field: amdxdna_drm_query_hwctx::migrations"]
-        [::std::mem::offset_of!(amdxdna_drm_query_hwctx, migrations) - 40usize];
-    ["Offset of field: amdxdna_drm_query_hwctx::preemptions"]
-        [::std::mem::offset_of!(amdxdna_drm_query_hwctx, preemptions) - 48usize];
-    ["Offset of field: amdxdna_drm_query_hwctx::errors"]
-        [::std::mem::offset_of!(amdxdna_drm_query_hwctx, errors) - 56usize];
+    ["Size of amdxdna_drm_query_ctx"][::std::mem::size_of::<amdxdna_drm_query_ctx>() - 72usize];
+    ["Alignment of amdxdna_drm_query_ctx"]
+        [::std::mem::align_of::<amdxdna_drm_query_ctx>() - 8usize];
+    ["Offset of field: amdxdna_drm_query_ctx::context_id"]
+        [::std::mem::offset_of!(amdxdna_drm_query_ctx, context_id) - 0usize];
+    ["Offset of field: amdxdna_drm_query_ctx::start_col"]
+        [::std::mem::offset_of!(amdxdna_drm_query_ctx, start_col) - 4usize];
+    ["Offset of field: amdxdna_drm_query_ctx::num_col"]
+        [::std::mem::offset_of!(amdxdna_drm_query_ctx, num_col) - 8usize];
+    ["Offset of field: amdxdna_drm_query_ctx::hwctx_id"]
+        [::std::mem::offset_of!(amdxdna_drm_query_ctx, hwctx_id) - 12usize];
+    ["Offset of field: amdxdna_drm_query_ctx::pid"]
+        [::std::mem::offset_of!(amdxdna_drm_query_ctx, pid) - 16usize];
+    ["Offset of field: amdxdna_drm_query_ctx::command_submissions"]
+        [::std::mem::offset_of!(amdxdna_drm_query_ctx, command_submissions) - 24usize];
+    ["Offset of field: amdxdna_drm_query_ctx::command_completions"]
+        [::std::mem::offset_of!(amdxdna_drm_query_ctx, command_completions) - 32usize];
+    ["Offset of field: amdxdna_drm_query_ctx::migrations"]
+        [::std::mem::offset_of!(amdxdna_drm_query_ctx, migrations) - 40usize];
+    ["Offset of field: amdxdna_drm_query_ctx::preemptions"]
+        [::std::mem::offset_of!(amdxdna_drm_query_ctx, preemptions) - 48usize];
+    ["Offset of field: amdxdna_drm_query_ctx::errors"]
+        [::std::mem::offset_of!(amdxdna_drm_query_ctx, errors) - 56usize];
+    ["Offset of field: amdxdna_drm_query_ctx::priority"]
+        [::std::mem::offset_of!(amdxdna_drm_query_ctx, priority) - 64usize];
 };
 #[doc = " struct amdxdna_drm_aie_mem - The data for AIE memory read/write\n @col:   The AIE column index\n @row:   The AIE row index\n @addr:  The AIE memory address to read/write\n @size:  The size of bytes to read/write\n @buf_p: The buffer to store read/write data\n\n This is used for DRM_AMDXDNA_READ_AIE_MEM and DRM_AMDXDNA_WRITE_AIE_MEM\n parameters."]
 #[repr(C)]
@@ -3213,18 +3242,7 @@ const _: () = {
     ["Offset of field: amdxdna_drm_aie_reg::val"]
         [::std::mem::offset_of!(amdxdna_drm_aie_reg, val) - 12usize];
 };
-#[doc = "< Fallback to calculated DPM"]
-pub const amdxdna_power_mode_type_POWER_MODE_DEFAULT: amdxdna_power_mode_type = 0;
-#[doc = "< Set frequency to lowest DPM"]
-pub const amdxdna_power_mode_type_POWER_MODE_LOW: amdxdna_power_mode_type = 1;
-#[doc = "< Set frequency to medium DPM"]
-pub const amdxdna_power_mode_type_POWER_MODE_MEDIUM: amdxdna_power_mode_type = 2;
-#[doc = "< Set frequency to highest DPM"]
-pub const amdxdna_power_mode_type_POWER_MODE_HIGH: amdxdna_power_mode_type = 3;
-#[doc = "< More power, more performance"]
-pub const amdxdna_power_mode_type_POWER_MODE_TURBO: amdxdna_power_mode_type = 4;
-pub type amdxdna_power_mode_type = ::std::os::raw::c_uint;
-#[doc = " struct amdxdna_drm_get_power_mode - Get the power mode of the AIE hardware\n @power_mode: The sensor type from enum amdxdna_power_mode_type\n @pad: MBZ."]
+#[doc = " struct amdxdna_drm_get_power_mode - Get the power mode of the AIE hardware\n @power_mode: Returned current power mode\n @pad: MBZ."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct amdxdna_drm_get_power_mode {
@@ -3284,20 +3302,7 @@ const _: () = {
     ["Offset of field: amdxdna_drm_get_force_preempt_state::pad"]
         [::std::mem::offset_of!(amdxdna_drm_get_force_preempt_state, pad) - 1usize];
 };
-pub const amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_AIE_STATUS: amdxdna_drm_get_param = 0;
-pub const amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_AIE_METADATA: amdxdna_drm_get_param = 1;
-pub const amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_AIE_VERSION: amdxdna_drm_get_param = 2;
-pub const amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_CLOCK_METADATA: amdxdna_drm_get_param = 3;
-pub const amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_SENSORS: amdxdna_drm_get_param = 4;
-pub const amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_HW_CONTEXTS: amdxdna_drm_get_param = 5;
-pub const amdxdna_drm_get_param_DRM_AMDXDNA_READ_AIE_MEM: amdxdna_drm_get_param = 6;
-pub const amdxdna_drm_get_param_DRM_AMDXDNA_READ_AIE_REG: amdxdna_drm_get_param = 7;
-pub const amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_FIRMWARE_VERSION: amdxdna_drm_get_param = 8;
-pub const amdxdna_drm_get_param_DRM_AMDXDNA_GET_POWER_MODE: amdxdna_drm_get_param = 9;
-pub const amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_TELEMETRY: amdxdna_drm_get_param = 10;
-pub const amdxdna_drm_get_param_DRM_AMDXDNA_GET_FORCE_PREEMPT_STATE: amdxdna_drm_get_param = 11;
-pub type amdxdna_drm_get_param = ::std::os::raw::c_uint;
-#[doc = " struct amdxdna_drm_get_info - Get some information from the AIE hardware.\n @param: Value in enum amdxdna_drm_get_param. Specifies the structure passed in the buffer.\n @buffer_size: Size of the input buffer. Size needed/written by the kernel.\n @buffer: A structure specified by the param struct member."]
+#[doc = " struct amdxdna_drm_get_info - Get some information from the AIE hardware.\n @param: Specifies the structure passed in the buffer.\n @buffer_size: Size of the input buffer. Size needed/written by the kernel.\n @buffer: A structure specified by the param struct member."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct amdxdna_drm_get_info {
@@ -3316,7 +3321,7 @@ const _: () = {
     ["Offset of field: amdxdna_drm_get_info::buffer"]
         [::std::mem::offset_of!(amdxdna_drm_get_info, buffer) - 8usize];
 };
-#[doc = " struct amdxdna_drm_set_power_mode - Set the power mode of the AIE hardware\n @power_mode: The sensor type from enum amdxdna_power_mode_type\n @pad: MBZ."]
+#[doc = " struct amdxdna_drm_set_power_mode - Set the power mode of the AIE hardware\n @power_mode: The target power mode to be set\n @pad: MBZ."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct amdxdna_drm_set_power_mode {
@@ -3352,12 +3357,7 @@ const _: () = {
     ["Offset of field: amdxdna_drm_set_force_preempt_state::pad"]
         [::std::mem::offset_of!(amdxdna_drm_set_force_preempt_state, pad) - 1usize];
 };
-pub const amdxdna_drm_set_param_DRM_AMDXDNA_SET_POWER_MODE: amdxdna_drm_set_param = 0;
-pub const amdxdna_drm_set_param_DRM_AMDXDNA_WRITE_AIE_MEM: amdxdna_drm_set_param = 1;
-pub const amdxdna_drm_set_param_DRM_AMDXDNA_WRITE_AIE_REG: amdxdna_drm_set_param = 2;
-pub const amdxdna_drm_set_param_DRM_AMDXDNA_SET_FORCE_PREEMPT: amdxdna_drm_set_param = 3;
-pub type amdxdna_drm_set_param = ::std::os::raw::c_uint;
-#[doc = " struct amdxdna_drm_set_state - Set the state of some component within the AIE hardware.\n @param: Value in enum amdxdna_drm_set_param. Specifies the structure passed in the buffer.\n @buffer_size: Size of the input buffer.\n @buffer: A structure specified by the param struct member."]
+#[doc = " struct amdxdna_drm_set_state - Set the state of some component within the AIE hardware.\n @param: Specifies the structure passed in the buffer.\n @buffer_size: Size of the input buffer.\n @buffer: A structure specified by the param struct member."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct amdxdna_drm_set_state {
