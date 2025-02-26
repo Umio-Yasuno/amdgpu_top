@@ -117,7 +117,7 @@ fn main() {
             return;
         },
         DumpMode::Xdna => {
-            dump_xdna_device::dump_xdna_device();
+            dump_xdna_device::dump_xdna_device(TITLE);
             return;
         },
         DumpMode::NoDump => match main_opt.opt_dump_mode {

@@ -2,7 +2,9 @@
 
 use libamdgpu_top::{stat, xdna};
 
-pub fn dump_xdna_device() {
+pub fn dump_xdna_device(title: &str) {
+    println!("{title}\n");
+
     let Some(xdna_device) = xdna::find_xdna_device() else {
         println!("There are no the XDNA NPU devices found.");
         return;
