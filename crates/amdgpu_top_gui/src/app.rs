@@ -510,12 +510,40 @@ impl MyApp {
                 ui.label(format!("{label} Temp. ({val:4} C)"));
                 ui.end_row();
 
-                let points: PlotPoints = temp_history.iter()
-                    .map(|(i, val)| [i, val as f64]).collect();
+                let points: PlotPoints = temp_history
+                    .iter()
+                    .map(|(i, val)| [i, val as f64])
+                    .collect();
                 let line = Line::new(points).fill(0.0);
 
                 default_plot(label)
                     .include_y(max)
+                    .label_formatter(label_fmt)
+                    .auto_bounds([true, true].into())
+                    .height(SENSORS_HEIGHT)
+                    .width(SENSORS_WIDTH)
+                    .show(ui, |plot_ui| plot_ui.line(line));
+            });
+
+            n += 1;
+            if n % 2 == 1 { ui.end_row(); }
+        }
+
+        if let Some(ref tctl) = sensors.tctl {
+            let label = "CPU Tctl";
+            egui::Grid::new(label).show(ui, |ui| {
+                ui.label(format!("CPU Tctl ({:3} C)", tctl / 1000));
+                ui.end_row();
+
+                let points: PlotPoints = self.buf_data.history.sensors_history.tctl
+                    .iter()
+                    .map(|(i, val)| [i, val as f64])
+                    .collect();
+                let line = Line::new(points).fill(0.0);
+
+                default_plot(label)
+                    .include_y(0)
+                    .include_y(100)
                     .label_formatter(label_fmt)
                     .auto_bounds([true, true].into())
                     .height(SENSORS_HEIGHT)

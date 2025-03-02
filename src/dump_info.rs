@@ -133,6 +133,11 @@ fn sensors_info(sensors: &Sensors) {
         }
         println!();
     }
+
+    if let Some(ref tctl) = sensors.tctl {
+        println!("CPU Tctl        : {:3} C", tctl / 1000);
+    }
+
     println!();
     for power in [&sensors.average_power, &sensors.input_power] {
         let Some(power) = power else { continue };

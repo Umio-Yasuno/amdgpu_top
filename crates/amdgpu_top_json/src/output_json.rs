@@ -105,6 +105,14 @@ impl OutputJson for Sensors {
         }
 
         m.insert(
+            "CPU Tctl".to_string(),
+            self.tctl.as_ref().map_or(Value::Null, |tctl| json!({
+                "value": tctl / 1000,
+                "unit": "C",
+            })),
+        );
+
+        m.insert(
             "PCIe Link Speed".to_string(),
             self.current_link.map_or(Value::Null, |link| link.json()),
         );

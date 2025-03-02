@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::io::Read;
+use std::path::{Path, PathBuf};
 use std::fs;
 use libdrm_amdgpu_sys::{
     PCI,
@@ -43,6 +44,8 @@ pub struct Sensors {
     pub fan_max_rpm: Option<u32>,
     pub pci_power_state: Option<String>,
     pub power_profile: Option<PowerProfile>,
+    k10temp_tctl_path: Option<PathBuf>,
+    pub tctl: Option<i64>, // CPU Temp.
 }
 
 impl Sensors {
@@ -115,6 +118,17 @@ impl Sensors {
                 s
             });
         let power_profile = PowerProfile::get_current_profile_from_sysfs(&sysfs_path);
+        let k10temp_path = if is_apu {
+            Self::find_k10temp_path()
+        } else {
+            None
+        };
+        let k10temp_tctl_path = k10temp_path.map(|path| path.join("temp1_input"));
+        let tctl = if let Some(ref path) = k10temp_tctl_path {
+            Self::get_tctl(path)
+        } else {
+            None
+        };
 
         Some(Self {
             hwmon_path,
@@ -142,6 +156,8 @@ impl Sensors {
             gpu_port_path,
             pci_power_state,
             power_profile,
+            k10temp_tctl_path,
+            tctl,
         })
     }
 
@@ -176,6 +192,7 @@ impl Sensors {
         self.fan_rpm = parse_hwmon(self.hwmon_path.join("fan1_input"));
         self.power_profile = PowerProfile::get_current_profile_from_sysfs(&self.sysfs_path);
         self.update_pci_power_state();
+        self.update_tctl();
     }
 
     pub fn update_for_idle(&mut self) {
@@ -214,5 +231,38 @@ impl Sensors {
 
     pub fn any_hwmon_power(&self) -> Option<HwmonPower> {
         self.average_power.clone().or(self.input_power.clone())
+    }
+
+    fn find_k10temp_path() -> Option<PathBuf> {
+        const HWMON_DIR: &str = "/sys/class/hwmon/";
+        const K10TEMP_NAME: &[u8] = b"k10temp";
+        let hwmon_dir = fs::read_dir(HWMON_DIR).ok()?;
+        let mut buf = [0u8; 8];
+
+        for dir_entry in hwmon_dir {
+            let Ok(dir_entry)= dir_entry else { continue };
+            let path = dir_entry.path();
+
+            let Ok(mut f) = fs::File::open(path.join("name")) else { continue };
+            let _ = f.read_exact(&mut buf);
+
+            if buf.starts_with(K10TEMP_NAME) {
+                return Some(path);
+            }
+        }
+
+        None
+    }
+
+    fn get_tctl(tctl_path: &Path) -> Option<i64> {
+        let val = fs::read_to_string(tctl_path).ok()?;
+
+        val.trim_end().parse::<i64>().ok()
+    }
+
+    fn update_tctl(&mut self) {
+        if let Some(ref path) = self.k10temp_tctl_path {
+            self.tctl = Self::get_tctl(path);
+        }
     }
 }

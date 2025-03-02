@@ -69,6 +69,11 @@ impl AppTextView {
             writeln!(self.text.buf)?;
         }
 
+        if let Some(tctl) = sensors.tctl {
+            write!(self.text.buf, " CPU Tctl   => {:3} C", tctl / 1000)?;
+            writeln!(self.text.buf)?;
+        }
+
         if let Some(fan_rpm) = sensors.fan_rpm {
             write!(self.text.buf, " Fan => {fan_rpm:4} RPM")?;
             if let Some(max_rpm) = sensors.fan_max_rpm {
