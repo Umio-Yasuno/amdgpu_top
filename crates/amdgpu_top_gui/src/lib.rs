@@ -470,7 +470,14 @@ impl MyApp {
                     },
                     /* APU */
                     GpuMetrics::V2_0(_) |
-                    GpuMetrics::V2_1(_) |
+                    GpuMetrics::V2_1(_) => {
+                        ui.add_space(SPACE);
+                        collapsing(ui, &header, true, |ui| {
+                            metrics.v2_ui(ui);
+                            collapsing_plot(ui, &fl!("vclk_dclk_plot"), true, |ui| self.egui_vclk_dclk_plot(ui));
+                        });
+                    },
+                    /* APU */
                     GpuMetrics::V2_2(_) |
                     GpuMetrics::V2_3(_) |
                     GpuMetrics::V2_4(_) => {
