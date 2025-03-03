@@ -191,6 +191,7 @@ impl Sensors {
 
         self.fan_rpm = parse_hwmon(self.hwmon_path.join("fan1_input"));
         self.power_profile = PowerProfile::get_current_profile_from_sysfs(&self.sysfs_path);
+        self.power_cap = PowerCap::from_hwmon_path(&self.hwmon_path);
         self.update_pci_power_state();
         self.update_tctl();
     }
