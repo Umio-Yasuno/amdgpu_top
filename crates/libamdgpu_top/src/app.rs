@@ -1,5 +1,5 @@
 use crate::drmVersion;
-use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, RasBlock, RasErrorCount};
+use crate::AMDGPU::{ASIC_NAME, DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo, RasBlock, RasErrorCount};
 use crate::{AppDeviceInfo, DevicePath, stat, xdna, VramUsage, has_vcn, has_vcn_unified, has_vpe};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use xdna::XdnaFdInfoStat;
@@ -286,6 +286,29 @@ impl AppAmdgpuTop {
                     &self.device_info.pci_bus,
                     &self.device_info.ext_info,
                 );
+            }
+
+        }
+
+        // Workaround:
+        // Raphael/Granite Ridge APU reports very low input power. (7.00 - 15.00 mW)
+        //     ref: https://gitlab.freedesktop.org/drm/amd/-/issues/2321
+        //     ref: https://gitlab.freedesktop.org/drm/amd/-/issues/3999
+        if self.device_info.asic_name == ASIC_NAME::CHIP_GFX1036
+        && self.device_info.smc_fw_version.is_some_and(|ver| ver >= 0x624F00)
+        {
+            if let Some(input_power) = self.stat.sensors
+                .as_mut()
+                .and_then(|s| s.input_power.as_mut())
+            {
+                if input_power.value == 0 {
+                    if let Some(v) = self.stat.metrics
+                        .as_ref()
+                        .and_then(|m| m.get_average_socket_power())
+                    {
+                        input_power.value = v;
+                    }
+                }
             }
         }
 

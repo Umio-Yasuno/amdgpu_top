@@ -3,6 +3,7 @@ use crate::AMDGPU::{
     DeviceHandle,
     drm_amdgpu_info_device,
     drm_amdgpu_memory_info,
+    FW_VERSION::FW_TYPE,
     GPU_INFO,
     HW_IP::HwIpInfo,
     HwmonTemp,
@@ -54,6 +55,7 @@ pub struct AppDeviceInfo {
     pub gfx_target_version: Option<String>,
     pub ecc_memory: bool,
     pub has_npu: bool,
+    pub smc_fw_version: Option<u32>,
 }
 
 impl AppDeviceInfo {
@@ -84,6 +86,10 @@ impl AppDeviceInfo {
             ASIC_NAME::CHIP_GFX1103_R1X => true,
             _ => asic_name >= ASIC_NAME::CHIP_GFX1150,
         };
+        let smc_fw_version = amdgpu_dev
+            .query_firmware_version(FW_TYPE::SMC, 0, 0)
+            .ok()
+            .map(|fw_ver| fw_ver.version);
 
         Self {
             ext_info: *ext_info,
@@ -121,6 +127,7 @@ impl AppDeviceInfo {
             gfx_target_version,
             ecc_memory,
             has_npu,
+            smc_fw_version,
         }
     }
 
