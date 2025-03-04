@@ -42,7 +42,7 @@ pub fn dump_all(title: &str, device_path_list: &[DevicePath], opt_dump_mode: Opt
     }
 
     for (i, device_path) in device_path_list.iter().enumerate() {
-        println!("\n--------\n#{i} {device_path:?}");
+        println!("\n--------\n#{i} {device_path:#X?}");
         dump(device_path, opt_dump_mode);
     }
 }
