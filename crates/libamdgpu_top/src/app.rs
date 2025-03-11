@@ -1,5 +1,5 @@
 use crate::drmVersion;
-use crate::AMDGPU::{ASIC_NAME, DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo, RasBlock, RasErrorCount};
+use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo, RasBlock, RasErrorCount};
 use crate::{AppDeviceInfo, DevicePath, stat, xdna, VramUsage, has_vcn, has_vcn_unified, has_vpe};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use xdna::XdnaFdInfoStat;
@@ -291,10 +291,10 @@ impl AppAmdgpuTop {
         }
 
         // Workaround:
-        // Raphael/Granite Ridge APU reports very low input power. (7.00 - 15.00 mW)
+        // Raphael/Granite Ridge APU (SMU v13.0.5) reports very low input power. (7.00 - 15.00 mW)
         //     ref: https://gitlab.freedesktop.org/drm/amd/-/issues/2321
         //     ref: https://gitlab.freedesktop.org/drm/amd/-/issues/3999
-        if self.device_info.asic_name == ASIC_NAME::CHIP_GFX1036
+        if self.device_info.smu_ip_version.is_some_and(|ip_ver| ip_ver == (13, 0, 5))
         && self.device_info.smc_fw_version.is_some_and(|ver| ver >= 0x624F00)
         {
             if let Some(input_power) = self.stat.sensors
