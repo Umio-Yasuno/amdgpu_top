@@ -321,10 +321,12 @@ impl AppAmdgpuTop {
             .is_some_and(|ip_ver| ip_ver == (14, 0, 2) || ip_ver == (14, 0, 3))
         {
             if let Some(sensors) = self.stat.sensors.as_mut() {
-                sensors.fan_rpm = self.stat.metrics
-                    .as_ref()
-                    .and_then(|m| m.get_current_fan_speed())
-                    .map(|fan_rpm| fan_rpm as u32);
+                if sensors.fan_rpm.is_none() {
+                    sensors.fan_rpm = self.stat.metrics
+                        .as_ref()
+                        .and_then(|m| m.get_current_fan_speed())
+                        .map(|fan_rpm| fan_rpm as u32);
+                }
             }
         }
 
