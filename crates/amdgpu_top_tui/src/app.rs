@@ -310,7 +310,7 @@ impl ListNameInfoBar for AppDeviceInfo {
         format!(
             concat!(
                 "{mark_name} ({pci}, {did:#06X}:{rid:#04X})\n",
-                "{asic}, {gpu_type}, {chip_class},{gfx_ver} {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
+                "{asic}\n{gpu_type}, {chip_class},{gfx_ver} {num_cu} CU, {min_gpu_clk}-{max_gpu_clk} MHz\n",
                 "{vram_type} {vram_bus_width}-bit, {vram_size} MiB, ",
                 "{min_memory_clk}-{max_memory_clk} MHz",
             ),
