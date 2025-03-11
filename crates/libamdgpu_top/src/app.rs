@@ -312,6 +312,22 @@ impl AppAmdgpuTop {
             }
         }
 
+        // Workaround:
+        // `*_get_fan_speed_rpm` is missing in `drivers/gpu/drm/amd/pm/swsmu/smu14/smu_v14_0_2_ppt.c`,
+        // so SMU v14.0.2/3 dose not have `fan1_input` in `hwmon`.
+        //     ref: https://gitlab.freedesktop.org/drm/amd/-/issues/4034
+        //     ref: https://github.com/Umio-Yasuno/amdgpu_top/issues/123
+        if self.device_info.smu_ip_version
+            .is_some_and(|ip_ver| ip_ver == (14, 0, 2) || ip_ver == (14, 0, 3))
+        {
+            if let Some(sensors) = self.stat.sensors.as_mut() {
+                sensors.fan_rpm = self.stat.metrics
+                    .as_ref()
+                    .and_then(|m| m.get_current_fan_speed())
+                    .map(|fan_rpm| fan_rpm as u32);
+            }
+        }
+
         if self.stat.memory_error_count.is_some() {
             self.stat.memory_error_count = RasErrorCount::get_from_sysfs_with_ras_block(
                 &self.device_info.sysfs_path,

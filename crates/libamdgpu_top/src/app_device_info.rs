@@ -6,6 +6,7 @@ use crate::AMDGPU::{
     FW_VERSION::FW_TYPE,
     GPU_INFO,
     HW_IP::HwIpInfo,
+    HwId,
     HwmonTemp,
     IpDieEntry,
     PowerCap,
@@ -56,6 +57,7 @@ pub struct AppDeviceInfo {
     pub ecc_memory: bool,
     pub has_npu: bool,
     pub smc_fw_version: Option<u32>,
+    pub smu_ip_version: Option<(u8, u8, u8)>, // MP0: APU, MP1: dGPU
 }
 
 impl AppDeviceInfo {
@@ -90,6 +92,14 @@ impl AppDeviceInfo {
             .query_firmware_version(FW_TYPE::SMC, 0, 0)
             .ok()
             .map(|fw_ver| fw_ver.version);
+        let smu_ip_version = ip_die_entries
+            .first()
+            .map(|entry| &entry.ip_hw_ids)
+            .and_then(|ip_hw_ids|
+                ip_hw_ids.iter().find(|ip| ip.hw_id == HwId::MP0 || ip.hw_id == HwId::MP1)
+            )
+            .and_then(|ip_hw_id| ip_hw_id.instances.first())
+            .map(|smu_ip| smu_ip.version());
 
         Self {
             ext_info: *ext_info,
@@ -128,6 +138,7 @@ impl AppDeviceInfo {
             ecc_memory,
             has_npu,
             smc_fw_version,
+            smu_ip_version,
         }
     }
 
