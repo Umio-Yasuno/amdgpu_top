@@ -16,5 +16,5 @@ libdrm_dynamic_loading = ["libdrm_amdgpu_sys/dynamic_loading"]
 
 [dependencies]
 anyhow = { version = "1.0" }
-libdrm_amdgpu_sys = { version = "0.8.3", git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs", default-features = false, rev = "098402ca4109bd7d77ffbf767332f4acb763fbff" }
+libdrm_amdgpu_sys = { version = "0.8.3", git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs", default-features = false, rev = "5b98adaf5e3147037ca174a0761b69c88407a2a7" }
 nix = { version = "0.29", default-features = false, features = [ "ioctl" ] }
