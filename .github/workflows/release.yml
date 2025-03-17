@@ -46,7 +46,6 @@ jobs:
     name: build
     needs: ['create-release']
     env:
-      APPIMAGETOOL: tools/appimagetool
       VERSION: ${{needs.create-release.outputs.version}}
       PKG_VER: ${{needs.create-release.outputs.pkg_ver}}
     strategy:
@@ -73,21 +72,21 @@ jobs:
         run: |
           sudo apt update
           sudo apt install libdrm-dev mold desktop-file-utils appstream
-      - name: Download appimagetool
-        run: |
-          mkdir tools
-          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
-            curl -o $APPIMAGETOOL -L -O https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
-          else
-            curl -o $APPIMAGETOOL -L -O https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-aarch64.AppImage
-          fi
-          chmod +x $APPIMAGETOOL
+#      - name: Download appimagetool
+#        run: |
+#          mkdir tools
+#          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
+#            curl -o $APPIMAGETOOL -L -O https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+#          else
+#            curl -o $APPIMAGETOOL -L -O https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-aarch64.AppImage
+#          fi
+#          chmod +x $APPIMAGETOOL
       - name: Install cargo-deb
         run: mold -run cargo install cargo-deb
       - name: Install cargo-generate-rpm
         run: mold -run cargo install cargo-generate-rpm
-      - name: Install cargo-appimage
-        run: mold -run cargo install cargo-appimage
+      - name: Install xbuild
+        run: mold -run cargo install xbuild
       - name: Build binary
         run: mold -run cargo build --release --no-default-features --features="package"
       - name: Upload binary
@@ -129,21 +128,21 @@ jobs:
           else
             gh release upload --clobber "$VERSION" ./target/generate-rpm/amdgpu_top-${{ env.PKG_VER }}-1.aarch64.rpm
           fi
-      - name: Build AppImage
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PATH=$PATH:$PWD/tools/
-          mold -run cargo appimage --no-default-features --features="package"
-
-          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
-            cp ./target/appimage/amdgpu_top.AppImage amdgpu_top-x86_64.AppImage
-            gh release upload --clobber "$VERSION" amdgpu_top-x86_64.AppImage
-          else
-            cp ./target/appimage/amdgpu_top.AppImage amdgpu_top-aarch64.AppImage
-            gh release upload --clobber "$VERSION" amdgpu_top-aarch64.AppImage
-          fi
+#      - name: Build AppImage
+#        shell: bash
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          PATH=$PATH:$PWD/tools/
+#          mold -run x build --format appimage
+#
+#          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
+#            cp ./target/appimage/amdgpu_top.AppImage amdgpu_top-x86_64.AppImage
+#            gh release upload --clobber "$VERSION" amdgpu_top-x86_64.AppImage
+#          else
+#            cp ./target/appimage/amdgpu_top.AppImage amdgpu_top-aarch64.AppImage
+#            gh release upload --clobber "$VERSION" amdgpu_top-aarch64.AppImage
+#          fi
       - name: Build Deb Package without GUI
         shell: bash
         env:
