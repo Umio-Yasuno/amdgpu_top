@@ -34,6 +34,31 @@
   </screenshots>
 
   <releases>
+    <release version="0.10.4" date="2025-03-17">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>Rust 2024 Edition</li>
+          <li>add support for k10temp Tctl</li>
+          <li>dynamically update power_cap</li>
+          <li>implement workaround for Raphael/Granite Ridge APU reported input power</li>
+          <li>implement workaround for RDNA 4 dGPU (SMU v14.0.2/3) dose not have fan1_input</li>
+          <li>skip show fdinfo stat if ids_count is zero</li>
+        </ul>
+        <ul>
+          <li>tui: update info_bar<li>
+        </ul>
+        <ul>
+          <li>gui: if gpu_metrics_v2_0 or gpu_metrics_v2_1, do not display cpu temp/power plot</li>
+        </ul>
+        <ul>
+          <li>xdna: update xdna bindings</li>
+          <li>xdna: print app version when dumping xdna info</li>
+        </ul>
+      </description>
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.10.4</url>
+    </release>
+
     <release version="0.10.3" date="2025-02-04">
       <description>
         <p>Changelog</p>
