@@ -485,7 +485,7 @@ impl MyApp {
                                     |ui| self.egui_core_temp_plot(ui),
                                 );
                             }
-                            if self.buf_data.history.core_power.is_some() {
+                            if self.buf_data.history.core_power_mw.is_some() {
                                 collapsing_plot(
                                     ui,
                                     &fl!("cpu_power_plot"),
