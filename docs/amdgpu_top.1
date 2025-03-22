@@ -221,6 +221,70 @@ T}@T{
 reverse sort for fdinfo
 T}
 .TE
+.SH FDINFO DESCRIPTION
+.PP
+fdinfo for the AMDGPU driver shows hardware IP usage per process.
+.SS VRAM
+.SS GTT
+.PP
+Graphics Translation Tables.
+.SS KFD
+.PP
+The process of using the AMDKFD driver.
+.SS GFX
+.PP
+GFX engine.
+.SS Compute/COMP
+.PP
+Compute engine.
+.PD 0
+.P
+.PD
+The AMDKFD driver dose not track queues and does not show them in
+fdinfo.
+.SS DMA
+.PP
+DMA/SDMA (System DMA) engine.
+.SS Decode/DEC
+.PP
+Media decoder.
+.PD 0
+.P
+.PD
+This is not show on RDNA 4.
+.SS Encode/ENC
+.PP
+Media encoder.
+.PD 0
+.P
+.PD
+This is not show on RDNA 4.
+.SS VCN, Media
+.PP
+Media engine.
+.PD 0
+.P
+.PD
+From VCN4, the encoding queue and decoding queue have been unified.
+.PD 0
+.P
+.PD
+The AMDGPU driver handles both decoding and encoding as contexts for the
+encoding engine.
+.SS JPEG
+.PP
+JPEG decoder.
+.SS VPE
+.PP
+Video Processor Engine.
+.PD 0
+.P
+.PD
+ref:
+.PD 0
+.P
+.PD
+<https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/amd/vpelib/README.md>
 .SH BUGS
 .PP
 <https://github.com/Umio-Yasuno/amdgpu_top/issues>
