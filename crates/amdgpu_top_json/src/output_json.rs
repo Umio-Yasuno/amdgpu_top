@@ -91,14 +91,30 @@ impl OutputJson for Sensors {
         }
 
         for (label, temp, unit) in [
-            ("Edge Temperature", &self.edge_temp, "C"),
-            ("Junction Temperature", &self.junction_temp, "C"),
-            ("Memory Temperature", &self.memory_temp, "C"),
+            ("Edge", &self.edge_temp, "C"),
+            ("Junction", &self.junction_temp, "C"),
+            ("Memory", &self.memory_temp, "C"),
         ] {
             m.insert(
-                label.to_string(),
+                format!("{label} Temperature"),
                 temp.as_ref().map_or(Value::Null, |temp| json!({
                     "value": temp.current,
+                    "unit": unit,
+                })),
+            );
+
+            m.insert(
+                format!("{label} Critical Temperature"),
+                temp.as_ref().map_or(Value::Null, |temp| json!({
+                    "value": temp.critical,
+                    "unit": unit,
+                })),
+            );
+
+            m.insert(
+                format!("{label} Emergency Temperature"),
+                temp.as_ref().map_or(Value::Null, |temp| json!({
+                    "value": temp.emergency,
                     "unit": unit,
                 })),
             );
