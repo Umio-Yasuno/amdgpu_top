@@ -112,6 +112,21 @@ impl OutputJson for Sensors {
             })),
         );
 
+        let all_cpu_core_freq: Vec<Value> = self.all_cpu_core_freq_info
+            .iter()
+            .map(|freq_info| json!({
+                "core_id": freq_info.core_id,
+                "thread_id": freq_info.thread_id,
+                "min_freq": freq_info.min,
+                "cur_freq": freq_info.cur,
+                "max_freq": freq_info.max,
+            }))
+            .collect();
+        m.insert(
+            "CPU Core freq".to_string(),
+            Value::Array(all_cpu_core_freq),
+        );
+
         m.insert(
             "PCIe Link Speed".to_string(),
             self.current_link.map_or(Value::Null, |link| link.json()),
