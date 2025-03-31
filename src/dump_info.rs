@@ -84,13 +84,18 @@ pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
 
     {
         let profiles: Vec<String> = info.power_profiles.iter().map(|p| p.to_string()).collect();
-        println!("Supported Power Profiles: {profiles:?}");
+        if !profiles.is_empty() {
+            println!("\nSupported Power Profiles: {profiles:?}");
+        }
     }
+
     info.cache_info();
     info.hw_ip_info();
+
     if !info.ip_die_entries.is_empty() {
         info.ip_discovery_table();
     }
+
     fw_info(&amdgpu_dev);
     info.codec_info();
     info.vbios_info();
@@ -176,6 +181,20 @@ fn sensors_info(sensors: &Sensors) {
     ] {
         let Some(link) = link else { continue };
         println!("{PCIE_LABEL} {label:PCIE_LEN$}: Gen{}x{:<2}", link.r#gen, link.width);
+    }
+
+    if !sensors.all_cpu_core_freq_info.is_empty() {
+        println!("\nCPU Core freq: <MIN>-<CUR>-<MAX>")
+    }
+
+    for freq_info in &sensors.all_cpu_core_freq_info {
+        println!(
+            "    Core{:<2}:     {:4}--{:4}--{:4} MHz",
+            freq_info.core_id,
+            freq_info.min,
+            freq_info.cur,
+            freq_info.max,
+        );
     }
 }
 

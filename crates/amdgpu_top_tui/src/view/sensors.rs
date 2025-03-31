@@ -113,6 +113,19 @@ impl AppTextView {
             writeln!(self.text.buf, " Power Profile: {power_profile}")?;
         }
 
+        if !sensors.all_cpu_core_freq_info.is_empty() {
+            write!(self.text.buf, "CPU Core freq (MHz): [")?;
+        }
+
+        for freq_info in &sensors.all_cpu_core_freq_info {
+            write!(self.text.buf, " {:>4},", freq_info.cur)?;
+        }
+
+        if !sensors.all_cpu_core_freq_info.is_empty() {
+            let _ = self.text.buf.pop();
+            writeln!(self.text.buf, "]")?;
+        }
+
         Ok(())
     }
 

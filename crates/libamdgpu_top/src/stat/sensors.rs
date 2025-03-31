@@ -15,7 +15,7 @@ use libdrm_amdgpu_sys::{
         PowerProfile,
     },
 };
-use super::{parse_hwmon, HwmonPower, PowerType};
+use super::{CpuFreqInfo, parse_hwmon, HwmonPower, PowerType};
 
 #[derive(Clone, Debug)]
 pub struct Sensors {
@@ -46,6 +46,7 @@ pub struct Sensors {
     pub power_profile: Option<PowerProfile>,
     k10temp_tctl_path: Option<PathBuf>,
     pub tctl: Option<i64>, // CPU Temp.
+    pub all_cpu_core_freq_info: Vec<CpuFreqInfo>,
 }
 
 impl Sensors {
@@ -130,6 +131,12 @@ impl Sensors {
             None
         };
 
+        let all_cpu_core_freq_info = if is_apu {
+            CpuFreqInfo::get_all_cpu_core_freq_info()
+        } else {
+            Vec::new()
+        };
+
         Some(Self {
             hwmon_path,
             sysfs_path,
@@ -158,6 +165,7 @@ impl Sensors {
             power_profile,
             k10temp_tctl_path,
             tctl,
+            all_cpu_core_freq_info,
         })
     }
 
@@ -194,6 +202,7 @@ impl Sensors {
         self.power_cap = PowerCap::from_hwmon_path(&self.hwmon_path);
         self.update_pci_power_state();
         self.update_tctl();
+        self.update_all_cpu_core_cur_freq();
     }
 
     pub fn update_for_idle(&mut self) {
@@ -264,6 +273,12 @@ impl Sensors {
     fn update_tctl(&mut self) {
         if let Some(ref path) = self.k10temp_tctl_path {
             self.tctl = Self::get_tctl(path);
+        }
+    }
+
+    fn update_all_cpu_core_cur_freq(&mut self) {
+        for freq_info in self.all_cpu_core_freq_info.iter_mut() {
+            freq_info.update_cur_freq();
         }
     }
 }

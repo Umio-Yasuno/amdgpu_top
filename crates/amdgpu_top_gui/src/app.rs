@@ -9,7 +9,7 @@ use libamdgpu_top::{
     AMDGPU::RasErrorCount,
     DevicePath,
     PCI,
-    stat::{FdInfoSortType, PerfCounter},
+    stat::{FdInfoSortType, PerfCounter, Sensors},
 };
 
 const SPACING: [f32; 2] = [16.0; 2];
@@ -448,6 +448,8 @@ impl MyApp {
             self.egui_temp_plot(ui);
         });
 
+        self.egui_core_freq_plot(ui, sensors);
+
         if let Some(cur) = sensors.current_link {
             let min_max = if let [Some(min), Some(max)] = [sensors.min_dpm_link, sensors.max_dpm_link] {
                 format!(
@@ -638,6 +640,49 @@ impl MyApp {
                 plot_ui.line(umc);
                 plot_ui.line(media);
             });
+    }
+
+    pub fn egui_core_freq_plot(&self, ui: &mut egui::Ui, sensors: &Sensors) {
+        if sensors.all_cpu_core_freq_info.is_empty() {
+            return;
+        }
+
+        {
+            use std::fmt::Write;
+
+            let mut s = String::with_capacity(128);
+            let Ok(_) = write!(s, "\nCPU Core freq (MHz): [") else { return };
+            for freq_info in &sensors.all_cpu_core_freq_info {
+                let Ok(_) = write!(s, " {:>4},", freq_info.cur) else { return };
+            }
+            let _ = s.pop();
+            let Ok(_) = write!(s, "]") else { return };
+
+            ui.label(s);
+            ui.end_row();
+        }
+
+        let all_core_freq: Vec<Vec<[f64; 2]>> = self.buf_data.history.sensors_history.core_freq
+            .iter()
+            .map(|history| history.iter().map(|(i, mhz)| [i, mhz as f64]).collect())
+            .collect();
+        let label_fmt = |name: &str, val: &PlotPoint| {
+            format!("{:.1}s : {name} {:.0} MHz", val.x, val.y)
+        };
+
+        Plot::new("Core Freq Plot")
+            .allow_zoom(false)
+            .allow_scroll(false)
+            .show_axes([false, true])
+            .label_formatter(label_fmt)
+            .auto_bounds([true, true].into())
+            .height(PLOT_HEIGHT)
+            .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
+            .legend(Legend::default().position(Corner::LeftTop))
+            .show(ui, |plot_ui| for (i, freq) in all_core_freq.into_iter().enumerate() {
+                plot_ui.line(Line::new(PlotPoints::new(freq)).name(format!("Core{i}")))
+            });
+        ui.label(""); // \n
     }
 
     pub fn egui_core_power_plot(&self, ui: &mut egui::Ui) {

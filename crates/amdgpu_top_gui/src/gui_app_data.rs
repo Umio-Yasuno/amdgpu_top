@@ -47,6 +47,7 @@ pub struct SensorsHistory {
     pub input_power: History<u32>,
     pub fan_rpm: History<u32>,
     pub tctl: History<i64>,
+    pub core_freq: Vec<History<u32>>,
 }
 
 impl SensorsHistory {
@@ -55,8 +56,9 @@ impl SensorsHistory {
             .map(|_| History::new(HISTORY_LENGTH, f32::INFINITY));
         let [edge_temp, junction_temp, memory_temp, tctl] = [0;4]
             .map(|_| History::new(HISTORY_LENGTH, f32::INFINITY));
+        let core_freq = vec![History::new(HISTORY_LENGTH, f32::INFINITY); 64];
 
-        Self { sclk, mclk, vddgfx, vddnb, edge_temp, junction_temp, memory_temp, average_power, input_power, fan_rpm, tctl }
+        Self { sclk, mclk, vddgfx, vddnb, edge_temp, junction_temp, memory_temp, average_power, input_power, fan_rpm, tctl, core_freq }
     }
 
     pub fn add(&mut self, sec: f64, sensors: &Sensors) {
@@ -85,6 +87,10 @@ impl SensorsHistory {
         if let Some(tctl_val) = sensors.tctl {
             self.tctl.add(sec, tctl_val / 1000);
         }
+
+        for (freq, freq_history) in sensors.all_cpu_core_freq_info.iter().zip(self.core_freq.iter_mut()) {
+            freq_history.add(sec, freq.cur);
+        }
     }
 }
 
@@ -93,7 +99,6 @@ impl Default for SensorsHistory {
         Self::new()
     }
 }
-
 
 #[derive(Clone)]
 pub struct GuiAppData {

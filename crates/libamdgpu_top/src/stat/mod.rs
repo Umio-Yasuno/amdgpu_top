@@ -87,6 +87,9 @@ pub(crate) const GFX12_GRBM2_INDEX: &[(&str, usize)] = &[
     ("Command Processor - Graphics", 30), // CPG
 ];
 
+mod cpu_freq;
+pub use cpu_freq::*;
+
 mod perf_counter;
 pub use perf_counter::*;
 

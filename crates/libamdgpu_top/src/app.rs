@@ -287,7 +287,6 @@ impl AppAmdgpuTop {
                     &self.device_info.ext_info,
                 );
             }
-
         }
 
         // Workaround:
