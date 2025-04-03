@@ -114,7 +114,7 @@ impl AppTextView {
         }
 
         if !sensors.all_cpu_core_freq_info.is_empty() {
-            write!(self.text.buf, "CPU Core freq (MHz): [")?;
+            write!(self.text.buf, " CPU Core freq (MHz): [")?;
         }
 
         for freq_info in &sensors.all_cpu_core_freq_info {
