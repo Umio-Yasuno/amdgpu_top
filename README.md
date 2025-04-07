@@ -172,6 +172,8 @@ AMD Radeon Graphics (0000:08:00.0): GFX: 0%, MediaEngine: 0%, Memory: null%
 fdinfo for the AMDGPU driver shows hardware IP usage per process.  
 
 ### VRAM
+GPU Memory.  
+
 ### GTT
 Graphics Translation Tables.  
 
@@ -190,16 +192,18 @@ DMA/SDMA (System DMA) engine.
 
 #### Decode/DEC
 Media decoder.  
-This is not show on RDNA 4.  
+This is not show on VCN4 or later.  
 
 #### Encode/ENC
 Media encoder.  
-This is not show on RDNA 4.  
+This is not show on VCN4 or later.  
 
 #### VCN, Media
 Media engine.  
 From VCN4, the encoding queue and decoding queue have been unified.  
 The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.  
+
+This is the average of the video decoder/encoder and the JPEG decoder usage.  
 
 #### JPEG
 JPEG decoder.  
