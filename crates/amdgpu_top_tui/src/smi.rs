@@ -190,14 +190,15 @@ impl SmiApp {
                 writeln!(self.info_text.buf)?;
 
                 if let Some(tctl) = sensors.tctl {
-                    write!(self.info_text.buf, " Tctl:{:>3}C,", tctl / 1000)?;
+                    write!(self.info_text.buf, " Tctl:{:>3}C", tctl / 1000)?;
                 } else {
-                    write!(self.info_text.buf, " Tctl:___C,")?;
+                    write!(self.info_text.buf, " Tctl:___C")?;
                 }
 
                 sensors.print_all_cpu_core_cur_freq(
                     &mut self.info_text.buf,
-                    " CPU freq (MHz)",
+                    " CPU freq (100MHz)",
+                    true,
                 )?;
             }
         }

@@ -652,6 +652,7 @@ impl MyApp {
             let Ok(_) = sensors.print_all_cpu_core_cur_freq(
                 &mut s,
                 "\nCPU Core freq (MHz)",
+                false,
             ) else { return };
             ui.label(s);
             ui.end_row();

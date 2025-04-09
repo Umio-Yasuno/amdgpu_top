@@ -283,17 +283,30 @@ impl Sensors {
         }
     }
 
-    pub fn print_all_cpu_core_cur_freq(&self, buf: &mut String, label: &str) -> fmt::Result {
+    pub fn print_all_cpu_core_cur_freq(
+        &self,
+        buf: &mut String,
+        label: &str,
+        divide_by_100: bool,
+    ) -> fmt::Result {
         if self.all_cpu_core_freq_info.is_empty() { return Ok(()) }
 
         write!(buf, "{label}: [")?;
 
         for cpu_freq_info in &self.all_cpu_core_freq_info {
-            write!(
-                buf,
-                "{:>4},",
-                cpu_freq_info.cur,
-            )?;
+            if divide_by_100 {
+                write!(
+                    buf,
+                    "{:>2},",
+                    cpu_freq_info.cur / 100,
+                )?;
+            } else {
+                write!(
+                    buf,
+                    "{:>4},",
+                    cpu_freq_info.cur,
+                )?;
+            }
         }
 
         let _ = buf.pop();

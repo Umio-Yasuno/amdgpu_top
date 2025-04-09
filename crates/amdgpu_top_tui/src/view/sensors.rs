@@ -111,7 +111,8 @@ impl AppTextView {
 
         sensors.print_all_cpu_core_cur_freq(
             &mut self.text.buf,
-            " CPU Core freq (MHz)"
+            " CPU Core freq (MHz)",
+            false,
         )?;
 
         Ok(())
