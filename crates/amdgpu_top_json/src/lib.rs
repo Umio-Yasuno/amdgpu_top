@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use std::io::Write;
 
 mod output_json;
+use crate::output_json::FdInfoJson;
 mod dump;
 pub use dump::{dump_json, drm_info_json, gpu_metrics_json, JsonInfo};
 
@@ -229,6 +230,9 @@ impl JsonDeviceInfo {
     }
 
     pub fn json(&self, no_pc: bool) -> Value {
+        let (proc_usage, has_vcn, has_vcn_unified, has_vpe) =
+            self.app.stat.fdinfo.fold_fdinfo_usage();
+
         json!({
             "Info": self.info,
             "GRBM": if !no_pc { self.app.stat.grbm.json() } else { Value::Null },
@@ -237,7 +241,7 @@ impl JsonDeviceInfo {
             "Sensors": self.app.stat.sensors.as_ref().map(|s| s.json()),
             "fdinfo": self.app.stat.fdinfo.json(),
             "xdna_fdinfo": self.app.stat.xdna_fdinfo.json(),
-            "Total fdinfo": self.app.stat.fdinfo.fold_fdinfo_usage().json(),
+            "Total fdinfo": proc_usage.usage_json(has_vcn, has_vcn_unified, has_vpe),
             "gpu_metrics": self.app.stat.metrics.as_ref().map(|m| m.json()),
             "gpu_activity": self.app.stat.activity.json(),
         })

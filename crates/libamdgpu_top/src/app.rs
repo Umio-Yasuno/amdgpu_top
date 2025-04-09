@@ -345,7 +345,8 @@ impl AppAmdgpuTop {
         self.dynamic_no_pc = self.device_info.is_apu && self.stat.activity.is_gfx_idling();
 
         if self.stat.activity.media.is_none() || self.stat.activity.media == Some(0) {
-            self.stat.activity.media = self.stat.fdinfo.fold_fdinfo_usage().media.try_into().ok();
+            let (proc_usage, _, _, _) = self.stat.fdinfo.fold_fdinfo_usage();
+            self.stat.activity.media = proc_usage.media.try_into().ok();
         }
     }
 

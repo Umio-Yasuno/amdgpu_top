@@ -216,7 +216,7 @@ impl GuiAppData {
 
         self.history.vram_history.add(secs, self.stat.vram_usage.0.vram.heap_usage);
         self.history.gtt_history.add(secs, self.stat.vram_usage.0.gtt.heap_usage);
-        self.history.fdinfo_history.add(secs, self.stat.fdinfo.fold_fdinfo_usage());
+        self.history.fdinfo_history.add(secs, self.stat.fdinfo.fold_fdinfo_usage().0);
 
         if let Some(gfx) = self.stat.activity.gfx {
             self.history.gfx_activity.add(secs, gfx);

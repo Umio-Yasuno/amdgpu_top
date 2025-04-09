@@ -162,8 +162,12 @@ impl OutputJson for Sensors {
     }
 }
 
-impl OutputJson for FdInfoUsage {
-    fn json(&self) -> Value {
+pub trait FdInfoJson {
+    fn usage_json(&self, has_vcn: bool, has_vcn_unified: bool, has_vpe: bool) -> Value;
+}
+
+impl FdInfoJson for FdInfoUsage {
+    fn usage_json(&self, has_vcn: bool, has_vcn_unified: bool, has_vpe: bool) -> Value {
         let mut sub = Map::new();
         sub.insert(
             "VRAM".to_string(),
@@ -181,30 +185,30 @@ impl OutputJson for FdInfoUsage {
         );
 
         for (label, val) in [
-            ("GFX", self.gfx),
-            ("Compute", self.compute),
-            ("DMA", self.dma),
-            ("Decode", self.total_dec),
-            ("Encode", self.total_enc),
-            ("Media", self.media),
-            ("VCN_JPEG", self.vcn_jpeg),
-            ("VPE", self.vpe),
+            ("GFX", Some(self.gfx)),
+            ("Compute", Some(self.compute)),
+            ("DMA", Some(self.dma)),
+            ("Decode", if !has_vcn_unified { Some(self.total_dec) } else { None }),
+            ("Encode", if !has_vcn_unified { Some(self.total_enc) } else { None }),
+            ("Media", Some(self.media)),
+            ("VCN_JPEG", if has_vcn { Some(self.vcn_jpeg) } else { None }),
+            ("VPE", if has_vpe { Some(self.vpe) } else { None }),
         ] {
             sub.insert(
                 label.to_string(),
-                json!({
-                    "value": val,
-                    "unit": "%",
-                })
+                if let Some(val) = val {
+                    json!({
+                        "value": val,
+                        "unit": "%",
+                    })
+                } else {
+                    Value::Null
+                },
             );
         }
 
         sub.into()
     }
-}
-
-pub trait FdInfoJson {
-    fn usage_json(&self, has_vcn: bool, has_vcn_unified: bool, has_vpe: bool) -> Value;
 }
 
 impl FdInfoJson for ProcUsage {

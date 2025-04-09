@@ -387,7 +387,11 @@ impl FdInfoStat {
         }
     }
 
-    pub fn fold_fdinfo_usage(&self) -> FdInfoUsage {
-        self.proc_usage.iter().fold(FdInfoUsage::default(), |acc, pu| acc + pu.usage)
+    pub fn fold_fdinfo_usage(&self) -> (FdInfoUsage, bool, bool, bool) {
+        let proc_usage = self.proc_usage
+            .iter()
+            .fold(FdInfoUsage::default(), |acc, pu| acc + pu.usage);
+
+        (proc_usage, self.has_vcn, self.has_vcn_unified, self.has_vpe)
     }
 }
