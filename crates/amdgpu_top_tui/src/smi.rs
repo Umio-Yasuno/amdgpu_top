@@ -11,7 +11,7 @@ use crate::{Text, AppTextView};
 
 const GPU_NAME_LEN: usize = 25;
 const LINE_LEN: usize = 150;
-const THR_LEN: usize = 42;
+const THR_LEN: usize = 48;
 const ECC_LABEL: &str = "ECC_UnCorr.";
 const ECC_LEN: usize = ECC_LABEL.len()-2;
 const PROC_TITLE: &str = "Processes";
@@ -43,7 +43,7 @@ impl SmiApp {
         let text = format!(concat!(
             "GPU {name:<name_len$} {pad:10}|{pci:<16}|{vram:^18}|\n",
             "SCLK    MCLK    VDDGFX  Power           | GFX% UMC%Media%|{gtt:^18}|\n",
-            "Temp    {fan:<7} {tctl}  {ecc} {thr:<THR_LEN$}|"
+            "Temp    {fan:<7} {ecc} {thr:<THR_LEN$}|"
             ),
             name = "Name",
             name_len = GPU_NAME_LEN,
@@ -52,7 +52,6 @@ impl SmiApp {
             gtt = " GTT Usage",
             pad = "",
             fan = "Fan",
-            tctl = "Tctl",
             ecc = "ECC_UnCorr.",
             thr = "Throttle_Status",
             THR_LEN = THR_LEN,
@@ -165,12 +164,6 @@ impl SmiApp {
             write!(self.info_text.buf, "  ____RPM ")?;
         }
 
-        if let Some(tctl) = sensors.and_then(|s| s.tctl) {
-            write!(self.info_text.buf, " {:>3}C ", tctl / 1000)?;
-        } else {
-            write!(self.info_text.buf, " ___C ")?;
-        }
-
         if let Some(ecc) = &self.app_amdgpu_top.stat.memory_error_count {
             write!(self.info_text.buf, "[{:>ECC_LEN$}] ", ecc.uncorrected)?;
         } else {
@@ -190,6 +183,34 @@ impl SmiApp {
                 "{:<THR_LEN$}|",
                 "N/A",
             )?;
+        }
+
+        if self.app_amdgpu_top.device_info.is_apu {
+            if let Some(sensors) = sensors {
+                writeln!(self.info_text.buf)?;
+
+                if let Some(tctl) = sensors.tctl {
+                    write!(self.info_text.buf, " Tctl:{:>3}C,", tctl / 1000)?;
+                } else {
+                    write!(self.info_text.buf, " Tctl:___C,")?;
+                }
+
+                if !sensors.all_cpu_core_freq_info.is_empty() {
+                    write!(self.info_text.buf, " CPU freq (MHz): [")?;
+                }
+
+                for cpu_freq_info in &sensors.all_cpu_core_freq_info {
+                    write!(
+                        self.info_text.buf,
+                        "{:>4},",
+                        cpu_freq_info.cur,
+                    )?;
+                }
+                if !sensors.all_cpu_core_freq_info.is_empty() {
+                    let _ = self.info_text.buf.pop();
+                    write!(self.info_text.buf, "]")?;
+                }
+            }
         }
 
         self.info_text.set();
