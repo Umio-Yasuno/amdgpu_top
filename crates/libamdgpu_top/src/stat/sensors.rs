@@ -1,3 +1,4 @@
+use std::fmt::{self, Write};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::fs;
@@ -280,5 +281,24 @@ impl Sensors {
         for freq_info in self.all_cpu_core_freq_info.iter_mut() {
             freq_info.update_cur_freq();
         }
+    }
+
+    pub fn print_all_cpu_core_cur_freq(&self, buf: &mut String, label: &str) -> fmt::Result {
+        if self.all_cpu_core_freq_info.is_empty() { return Ok(()) }
+
+        write!(buf, "{label}: [")?;
+
+        for cpu_freq_info in &self.all_cpu_core_freq_info {
+            write!(
+                buf,
+                "{:>4},",
+                cpu_freq_info.cur,
+            )?;
+        }
+
+        let _ = buf.pop();
+        write!(buf, "]")?;
+
+        Ok(())
     }
 }

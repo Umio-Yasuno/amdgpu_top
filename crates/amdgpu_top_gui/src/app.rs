@@ -648,16 +648,11 @@ impl MyApp {
         }
 
         {
-            use std::fmt::Write;
-
             let mut s = String::with_capacity(128);
-            let Ok(_) = write!(s, "\nCPU Core freq (MHz): [") else { return };
-            for freq_info in &sensors.all_cpu_core_freq_info {
-                let Ok(_) = write!(s, " {:>4},", freq_info.cur) else { return };
-            }
-            let _ = s.pop();
-            let Ok(_) = write!(s, "]") else { return };
-
+            let Ok(_) = sensors.print_all_cpu_core_cur_freq(
+                &mut s,
+                "\nCPU Core freq (MHz)",
+            ) else { return };
             ui.label(s);
             ui.end_row();
         }

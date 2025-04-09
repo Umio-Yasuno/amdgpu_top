@@ -195,21 +195,10 @@ impl SmiApp {
                     write!(self.info_text.buf, " Tctl:___C,")?;
                 }
 
-                if !sensors.all_cpu_core_freq_info.is_empty() {
-                    write!(self.info_text.buf, " CPU freq (MHz): [")?;
-                }
-
-                for cpu_freq_info in &sensors.all_cpu_core_freq_info {
-                    write!(
-                        self.info_text.buf,
-                        "{:>4},",
-                        cpu_freq_info.cur,
-                    )?;
-                }
-                if !sensors.all_cpu_core_freq_info.is_empty() {
-                    let _ = self.info_text.buf.pop();
-                    write!(self.info_text.buf, "]")?;
-                }
+                sensors.print_all_cpu_core_cur_freq(
+                    &mut self.info_text.buf,
+                    " CPU freq (MHz)",
+                )?;
             }
         }
 
