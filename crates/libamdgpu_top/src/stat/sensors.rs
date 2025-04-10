@@ -298,7 +298,7 @@ impl Sensors {
                 write!(
                     buf,
                     "{:>2},",
-                    cpu_freq_info.cur / 100,
+                    cpu_freq_info.cur.div_ceil(100),
                 )?;
             } else {
                 write!(
