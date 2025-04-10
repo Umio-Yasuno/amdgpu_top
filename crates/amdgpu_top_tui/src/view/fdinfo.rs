@@ -81,7 +81,7 @@ impl AppTextView {
                 gtt = pu.usage.gtt_usage >> 10,
             )?;
 
-            write!(self.text.buf, "{:>3}%|", pu.cpu_usage)?;
+            write!(self.text.buf, "{:>3}%|", pu.usage.cpu)?;
 
             for (usage, label_len) in [
                 (pu.usage.gfx, GFX_LABEL.len()),

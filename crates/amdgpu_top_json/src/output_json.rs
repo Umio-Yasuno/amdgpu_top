@@ -185,6 +185,7 @@ impl FdInfoJson for FdInfoUsage {
         );
 
         for (label, val) in [
+            ("CPU", Some(self.cpu)),
             ("GFX", Some(self.gfx)),
             ("Compute", Some(self.compute)),
             ("DMA", Some(self.dma)),
@@ -193,6 +194,7 @@ impl FdInfoJson for FdInfoUsage {
             ("Media", Some(self.media)),
             ("VCN_JPEG", if has_vcn { Some(self.vcn_jpeg) } else { None }),
             ("VPE", if has_vpe { Some(self.vpe) } else { None }),
+            ("VCN_Unified", if has_vcn_unified { Some(self.vcn_unified) } else { None }),
         ] {
             sub.insert(
                 label.to_string(),
@@ -213,49 +215,9 @@ impl FdInfoJson for FdInfoUsage {
 
 impl FdInfoJson for ProcUsage {
     fn usage_json(&self, has_vcn: bool, has_vcn_unified: bool, has_vpe: bool) -> Value {
-        let mut sub = Map::new();
-        sub.insert(
-            "VRAM".to_string(),
-            json!({
-                "value": self.usage.vram_usage >> 10,
-                "unit": "MiB",
-            }),
-        );
-        sub.insert(
-            "GTT".to_string(),
-            json!({
-                "value": self.usage.gtt_usage >> 10,
-                "unit": "MiB",
-            }),
-        );
-
-        for (label, val) in [
-            ("GFX", Some(self.usage.gfx)),
-            ("Compute", Some(self.usage.compute)),
-            ("DMA", Some(self.usage.dma)),
-            ("Decode", if !has_vcn_unified { Some(self.usage.total_dec) } else { None }),
-            ("Encode", if !has_vcn_unified { Some(self.usage.total_enc) } else { None }),
-            ("CPU", Some(self.cpu_usage)),
-            ("Media", Some(self.usage.media)),
-            ("VCN_JPEG", if has_vcn { Some(self.usage.vcn_jpeg) } else { None }),
-            ("VPE", if has_vpe { Some(self.usage.vpe) } else { None }),
-        ] {
-            sub.insert(
-                label.to_string(),
-                if let Some(val) = val {
-                    json!({
-                        "value": val,
-                        "unit": "%",
-                    })
-                } else {
-                    Value::Null
-                },
-            );
-        }
-
         json!({
             "name": self.name,
-            "usage": sub,
+            "usage": self.usage.usage_json(has_vcn, has_vcn_unified, has_vpe),
         })
     }
 }

@@ -264,7 +264,7 @@ impl MyApp {
                 ui.label(format!("{:5} {mib}", pu.usage.vram_usage >> 10));
                 ui.label(format!("{:5} {mib}", pu.usage.gtt_usage >> 10));
                 for usage in [
-                    pu.cpu_usage,
+                    pu.usage.cpu,
                     pu.usage.gfx,
                     pu.usage.compute,
                     pu.usage.dma,

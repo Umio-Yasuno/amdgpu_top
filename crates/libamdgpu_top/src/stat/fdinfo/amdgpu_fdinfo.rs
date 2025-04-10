@@ -13,6 +13,7 @@ const KFD_PROC_PATH: &str = "/sys/class/kfd/kfd/proc/";
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, PartialOrd)]
 pub struct FdInfoUsage {
     // client_id: usize,
+    pub cpu: i64, // %
     pub vram_usage: u64, // KiB
     pub gtt_usage: u64, // KiB
     pub system_cpu_memory_usage: u64, // KiB, from Linux Kernel v6.4
@@ -30,6 +31,7 @@ pub struct FdInfoUsage {
     pub total_dec: i64, // ns, %
     pub total_enc: i64, // ns, %
     pub vpe: i64, // ns, %
+    pub vcn_unified: i64, // ns, %
 }
 
 impl std::ops::Add for FdInfoUsage {
@@ -37,6 +39,7 @@ impl std::ops::Add for FdInfoUsage {
 
     fn add(self, other: Self) -> Self {
         Self {
+            cpu: self.cpu + other.cpu,
             vram_usage: self.vram_usage + other.vram_usage,
             gtt_usage: self.gtt_usage + other.gtt_usage,
             system_cpu_memory_usage: self.system_cpu_memory_usage + other.system_cpu_memory_usage,
@@ -54,6 +57,7 @@ impl std::ops::Add for FdInfoUsage {
             total_dec: self.total_dec + other.total_dec,
             total_enc: self.total_enc + other.total_enc,
             vpe: self.vpe + other.vpe,
+            vcn_unified: self.vcn_unified + other.vcn_unified,
         }
     }
 }
@@ -200,23 +204,24 @@ impl FdInfoUsage {
             From VCN4, the encoding queue and decoding queue have been unified.
             The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.
         */
-        let [total_dec, total_enc, media] = if has_vcn_unified {
+        let [total_dec, total_enc, media, vcn_unified] = if has_vcn_unified {
             let media = (vcn_jpeg + enc) / 2;
 
-            [0, 0, media]
+            [0, 0, media, enc]
         } else if has_vcn {
             let total_dec = (dec + vcn_jpeg) / 2;
             let media = (dec + vcn_jpeg + enc) / 3;
 
-            [total_dec, enc, media]
+            [total_dec, enc, media, 0]
         } else {
             let total_enc = (enc + uvd_enc) / 2;
             let media = (dec + enc + uvd_enc) / 3;
 
-            [dec, total_enc, media]
+            [dec, total_enc, media, 0]
         };
 
         Self {
+            cpu: 0,
             vram_usage: self.vram_usage,
             gtt_usage: self.gtt_usage,
             system_cpu_memory_usage: self.system_cpu_memory_usage,
@@ -234,6 +239,7 @@ impl FdInfoUsage {
             total_dec,
             total_enc,
             vpe,
+            vcn_unified,
         }
     }
 }
@@ -244,7 +250,6 @@ pub struct ProcUsage {
     pub name: String,
     pub ids_count: usize,
     pub usage: FdInfoUsage,
-    pub cpu_usage: i64, // %
     pub is_kfd_process: bool,
 }
 
@@ -324,7 +329,7 @@ impl FdInfoStat {
             }
         }
 
-        let usage = if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
+        let mut usage = if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
             // ns -> %
             let usage_per = stat.calc_usage(
                 pre_stat,
@@ -366,15 +371,15 @@ impl FdInfoStat {
         };
 
         let name = proc_info.name.clone();
-        let cpu_usage = self.get_cpu_usage(pid, &name) as i64;
         let is_kfd_process = Path::new(KFD_PROC_PATH).join(pid.to_string()).exists();
+
+        usage.cpu = self.get_cpu_usage(pid, &name) as i64;
 
         self.proc_usage.push(ProcUsage {
             pid,
             name,
             ids_count,
             usage,
-            cpu_usage,
             is_kfd_process,
         });
     }
