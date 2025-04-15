@@ -212,7 +212,7 @@ JPEG decoder.
 Video Processor Engine.  
 ref: <https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/amd/vpelib/README.md?ref_type=heads>  
 
-#### VCN_Unified
+#### VCN_Unified, VCNU
 The video decoder/encoder usage for VCN4.  
 
 ## Installation
