@@ -16,7 +16,7 @@ const COMPUTE_LABEL: &str = "COMP";
 const DMA_LABEL: &str = "DMA";
 const DEC_LABEL: &str = "DEC";
 const ENC_LABEL: &str = "ENC";
-const VCN_LABEL: &str = "VCN";
+const VCN_UNIFIED_LABEL: &str = "VCNU";
 const VPE_LABEL: &str = "VPE";
 const KFD_LABEL: &str = "KFD";
 // const UVD_ENC_LABEL: &str = "UVD (ENC)";
@@ -43,7 +43,7 @@ impl AppTextView {
         )?;
 
         if stat.has_vcn_unified {
-            write!(self.text.buf, "{VCN_LABEL:^4}|")?;
+            write!(self.text.buf, "{VCN_UNIFIED_LABEL:^4}|")?;
         } else {
             write!(self.text.buf, "{DEC_LABEL:^4}|{ENC_LABEL:^4}|")?;
         }
@@ -92,7 +92,7 @@ impl AppTextView {
             }
 
             if stat.has_vcn_unified {
-                write!(self.text.buf, "{:>3}%|", pu.usage.media)?;
+                write!(self.text.buf, "{:>3}%|", pu.usage.vcn_unified)?;
             } else {
                 write!(self.text.buf, "{:>3}%|", pu.usage.total_dec)?;
                 write!(self.text.buf, "{:>3}%|", pu.usage.total_enc)?;
