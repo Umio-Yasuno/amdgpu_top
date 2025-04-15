@@ -37,19 +37,19 @@ impl AppTextView {
 
         write!(
             self.text.buf,
-            " {proc_name:<PROC_NAME_LEN$}|{pid:^PID_MAX_LEN$}|{KFD_LABEL}|{VRAM_LABEL:^6}|{GTT_LABEL:^6}|{CPU_LABEL:^4}|{GFX_LABEL:^4}|{COMPUTE_LABEL:^4}|{DMA_LABEL:^4}",
+            " {proc_name:<PROC_NAME_LEN$}|{pid:^PID_MAX_LEN$}|{KFD_LABEL}|{VRAM_LABEL:^6}|{GTT_LABEL:^6}|{CPU_LABEL:^4}|{GFX_LABEL:^4}|{COMPUTE_LABEL:^4}|{DMA_LABEL:^4}|",
             proc_name = "Name",
             pid = "PID",
         )?;
 
         if stat.has_vcn_unified {
-            write!(self.text.buf, "|{VCN_LABEL:^4}|")?;
+            write!(self.text.buf, "{VCN_LABEL:^4}|")?;
         } else {
-            write!(self.text.buf, "|{DEC_LABEL:^4}|{ENC_LABEL:^4}|")?;
+            write!(self.text.buf, "{DEC_LABEL:^4}|{ENC_LABEL:^4}|")?;
         }
 
         if stat.has_vpe {
-            write!(self.text.buf, "|{VPE_LABEL:^4}|")?;
+            write!(self.text.buf, "{VPE_LABEL:^4}|")?;
         }
 
         writeln!(self.text.buf)?;

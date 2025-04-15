@@ -102,16 +102,37 @@ impl VramUsage {
 }
 
 pub fn has_vcn(amdgpu_dev: &DeviceHandle) -> bool {
+    #[cfg(debug_assertions)]
+    {
+        if let Ok(s) = std::env::var("DBG_VCN") {
+            return s == "1";
+        }
+    }
+
     amdgpu_dev.get_hw_ip_info(HW_IP_TYPE::VCN_DEC).is_ok()
 }
 
 pub fn has_vcn_unified(amdgpu_dev: &DeviceHandle) -> bool {
+    #[cfg(debug_assertions)]
+    {
+        if let Ok(s) = std::env::var("DBG_VCNU") {
+            return s == "1";
+        }
+    }
+
     let Ok(ip) = amdgpu_dev.get_hw_ip_info(HW_IP_TYPE::VCN_ENC) else { return false };
 
     4 <= ip.info.hw_ip_version_major
 }
 
 pub fn has_vpe(amdgpu_dev: &DeviceHandle) -> bool {
+    #[cfg(debug_assertions)]
+    {
+        if let Ok(s) = std::env::var("DBG_VPE") {
+            return s == "1";
+        }
+    }
+
     amdgpu_dev.get_hw_ip_info(HW_IP_TYPE::VPE).is_ok()
 }
 
