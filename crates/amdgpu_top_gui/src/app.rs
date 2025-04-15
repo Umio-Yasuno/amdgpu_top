@@ -164,7 +164,7 @@ impl MyApp {
             format!("{:.1}s : {name} {:.0}%", val.x, val.y)
         };
 
-        let [mut gfx, mut compute, mut dma, mut dec, mut enc, mut media, mut vpe] = [0; 7]
+        let [mut gfx, mut compute, mut dma, mut dec, mut enc, mut vcnu, mut vpe] = [0; 7]
             .map(|_| Vec::<[f64; 2]>::with_capacity(HISTORY_LENGTH.end));
 
         for (i, usage) in self.buf_data.history.fdinfo_history.iter() {
@@ -173,7 +173,7 @@ impl MyApp {
             dma.push([i, usage.dma as f64]);
 
             if has_vcn_unified {
-                media.push([i, usage.media as f64]);
+                vcnu.push([i, usage.vcn_unified as f64]);
             } else {
                 dec.push([i, usage.total_dec as f64]);
                 enc.push([i, usage.total_enc as f64]);
@@ -203,7 +203,7 @@ impl MyApp {
                 }
 
                 if has_vcn_unified {
-                    plot_ui.line(Line::new(PlotPoints::new(media)).name(fl!("media")));
+                    plot_ui.line(Line::new(PlotPoints::new(vcnu)).name(fl!("vcn_unified")));
                 } else {
                     plot_ui.line(Line::new(PlotPoints::new(dec)).name(fl!("decode")));
                     plot_ui.line(Line::new(PlotPoints::new(enc)).name(fl!("encode")));
@@ -229,7 +229,7 @@ impl MyApp {
                 (fl!("gfx"), 5, FdInfoSortType::GFX, true),
                 (fl!("compute"), 9, FdInfoSortType::Compute, true),
                 (fl!("dma"), 5, FdInfoSortType::DMA, true),
-                (fl!("media"), 5, FdInfoSortType::MediaEngine, has_vcn_unified),
+                (fl!("vcn_unified"), 11, FdInfoSortType::VCNU, has_vcn_unified),
                 (fl!("decode"), 9, FdInfoSortType::Decode, !has_vcn_unified),
                 (fl!("encode"), 9, FdInfoSortType::Encode, !has_vcn_unified),
                 (fl!("vpe"), 5, FdInfoSortType::VPE, has_vpe),
@@ -273,7 +273,7 @@ impl MyApp {
                 }
 
                 if has_vcn_unified {
-                    ui.label(format!("{:3} %", pu.usage.media));
+                    ui.label(format!("{:3} %", pu.usage.vcn_unified));
                 } else {
                     ui.label(format!("{:3} %", pu.usage.total_dec));
                     ui.label(format!("{:3} %", pu.usage.total_enc));

@@ -166,6 +166,7 @@ dma = DMA
 vcn = VCN
 # Video Compression Engine
 vpe = VPE
+vcn_unified = VCN Unified
 # Process Name
 name = Name
 pid = PID
