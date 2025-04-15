@@ -31,7 +31,7 @@ pub struct FdInfoUsage {
     pub total_dec: i64, // ns, %
     pub total_enc: i64, // ns, %
     pub vpe: i64, // ns, %
-    pub vcn_unified: i64, // ns, %
+    pub vcn_unified: i64, // ns, %, dec+enc
 }
 
 impl std::ops::Add for FdInfoUsage {
@@ -207,7 +207,7 @@ impl FdInfoUsage {
         let [total_dec, total_enc, media, vcn_unified] = if has_vcn_unified {
             let media = (vcn_jpeg + enc) / 2;
 
-            [0, 0, media, enc]
+            [0, 0, media, dec+enc]
         } else if has_vcn {
             let total_dec = (dec + vcn_jpeg) / 2;
             let media = (dec + vcn_jpeg + enc) / 3;

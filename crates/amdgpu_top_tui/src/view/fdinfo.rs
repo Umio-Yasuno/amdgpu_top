@@ -174,7 +174,7 @@ impl AppTextView {
     pub fn cb_sort_by_media(siv: &mut cursive::Cursive) {
         {
             let mut opt = siv.user_data::<Opt>().unwrap().lock().unwrap();
-            opt.fdinfo_sort = FdInfoSortType::MediaEngine;
+            opt.fdinfo_sort = FdInfoSortType::VCNU;
         }
     }
 }

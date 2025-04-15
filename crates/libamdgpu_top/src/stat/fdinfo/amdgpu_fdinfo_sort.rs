@@ -16,6 +16,7 @@ pub enum FdInfoSortType {
     Encode,
     MediaEngine,
     VPE, // Video Processing Engine
+    VCNU, // VCN Unified
 }
 
 impl FdInfoStat {
@@ -46,6 +47,8 @@ impl FdInfoStat {
                 (FdInfoSortType::MediaEngine, true) => a.usage.media.cmp(&b.usage.media),
                 (FdInfoSortType::VPE, false) => b.usage.media.cmp(&a.usage.vpe),
                 (FdInfoSortType::VPE, true) => a.usage.media.cmp(&b.usage.vpe),
+                (FdInfoSortType::VCNU, false) => b.usage.media.cmp(&a.usage.vcn_unified),
+                (FdInfoSortType::VCNU, true) => a.usage.media.cmp(&b.usage.vcn_unified),
             }
         );
     }
