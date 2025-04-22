@@ -84,14 +84,14 @@ impl MyApp {
 
                     let points: PlotPoints = history.iter()
                         .map(|(i, val)| [i, val as f64]).collect();
-                    let line = Line::new(points).fill(0.0);
+                    let line = Line::new(pc_index.name.clone(), points).fill(0.0);
 
                     default_plot(&pc_index.name)
                         .allow_scroll(false)
                         .include_y(0.0)
                         .include_y(100.0)
                         .label_formatter(label_fmt)
-                        .auto_bounds([true, false].into())
+                        .auto_bounds([true, false])
                         .height(SENSORS_HEIGHT / 2.0)
                         .width(SENSORS_WIDTH)
                         .show(ui, |plot_ui| plot_ui.line(line));
@@ -124,7 +124,7 @@ impl MyApp {
             .allow_scroll(false)
             .include_y(max as f64)
             .label_formatter(label_fmt)
-            .auto_bounds([true, false].into())
+            .auto_bounds([true, false])
             .height(PLOT_HEIGHT)
             .width(PLOT_WIDTH.min(ui.available_width()))
             .legend(Legend::default().position(Corner::LeftTop))
@@ -133,7 +133,7 @@ impl MyApp {
                     (vram, fl!("vram")),
                     (gtt, fl!("gtt"))
                 ] {
-                    plot_ui.line(Line::new(PlotPoints::new(usage)).name(name));
+                    plot_ui.line(Line::new(name, PlotPoints::new(usage)));
                 }
             });
     }
@@ -189,7 +189,7 @@ impl MyApp {
             .include_y(100.0)
             .show_axes([false, true])
             .label_formatter(label_fmt)
-            .auto_bounds([true, false].into())
+            .auto_bounds([true, false])
             .height(PLOT_HEIGHT)
             .width(PLOT_WIDTH.min(ui.available_width()))
             .legend(Legend::default().position(Corner::LeftTop))
@@ -199,18 +199,18 @@ impl MyApp {
                     (compute, fl!("compute")),
                     (dma, fl!("dma")),
                 ] {
-                    plot_ui.line(Line::new(PlotPoints::new(usage)).name(name));
+                    plot_ui.line(Line::new(name, PlotPoints::new(usage)));
                 }
 
                 if has_vcn_unified {
-                    plot_ui.line(Line::new(PlotPoints::new(vcnu)).name(fl!("vcn_unified")));
+                    plot_ui.line(Line::new(fl!("vcn_unified"), PlotPoints::new(vcnu)));
                 } else {
-                    plot_ui.line(Line::new(PlotPoints::new(dec)).name(fl!("decode")));
-                    plot_ui.line(Line::new(PlotPoints::new(enc)).name(fl!("encode")));
+                    plot_ui.line(Line::new(fl!("decode"), PlotPoints::new(dec)));
+                    plot_ui.line(Line::new(fl!("encode"), PlotPoints::new(enc)));
                 }
 
                 if has_vpe {
-                    plot_ui.line(Line::new(PlotPoints::new(vpe)).name(fl!("vpe")));
+                    plot_ui.line(Line::new(fl!("vpe"), PlotPoints::new(vpe)));
                 }
             });
     }
@@ -425,7 +425,7 @@ impl MyApp {
                     };
                     let points: PlotPoints = history.iter()
                         .map(|(i, val)| [i, val as f64]).collect();
-                    let line = Line::new(points).fill(0.0);
+                    let line = Line::new(label.to_string(), points).fill(0.0);
 
                     Plot::new(label)
                         .allow_zoom(false)
@@ -434,7 +434,7 @@ impl MyApp {
                         .include_y(max)
                         .show_axes(false)
                         .label_formatter(label_fmt)
-                        .auto_bounds([true, false].into())
+                        .auto_bounds([true, false])
                         .height(SENSORS_HEIGHT)
                         .width(SENSORS_WIDTH)
                         .show(ui, |plot_ui| plot_ui.line(line));
@@ -516,12 +516,12 @@ impl MyApp {
                     .iter()
                     .map(|(i, val)| [i, val as f64])
                     .collect();
-                let line = Line::new(points).fill(0.0);
+                let line = Line::new(label.to_string(), points).fill(0.0);
 
                 default_plot(label)
                     .include_y(max)
                     .label_formatter(label_fmt)
-                    .auto_bounds([true, true].into())
+                    .auto_bounds([true, true])
                     .height(SENSORS_HEIGHT)
                     .width(SENSORS_WIDTH)
                     .show(ui, |plot_ui| plot_ui.line(line));
@@ -541,13 +541,13 @@ impl MyApp {
                     .iter()
                     .map(|(i, val)| [i, val as f64])
                     .collect();
-                let line = Line::new(points).fill(0.0);
+                let line = Line::new(label.to_string(), points).fill(0.0);
 
                 default_plot(label)
                     .include_y(0)
                     .include_y(100)
                     .label_formatter(label_fmt)
-                    .auto_bounds([true, true].into())
+                    .auto_bounds([true, true])
                     .height(SENSORS_HEIGHT)
                     .width(SENSORS_WIDTH)
                     .show(ui, |plot_ui| plot_ui.line(line));
@@ -576,14 +576,14 @@ impl MyApp {
             }
 
             [
-                Line::new(PlotPoints::new(sent_history)).name(&fl_sent),
-                Line::new(PlotPoints::new(rec_history)).name(&fl_rec),
+                Line::new(fl_sent.clone(), PlotPoints::new(sent_history)),
+                Line::new(fl_rec.clone(), PlotPoints::new(rec_history)),
             ]
         };
 
         default_plot("pcie_bw plot")
             .label_formatter(label_fmt)
-            .auto_bounds([true, true].into())
+            .auto_bounds([true, true])
             .height(PLOT_HEIGHT)
             .width(PLOT_WIDTH.min(ui.available_width()))
             .legend(Legend::default().position(Corner::LeftTop))
@@ -623,7 +623,7 @@ impl MyApp {
                 .map(|(i, act)| [i, act as f64])
                 .collect();
 
-            Line::new(PlotPoints::new(v)).name(name)
+            Line::new(name, PlotPoints::new(v))
         });
 
         default_plot("activity plot")
@@ -671,12 +671,12 @@ impl MyApp {
             .allow_scroll(false)
             .show_axes([false, true])
             .label_formatter(label_fmt)
-            .auto_bounds([true, true].into())
+            .auto_bounds([true, true])
             .height(PLOT_HEIGHT)
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| for (i, freq) in all_core_freq.into_iter().enumerate() {
-                plot_ui.line(Line::new(PlotPoints::new(freq)).name(format!("Core{i}")))
+                plot_ui.line(Line::new(format!("Core{i}"), PlotPoints::new(freq)))
             });
         ui.label(""); // \n
     }
@@ -696,12 +696,12 @@ impl MyApp {
             .allow_scroll(false)
             .show_axes([false, true])
             .label_formatter(label_fmt)
-            .auto_bounds([true, true].into())
+            .auto_bounds([true, true])
             .height(PLOT_HEIGHT)
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| for (i, mw) in all_core_power_mw.into_iter().enumerate() {
-                plot_ui.line(Line::new(PlotPoints::new(mw)).name(format!("Core{i}")))
+                plot_ui.line(Line::new(format!("Core{i}"), PlotPoints::new(mw)))
             });
     }
 
@@ -725,7 +725,7 @@ impl MyApp {
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| for (i, temp_c) in all_core_temp.into_iter().enumerate() {
-                plot_ui.line(Line::new(PlotPoints::new(temp_c)).name(format!("Core{i}")))
+                plot_ui.line(Line::new(format!("Core{i}"), PlotPoints::new(temp_c)))
             });
     }
 
@@ -757,7 +757,7 @@ impl MyApp {
                     (dclk1, "DCLK1"),
                 ] {
                     if !clk.is_empty() {
-                        plot_ui.line(Line::new(PlotPoints::new(clk)).name(name))
+                        plot_ui.line(Line::new(name, PlotPoints::new(clk)))
                     }
                 }
             });

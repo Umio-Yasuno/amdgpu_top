@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex, LazyLock};
 use std::time::Duration;
 use std::ops::Range;
-use eframe::{egui, egui_wgpu, wgpu};
+use eframe::egui;
 use egui::{FontFamily, FontId, Theme, RichText, ViewportBuilder};
 use egui::viewport::ViewportCommand;
 use i18n_embed::DesktopLanguageRequester;
@@ -142,20 +142,22 @@ pub fn run(
         full_fdinfo_list: false,
     };
 
+    unsafe {
+        // In the case of the Vulkan backend, this app may wake up the suspended devices.
+        let backend = match gui_wgpu_backend {
+            GuiWgpuBackend::Gl => "opengl",
+            GuiWgpuBackend::Vulkan => "vulkan",
+        };
+
+        std::env::set_var("WGPU_BACKEND", backend);
+        // use APU if it is available
+        std::env::set_var("WGPU_POWER_PREF", "low");
+    }
+
     let options = eframe::NativeOptions {
         viewport: ViewportBuilder::default()
             .with_inner_size(egui::vec2(1080.0, 840.0))
             .with_app_id(app_name),
-        wgpu_options: egui_wgpu::WgpuConfiguration {
-            // In the case of the Vulkan backend, this app may wake up the suspended devices.
-            supported_backends: match gui_wgpu_backend {
-                GuiWgpuBackend::Gl => wgpu::Backends::GL,
-                GuiWgpuBackend::Vulkan => wgpu::Backends::VULKAN,
-            },
-            // use APU if it is available
-            power_preference: wgpu::PowerPreference::LowPower,
-            ..Default::default()
-        },
         ..Default::default()
     };
 
@@ -246,7 +248,7 @@ pub fn run(
 
                 fonts.font_data.insert(
                     "BIZUDGothic".to_string(),
-                    FontData::from_static(include_bytes!("../fonts/BIZUDGothic-Regular.ttf")),
+                    Arc::new(FontData::from_static(include_bytes!("../fonts/BIZUDGothic-Regular.ttf"))),
                 );
 
                 fonts.families.get_mut(&FontFamily::Proportional).unwrap()
