@@ -3,7 +3,7 @@ use crate::AMDGPU::{
     DeviceHandle,
     drm_amdgpu_info_device,
     drm_amdgpu_memory_info,
-    FW_VERSION::FW_TYPE,
+    FW_VERSION::{FW_TYPE, FwVer},
     GPU_INFO,
     HW_IP::HwIpInfo,
     HwId,
@@ -58,6 +58,7 @@ pub struct AppDeviceInfo {
     pub has_npu: bool,
     pub smc_fw_version: Option<u32>,
     pub smu_ip_version: Option<(u8, u8, u8)>, // MP0: APU, MP1: dGPU
+    pub fw_versions: Vec<FwVer>,
 }
 
 impl AppDeviceInfo {
@@ -100,6 +101,7 @@ impl AppDeviceInfo {
             )
             .and_then(|ip_hw_id| ip_hw_id.instances.first())
             .map(|smu_ip| smu_ip.version());
+        let fw_versions = Self::get_fw_versions(&amdgpu_dev);
 
         Self {
             ext_info: *ext_info,
@@ -139,7 +141,50 @@ impl AppDeviceInfo {
             has_npu,
             smc_fw_version,
             smu_ip_version,
+            fw_versions,
         }
+    }
+
+    pub fn get_fw_versions(amdgpu_dev: &DeviceHandle) -> Vec<FwVer> {
+        const FW_LIST: &[FW_TYPE] = &[
+            FW_TYPE::VCE,
+            FW_TYPE::UVD,
+            FW_TYPE::GMC,
+            FW_TYPE::GFX_ME,
+            FW_TYPE::GFX_PFP,
+            FW_TYPE::GFX_CE,
+            FW_TYPE::GFX_RLC,
+            FW_TYPE::GFX_MEC,
+            FW_TYPE::SMC,
+            FW_TYPE::SDMA,
+            FW_TYPE::SOS,
+            FW_TYPE::ASD,
+            FW_TYPE::VCN,
+            FW_TYPE::GFX_RLC_RESTORE_LIST_CNTL,
+            FW_TYPE::GFX_RLC_RESTORE_LIST_GPM_MEM,
+            FW_TYPE::GFX_RLC_RESTORE_LIST_SRM_MEM,
+            FW_TYPE::DMCU,
+            FW_TYPE::TA,
+            FW_TYPE::DMCUB,
+            FW_TYPE::TOC,
+        ];
+
+        let mut fw_versions = Vec::with_capacity(24);
+
+        for fw_type in FW_LIST {
+            let fw_info = match amdgpu_dev.query_firmware_version(*fw_type, 0, 0) {
+                Ok(v) => v,
+                Err(_) => continue,
+            };
+            fw_versions.push(fw_info);
+        }
+
+        /* MEC2 */
+        if let Ok(mec2) = amdgpu_dev.query_firmware_version(FW_TYPE::GFX_MEC, 0, 1) {
+            fw_versions.push(mec2);
+        }
+
+        fw_versions
     }
 
     pub fn menu_entry(&self) -> String {
