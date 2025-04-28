@@ -1,12 +1,13 @@
+use std::time::Duration;
 use libamdgpu_top::{
     AMDGPU::{
         VIDEO_CAPS::CODEC,
         FW_VERSION::{FW_TYPE, FwVer},
-        DeviceHandle,
         GPU_INFO,
         GpuMetrics,
         MetricsInfo,
     },
+    app::AppAmdgpuTop,
     AppDeviceInfo,
     // DeviceHandle,
     DevicePath,
@@ -49,20 +50,18 @@ pub fn dump_all(title: &str, device_path_list: &[DevicePath], opt_dump_mode: Opt
 
 pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
     let amdgpu_dev = device_path.init().unwrap();
-    let ext_info = amdgpu_dev.device_info().unwrap();
-    let memory_info = amdgpu_dev.memory_info().unwrap();
-    let pci_bus = device_path.pci;
-    let sensors = Sensors::new(&amdgpu_dev, &pci_bus, &ext_info);
+    let drm = amdgpu_dev.get_drm_version_struct();
+    let Some(app) = AppAmdgpuTop::new(amdgpu_dev, device_path.clone(), &Default::default())
+        .map(|mut app| {
+            app.update(Duration::ZERO);
+            app
+        }) else {
+            return;
+        };
+    let sensors = &app.stat.sensors;
+    let info = &app.device_info;
 
-    let info = AppDeviceInfo::new(
-        &amdgpu_dev,
-        &ext_info,
-        &memory_info,
-        &sensors,
-        device_path,
-    );
-
-    if let Ok(drm) = amdgpu_dev.get_drm_version_struct() {
+    if let Ok(drm) = drm {
         println!("drm version: {}.{}.{}", drm.version_major, drm.version_minor, drm.version_patchlevel);
     }
 
@@ -78,7 +77,7 @@ pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
     info.gfx_info();
     info.memory_info();
 
-    if let Some(ref sensors) = sensors {
+    if let Some(sensors) = sensors {
         sensors_info(sensors);
     }
 
@@ -96,7 +95,7 @@ pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
         info.ip_discovery_table();
     }
 
-    fw_info(&amdgpu_dev);
+    info.fw_info();
     info.codec_info();
     info.vbios_info();
 
@@ -107,15 +106,12 @@ pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
     }
 
     if let OptDumpMode::GpuMetrics = opt_dump_mode {
-        if let Ok(m) = GpuMetrics::get_from_sysfs_path(&device_path.sysfs_path) {
+        if let Some(m) = app.stat.metrics {
             println!("\nGPU Metrics: {m:#?}");
         } else {
             println!("\nGPU Metrics: Not Supported");
         }
-    } else if let Some(h) = GpuMetrics::get_from_sysfs_path(&device_path.sysfs_path)
-        .ok()
-        .and_then(|m| m.get_header())
-    {
+    } else if let Some(h) = app.stat.metrics.as_ref().and_then(|m| m.get_header()) {
         println!("\nGPU Metrics Version: v{}.{}", h.format_revision, h.content_revision);
     }
 
@@ -198,62 +194,6 @@ fn sensors_info(sensors: &Sensors) {
     }
 }
 
-fn fw_info(amdgpu_dev: &DeviceHandle) {
-    const FW_LIST: &[FW_TYPE] = &[
-        FW_TYPE::VCE,
-        FW_TYPE::UVD,
-        FW_TYPE::GMC,
-        FW_TYPE::GFX_ME,
-        FW_TYPE::GFX_PFP,
-        FW_TYPE::GFX_CE,
-        FW_TYPE::GFX_RLC,
-        FW_TYPE::GFX_MEC,
-        FW_TYPE::SMC,
-        FW_TYPE::SDMA,
-        FW_TYPE::SOS,
-        FW_TYPE::ASD,
-        FW_TYPE::VCN,
-        FW_TYPE::GFX_RLC_RESTORE_LIST_CNTL,
-        FW_TYPE::GFX_RLC_RESTORE_LIST_GPM_MEM,
-        FW_TYPE::GFX_RLC_RESTORE_LIST_SRM_MEM,
-        FW_TYPE::DMCU,
-        FW_TYPE::TA,
-        FW_TYPE::DMCUB,
-        FW_TYPE::TOC,
-    ];
-
-    println!("\nFirmware info:");
-
-    for fw_type in FW_LIST {
-        let fw_info = match amdgpu_dev.query_firmware_version(*fw_type, 0, 0) {
-            Ok(v) => v,
-            Err(_) => continue,
-        };
-        fw_info_dump(&fw_info);
-    }
-
-    /* MEC2 */
-    if let Ok(mec2) = amdgpu_dev.query_firmware_version(FW_TYPE::GFX_MEC, 0, 1) {
-        println!(
-            "    {:<8} feature: {:>3}, ver: {:>#10X}",
-            "GFX_MEC2",
-            mec2.feature,
-            mec2.version,
-        );
-    }
-}
-
-fn fw_info_dump(fw_info: &FwVer) {
-    let (ver, ftr) = (fw_info.version, fw_info.feature);
-
-    if ver == 0 { return; }
-
-    println!(
-        "    {fw_type:<8} feature: {ftr:>3}, ver: {ver:>#10X}",
-        fw_type = fw_info.fw_type.to_string(),
-    );
-}
-
 trait DumpInfo {
     fn device_info(&self);
     fn gfx_info(&self);
@@ -263,6 +203,7 @@ trait DumpInfo {
     fn codec_info(&self);
     fn hw_ip_info(&self);
     fn ip_discovery_table(&self);
+    fn fw_info(&self);
 }
 
 impl DumpInfo for AppDeviceInfo {
@@ -428,6 +369,36 @@ impl DumpInfo for AppDeviceInfo {
                     inst_info.revision,
                 );
             }
+        }
+    }
+
+    fn fw_info(&self) {
+        fn fw_ver_dump(fw_info: &FwVer) {
+            let (ver, ftr) = (fw_info.version, fw_info.feature);
+
+            if ver == 0 { return; }
+
+            let is_mec2 = if let (FW_TYPE::GFX_MEC, 0, 1) = (fw_info.fw_type, fw_info.ip_instance, fw_info.index) {
+                true
+            } else {
+                false
+            };
+
+            let fw_type = if is_mec2 {
+                "GFX_MEC2".to_string()
+            } else {
+                fw_info.fw_type.to_string()
+            };
+
+            println!(
+                "    {fw_type:<8} feature: {ftr:>3}, ver: {ver:>#10X}",
+            );
+        }
+
+        println!("\nFirmware info:");
+
+        for fw_ver in &self.fw_versions {
+            fw_ver_dump(&fw_ver);
         }
     }
 }

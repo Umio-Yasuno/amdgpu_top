@@ -220,7 +220,7 @@ impl AppAmdgpuTop {
     }
 
     pub fn update(&mut self, interval: Duration) {
-        {
+        if interval != Duration::ZERO {
             let fdinfo_lock = self.stat.arc_proc_index.try_lock();
             let xdna_fdinfo_lock = self.stat.arc_xdna_proc_index.try_lock();
 
