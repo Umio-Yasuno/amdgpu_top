@@ -80,6 +80,7 @@ jobs:
             git
             mold
             github-cli
+            rustup
       - name: Build binary with musl
         if: startsWith(env.RUSTC_HOST_ARCH, 'x86_64')
         env:
