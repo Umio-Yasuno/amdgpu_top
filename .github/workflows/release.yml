@@ -79,7 +79,7 @@ jobs:
           sudo apt update
           sudo apt install libdrm-dev mold desktop-file-utils appstream
       - name: Setup Alpine Linux
-        continue-on-error: true
+        if: env.APK_ARCH == "x86_64"
         uses: jirutka/setup-alpine@v1.3.0
         with:
           branch: edge
@@ -92,6 +92,7 @@ jobs:
             rust
             mold
       - name: Build binary with musl
+        if: env.APK_ARCH == "x86_64"
         shell: alpine.sh {0}
         run: |
           ls -la
@@ -100,8 +101,7 @@ jobs:
             cp ./target/release/amdgpu_top ./
             tar czf "amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-musl.tar.gz" amdgpu_top
             gh release upload --clobber "$VERSION" "amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-musl.tar.gz"
-          else
-            exit 2
+          # else
             # cp ./target/release/amdgpu_top ./
             # tar czf "amdgpu_top-${{ env.PKG_VER }}-aarch64-unknown-linux-musl.tar.gz" amdgpu_top
             # gh release upload --clobber "$VERSION" "amdgpu_top-${{ env.PKG_VER }}-aarch64-unknown-linux-musl.tar.gz"
