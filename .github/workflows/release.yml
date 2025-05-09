@@ -105,7 +105,6 @@ jobs:
           exit 1
       - name: Install
         run: |
-          exit 1
           sudo apt update
           sudo apt install libdrm-dev mold desktop-file-utils appstream
       - name: Install cargo-deb
