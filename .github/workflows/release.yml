@@ -68,6 +68,36 @@ jobs:
           if [ "$VERSION" == "" ]; then
             exit 1
           fi
+      - name: Setup Alpine Linux
+        if: startsWith(env.RUSTC_HOST_ARCH, 'x86_64')
+        uses: jirutka/setup-alpine@v1.3.0
+        with:
+          branch: edge
+          packages: >
+            build-base
+            libdrm-dev
+            git
+            mold
+            github-cli
+            rustup
+      - name: Build binary with musl
+        if: startsWith(env.RUSTC_HOST_ARCH, 'x86_64')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: alpine.sh {0}
+        run: |
+          rustup-init --target x86_64-unknown-linux-musl --default-toolchain stable --profile minimal -y
+          RUSTFLAGS='-C target-feature=-crt-static' mold -run cargo build --release --no-default-features --features="libdrm_link,tui,json" --target x86_64-unknown-linux-musl
+
+          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
+            cp ./target/x86_64-unknown-linux-musl/release/amdgpu_top ./
+            tar czf "amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-musl.tar.gz" amdgpu_top
+            gh release upload --clobber "$VERSION" "amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-musl.tar.gz"
+          # else
+            # cp ./target/release/amdgpu_top ./
+            # tar czf "amdgpu_top-${{ env.PKG_VER }}-aarch64-unknown-linux-musl.tar.gz" amdgpu_top
+            # gh release upload --clobber "$VERSION" "amdgpu_top-${{ env.PKG_VER }}-aarch64-unknown-linux-musl.tar.gz"
+          fi
       - name: Install
         run: |
           sudo apt update
@@ -138,7 +168,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mold -run cargo deb -- --no-default-features --features="tui, json"
+          mold -run cargo deb -- --no-default-features --features="libdrm_link,tui,json"
 
           if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
             mv ./target/debian/amdgpu-top{,_without_gui}_${{ env.PKG_VER }}-1_amd64.deb
