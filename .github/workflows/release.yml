@@ -87,13 +87,14 @@ jobs:
             git
             rust
             mold
+            github-cli
       - name: Build binary with musl
         if: startsWith(env.RUSTC_HOST_ARCH, 'x86_64')
         shell: alpine.sh {0}
         run: |
           if [ "${RUSTC_HOST_ARCH:0:6}" == "x86_64" ]; then
             # mold -run cargo build --release --no-default-features --features="package"
-            mold -run cargo build --release --no-default-features --features="libdrm_link,tui,json"
+            mold -run cargo build --no-default-features --features="libdrm_link,tui,json"
             cp ./target/release/amdgpu_top ./
             tar czf "amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-musl.tar.gz" amdgpu_top
             gh release upload --clobber "$VERSION" "amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-musl.tar.gz"
