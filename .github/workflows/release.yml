@@ -88,10 +88,9 @@ jobs:
         shell: alpine.sh {0}
         run: |
           rustup-init --target x86_64-unknown-linux-musl --default-toolchain stable --profile minimal -y
-          if [ "${RUSTC_HOST_ARCH:0:6}" == "x86_64" ]; then
-            mold -run cargo build --no-default-features --features="libdrm_link,tui,json" --target x86_64-unknown-linux-musl
-            # cp ./target/release/amdgpu_top ./
-            cp ./target/debug/amdgpu_top ./
+          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
+            RUSTFLAGS='-C target-feature=-crt-static' mold -run cargo build --no-default-features --features="libdrm_link,tui,json" --target x86_64-unknown-linux-musl
+            cp ./target/x86_64-unknown-linux-musl/debug/amdgpu_top ./
             tar czf "amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-musl.tar.gz" amdgpu_top
             gh release upload --clobber "$VERSION" "amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-musl.tar.gz"
           # else
