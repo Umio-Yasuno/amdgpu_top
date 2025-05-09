@@ -91,9 +91,9 @@ jobs:
         if: startsWith(env.RUSTC_HOST_ARCH, 'x86_64')
         shell: alpine.sh {0}
         run: |
-          ls -la
-          mold -run cargo build --release --no-default-features --features="package"
           if [ "${RUSTC_HOST_ARCH:0:6}" == "x86_64" ]; then
+            # mold -run cargo build --release --no-default-features --features="package"
+            mold -run cargo build --release --no-default-features --features="tui, json"
             cp ./target/release/amdgpu_top ./
             tar czf "amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-musl.tar.gz" amdgpu_top
             gh release upload --clobber "$VERSION" "amdgpu_top-${{ env.PKG_VER }}-x86_64-unknown-linux-musl.tar.gz"
@@ -105,6 +105,7 @@ jobs:
           exit 1
       - name: Install
         run: |
+          exit 1
           sudo apt update
           sudo apt install libdrm-dev mold desktop-file-utils appstream
       - name: Install cargo-deb
