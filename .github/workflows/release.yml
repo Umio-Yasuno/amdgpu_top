@@ -80,14 +80,13 @@ jobs:
             git
             mold
             github-cli
-        run: |
-          rustup-init --target x86_64-unknown-linux-musl --default-toolchain stable --profile minimal -y
       - name: Build binary with musl
         if: startsWith(env.RUSTC_HOST_ARCH, 'x86_64')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: alpine.sh {0}
         run: |
+          rustup-init --target x86_64-unknown-linux-musl --default-toolchain stable --profile minimal -y
           if [ "${RUSTC_HOST_ARCH:0:6}" == "x86_64" ]; then
             mold -run cargo build --no-default-features --features="libdrm_link,tui,json" --target x86_64-unknown-linux-musl
             # cp ./target/release/amdgpu_top ./
