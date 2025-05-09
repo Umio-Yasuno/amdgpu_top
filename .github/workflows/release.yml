@@ -2,8 +2,8 @@ name: release
 
 on:
   push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+#    tags:
+#      - "v[0-9]+.[0-9]+.[0-9]+"
 
 permissions:
   contents: write
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Get the tag name
         if: env.VERSION == ''
-        run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+        run: echo "VERSION=${{ github.sha }}" >> $GITHUB_ENV
       - name: Print Version
         run: echo "$VERSION"
       - name: Print Cargo Version
@@ -37,7 +37,8 @@ jobs:
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create $VERSION --draft --verify-tag --title $VERSION
+        # run: gh release create $VERSION --draft --verify-tag --title $VERSION
+        run: gh release create $VERSION --draft --title $VERSION
     outputs:
       version: ${{ env.VERSION }}
       pkg_ver: ${{ env.PKG_VER }}
@@ -72,6 +73,22 @@ jobs:
         run: |
           sudo apt update
           sudo apt install libdrm-dev mold desktop-file-utils appstream
+      - name: Setup Alpine Linux
+        uses: jirutka/setup-alpine@v1.3.0
+        with:
+          branch: edge
+          packages: >
+            build-base
+            libdrm-dev
+            cargo
+            git
+            rust
+            mold
+      - name: Build binary with musl
+        shell: alpine.sh {0}
+        run: |
+          ls -la
+          exit 1
       - name: Install cargo-deb
         run: mold -run cargo install cargo-deb
       - name: Install cargo-generate-rpm
