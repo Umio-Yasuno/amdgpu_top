@@ -152,7 +152,7 @@ fn main() {
             #[cfg(not(feature = "tui"))]
             {
                 eprintln!("\"tui\" feature is not enabled for this build.");
-                dump_info::dump(&ui_args.device_path, main_opt.opt_dump_mode);
+                dump_info::dump(&ui_args.selected_device_path, main_opt.opt_dump_mode);
             }
         },
         #[cfg(feature = "gui")]
