@@ -90,6 +90,8 @@ jobs:
             github-cli
       - name: Build binary with musl
         if: startsWith(env.RUSTC_HOST_ARCH, 'x86_64')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: alpine.sh {0}
         run: |
           if [ "${RUSTC_HOST_ARCH:0:6}" == "x86_64" ]; then
