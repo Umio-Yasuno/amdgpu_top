@@ -34,6 +34,39 @@
   </screenshots>
 
   <releases>
+    <release version="0.10.5" date="2025-05-27">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>ci: use xbuild for build appimage</li>
+          <li>lib: add cpu and vcn_unified fields to FdInfoUsage</li>
+          <li>lib: add VCNU to FdInfoSortType</li>
+          <li>lib: add fw_versions fieled to AppDeviceInfo</li>
+          <li>cleanup dump_info</li>
+          <li>fix build without tui feature</li>
+          <li>add dynamically linked musl binary to release</li>
+        </ul>
+        <ul>
+          <li>smi: display CPU Core freq</li>
+          <li>tui: fix vpe label</li>
+          <li>tui: add support for cpu core freq</li>
+          <li>tui: use VCNU (vcn_unified) instead of VCN (media, avg. of dec/enc/jpeg_dec)</li>
+          <li>tui: update cursive version</li>
+        </ul>
+        <ul>
+          <li>gui: if gpu_metrics_v2_0/v2_1 then check core_temp and core_power and enable cpu_temp_plot and cpu_power_plot accordingly</li>
+          <li>gui: add support for cpu core freq</li>
+          <li>gui: use VCNU instead of VCN (media)</li>
+          <li>gui: update eframe and egui_plot version</li>
+        </ul>
+        <ul>
+          <li>json: add support for cpu core freq</li>
+          <li>json: add support for critical/emergency temp</li>
+        </ul>
+      </description>
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.10.5</url>
+    </release>
+
     <release version="0.10.4" date="2025-03-17">
       <description>
         <p>Changelog</p>
