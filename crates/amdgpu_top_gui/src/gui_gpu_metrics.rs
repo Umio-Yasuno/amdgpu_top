@@ -346,9 +346,9 @@ impl GuiGpuMetrics for GpuMetrics {
             ]);
         });
 
-        self.socket_power(ui);
+        // self.socket_power(ui);
 
-       if let [Some(dram_reads), Some(dram_writes)] = [
+        if let [Some(dram_reads), Some(dram_writes)] = [
             self.get_average_dram_reads(),
             self.get_average_dram_writes(),
         ] {

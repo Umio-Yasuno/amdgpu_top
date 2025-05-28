@@ -286,7 +286,7 @@ impl AppTextView {
             (metrics.get_current_socclk(), "MHz"),
         ])?;
 
-        socket_power(&mut self.text.buf, metrics)?;
+        // socket_power(&mut self.text.buf, metrics)?;
         avg_activity(&mut self.text.buf, metrics)?;
 
         if let [Some(dram_reads), Some(dram_writes)] = [
