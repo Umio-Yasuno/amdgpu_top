@@ -1,7 +1,7 @@
 # XDNA
 ## Generate bindings for xdna-driver
 ```
-$ bindgen header/amdxdna_accel.h > bindings.rs
+$ bindgen --no-layout-tests --wrap-unsafe-ops header/amdxdna_accel.h > bindings.rs
 ```
 
 ### Header source
