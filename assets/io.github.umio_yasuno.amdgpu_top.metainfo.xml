@@ -4,17 +4,17 @@
   <name>amdgpu_top</name>
   <summary> Tool to display AMDGPU usage</summary>
   <content_rating />
- 
+
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
   <url type="homepage">https://github.com/Umio-Yasuno/amdgpu_top</url>
-  
+
   <description>
     <p>
       amdgpu_top is tool that display AMD GPU utilization, like umr or clbr/radeontop or intel_gpu_top. The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, and AMDGPU driver.
     </p>
   </description>
-  
+
   <launchable type="desktop-id">amdgpu_top.desktop</launchable>
   <launchable type="desktop-id">amdgpu_top-tui.desktop</launchable>
 
@@ -79,7 +79,7 @@
           <li>skip show fdinfo stat if ids_count is zero</li>
         </ul>
         <ul>
-          <li>tui: update info_bar<li>
+          <li>tui: update info_bar</li>
         </ul>
         <ul>
           <li>gui: if gpu_metrics_v2_0 or gpu_metrics_v2_1, do not display cpu temp/power plot</li>
