@@ -27,18 +27,6 @@ struct SmiApp {
 }
 
 impl SmiApp {
-    pub fn new(app_amdgpu_top: AppAmdgpuTop, index: usize) -> Option<Self> {
-        let gfxoff_monitor = GfxoffMonitor::new(app_amdgpu_top.device_path.pci).ok();
-
-        Some(Self {
-            app_amdgpu_top,
-            index,
-            gfxoff_monitor,
-            fdinfo_view: Default::default(),
-            info_text: Default::default(),
-        })
-    }
-
     fn info_header() -> TextView {
         let text = format!(concat!(
             "GPU {name:<name_len$} {pad:10}|{pci:<16}|{vram:^18}|\n",
@@ -58,21 +46,6 @@ impl SmiApp {
         );
 
         TextView::new(text).no_wrap()
-    }
-
-    fn info_text(&mut self) -> TextView {
-        TextView::new_with_content(self.info_text.content.clone()).no_wrap()
-    }
-
-    fn fdinfo_panel(&self) -> Panel<TextView> {
-        let text = TextView::new_with_content(self.fdinfo_view.text.content.clone()).no_wrap();
-        Panel::new(text)
-            .title(format!(
-                "#{:<2} {}",
-                self.index,
-                self.app_amdgpu_top.device_info.marketing_name,
-            ))
-            .title_position(HAlign::Left)
     }
 
     fn update_info_text(&mut self) -> Result<(), std::fmt::Error> {
@@ -306,20 +279,11 @@ pub fn run_smi(
     }: UiArgs,
 ) {
     let sample = Sampling::low();
-    let (vec_app, suspended) = AppAmdgpuTop::create_app_and_suspended_list(
-        &device_path_list,
-        &Default::default(),
-    );
-    let mut vec_app: Vec<_> = vec_app
-        .into_iter()
+    let mut vec_app: Vec<SmiApp> = Vec::with_capacity(device_path_list.len());
+    let mut sus_app_devices: Vec<_> = device_path_list
+        .iter()
         .enumerate()
-        .filter_map(|(i, app)| SmiApp::new(app, i))
-        .collect();
-    let app_len = vec_app.len();
-    let mut sus_app_devices: Vec<_> = suspended
-        .into_iter()
-        .enumerate()
-        .map(|(i, device_path)| SuspendedSmiApp::new(device_path.clone(), app_len+i))
+        .map(|(i, device_path)| SuspendedSmiApp::new(device_path.clone(), i))
         .collect();
 
     let mut siv = cursive::default();
@@ -330,11 +294,6 @@ pub fn run_smi(
             let mut info = LinearLayout::vertical()
                 .child(SmiApp::info_header())
                 .child(TextView::new_with_content(line.clone()).no_wrap());
-            for app in vec_app.iter_mut() {
-                app.update(&sample);
-                info.add_child(app.info_text());
-                info.add_child(TextView::new_with_content(line.clone()).no_wrap());
-            }
             for sus_app in sus_app_devices.iter_mut() {
                 info.add_child(sus_app.info_text());
                 info.add_child(TextView::new_with_content(line.clone()).no_wrap());
@@ -344,9 +303,6 @@ pub fn run_smi(
         }
         {
             let mut proc = LinearLayout::vertical();
-            for app in &vec_app {
-                proc.add_child(app.fdinfo_panel());
-            }
             for sus_app in sus_app_devices.iter_mut() {
                 proc.add_child(sus_app.fdinfo_panel());
             }
@@ -377,6 +333,14 @@ pub fn run_smi(
 
     let cb_sink = siv.cb_sink().clone();
 
+    {
+        extract_active_devices(&mut vec_app, &mut sus_app_devices);
+
+        for app in vec_app.iter_mut() {
+            app.update(&sample);
+        }
+    }
+
     std::thread::spawn(move || loop {
         std::thread::sleep(sample.to_duration()); // 1s
 
@@ -384,19 +348,23 @@ pub fn run_smi(
             app.update(&sample);
         }
 
-        sus_app_devices.retain(|sus_app| {
-            let is_active = sus_app.device_path.check_if_device_is_active();
-
-            if is_active {
-                let Some(smi_app) = sus_app.to_smi_app() else { return true };
-                vec_app.push(smi_app);
-            }
-
-            !is_active
-        });
+        extract_active_devices(&mut vec_app, &mut sus_app_devices);
 
         cb_sink.send(Box::new(cursive::Cursive::noop)).unwrap();
     });
 
     siv.run();
+}
+
+fn extract_active_devices(vec_app: &mut Vec<SmiApp>, sus_app_devices: &mut Vec<SuspendedSmiApp>) {
+    sus_app_devices.retain(|sus_app| {
+        let is_active = sus_app.device_path.check_if_device_is_active();
+
+        if is_active {
+            let Some(smi_app) = sus_app.to_smi_app() else { return true };
+            vec_app.push(smi_app);
+        }
+
+        !is_active
+    });
 }
