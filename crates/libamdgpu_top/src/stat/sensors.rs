@@ -181,24 +181,14 @@ impl Sensors {
             self.bus_info.get_current_link_info()
         };
 
-        for temp in [&mut self.edge_temp, &mut self.junction_temp, &mut self.memory_temp] {
-            let Some(temp) = temp else { continue };
-            temp.update(&self.hwmon_path);
-        }
+        let hwmon_path = &self.hwmon_path;
 
-        if self.average_power.is_some() {
-            self.average_power = HwmonPower::from_hwmon_path_with_type(
-                &self.hwmon_path,
-                PowerType::Average,
-            );
-        }
-
-        if self.input_power.is_some() {
-            self.input_power = HwmonPower::from_hwmon_path_with_type(
-                &self.hwmon_path,
-                PowerType::Input,
-            );
-        }
+        self.edge_temp = HwmonTemp::from_hwmon_path(hwmon_path, HwmonTempType::Edge);
+        self.junction_temp = HwmonTemp::from_hwmon_path(hwmon_path, HwmonTempType::Junction);
+        self.memory_temp = HwmonTemp::from_hwmon_path(hwmon_path, HwmonTempType::Memory);
+        self.power_cap = PowerCap::from_hwmon_path(hwmon_path);
+        self.average_power = HwmonPower::from_hwmon_path_with_type(hwmon_path, PowerType::Average);
+        self.input_power = HwmonPower::from_hwmon_path_with_type(hwmon_path, PowerType::Input);
 
         self.fan_rpm = parse_hwmon(self.hwmon_path.join("fan1_input"));
         self.power_profile = PowerProfile::get_current_profile_from_sysfs(&self.sysfs_path);

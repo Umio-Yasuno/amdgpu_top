@@ -267,9 +267,9 @@ impl AppAmdgpuTop {
             return;
         };
 
-        if self.stat.metrics.is_some()
-        || (self.stat.metrics.is_none() && self.stat.sensors.as_ref().is_some_and(|s| s.is_idle))
-        {
+        let was_idle = self.stat.sensors.as_ref().is_some_and(|s| s.is_idle);
+
+        if self.stat.metrics.is_some() || (self.stat.metrics.is_none() && was_idle) {
             self.stat.metrics = GpuMetrics::get_from_sysfs_path(&self.device_info.sysfs_path).ok();
         }
 
