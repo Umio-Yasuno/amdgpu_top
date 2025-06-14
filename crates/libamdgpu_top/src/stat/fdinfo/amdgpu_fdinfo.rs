@@ -404,6 +404,6 @@ impl FdInfoStat {
         self
             .proc_usage
             .iter()
-            .all(|pu| pu.usage.vram_usage == 0)
+            .all(|pu| (pu.usage.vram_usage >> 10) == 0)
     }
 }
