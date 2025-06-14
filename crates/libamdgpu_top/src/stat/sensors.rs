@@ -48,6 +48,7 @@ pub struct Sensors {
     k10temp_tctl_path: Option<PathBuf>,
     pub tctl: Option<i64>, // CPU Temp.
     pub all_cpu_core_freq_info: Vec<CpuFreqInfo>,
+    pub is_idle: bool,
 }
 
 impl Sensors {
@@ -167,6 +168,7 @@ impl Sensors {
             k10temp_tctl_path,
             tctl,
             all_cpu_core_freq_info,
+            is_idle: false,
         })
     }
 
@@ -204,6 +206,7 @@ impl Sensors {
         self.update_pci_power_state();
         self.update_tctl();
         self.update_all_cpu_core_cur_freq();
+        self.is_idle = false;
     }
 
     pub fn update_for_idle(&mut self) {
@@ -219,6 +222,7 @@ impl Sensors {
         self.vddgfx = None;
         self.fan_rpm = None;
         self.power_profile = None;
+        self.is_idle = true;
 
         self.update_pci_power_state();
     }
