@@ -399,4 +399,11 @@ impl FdInfoStat {
 
         (proc_usage, self.has_vcn, self.has_vcn_unified, self.has_vpe)
     }
+
+    pub fn no_process_using_vram(&self) -> bool {
+        self
+            .proc_usage
+            .iter()
+            .all(|pu| pu.usage.vram_usage == 0)
+    }
 }

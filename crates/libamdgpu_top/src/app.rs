@@ -238,12 +238,11 @@ impl AppAmdgpuTop {
             }
         }
         {
-            let proc_len = self.stat.fdinfo.proc_usage.len();
             let pre_activity = &self.stat.activity;
+            let no_process_using_vram = self.stat.fdinfo.no_process_using_vram();
 
-            // running GPU process is only "amdgpu_top"
             // TODO: those checks may not be enough
-            if proc_len == 1
+            if no_process_using_vram
                 && self.amdgpu_dev.is_some()
                 && !self.no_drop_device_handle
                 && !self.device_info.is_apu
@@ -251,7 +250,7 @@ impl AppAmdgpuTop {
             {
                 unsafe { ManuallyDrop::drop(&mut self.amdgpu_dev); }
                 self.amdgpu_dev = ManuallyDrop::new(None);
-            } else if proc_len > 1
+            } else if !no_process_using_vram
                 && self.amdgpu_dev.is_none()
                 && self.device_path.check_if_device_is_active()
             {
