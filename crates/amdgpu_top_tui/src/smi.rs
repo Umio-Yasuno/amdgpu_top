@@ -178,11 +178,19 @@ impl SmiApp {
                 thr.get(..THR_LEN).unwrap_or_else(|| &thr)
             )?;
         } else {
-            write!(
-                self.info_text.buf,
-                "{:<THR_LEN$}|",
-                "N/A",
-            )?;
+            if !self.app_amdgpu_top.device_path.check_if_device_is_active() {
+                write!(
+                    self.info_text.buf,
+                    "{:<THR_LEN$}|",
+                    "N/A (Suspended)",
+                )?;
+            } else {
+                write!(
+                    self.info_text.buf,
+                    "{:<THR_LEN$}|",
+                    "N/A",
+                )?;
+            }
         }
 
         if self.app_amdgpu_top.device_info.is_apu {
