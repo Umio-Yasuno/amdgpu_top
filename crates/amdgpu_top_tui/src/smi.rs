@@ -193,7 +193,11 @@ impl SmiApp {
 
         let _ = self.fdinfo_view.print_fdinfo(
             &mut self.app_amdgpu_top.stat.fdinfo,
-            FdInfoSortType::default(),
+            if self.app_amdgpu_top.device_info.is_apu {
+                FdInfoSortType::GTT
+            } else {
+                FdInfoSortType::default()
+            },
             false,
         );
 
