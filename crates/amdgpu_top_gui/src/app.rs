@@ -2,11 +2,12 @@ use std::sync::{Arc, Mutex};
 use eframe::wgpu::AdapterInfo;
 use crate::egui::{self, RichText, util::History};
 use crate::{BASE, MEDIUM, HISTORY_LENGTH};
-use crate::{GuiAppData, util::*, fl};
+use crate::{GuiAppData, GuiGpuMetrics, util::*, fl};
+use crate::tab_gui::{MainTab, InfoTab};
 use egui_plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
 
 use libamdgpu_top::{
-    AMDGPU::RasErrorCount,
+    AMDGPU::{GpuMetrics, MetricsInfo, RasErrorCount},
     DevicePath,
     PCI,
     stat::{FdInfoSortType, PerfCounter, Sensors},
@@ -34,6 +35,9 @@ pub struct MyApp {
     pub no_pc: bool,
     pub pause: bool,
     pub full_fdinfo_list: bool,
+    pub tab_gui: bool,
+    pub main_tab: MainTab,
+    pub info_tab: InfoTab,
 }
 
 pub fn grid(ui: &mut egui::Ui, v: &[(&str, &str)]) {
@@ -330,12 +334,12 @@ impl MyApp {
             |ui| self.egui_fdinfo_plot(ui, has_vcn_unified, has_vpe),
         );
 
-        ui.toggle_value(&mut self.full_fdinfo_list, fl!("full_fdinfo_list"));
+        ui.checkbox(&mut self.full_fdinfo_list, fl!("full_fdinfo_list"));
 
         if self.full_fdinfo_list || (proc_len != 0 && proc_len < 8) {
             self.egui_fdinfo_list(ui, has_vcn_unified, has_vpe);
         } else {
-            egui::ScrollArea::vertical()
+            egui::ScrollArea::both()
                 .auto_shrink([false, false])
                 .min_scrolled_height(FDINFO_LIST_HEIGHT)
                 .show(ui, |ui| self.egui_fdinfo_list(ui, has_vcn_unified, has_vpe));
@@ -763,6 +767,66 @@ impl MyApp {
             });
     }
 
+    pub fn egui_gpu_metrics(&self, ui: &mut egui::Ui) {
+        let Some(metrics) = &self.buf_data.stat.metrics else { return };
+        let Some(header) = metrics.get_header() else { return };
+
+        let header = format!(
+            "{} v{}.{}",
+            fl!("gpu_metrics"),
+            header.format_revision,
+            header.content_revision
+        );
+
+        match metrics {
+            GpuMetrics::V1_0(_) |
+            GpuMetrics::V1_1(_) |
+            GpuMetrics::V1_2(_) |
+            GpuMetrics::V1_3(_) |
+            GpuMetrics::V1_4(_) |
+            GpuMetrics::V1_5(_) => {
+                collapsing(ui, &header, true, |ui| metrics.v1_ui(ui));
+                collapsing_plot(ui, &fl!("vclk_dclk_plot"), true, |ui| self.egui_vclk_dclk_plot(ui));
+            },
+            /* APU */
+            GpuMetrics::V2_0(_) |
+            GpuMetrics::V2_1(_) |
+            GpuMetrics::V2_2(_) |
+            GpuMetrics::V2_3(_) |
+            GpuMetrics::V2_4(_) => {
+                collapsing(ui, &header, true, |ui| {
+                    metrics.v2_ui(ui);
+                    if self.buf_data.history.core_temp.is_some() {
+                        collapsing_plot(
+                            ui,
+                            &fl!("cpu_temp_plot"),
+                            true,
+                            |ui| self.egui_core_temp_plot(ui),
+                        );
+                    }
+                    if self.buf_data.history.core_power_mw.is_some() {
+                        collapsing_plot(
+                            ui,
+                            &fl!("cpu_power_plot"),
+                            true,
+                            |ui| self.egui_core_power_plot(ui),
+                        );
+                    }
+                    collapsing_plot(ui, &fl!("vclk_dclk_plot"), true, |ui| self.egui_vclk_dclk_plot(ui));
+                });
+            },
+            /* APU */
+            GpuMetrics::V3_0(_) => {
+                collapsing(ui, &header, true, |ui| {
+                    metrics.v3_ui(ui);
+                    collapsing_plot(ui, &fl!("cpu_temp_plot"), true, |ui| self.egui_core_temp_plot(ui));
+                    collapsing_plot(ui, &fl!("cpu_power_plot"), true, |ui| self.egui_core_power_plot(ui));
+                    collapsing_plot(ui, &fl!("vclk_dclk_plot"), true, |ui| self.egui_vclk_dclk_plot(ui));
+                });
+            },
+            _ => {},
+        }
+    }
 }
 
 fn default_plot(id: &str) -> Plot {

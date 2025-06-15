@@ -14,6 +14,7 @@ use libamdgpu_top::{
     app::AppAmdgpuTop,
     stat::{
         self,
+        FdInfoSortType,
         PerfCounter,
     },
     AppDeviceInfo,
@@ -36,6 +37,8 @@ use gui_gpu_metrics::GuiGpuMetrics;
 mod gui_device_info;
 use gui_device_info::{GuiInfo, GuiConnectorInfo, GuiHwIpInfo, GuiIpDiscovery, GuiVbiosInfo, GuiVideoCapsInfo, GuiXdnaInfo};
 
+mod tab_gui;
+
 mod util;
 use util::*;
 
@@ -44,9 +47,11 @@ pub use localize::LANGUAGE_LOADER;
 use localize::localizer;
 
 const SPACE: f32 = 8.0;
+const SPACE_3X: f32 = SPACE * 3.0;
 const SMALL: FontId = FontId::new(12.0, FontFamily::Monospace);
 const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
 const MEDIUM: FontId = FontId::new(15.0, FontFamily::Monospace);
+const LARGE: FontId = FontId::new(16.0, FontFamily::Monospace);
 const HEADING: FontId = FontId::new(16.0, FontFamily::Monospace);
 const HISTORY_LENGTH: Range<usize> = 0..30; // seconds
 static SIDE_PANEL_STATE_ID: LazyLock<egui::Id> = LazyLock::new(|| {
@@ -73,6 +78,7 @@ pub fn run(
         no_pc,
         is_dark_mode,
         gui_wgpu_backend,
+        tab_gui,
         ..
     }: UiArgs,
 ) {
@@ -127,7 +133,11 @@ pub fn run(
         .clone();
 
     let mut gui_app = MyApp {
-        fdinfo_sort: Default::default(),
+        fdinfo_sort: if data.device_info.is_apu {
+            FdInfoSortType::GTT
+        } else {
+            Default::default()
+        },
         reverse_sort: false,
         buf_data: data,
         buf_vec_data: vec_data.clone(),
@@ -140,6 +150,9 @@ pub fn run(
         no_pc,
         pause: false,
         full_fdinfo_list: false,
+        tab_gui,
+        main_tab: Default::default(),
+        info_tab: Default::default(),
     };
 
     unsafe {
@@ -338,7 +351,13 @@ impl MyApp {
     }
 
     fn egui_side_panel(&self, ui: &mut egui::Ui) {
-        egui::ScrollArea::vertical().show(ui, |ui| {
+        let scroll_area = if self.tab_gui {
+            egui::ScrollArea::new([false, false])
+        } else {
+            egui::ScrollArea::vertical()
+        };
+
+        scroll_area.show(ui, |ui| {
             ui.add_space(SPACE);
             collapsing(
                 ui,
@@ -447,69 +466,9 @@ impl MyApp {
                 collapsing(ui, &fl!("ecc_memory_error_count"), true, |ui| ecc.ui(ui));
             }
 
-            if let Some(metrics) = &self.buf_data.stat.metrics {
-                let header = if let Some(h) = metrics.get_header() {
-                    format!(
-                        "{} v{}.{}",
-                        fl!("gpu_metrics"),
-                        h.format_revision,
-                        h.content_revision
-                    )
-                } else {
-                    String::new()
-                };
-
-                match metrics {
-                    GpuMetrics::V1_0(_) |
-                    GpuMetrics::V1_1(_) |
-                    GpuMetrics::V1_2(_) |
-                    GpuMetrics::V1_3(_) |
-                    GpuMetrics::V1_4(_) |
-                    GpuMetrics::V1_5(_) => {
-                        ui.add_space(SPACE);
-                        collapsing(ui, &header, true, |ui| metrics.v1_ui(ui));
-                        collapsing_plot(ui, &fl!("vclk_dclk_plot"), true, |ui| self.egui_vclk_dclk_plot(ui));
-                    },
-                    /* APU */
-                    GpuMetrics::V2_0(_) |
-                    GpuMetrics::V2_1(_) |
-                    GpuMetrics::V2_2(_) |
-                    GpuMetrics::V2_3(_) |
-                    GpuMetrics::V2_4(_) => {
-                        ui.add_space(SPACE);
-                        collapsing(ui, &header, true, |ui| {
-                            metrics.v2_ui(ui);
-                            if self.buf_data.history.core_temp.is_some() {
-                                collapsing_plot(
-                                    ui,
-                                    &fl!("cpu_temp_plot"),
-                                    true,
-                                    |ui| self.egui_core_temp_plot(ui),
-                                );
-                            }
-                            if self.buf_data.history.core_power_mw.is_some() {
-                                collapsing_plot(
-                                    ui,
-                                    &fl!("cpu_power_plot"),
-                                    true,
-                                    |ui| self.egui_core_power_plot(ui),
-                                );
-                            }
-                            collapsing_plot(ui, &fl!("vclk_dclk_plot"), true, |ui| self.egui_vclk_dclk_plot(ui));
-                        });
-                    },
-                    /* APU */
-                    GpuMetrics::V3_0(_) => {
-                        ui.add_space(SPACE);
-                        collapsing(ui, &header, true, |ui| {
-                            metrics.v3_ui(ui);
-                            collapsing_plot(ui, &fl!("cpu_temp_plot"), true, |ui| self.egui_core_temp_plot(ui));
-                            collapsing_plot(ui, &fl!("cpu_power_plot"), true, |ui| self.egui_core_power_plot(ui));
-                            collapsing_plot(ui, &fl!("vclk_dclk_plot"), true, |ui| self.egui_vclk_dclk_plot(ui));
-                        });
-                    },
-                    _ => {},
-                }
+            if self.buf_data.stat.metrics.is_some() {
+                ui.add_space(SPACE);
+                self.egui_gpu_metrics(ui);
             }
 
             collapsing(ui, &fl!("throttling_log"), false, |ui| {
@@ -555,7 +514,11 @@ impl eframe::App for MyApp {
 
         {
             let mut style = (*ctx.style()).clone();
-            style.override_font_id = Some(BASE);
+            if self.tab_gui {
+                style.override_font_id = Some(LARGE);
+            } else {
+                style.override_font_id = Some(BASE);
+            }
             ctx.set_style(style);
         }
 
@@ -563,43 +526,6 @@ impl eframe::App for MyApp {
 
         egui::TopBottomPanel::top("menu bar").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                {
-                    let pre_theme = ctx.theme();
-
-                    egui::widgets::global_theme_preference_buttons(ui);
-
-                    let cur_theme = ctx.theme();
-
-                    if pre_theme != cur_theme {
-                        ctx.data_mut(|id_map| {
-                            let v = id_map.get_persisted_mut_or_insert_with(
-                                *THEME_ID,
-                                || { cur_theme },
-                            );
-                            *v = cur_theme;
-                        });
-                    }
-                }
-
-                {
-                    let res = ui.toggle_value(
-                        &mut self.show_sidepanel,
-                        RichText::new(fl!("info"))
-                            .font(BASE))
-                            .on_hover_text(fl!("toggle_side_panel"),
-                    );
-
-                    if res.changed() {
-                        ctx.data_mut(|id_map| {
-                            let v = id_map.get_persisted_mut_or_insert_with(
-                                *SIDE_PANEL_STATE_ID,
-                                || { self.show_sidepanel },
-                            );
-                            *v = self.show_sidepanel;
-                        });
-                    }
-                }
-
                 {
                     let pre_pci_bus = self.selected_pci_bus;
 
@@ -618,28 +544,74 @@ impl eframe::App for MyApp {
                     }
                 }
 
-                ui.separator();
-                egui::gui_zoom::zoom_menu_buttons(ui);
-                ui.label(format!("{:>3.0}%", ui.ctx().zoom_factor() * 100.0));
+                {
+                    let pre_theme = ctx.theme();
 
-                ui.separator();
-                ui.toggle_value(
-                    &mut self.pause,
-                    RichText::new(fl!("pause")).font(BASE),
-                );
+                    egui::widgets::global_theme_preference_buttons(ui);
 
-                ui.separator();
-                if ui.button(RichText::new(fl!("quit") + " (Ctrl+Q)").font(SMALL)).clicked() {
-                    ctx.send_viewport_cmd(ViewportCommand::Close);
-                };
+                    let cur_theme = ctx.theme();
+
+                    if pre_theme != cur_theme {
+                        ctx.data_mut(|id_map| {
+                            let v = id_map.get_persisted_mut_or_insert_with(
+                                *THEME_ID,
+                                || { cur_theme },
+                            );
+                            *v = cur_theme;
+                        });
+                    }
+                }
+
+                if !self.tab_gui {
+                    let res = ui.toggle_value(
+                        &mut self.show_sidepanel,
+                        RichText::new(fl!("info"))
+                            .font(BASE))
+                            .on_hover_text(fl!("toggle_side_panel"),
+                    );
+
+                    if res.changed() {
+                        ctx.data_mut(|id_map| {
+                            let v = id_map.get_persisted_mut_or_insert_with(
+                                *SIDE_PANEL_STATE_ID,
+                                || { self.show_sidepanel },
+                            );
+                            *v = self.show_sidepanel;
+                        });
+                    }
+                }
+
+                if !self.tab_gui {
+                    ui.separator();
+                    egui::gui_zoom::zoom_menu_buttons(ui);
+                    ui.label(format!("{:>3.0}%", ui.ctx().zoom_factor() * 100.0));
+
+                    ui.separator();
+                    ui.toggle_value(
+                        &mut self.pause,
+                        RichText::new(fl!("pause")).font(BASE),
+                    );
+
+                    ui.separator();
+                    if ui.button(RichText::new(fl!("quit") + " (Ctrl+Q)").font(SMALL)).clicked() {
+                        ctx.send_viewport_cmd(ViewportCommand::Close);
+                    };
+                }
             });
         });
 
-        if self.show_sidepanel {
+        if !self.tab_gui && self.show_sidepanel {
             egui::SidePanel::left(*SIDE_PANEL_ID).show(ctx, |ui| self.egui_side_panel(ui));
         }
 
-        egui::CentralPanel::default().show(ctx, |ui| self.egui_central_panel(ui));
+        egui::CentralPanel::default().show(
+            ctx,
+            |ui| if self.tab_gui {
+                self.egui_tab_gui(ui)
+            } else {
+                self.egui_central_panel(ui)
+            }
+        );
 
         ctx.request_repaint_after(Duration::from_millis(500));
     }

@@ -16,6 +16,7 @@ pub struct MainOpt {
     pub decode_gpu_metrics: Option<String>,
     pub hide_fdinfo: bool,
     pub wgpu_backend: GuiWgpuBackend,
+    pub tab_gui: bool,
 }
 
 impl Default for MainOpt {
@@ -36,6 +37,7 @@ impl Default for MainOpt {
             decode_gpu_metrics: None,
             hide_fdinfo: false,
             wgpu_backend: GuiWgpuBackend::Gl,
+            tab_gui: false,
         }
     }
 }
@@ -255,6 +257,17 @@ impl MainOpt {
                     #[cfg(feature = "gui")]
                     {
                         opt.app_mode = AppMode::GUI;
+                    }
+                    #[cfg(not(feature = "gui"))]
+                    {
+                        eprintln!("\"gui\" feature is not enabled for this build.");
+                        std::process::exit(1);
+                    }
+                },
+                "--tab-gui" => {
+                    #[cfg(feature = "gui")]
+                    {
+                        opt.tab_gui = true;
                     }
                     #[cfg(not(feature = "gui"))]
                     {

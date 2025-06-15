@@ -38,7 +38,8 @@ pub struct UiArgs {
     pub no_pc: bool,
     pub is_dark_mode: Option<bool>, // TUI, GUI
     pub hide_fdinfo: bool, // TUI
-    pub gui_wgpu_backend: GuiWgpuBackend,
+    pub gui_wgpu_backend: GuiWgpuBackend, // GUI
+    pub tab_gui: bool, // GUI
 }
 
 pub struct Sampling {
