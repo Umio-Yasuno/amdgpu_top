@@ -357,6 +357,11 @@ impl MyApp {
             egui::ScrollArea::vertical()
         };
 
+        {
+            let vis = ui.visuals_mut();
+            vis.striped = true;
+        }
+
         scroll_area.show(ui, |ui| {
             ui.add_space(SPACE);
             collapsing(
