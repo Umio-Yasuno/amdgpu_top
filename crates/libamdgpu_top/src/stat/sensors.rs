@@ -114,12 +114,16 @@ impl Sensors {
         let fan_rpm = parse_hwmon(hwmon_path.join("fan1_input"));
         let fan_max_rpm = parse_hwmon(hwmon_path.join("fan1_max"));
         let gpu_port_path = pci_bus.get_gpu_pcie_port_bus().get_sysfs_path();
-        let pci_power_state = fs::read_to_string(gpu_port_path.join("power_state"))
-            .ok()
-            .map(|mut s| {
-                s.pop();
-                s
-            });
+        let pci_power_state = if !is_apu {
+            fs::read_to_string(gpu_port_path.join("power_state"))
+                .ok()
+                .map(|mut s| {
+                    s.pop();
+                    s
+                })
+        } else {
+            None
+        };
         let power_profile = PowerProfile::get_current_profile_from_sysfs(&sysfs_path);
         let k10temp_path = if is_apu {
             Self::find_k10temp_path()
@@ -218,12 +222,14 @@ impl Sensors {
     }
 
     pub fn update_pci_power_state(&mut self) {
-        self.pci_power_state = fs::read_to_string(self.gpu_port_path.join("power_state"))
-            .ok()
-            .map(|mut s| {
-                s.pop(); // trim `\n`
-                s
-            });
+        if !self.is_apu {
+            self.pci_power_state = fs::read_to_string(self.gpu_port_path.join("power_state"))
+                .ok()
+                .map(|mut s| {
+                    s.pop(); // trim `\n`
+                    s
+                });
+        }
     }
 
     pub fn update(&mut self, amdgpu_dev: &DeviceHandle) {
