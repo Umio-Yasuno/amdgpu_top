@@ -151,19 +151,18 @@ impl SmiApp {
                 thr.get(..THR_LEN).unwrap_or_else(|| &thr)
             )?;
         } else {
-            if !self.app_amdgpu_top.device_path.check_if_device_is_active() {
-                write!(
-                    self.info_text.buf,
-                    "{:<THR_LEN$}|",
-                    "N/A (Suspended)",
-                )?;
+            let pci_power_state = if sensors.is_some_and(|s| s.is_idle) {
+                sensors.and_then(|sensors| sensors.pci_power_state.as_ref())
             } else {
-                write!(
-                    self.info_text.buf,
-                    "{:<THR_LEN$}|",
-                    "N/A",
-                )?;
-            }
+                None
+            };
+            let s = if let Some(s) = pci_power_state {
+                &format!("N/A ({s})")
+            } else {
+                "N/A"
+            };
+
+            write!(self.info_text.buf, "{s:<THR_LEN$}|")?;
         }
 
         if self.app_amdgpu_top.device_info.is_apu {
