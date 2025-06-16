@@ -256,6 +256,8 @@ impl AppAmdgpuTop {
             {
                 self.amdgpu_dev = ManuallyDrop::new(self.device_path.init().ok());
             }
+
+            self.dynamic_no_pc = no_process_using_vram;
         }
 
         if self.amdgpu_dev.is_none() {
@@ -340,8 +342,6 @@ impl AppAmdgpuTop {
             self.device_info.asic_name,
             &self.stat.metrics,
         );
-
-        self.dynamic_no_pc = self.device_info.is_apu && self.stat.activity.is_gfx_idling();
 
         if self.stat.activity.media.is_none() || self.stat.activity.media == Some(0) {
             let (proc_usage, _, _, _) = self.stat.fdinfo.fold_fdinfo_usage();
