@@ -48,10 +48,10 @@ use localize::localizer;
 
 const SPACE: f32 = 8.0;
 const SPACE_3X: f32 = SPACE * 3.0;
-const SMALL: FontId = FontId::new(12.0, FontFamily::Monospace);
+// const SMALL: FontId = FontId::new(12.0, FontFamily::Monospace);
 const BASE: FontId = FontId::new(14.0, FontFamily::Monospace);
 const MEDIUM: FontId = FontId::new(15.0, FontFamily::Monospace);
-const LARGE: FontId = FontId::new(16.0, FontFamily::Monospace);
+// const LARGE: FontId = FontId::new(16.0, FontFamily::Monospace);
 const HEADING: FontId = FontId::new(16.0, FontFamily::Monospace);
 const HISTORY_LENGTH: Range<usize> = 0..30; // seconds
 static SIDE_PANEL_STATE_ID: LazyLock<egui::Id> = LazyLock::new(|| {
