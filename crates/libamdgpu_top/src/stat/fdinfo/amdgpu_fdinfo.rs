@@ -401,9 +401,15 @@ impl FdInfoStat {
     }
 
     pub fn no_process_using_vram(&self) -> bool {
+        const EXCLUDE_PROC_NAMES: &[&str] = &[
+            "amdgpu_top",
+            "steamwebhelper",
+        ];
+
         self
             .proc_usage
             .iter()
+            .filter(|pu| !EXCLUDE_PROC_NAMES.contains(&pu.name.as_str()))
             .all(|pu| (pu.usage.vram_usage >> 10) == 0)
     }
 }
