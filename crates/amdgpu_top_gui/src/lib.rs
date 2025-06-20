@@ -520,7 +520,7 @@ impl eframe::App for MyApp {
         {
             let mut style = (*ctx.style()).clone();
             if self.tab_gui {
-                style.override_font_id = Some(LARGE);
+                style.override_font_id = Some(MEDIUM);
             } else {
                 style.override_font_id = Some(BASE);
             }
@@ -547,12 +547,37 @@ impl eframe::App for MyApp {
                             *v = cur_pci_bus;
                         });
                     }
+                    ui.separator();
+                }
+
+                if !self.tab_gui {
+                    let res =
+                        ui.toggle_value(
+                            &mut self.show_sidepanel,
+                            RichText::new(fl!("info"))
+                        ).on_hover_text(fl!("toggle_side_panel"),
+                    );
+
+                    if res.changed() {
+                        ctx.data_mut(|id_map| {
+                            let v = id_map.get_persisted_mut_or_insert_with(
+                                *SIDE_PANEL_STATE_ID,
+                                || { self.show_sidepanel },
+                            );
+                            *v = self.show_sidepanel;
+                        });
+                    }
+                    ui.separator();
                 }
 
                 {
                     let pre_theme = ctx.theme();
 
-                    egui::widgets::global_theme_preference_buttons(ui);
+                    if self.tab_gui {
+                        egui::widgets::global_theme_preference_switch(ui);
+                    } else {
+                        egui::widgets::global_theme_preference_buttons(ui);
+                    }
 
                     let cur_theme = ctx.theme();
 
@@ -565,44 +590,35 @@ impl eframe::App for MyApp {
                             *v = cur_theme;
                         });
                     }
+                    ui.separator();
                 }
 
+                if self.tab_gui {
+                    ui.label(format!("🔍 {:>3.0}%", ctx.zoom_factor() * 100.0));
+                    ui.separator();
+                }
+
+                ui.toggle_value(
+                    &mut self.pause,
+                    RichText::new(fl!("pause")),
+                );
+
+                ui.separator();
                 if !self.tab_gui {
-                    let res = ui.toggle_value(
-                        &mut self.show_sidepanel,
-                        RichText::new(fl!("info"))
-                            .font(BASE))
-                            .on_hover_text(fl!("toggle_side_panel"),
-                    );
-
-                    if res.changed() {
-                        ctx.data_mut(|id_map| {
-                            let v = id_map.get_persisted_mut_or_insert_with(
-                                *SIDE_PANEL_STATE_ID,
-                                || { self.show_sidepanel },
-                            );
-                            *v = self.show_sidepanel;
-                        });
-                    }
+                    ui.toggle_value(&mut self.tab_gui, "Tab Mode");
+                } else {
+                    ui.toggle_value(&mut self.tab_gui, "Single");
                 }
-
-                if !self.tab_gui {
-                    ui.separator();
-                    egui::gui_zoom::zoom_menu_buttons(ui);
-                    ui.label(format!("{:>3.0}%", ui.ctx().zoom_factor() * 100.0));
-
-                    ui.separator();
-                    ui.toggle_value(
-                        &mut self.pause,
-                        RichText::new(fl!("pause")).font(BASE),
-                    );
-
-                    ui.separator();
-                    if ui.button(RichText::new(fl!("quit") + " (Ctrl+Q)").font(SMALL)).clicked() {
-                        ctx.send_viewport_cmd(ViewportCommand::Close);
-                    };
-                }
+                ui.separator();
             });
+
+            if !self.tab_gui { ui.horizontal(|ui| {
+                egui::gui_zoom::zoom_menu_buttons(ui);
+                ui.label(format!("{:>3.0}%", ctx.zoom_factor() * 100.0));
+                ui.separator();
+
+                quit_button(ctx, ui);
+            }); }
         });
 
         if !self.tab_gui && self.show_sidepanel {
@@ -620,6 +636,12 @@ impl eframe::App for MyApp {
 
         ctx.request_repaint_after(Duration::from_millis(500));
     }
+}
+
+fn quit_button(ctx: &egui::Context, ui: &mut egui::Ui) {
+    if ui.button(RichText::new(fl!("quit") + " (Ctrl+Q)")).clicked() {
+        ctx.send_viewport_cmd(ViewportCommand::Close);
+    };
 }
 
 use i18n_embed::fluent::FluentLanguageLoader;
