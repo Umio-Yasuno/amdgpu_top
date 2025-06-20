@@ -594,6 +594,15 @@ impl eframe::App for MyApp {
                 }
 
                 if self.tab_gui {
+                    if ui.button("-").clicked() {
+                        egui::gui_zoom::zoom_out(ctx);
+                    }
+                    if ui.button("+").clicked() {
+                        egui::gui_zoom::zoom_in(ctx);
+                    }
+                    if ui.button("↻").clicked() {
+                        ctx.set_zoom_factor(1.0);
+                    }
                     ui.label(format!("🔍 {:>3.0}%", ctx.zoom_factor() * 100.0));
                     ui.separator();
                 }
