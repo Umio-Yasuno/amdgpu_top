@@ -267,6 +267,11 @@ impl DumpInfo for AppDeviceInfo {
         println!();
         println!("VRAM Type     : {}", self.ext_info.get_vram_type());
         println!("VRAM Bit Width: {}-bit", self.ext_info.vram_bit_width);
+
+        if let Some(mem_vendor) = &self.memory_vendor {
+            println!("VRAM Vendor   : {mem_vendor}");
+        }
+
         println!("Memory Clock  : {}-{} MHz", self.min_mem_clk, self.max_mem_clk);
         println!("Peak Memory BW: {} GB/s", self.ext_info.peak_memory_bw_gb());
         println!("ResizableBAR  : {resizable_bar}");

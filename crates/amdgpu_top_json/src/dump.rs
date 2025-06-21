@@ -176,6 +176,10 @@ impl JsonInfo for AppAmdgpuTop {
             "GPU Clock": gpu_clk,
             "VRAM Type": self.device_info.ext_info.get_vram_type().to_string(),
             "VRAM Bit width": self.device_info.ext_info.vram_bit_width,
+            "VRAM Vendor": match &self.device_info.memory_vendor {
+                Some(v) => Value::String(v.clone()),
+                None => Value::Null,
+            },
             "Memory Clock": mem_clk,
             "ResizableBAR": self.device_info.resizable_bar,
             "VRAM Size": self.device_info.memory_info.vram.total_heap_size,

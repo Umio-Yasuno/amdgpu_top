@@ -59,6 +59,7 @@ pub struct AppDeviceInfo {
     pub smc_fw_version: Option<u32>,
     pub smu_ip_version: Option<(u8, u8, u8)>, // MP0: APU, MP1: dGPU
     pub fw_versions: Vec<FwVer>,
+    pub memory_vendor: Option<String>,
 }
 
 impl AppDeviceInfo {
@@ -102,6 +103,12 @@ impl AppDeviceInfo {
             )
             .and_then(|ip_hw_id| ip_hw_id.instances.first())
             .map(|smu_ip| smu_ip.version());
+        let memory_vendor = std::fs::read_to_string(sysfs_path.join("mem_info_vram_vendor"))
+            .ok()
+            .map(|mut s| {
+                s.pop();
+                s
+            });
 
         Self {
             ext_info: *ext_info,
@@ -142,6 +149,7 @@ impl AppDeviceInfo {
             smc_fw_version,
             smu_ip_version,
             fw_versions,
+            memory_vendor,
         }
     }
 

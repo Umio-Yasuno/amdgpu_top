@@ -44,6 +44,7 @@ not_supported = Not Supported
 
 vram_type = VRAM Type
 vram_bit_width = VRAM Bit Width
+vram_vendor = VRAM Vendor
 vram_size = VRAM Size
 memory_clock = Memory Clock
 resizable_bar = ResizableBAR
@@ -51,6 +52,7 @@ ecc_memory = ECC Memory
 ecc_memory_error_count = ECC Memory Error Count
 corrected = Corrected
 uncorrected = UnCorrected
+unknown = Unknown
 
 l1_cache_per_cu = L1 Cache (per CU)
 gl1_cache_per_sa = GL1 Cache (per SA/SH)
