@@ -332,7 +332,7 @@ impl MyApp {
                 if self.buf_data.device_info.pci_bus == device.pci {
                     let _ = ui.add_enabled(
                         false,
-                        egui::SelectableLabel::new(true, &selected_text),
+                        egui::widgets::Button::selectable(true, &selected_text),
                     );
                 } else if self.buf_vec_data.iter().any(|data| data.pci_bus == device.pci) {
                     ui.selectable_value(
@@ -344,7 +344,7 @@ impl MyApp {
                     let label = format!("{} ({})", device.menu_entry(), fl!("suspended"));
                     let _ = ui.add_enabled(
                         false,
-                        egui::SelectableLabel::new(false, label),
+                        egui::widgets::Button::selectable(false, label),
                     );
                 }
             });
