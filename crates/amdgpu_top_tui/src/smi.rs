@@ -125,7 +125,7 @@ impl SmiApp {
             gt = self.app_amdgpu_top.stat.vram_usage.0.gtt.total_heap_size >> 20,
         )?;
 
-        if let Some(temp) = sensors.and_then(|s| s.edge_temp.as_ref()) {
+        if let Some(temp) = sensors.and_then(|s| s.junction_temp.as_ref().or(s.edge_temp.as_ref())) {
             write!(self.info_text.buf, " {:>3}C ", temp.current)?;
         } else {
             write!(self.info_text.buf, " ___C ")?;
