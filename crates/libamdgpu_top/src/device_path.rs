@@ -41,7 +41,8 @@ impl DevicePath {
     pub fn init(&self) -> anyhow::Result<DeviceHandle> {
         let (amdgpu_dev, _major, _minor) = {
             let libdrm_amdgpu = self.libdrm_amdgpu
-                .as_ref()
+                .clone()
+                .or_else(|| LibDrmAmdgpu::new().ok())
                 .ok_or("Error loading libdrm.so and libdrm_amdgpu.so")
                 .map_err(|v| anyhow!(v))?;
             let fd = self.get_fd()?;
