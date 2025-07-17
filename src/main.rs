@@ -208,12 +208,7 @@ pub fn device_list(list: &[DevicePath]) {
 
 pub fn from_main_opt(main_opt: &MainOpt, list: &[DevicePath]) -> DevicePath {
     if let Some(pci) = main_opt.pci {
-        DevicePath::try_from(pci).unwrap_or_else(|err| {
-            eprintln!("{err}");
-            eprintln!("pci_path: {pci:?}");
-            eprintln!("Device list: {list:#?}");
-            panic!();
-        })
+        list.iter().find(|device_path| device_path.pci == pci).unwrap().clone()
     } else if let Some(i) = main_opt.instance {
         list
             .get(i)
