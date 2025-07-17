@@ -30,26 +30,35 @@ fn main() {
         return;
     }
 
-    let (device_path_list, device_path) = {
-        let list = DevicePath::get_device_path_list();
+    fn get_list_and_selected_device_path(main_opt: &MainOpt)
+        -> (Vec<DevicePath>, DevicePath)
+    {
+        use std::collections::VecDeque;
+        let mut list = VecDeque::from(DevicePath::get_device_path_list());
 
         if list.is_empty() {
             eprintln!("There are no the AMD GPU devices found.");
             panic!();
         }
 
-        let device_path = if main_opt.select_apu {
-            select_apu(&list)
+        let list_slice = list.as_slices().0;
+        let selected_device_path = if main_opt.select_apu {
+            select_apu(list_slice)
         } else {
-            from_main_opt(&main_opt, &list)
+            from_main_opt(&main_opt, list_slice)
         };
 
         if main_opt.single_gpu {
-            (vec![device_path.clone()], device_path)
-        } else {
-            (list, device_path)
+            return (vec![selected_device_path.clone()], selected_device_path);
         }
-    };
+
+        list.retain(|device_path| device_path.pci != selected_device_path.pci);
+        list.push_front(selected_device_path.clone());
+
+        (list.into_iter().collect(), selected_device_path)
+    }
+
+    let (device_path_list, device_path) = get_list_and_selected_device_path(&main_opt);
 
     #[cfg(feature = "json")]
     if let AppMode::JSON = main_opt.app_mode { match main_opt.dump_mode {
@@ -221,7 +230,7 @@ pub fn from_main_opt(main_opt: &MainOpt, list: &[DevicePath]) -> DevicePath {
             })
             .clone()
     } else {
-        list.iter().next().unwrap().clone()
+        list.get(0).unwrap().clone()
     }
 }
 
