@@ -40,8 +40,8 @@ pub fn gpu_metrics_json(_title: &str, device_path_list: &[DevicePath]) {
 
 pub fn dump_json(device_path_list: &[DevicePath]) {
     let vec_json_info: Vec<Value> = device_path_list.iter().filter_map(|device_path| {
-        let amdgpu_dev = device_path.init().ok()?;
-        let mut app = AppAmdgpuTop::new(amdgpu_dev, device_path.clone(), &Default::default())?;
+        let amdgpu_dev = device_path.init().ok().unwrap();
+        let mut app = AppAmdgpuTop::new(amdgpu_dev, device_path.clone(), &Default::default()).unwrap();
 
         let mut m = Map::new();
         let mut info = app.json_info();

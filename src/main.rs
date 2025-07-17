@@ -33,29 +33,31 @@ fn main() {
     fn get_list_and_selected_device_path(main_opt: &MainOpt)
         -> (Vec<DevicePath>, DevicePath)
     {
-        use std::collections::VecDeque;
-        let mut list = VecDeque::from(DevicePath::get_device_path_list());
+        let mut list = DevicePath::get_device_path_list();
 
         if list.is_empty() {
             eprintln!("There are no the AMD GPU devices found.");
             panic!();
         }
 
-        let list_slice = list.as_slices().0;
         let selected_device_path = if main_opt.select_apu {
-            select_apu(list_slice)
+            select_apu(&list)
         } else {
-            from_main_opt(&main_opt, list_slice)
+            from_main_opt(&main_opt, &list)
         };
 
         if main_opt.single_gpu {
             return (vec![selected_device_path.clone()], selected_device_path);
         }
 
-        list.retain(|device_path| device_path.pci != selected_device_path.pci);
-        list.push_front(selected_device_path.clone());
+        let pos = list
+            .iter()
+            .position(|device_path| device_path.pci == selected_device_path.pci)
+            .unwrap();
+        list.remove(pos);
+        list.insert(0, selected_device_path.clone());
 
-        (list.into_iter().collect(), selected_device_path)
+        (list, selected_device_path)
     }
 
     let (device_path_list, device_path) = get_list_and_selected_device_path(&main_opt);
