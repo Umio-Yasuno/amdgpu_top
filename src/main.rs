@@ -50,12 +50,17 @@ fn main() {
             return (vec![selected_device_path.clone()], selected_device_path);
         }
 
-        let pos = list
-            .iter()
-            .position(|device_path| device_path.pci == selected_device_path.pci)
-            .unwrap();
-        list.remove(pos);
-        list.insert(0, selected_device_path.clone());
+        if main_opt.select_apu || main_opt.pci.is_some() || main_opt.instance.is_some() {
+            let pos = list
+                .iter()
+                .position(|device_path| device_path.pci == selected_device_path.pci)
+                .unwrap();
+
+            if pos != 0 {
+                list.remove(pos);
+                list.insert(0, selected_device_path.clone());
+            }
+        }
 
         (list, selected_device_path)
     }
