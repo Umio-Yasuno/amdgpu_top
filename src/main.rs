@@ -43,7 +43,7 @@ fn main() {
         let selected_device_path = if main_opt.select_apu {
             select_apu(&list)
         } else {
-            from_main_opt(&main_opt, &list)
+            from_main_opt(main_opt, &list)
         };
 
         if main_opt.single_gpu {
@@ -237,7 +237,7 @@ pub fn from_main_opt(main_opt: &MainOpt, list: &[DevicePath]) -> DevicePath {
             })
             .clone()
     } else {
-        list.get(0).unwrap().clone()
+        list.first().unwrap().clone()
     }
 }
 
