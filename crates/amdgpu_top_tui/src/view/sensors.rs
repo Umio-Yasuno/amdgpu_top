@@ -20,9 +20,9 @@ impl AppTextView {
         for (name, val, unit) in [
             ("GFX_SCLK", sensors.sclk, "MHz"),
             ("GFX_MCLK", sensors.mclk, "MHz"),
+            ("FCLK", sensors.fclk_dpm.as_ref().map(|f| f.current_mhz), "MHz"),
             ("VDDNB", sensors.vddnb, "mV"),
             ("VDDGFX", sensors.vddgfx, "mV"),
-            ("FCLK", sensors.fclk_dpm.as_ref().map(|f| f.current_mhz), "MHz"),
         ] {
             let Some(val) = val else { continue };
             c += 1;
