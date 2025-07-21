@@ -3,6 +3,8 @@ use libamdgpu_top::{
     AMDGPU::{
         VIDEO_CAPS::CODEC,
         FW_VERSION::{FW_TYPE, FwVer},
+        DpmClockType,
+        DpmClockRange,
         GPU_INFO,
         GpuMetrics,
         MetricsInfo,
@@ -122,6 +124,7 @@ pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
 
 fn sensors_info(sensors: &Sensors) {
     println!();
+
     for temp in [&sensors.edge_temp, &sensors.junction_temp, &sensors.memory_temp] {
         let Some(temp) = temp else { continue };
         let label = format!("{} Temp.", temp.type_);
@@ -177,6 +180,15 @@ fn sensors_info(sensors: &Sensors) {
     ] {
         let Some(link) = link else { continue };
         println!("{PCIE_LABEL} {label:PCIE_LEN$}: Gen{}x{:<2}", link.r#gen, link.width);
+    }
+
+    println!();
+
+    if let Some(f) = &sensors.fclk_dpm {
+        println!("  FCLK (DPM): {:>4}MHz ({:>4}-{:>4}MHz)", f.current_mhz, f.min_mhz, f.max_mhz);
+    }
+    if let Some(s) = DpmClockRange::from_sysfs(DpmClockType::SOCCLK, &sensors.sysfs_path) {
+        println!("SOCCLK (DPM): {:>4}MHz ({:>4}-{:>4}MHz)", s.current_mhz, s.min_mhz, s.max_mhz);
     }
 
     if !sensors.all_cpu_core_freq_info.is_empty() {

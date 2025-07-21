@@ -22,6 +22,7 @@ impl AppTextView {
             ("GFX_MCLK", sensors.mclk, "MHz"),
             ("VDDNB", sensors.vddnb, "mV"),
             ("VDDGFX", sensors.vddgfx, "mV"),
+            ("FCLK", sensors.fclk_dpm.as_ref().map(|f| f.current_mhz), "MHz"),
         ] {
             let Some(val) = val else { continue };
             c += 1;

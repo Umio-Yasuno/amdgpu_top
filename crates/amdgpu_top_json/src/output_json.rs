@@ -62,6 +62,7 @@ impl OutputJson for Sensors {
         for (label, val, unit) in [
             ("GFX_SCLK", self.sclk, "MHz"),
             ("GFX_MCLK", self.mclk, "MHz"),
+            ("FCLK", self.fclk_dpm.as_ref().map(|f| f.current_mhz), "MHz"),
             ("VDDNB", self.vddnb, "mV"),
             ("VDDGFX", self.vddgfx, "mV"),
             ("Fan", self.fan_rpm, "RPM"),

@@ -372,6 +372,14 @@ impl MyApp {
                     fl!("mhz"),
                 ),
                 (
+                    &self.buf_data.history.sensors_history.fclk,
+                    sensors.fclk_dpm.as_ref().map(|f| f.current_mhz),
+                    "FCLK",
+                    sensors.fclk_dpm.as_ref().map(|f| f.min_mhz).unwrap_or(0),
+                    sensors.fclk_dpm.as_ref().map(|f| f.max_mhz).unwrap_or(3000),
+                    fl!("mhz"),
+                ),
+                (
                     &self.buf_data.history.sensors_history.vddgfx,
                     sensors.vddgfx,
                     "VDDGFX",

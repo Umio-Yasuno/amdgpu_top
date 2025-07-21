@@ -9,6 +9,8 @@ use libdrm_amdgpu_sys::{
         GPU_INFO,
         ASIC_NAME,
         DeviceHandle,
+        DpmClockRange,
+        DpmClockType,
         HwmonTemp,
         HwmonTempType,
         SENSOR_INFO::SENSOR_TYPE,
@@ -45,6 +47,8 @@ pub struct Sensors {
     pub fan_max_rpm: Option<u32>,
     pub pci_power_state: Option<String>,
     pub power_profile: Option<PowerProfile>,
+    pub fclk_dpm: Option<DpmClockRange>,
+    // pub socclk_dpm: Option<DpmClockRange>,
     k10temp_tctl_path: Option<PathBuf>,
     pub tctl: Option<i64>, // CPU Temp.
     pub all_cpu_core_freq_info: Vec<CpuFreqInfo>,
@@ -143,6 +147,9 @@ impl Sensors {
             Vec::new()
         };
 
+        let fclk_dpm = DpmClockRange::from_sysfs(DpmClockType::FCLK, &sysfs_path);
+        // let socclk_dpm = DpmClockRange::from_sysfs(DpmClockType::SOCCLK, &sysfs_path);
+
         Some(Self {
             hwmon_path,
             sysfs_path,
@@ -169,6 +176,8 @@ impl Sensors {
             gpu_port_path,
             pci_power_state,
             power_profile,
+            fclk_dpm,
+            // socclk_dpm,
             k10temp_tctl_path,
             tctl,
             all_cpu_core_freq_info,
@@ -238,6 +247,8 @@ impl Sensors {
         self.mclk = amdgpu_dev.sensor_info(SENSOR_TYPE::GFX_MCLK).ok();
         self.vddnb = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDNB).ok();
         self.vddgfx = amdgpu_dev.sensor_info(SENSOR_TYPE::VDDGFX).ok();
+        self.fclk_dpm = DpmClockRange::from_sysfs(DpmClockType::FCLK, &self.sysfs_path);
+        // self.socclk_dpm = DpmClockRange::from_sysfs(DpmClockType::SOCCLK, &self.sysfs_path);
     }
 
     pub fn any_hwmon_power(&self) -> Option<HwmonPower> {

@@ -38,6 +38,7 @@ pub struct HistoryData {
 pub struct SensorsHistory {
     pub sclk: History<u32>,
     pub mclk: History<u32>,
+    pub fclk: History<u32>,
     pub vddgfx: History<u32>,
     pub vddnb: History<u32>,
     pub edge_temp: History<i64>,
@@ -52,19 +53,20 @@ pub struct SensorsHistory {
 
 impl SensorsHistory {
     pub fn new() -> Self {
-        let [sclk, mclk, vddgfx, vddnb, average_power, input_power, fan_rpm] = [0; 7]
+        let [sclk, mclk, fclk, vddgfx, vddnb, average_power, input_power, fan_rpm] = [0; 8]
             .map(|_| History::new(HISTORY_LENGTH, f32::INFINITY));
         let [edge_temp, junction_temp, memory_temp, tctl] = [0;4]
             .map(|_| History::new(HISTORY_LENGTH, f32::INFINITY));
         let core_freq = vec![History::new(HISTORY_LENGTH, f32::INFINITY); 64];
 
-        Self { sclk, mclk, vddgfx, vddnb, edge_temp, junction_temp, memory_temp, average_power, input_power, fan_rpm, tctl, core_freq }
+        Self { sclk, mclk, fclk, vddgfx, vddnb, edge_temp, junction_temp, memory_temp, average_power, input_power, fan_rpm, tctl, core_freq }
     }
 
     pub fn add(&mut self, sec: f64, sensors: &Sensors) {
         for (history, val) in [
             (&mut self.sclk, sensors.sclk),
             (&mut self.mclk, sensors.mclk),
+            (&mut self.fclk, sensors.fclk_dpm.as_ref().map(|f| f.current_mhz)),
             (&mut self.vddgfx, sensors.vddgfx),
             (&mut self.vddnb, sensors.vddnb),
             (&mut self.average_power, sensors.average_power.as_ref().map(|power| power.value)),
