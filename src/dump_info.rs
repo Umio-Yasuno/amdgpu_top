@@ -77,7 +77,7 @@ pub fn dump(device_path: &DevicePath, opt_dump_mode: OptDumpMode) {
     }
 
     info.gfx_info();
-    info.memory_info();
+    info.memory_info(app.get_fw_reserved_memory_size());
 
     if let Some(sensors) = sensors {
         sensors_info(sensors);
@@ -209,7 +209,7 @@ fn sensors_info(sensors: &Sensors) {
 trait DumpInfo {
     fn device_info(&self);
     fn gfx_info(&self);
-    fn memory_info(&self);
+    fn memory_info(&self, fw_reserved_memory: Option<u32>);
     fn cache_info(&self);
     fn vbios_info(&self);
     fn codec_info(&self);
@@ -269,7 +269,7 @@ impl DumpInfo for AppDeviceInfo {
         println!("Peak FP32: {} GFLOPS", self.ext_info.peak_gflops());
     }
 
-    fn memory_info(&self) {
+    fn memory_info(&self, fw_reserved_memory: Option<u32>) {
         let resizable_bar = if self.resizable_bar {
             "Enabled"
         } else {
@@ -288,6 +288,10 @@ impl DumpInfo for AppDeviceInfo {
         println!("Peak Memory BW: {} GB/s", self.ext_info.peak_memory_bw_gb());
         println!("ResizableBAR  : {resizable_bar}");
         println!();
+
+        if let Some(kb) = fw_reserved_memory {
+            println!("FW reserved memory:       {:5} MiB", kb >> 10)
+        }
 
         for (label, mem) in [
             ("VRAM", &self.memory_info.vram),
