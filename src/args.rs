@@ -267,6 +267,7 @@ impl MainOpt {
                 "--tab-gui" => {
                     #[cfg(feature = "gui")]
                     {
+                        opt.app_mode = AppMode::GUI;
                         opt.tab_gui = true;
                     }
                     #[cfg(not(feature = "gui"))]
