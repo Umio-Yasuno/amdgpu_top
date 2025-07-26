@@ -220,6 +220,10 @@ impl MyApp {
     }
 
     pub fn egui_fdinfo_list(&mut self, ui: &mut egui::Ui, has_vcn_unified: bool, has_vpe: bool) {
+        {
+            let vis = ui.visuals_mut();
+            vis.striped = true;
+        }
         egui::Grid::new("fdinfo").show(ui, |ui| {
             ui.style_mut().override_font_id = Some(MEDIUM);
             ui.label(rt_base(format!("{:^15}", fl!("name")))).highlight();
