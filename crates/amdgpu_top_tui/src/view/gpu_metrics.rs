@@ -393,10 +393,12 @@ impl AppTextView {
             metrics.get_stapm_power_limit(),
             metrics.get_current_stapm_power_limit(),
         ] {
-            writeln!(
-                self.text.buf,
-                " STAPM Limit: {stapm_limit:>5} mW, {current_stapm_limit:>5} mW (Current)",
-            )?;
+            if stapm_limit != u16::MAX && current_stapm_limit != u16::MAX {
+                writeln!(
+                    self.text.buf,
+                    " STAPM Limit: {stapm_limit:>5} mW, {current_stapm_limit:>5} mW (Current)",
+                )?;
+            }
         }
 
         Ok(())
