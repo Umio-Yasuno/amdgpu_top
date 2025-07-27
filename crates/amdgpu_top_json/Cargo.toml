@@ -11,4 +11,4 @@ authors.workspace = true
 
 [dependencies]
 libamdgpu_top = { workspace = true }
-serde_json = { version = "1.0.*" }
+serde_json = { version = "1" }
