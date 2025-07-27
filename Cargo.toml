@@ -58,7 +58,7 @@ amdgpu_top_json = { path = "crates/amdgpu_top_json/", version = "0.10.5", option
 libc = { version = "0.2", optional = true }
 
 [build-dependencies]
-gix = { version = "0.70", default-features = false, optional = true }
+gix = { version = "0", default-features = false, optional = true }
 
 [profile.release]
 opt-level = 2
