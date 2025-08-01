@@ -1,5 +1,5 @@
 use crate::drmVersion;
-use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo, RasBlock, RasErrorCount, VBIOS::VbiosParser};
+use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo, RasBlock, RasErrorCount};
 use crate::{AppDeviceInfo, DevicePath, stat, xdna, VramUsage, has_vcn, has_vcn_unified, has_vpe};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use xdna::XdnaFdInfoStat;
@@ -372,30 +372,5 @@ impl AppAmdgpuTop {
         self.amdgpu_dev
             .as_ref()
             .and_then(|dev| dev.get_drm_version_struct().ok())
-    }
-
-    pub fn get_fw_reserved_memory_size(&self) -> Option<u32> {
-        let amdgpu_dev = self.amdgpu_dev.as_ref()?;
-        let vbios_image = amdgpu_dev.get_vbios_image().ok()?;
-        let vbios_parser = VbiosParser::new(vbios_image);
-
-        if !vbios_parser.valid_vbios() || !vbios_parser.check_length() {
-            return None;
-        }
-
-        let rom_header = vbios_parser.get_atom_rom_header()?;
-        let data_table = vbios_parser.get_atom_data_table(&rom_header)?;
-        let header = vbios_parser.get_atom_firmware_info_header(&data_table)?;
-
-        match (header.format_revision, header.content_revision) {
-            (3, 5) => {
-                let firmware_info = vbios_parser.get_atom_firmware_info_v3_5(&data_table)?;
-                Some(firmware_info.fw_reserved_size_in_kb)
-            },
-            _ => {
-                let firmware_info = vbios_parser.get_atom_firmware_info(&data_table)?;
-                Some(firmware_info.fw_reserved_size_in_kb)
-            },
-        }
     }
 }
