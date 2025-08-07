@@ -11,9 +11,9 @@ authors.workspace = true
 
 [dependencies]
 libamdgpu_top = { workspace = true }
-eframe = { version = "^0.32", default-features = false, features = [ "default_fonts", "wgpu", "persistence", "wayland", "x11" ] }
+eframe = { version = "0.32", default-features = false, features = [ "default_fonts", "wgpu", "persistence", "wayland", "x11" ] }
 wgpu = { version = "25", default-features = false, features = ["gles", "vulkan"] }
-egui_plot = { version = "^0.33" }
+egui_plot = { version = "0.33" }
 i18n-embed = { version = "0", features = ["fluent-system", "desktop-requester"] }
 i18n-embed-fl = "0"
 rust-embed = { version = "8", features = ["debug-embed"] }

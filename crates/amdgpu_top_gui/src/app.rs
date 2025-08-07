@@ -841,7 +841,7 @@ impl MyApp {
     }
 }
 
-fn default_plot(id: &str) -> Plot {
+fn default_plot(id: &str) -> Plot<'_> {
     Plot::new(id)
         .allow_zoom(false)
         .allow_scroll(false)
