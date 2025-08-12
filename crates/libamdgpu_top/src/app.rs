@@ -35,6 +35,40 @@ pub struct AppAmdgpuTopStat {
     pub memory_error_count: Option<RasErrorCount>,
 }
 
+impl AppAmdgpuTopStat {
+    // Workaround:
+    // Raphael/Granite Ridge APU (SMU v13.0.5) reports very low input power. (7.00 - 15.00 mW)
+    //     ref: https://gitlab.freedesktop.org/drm/amd/-/issues/2321
+    //     ref: https://gitlab.freedesktop.org/drm/amd/-/issues/3999
+    fn workaround_for_smu_v13_0_5(&mut self) -> Option<()> {
+        let input_power = self.sensors.as_mut()?.input_power.as_mut()?;
+
+        if input_power.value == 0 {
+            let avg_socket_power = self.metrics.as_ref()?.get_average_socket_power()?;
+            input_power.value = avg_socket_power;
+        }
+
+        None
+    }
+
+    // Workaround:
+    // `*_get_fan_speed_rpm` is missing in `drivers/gpu/drm/amd/pm/swsmu/smu14/smu_v14_0_2_ppt.c`,
+    // so SMU v14.0.2/3 dose not have `fan1_input` in `hwmon`.
+    //     ref: https://gitlab.freedesktop.org/drm/amd/-/issues/4034
+    //     ref: https://github.com/Umio-Yasuno/amdgpu_top/issues/123
+    fn workaround_fan_rpm_for_smu_v14(&mut self) -> Option<()> {
+        let sensors = self.sensors.as_mut()?;
+        if sensors.fan_rpm.is_none() {
+            sensors.fan_rpm = self.metrics
+                .as_ref()?
+                .get_current_fan_speed()
+                .map(|fan_rpm| fan_rpm as u32);
+        }
+
+        None
+    }
+}
+
 pub struct AppOption {
     pub pcie_bw: bool,
 }
@@ -290,44 +324,15 @@ impl AppAmdgpuTop {
             }
         }
 
-        // Workaround:
-        // Raphael/Granite Ridge APU (SMU v13.0.5) reports very low input power. (7.00 - 15.00 mW)
-        //     ref: https://gitlab.freedesktop.org/drm/amd/-/issues/2321
-        //     ref: https://gitlab.freedesktop.org/drm/amd/-/issues/3999
         if self.device_info.smu_ip_version.is_some_and(|ip_ver| ip_ver == (13, 0, 5))
-        && self.device_info.smc_fw_version.is_some_and(|ver| ver >= 0x624F00)
         {
-            if let Some(input_power) = self.stat.sensors
-                .as_mut()
-                .and_then(|s| s.input_power.as_mut())
-            {
-                if input_power.value == 0 {
-                    if let Some(v) = self.stat.metrics
-                        .as_ref()
-                        .and_then(|m| m.get_average_socket_power())
-                    {
-                        input_power.value = v;
-                    }
-                }
-            }
+            self.stat.workaround_for_smu_v13_0_5();
         }
 
-        // Workaround:
-        // `*_get_fan_speed_rpm` is missing in `drivers/gpu/drm/amd/pm/swsmu/smu14/smu_v14_0_2_ppt.c`,
-        // so SMU v14.0.2/3 dose not have `fan1_input` in `hwmon`.
-        //     ref: https://gitlab.freedesktop.org/drm/amd/-/issues/4034
-        //     ref: https://github.com/Umio-Yasuno/amdgpu_top/issues/123
         if self.device_info.smu_ip_version
             .is_some_and(|ip_ver| ip_ver == (14, 0, 2) || ip_ver == (14, 0, 3))
         {
-            if let Some(sensors) = self.stat.sensors.as_mut() {
-                if sensors.fan_rpm.is_none() {
-                    sensors.fan_rpm = self.stat.metrics
-                        .as_ref()
-                        .and_then(|m| m.get_current_fan_speed())
-                        .map(|fan_rpm| fan_rpm as u32);
-                }
-            }
+            self.stat.workaround_fan_rpm_for_smu_v14();
         }
 
         if self.stat.memory_error_count.is_some() {
