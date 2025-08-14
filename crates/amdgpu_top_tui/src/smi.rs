@@ -129,7 +129,7 @@ impl SmiApp {
                 write!(self.info_text.buf, "{:>3}C/___C", temp.current)?;
             }
         } else {
-            write!(self.info_text.buf, " ___C/___C")?;
+            write!(self.info_text.buf, "___C/___C")?;
         }
 
         if let Some(fan_rpm) = sensors.and_then(|s| s.fan_rpm) {
