@@ -225,6 +225,7 @@ impl Sensors {
         self.vddgfx = None;
         self.fan_rpm = None;
         self.power_profile = None;
+        self.fclk_dpm = None;
         self.is_idle = true;
 
         self.update_pci_power_state();
