@@ -282,6 +282,12 @@ impl AppAmdgpuTop {
                 && !self.device_info.is_apu
                 && pre_activity.is_all_idling()
             {
+                {
+                    let dev = self.amdgpu_dev.as_ref().unwrap();
+                    self.stat.vram_usage.update_usage(dev);
+                    self.stat.vram_usage.update_usable_heap_size(dev);
+                }
+
                 unsafe { ManuallyDrop::drop(&mut self.amdgpu_dev); }
                 self.amdgpu_dev = ManuallyDrop::new(None);
             } else if !no_process_using_vram
