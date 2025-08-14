@@ -58,7 +58,7 @@ impl ModeProp {
 }
 
 pub fn connector_info(device_path: &DevicePath) -> Vec<ConnectorInfo> {
-    let Some(libdrm) = device_path.libdrm_amdgpu.clone().map(|l| LibDrm::from(l)) else {
+    let Some(libdrm) = device_path.libdrm_amdgpu.clone().map(LibDrm::from) else {
         return Vec::new();
     };
     let fd = {

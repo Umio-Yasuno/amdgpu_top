@@ -395,11 +395,7 @@ impl DumpInfo for AppDeviceInfo {
 
             if ver == 0 { return; }
 
-            let is_mec2 = if let (FW_TYPE::GFX_MEC, 0, 1) = (fw_info.fw_type, fw_info.ip_instance, fw_info.index) {
-                true
-            } else {
-                false
-            };
+            let is_mec2 = (FW_TYPE::GFX_MEC, 0, 1) == (fw_info.fw_type, fw_info.ip_instance, fw_info.index);
 
             let fw_type = if is_mec2 {
                 "GFX_MEC2".to_string()
@@ -415,7 +411,7 @@ impl DumpInfo for AppDeviceInfo {
         println!("\nFirmware info:");
 
         for fw_ver in &self.fw_versions {
-            fw_ver_dump(&fw_ver);
+            fw_ver_dump(fw_ver);
         }
     }
 }

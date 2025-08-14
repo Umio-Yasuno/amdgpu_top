@@ -28,7 +28,7 @@ pub fn check_metrics_val<T: IsMax + std::fmt::Display>(val: Option<T>) -> String
 pub fn check_temp_array(array: Option<Vec<u16>>) -> Option<Vec<u16>> {
     let array = array?;
 
-    if array.iter().all(|x| x == &u16::MAX) {
+    if array.iter().all(|x| *x == u16::MAX || *x == 0) {
         return None;
     }
 

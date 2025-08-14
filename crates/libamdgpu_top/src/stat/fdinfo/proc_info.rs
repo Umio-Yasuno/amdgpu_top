@@ -146,7 +146,7 @@ pub fn spawn_update_index_thread(
 
             update_index_by_all_proc(
                 &mut buf_index,
-                &paths,
+                paths,
                 &all_proc,
             );
 

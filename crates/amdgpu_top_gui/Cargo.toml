@@ -17,3 +17,8 @@ egui_plot = { version = "0.33" }
 i18n-embed = { version = "0", features = ["fluent-system", "desktop-requester"] }
 i18n-embed-fl = "0"
 rust-embed = { version = "8", features = ["debug-embed"] }
+
+[lints.clippy]
+collapsible_if = "allow"
+upper_case_acronyms = "allow"
+single_match = "allow"

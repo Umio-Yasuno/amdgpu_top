@@ -68,14 +68,16 @@ impl XdnaFdInfoStat {
 
             tmp
         } else {
-            self.pid_map.insert(pid, stat.clone());
-
-            XdnaFdInfoUsage {
+            let usage = XdnaFdInfoUsage {
                 total_memory: stat.total_memory,
                 shared_memory: stat.shared_memory,
                 active_memory: stat.active_memory,
                 ..Default::default()
-            }
+            };
+
+            self.pid_map.insert(pid, stat);
+
+            usage
         };
 
         self.proc_usage.push(XdnaProcUsage {

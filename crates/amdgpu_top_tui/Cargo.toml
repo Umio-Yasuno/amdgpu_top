@@ -13,3 +13,7 @@ authors.workspace = true
 libamdgpu_top = { workspace = true }
 cursive = { version = "0.21", default-features = false, features = ["crossterm-backend"] }
 termsize = "0.1.9"
+
+[lints.clippy]
+collapsible_if = "allow"
+single_element_loop = "allow"

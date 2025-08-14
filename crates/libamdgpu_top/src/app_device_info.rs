@@ -90,7 +90,7 @@ impl AppDeviceInfo {
             ASIC_NAME::CHIP_GFX1103_R1X => true,
             _ => asic_name >= ASIC_NAME::CHIP_GFX1150,
         };
-        let fw_versions = Self::get_fw_versions(&amdgpu_dev);
+        let fw_versions = Self::get_fw_versions(amdgpu_dev);
         let smc_fw_version = fw_versions
             .iter()
             .find(|fw_ver| fw_ver.fw_type == FW_TYPE::SMC)

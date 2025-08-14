@@ -283,7 +283,7 @@ impl TuiApp {
         if let Some(metrics) = &self.app_amdgpu_top.stat.metrics {
             let _ = self.layout.gpu_metrics_view.print_gpu_metrics(metrics);
         } else {
-            let _ = self.layout.gpu_metrics_view.text.clear();
+            self.layout.gpu_metrics_view.text.clear();
         }
 
         if !self.no_pc {

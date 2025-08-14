@@ -18,3 +18,7 @@ libdrm_dynamic_loading = ["libdrm_amdgpu_sys/dynamic_loading"]
 anyhow = { version = "1.0" }
 libdrm_amdgpu_sys = { version = "0.8.8", git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs", default-features = false, rev = "8d0029b4cf8f3b995728614f96c03f6e3dcf4f9e" }
 nix = { version = "0", default-features = false, features = [ "ioctl" ] }
+
+
+[lints.clippy]
+collapsible_if = "allow"
