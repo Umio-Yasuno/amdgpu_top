@@ -160,22 +160,20 @@ impl SmiApp {
             write!(self.info_text.buf, "{s:<THR_LEN$}|")?;
         }
 
-        if self.app_amdgpu_top.device_info.is_apu {
-            if let Some(sensors) = sensors {
-                writeln!(self.info_text.buf)?;
+        if self.app_amdgpu_top.device_info.is_apu && let Some(sensors) = sensors {
+            writeln!(self.info_text.buf)?;
 
-                if let Some(tctl) = sensors.tctl {
-                    write!(self.info_text.buf, " Tctl:{:>3}C", tctl / 1000)?;
-                } else {
-                    write!(self.info_text.buf, " Tctl:___C")?;
-                }
-
-                sensors.print_all_cpu_core_cur_freq(
-                    &mut self.info_text.buf,
-                    " CPU freq (100MHz)",
-                    true,
-                )?;
+            if let Some(tctl) = sensors.tctl {
+                write!(self.info_text.buf, " Tctl:{:>3}C", tctl / 1000)?;
+            } else {
+                write!(self.info_text.buf, " Tctl:___C")?;
             }
+
+            sensors.print_all_cpu_core_cur_freq(
+                &mut self.info_text.buf,
+                " CPU freq (100MHz)",
+                true,
+            )?;
         }
 
         self.info_text.set();
