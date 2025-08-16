@@ -27,9 +27,8 @@ fn get_fds<T: AsRef<Path>>(fd_dir_path: &mut PathBuf, device_path: &[T]) -> Vec<
 
         // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
         if device_path.iter().any(|path| link.starts_with(path)) {
-            if let Some(fd) = fd.to_str().and_then(|s| s.parse::<i32>().ok()) {
-                fds.push(fd);
-            }
+            let Some(fd) = fd.to_str().and_then(|s| s.parse::<i32>().ok()) else { continue };
+            fds.push(fd);
         }
     }
 

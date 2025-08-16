@@ -109,10 +109,8 @@ impl PpFeatureMask {
         let mut i = 0;
 
         while n != 0 {
-            if (n & 0b1) == 1 {
-                if let Ok(ftr) = PpFeatureMask::try_from(1 << i) {
-                    vec.push(ftr);
-                }
+            if (n & 0b1) == 1 && let Ok(ftr) = PpFeatureMask::try_from(1 << i) {
+                vec.push(ftr);
             }
             n >>= 0b1;
             i += 1;

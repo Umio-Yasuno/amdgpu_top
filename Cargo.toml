@@ -93,5 +93,3 @@ assets = [
 [package.metadata.appimage]
 assets = ["assets/"]
 
-[lints.clippy]
-collapsible_if = "allow"
