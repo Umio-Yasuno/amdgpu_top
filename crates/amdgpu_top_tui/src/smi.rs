@@ -215,14 +215,7 @@ impl SuspendedSmiApp {
         if let [Some(did), Some(rid)] = [device_path.device_id, device_path.revision_id] {
             let _ = writeln!(
                 info_text.buf,
-                "#{index:<2} [{name:<20} ({did:#X}:{rid:#X})]| {pci}   | Suspended",
-                name = device_path.device_name,
-                pci = device_path.pci,
-            );
-        } else {
-            let _ = writeln!(
-                info_text.buf,
-                "#{index:<2} [{name:<20}]| {pci}   | Suspended",
+                "#{index:<2} [{name:<GPU_NAME_LEN$}]         | {pci}   | Suspended        |",
                 name = device_path.device_name,
                 pci = device_path.pci,
             );
