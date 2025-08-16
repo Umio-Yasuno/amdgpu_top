@@ -60,6 +60,7 @@ pub struct AppDeviceInfo {
     pub smu_ip_version: Option<(u8, u8, u8)>, // MP0: APU, MP1: dGPU
     pub fw_versions: Vec<FwVer>,
     pub memory_vendor: Option<String>,
+    pub supports_gpu_metrics: bool,
 }
 
 impl AppDeviceInfo {
@@ -109,6 +110,7 @@ impl AppDeviceInfo {
                 s.pop();
                 s
             });
+        let supports_gpu_metrics = sysfs_path.join("gpu_metrics").exists();
 
         Self {
             ext_info: *ext_info,
@@ -150,6 +152,7 @@ impl AppDeviceInfo {
             smu_ip_version,
             fw_versions,
             memory_vendor,
+            supports_gpu_metrics,
         }
     }
 
