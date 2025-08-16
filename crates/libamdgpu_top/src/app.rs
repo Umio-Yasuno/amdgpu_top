@@ -16,7 +16,7 @@ pub struct AppAmdgpuTop {
     pub stat: AppAmdgpuTopStat,
     buf_interval: Duration,
     no_drop_device_handle: bool,
-    dynamic_no_pc: bool, // to transition the APU into GFXOFF state
+    dynamic_no_pc: bool, // to transition APU into GFXOFF state or dGPU into D3Hot state
 }
 
 #[derive(Clone)]
@@ -272,26 +272,22 @@ impl AppAmdgpuTop {
             }
         }
         {
-            let pre_activity = &self.stat.activity;
+            let is_all_idling = self.stat.activity.is_all_idling();
             let no_process_using_vram = self.stat.fdinfo.no_process_using_vram();
 
             // TODO: those checks may not be enough
-            if no_process_using_vram
-                && self.amdgpu_dev.is_some()
+            if is_all_idling
+                && let Some(dev) = self.amdgpu_dev.as_ref()
                 && !self.no_drop_device_handle
                 && !self.device_info.is_apu
-                && pre_activity.is_all_idling()
             {
-                {
-                    let dev = self.amdgpu_dev.as_ref().unwrap();
-                    self.stat.vram_usage.update_usage(dev);
-                    self.stat.vram_usage.update_usable_heap_size(dev);
-                }
+                self.stat.vram_usage.update_usage(dev);
+                self.stat.vram_usage.update_usable_heap_size(dev);
 
                 unsafe { ManuallyDrop::drop(&mut self.amdgpu_dev); }
                 self.amdgpu_dev = ManuallyDrop::new(None);
-            } else if !no_process_using_vram
-                && self.amdgpu_dev.is_none()
+            } else if self.amdgpu_dev.is_none()
+                && !is_all_idling
                 && self.device_path.check_if_device_is_active()
             {
                 self.amdgpu_dev = ManuallyDrop::new(self.device_path.init().ok());
