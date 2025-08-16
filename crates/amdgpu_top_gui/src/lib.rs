@@ -285,11 +285,10 @@ pub fn run(
                 let id = *PCI_BUS_ID;
                 let s: Option<String> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
 
-                if let Some(pci_bus) = s.and_then(|s| s.parse::<PCI::BUS_INFO>().ok()) {
-                    if gui_app.buf_vec_data.iter().any(|d| pci_bus == d.pci_bus) {
+                if let Some(pci_bus) = s.and_then(|s| s.parse::<PCI::BUS_INFO>().ok())
+                    && gui_app.buf_vec_data.iter().any(|d| pci_bus == d.pci_bus) {
                         gui_app.selected_pci_bus = pci_bus;
                     }
-                }
             }
 
             if let Some(is_dark_mode) = is_dark_mode {

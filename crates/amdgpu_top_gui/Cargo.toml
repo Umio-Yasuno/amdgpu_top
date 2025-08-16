@@ -19,6 +19,5 @@ i18n-embed-fl = "0"
 rust-embed = { version = "8", features = ["debug-embed"] }
 
 [lints.clippy]
-collapsible_if = "allow"
 upper_case_acronyms = "allow"
 single_match = "allow"

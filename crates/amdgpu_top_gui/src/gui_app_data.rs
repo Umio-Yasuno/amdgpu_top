@@ -180,10 +180,11 @@ impl GuiAppData {
     }
 
     pub fn update_history(&mut self, secs: f64, no_pc: bool) {
+        let metrics = self.stat.metrics.as_ref();
         if let Some(arc_pcie_bw) = &self.stat.arc_pcie_bw {
             let lock = arc_pcie_bw.try_lock();
-            if let Ok(pcie_bw) = lock {
-                if let (Some(sent), Some(rec), Some(mps)) = (
+            if let Ok(pcie_bw) = lock
+                && let (Some(sent), Some(rec), Some(mps)) = (
                     pcie_bw.sent,
                     pcie_bw.received,
                     pcie_bw.max_payload_size,
@@ -192,7 +193,6 @@ impl GuiAppData {
                     let rec = (rec * mps as u64) >> 20;
                     self.history.pcie_bw_history.add(secs, (sent, rec));
                 }
-            }
         }
 
         if !no_pc {
@@ -206,10 +206,10 @@ impl GuiAppData {
             }
         }
 
-        if let Some(thr_val) = self.stat.metrics.as_ref().and_then(|m| m.get_indep_throttle_status()) {
-            if thr_val != 0 {
-                self.history.throttling_history.add(secs, ThrottleStatus::new(thr_val));
-            }
+        if let Some(thr_val) = metrics.and_then(|m| m.get_indep_throttle_status())
+            && thr_val != 0
+        {
+            self.history.throttling_history.add(secs, ThrottleStatus::new(thr_val));
         }
 
         if let Some(ref mut sensors) = self.stat.sensors {
@@ -230,39 +230,35 @@ impl GuiAppData {
             self.history.media_activity.add(secs, media);
         }
 
-        if let Some(vclk) = self.stat.metrics.as_ref().and_then(|m| m.get_current_vclk()) {
+        if let Some(vclk) = metrics.and_then(|m| m.get_current_vclk()) {
             self.history.vclk.add(secs, vclk);
         }
-        if let Some(dclk) = self.stat.metrics.as_ref().and_then(|m| m.get_current_dclk()) {
+        if let Some(dclk) = metrics.and_then(|m| m.get_current_dclk()) {
             self.history.dclk.add(secs, dclk);
         }
-        if let Some(vclk1) = self.stat.metrics.as_ref().and_then(|m| m.get_current_vclk1()) {
+        if let Some(vclk1) = metrics.and_then(|m| m.get_current_vclk1()) {
             self.history.vclk1.add(secs, vclk1);
         }
-        if let Some(dclk1) = self.stat.metrics.as_ref().and_then(|m| m.get_current_dclk1()) {
+        if let Some(dclk1) = metrics.and_then(|m| m.get_current_dclk1()) {
             self.history.dclk1.add(secs, dclk1);
         }
 
-        if let Some(ref mut history_core_temp) = self.history.core_temp {
-            if let Some(core_temp) = self.stat.metrics
-                .as_ref()
+        if let Some(ref mut history_core_temp) = self.history.core_temp
+            && let Some(core_temp) = metrics
                 .and_then(|m| gpu_metrics_util::check_temp_array(m.get_temperature_core()))
             {
                 for (history, v) in history_core_temp.iter_mut().zip(core_temp.iter()) {
                     history.add(secs, *v);
                 }
             }
-        }
 
-        if let Some(ref mut history_core_power_mw) = self.history.core_power_mw {
-            if let Some(core_power_mw) = self.stat.metrics
-                .as_ref()
+        if let Some(ref mut history_core_power_mw) = self.history.core_power_mw
+            && let Some(core_power_mw) = metrics
                 .and_then(|m| gpu_metrics_util::check_power_clock_array(m.get_average_core_power()))
             {
                 for (history, v) in history_core_power_mw.iter_mut().zip(core_power_mw.iter()) {
                     history.add(secs, *v);
                 }
             }
-        }
     }
 }
