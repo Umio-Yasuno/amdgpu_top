@@ -3,12 +3,11 @@ use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo, RasBlock, R
 use crate::{AppDeviceInfo, DevicePath, stat, xdna, VramUsage, has_vcn, has_vcn_unified, has_vpe};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use xdna::XdnaFdInfoStat;
-use std::mem::ManuallyDrop;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 pub struct AppAmdgpuTop {
-    amdgpu_dev: ManuallyDrop<Option<DeviceHandle>>,
+    amdgpu_dev: DeviceHandle,
     pub device_info: AppDeviceInfo,
     pub device_path: DevicePath,
     pub xdna_device_path: Option<DevicePath>,
@@ -17,6 +16,7 @@ pub struct AppAmdgpuTop {
     buf_interval: Duration,
     no_drop_device_handle: bool,
     dynamic_no_pc: bool, // to transition APU into GFXOFF state or dGPU into D3Hot state
+    to_d3hot: bool,
 }
 
 #[derive(Clone)]
@@ -107,7 +107,7 @@ impl AppAmdgpuTop {
             let (device_path, other_sus_devs) = suspended_devices.split_first().unwrap();
             // wake up
             let amdgpu_dev = device_path.init().unwrap();
-            let app = AppAmdgpuTop::new(
+            let app = Self::new(
                 amdgpu_dev,
                 device_path.clone(),
                 &Default::default(),
@@ -228,7 +228,7 @@ impl AppAmdgpuTop {
         }
 
         Some(Self {
-            amdgpu_dev: ManuallyDrop::new(Some(amdgpu_dev)),
+            amdgpu_dev,
             device_info,
             device_path,
             xdna_device_path,
@@ -250,6 +250,7 @@ impl AppAmdgpuTop {
             buf_interval: Duration::ZERO,
             no_drop_device_handle,
             dynamic_no_pc: false,
+            to_d3hot: false,
         })
     }
 
@@ -272,31 +273,29 @@ impl AppAmdgpuTop {
             }
         }
         {
-            let is_all_idling = self.stat.activity.is_all_idling();
             let no_process_using_vram = self.stat.fdinfo.no_process_using_vram();
 
             // TODO: those checks may not be enough
-            if is_all_idling
-                && let Some(dev) = self.amdgpu_dev.as_ref()
+            if self.stat.activity.is_all_idling()
+                && !self.to_d3hot
                 && !self.no_drop_device_handle
                 && !self.device_info.is_apu
             {
-                self.stat.vram_usage.update_usage(dev);
-                self.stat.vram_usage.update_usable_heap_size(dev);
+                self.stat.vram_usage.update_usage(&self.amdgpu_dev);
+                self.stat.vram_usage.update_usable_heap_size(&self.amdgpu_dev);
 
-                unsafe { ManuallyDrop::drop(&mut self.amdgpu_dev); }
-                self.amdgpu_dev = ManuallyDrop::new(None);
-            } else if self.amdgpu_dev.is_none()
-                && !is_all_idling
+                self.to_d3hot = true;
+            } else if self.to_d3hot
+                && !no_process_using_vram
                 && self.device_path.check_if_device_is_active()
             {
-                self.amdgpu_dev = ManuallyDrop::new(self.device_path.init().ok());
+                self.to_d3hot = false;
             }
 
             self.dynamic_no_pc = no_process_using_vram;
         }
 
-        if self.amdgpu_dev.is_none() {
+        if self.to_d3hot {
             if let Some(ref mut sensors) = self.stat.sensors {
                 sensors.update_for_idle();
             }
@@ -311,15 +310,15 @@ impl AppAmdgpuTop {
             self.stat.metrics = GpuMetrics::get_from_sysfs_path(&self.device_info.sysfs_path).ok();
         }
 
-        if let Some(dev) = self.amdgpu_dev.as_ref() {
-            self.stat.vram_usage.update_usage(dev);
-            self.stat.vram_usage.update_usable_heap_size(dev);
+        {
+            self.stat.vram_usage.update_usage(&self.amdgpu_dev);
+            self.stat.vram_usage.update_usable_heap_size(&self.amdgpu_dev);
 
             if let Some(ref mut sensors) = self.stat.sensors {
-                sensors.update(dev);
+                sensors.update(&self.amdgpu_dev);
             } else {
                 self.stat.sensors = Sensors::new(
-                    dev,
+                    &self.amdgpu_dev,
                     &self.device_info.pci_bus,
                     &self.device_info.ext_info,
                 );
@@ -357,12 +356,10 @@ impl AppAmdgpuTop {
     }
 
     pub fn update_pc(&mut self) {
-        if self.dynamic_no_pc { return }
+        if self.dynamic_no_pc || self.to_d3hot { return }
 
-        if let Some(dev) = self.amdgpu_dev.as_ref() {
-            self.stat.grbm.read_reg(dev);
-            self.stat.grbm2.read_reg(dev);
-        }
+        self.stat.grbm.read_reg(&self.amdgpu_dev);
+        self.stat.grbm2.read_reg(&self.amdgpu_dev);
     }
 
     pub fn clear_pc(&mut self) {
@@ -376,8 +373,6 @@ impl AppAmdgpuTop {
     }
 
     pub fn get_drm_version_struct(&mut self) -> Option<drmVersion> {
-        self.amdgpu_dev
-            .as_ref()
-            .and_then(|dev| dev.get_drm_version_struct().ok())
+        self.amdgpu_dev.get_drm_version_struct().ok()
     }
 }
