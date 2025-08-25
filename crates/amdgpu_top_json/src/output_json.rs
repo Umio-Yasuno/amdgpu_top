@@ -2,7 +2,7 @@ use libamdgpu_top::{
     DevicePath,
     stat,
     xdna,
-    AMDGPU::{GpuMetrics, MetricsInfo},
+    AMDGPU::{GpuMetrics, MetricsInfo, FW_VERSION::FwVer, HW_IP::HwIpInfo, IpDieEntry, IpHwId, IpHwInstance},
     VramUsage,
     PCI,
     ConnectorInfo,
@@ -522,6 +522,63 @@ impl OutputJson for drmModeModeInfo {
             "flags": self.flags,
             "type": self.type_,
             "name": self.name(),
+        })
+    }
+}
+
+impl OutputJson for HwIpInfo {
+    fn json(&self) -> Value {
+        json!({
+            "ip_type": self.ip_type.to_string(),
+            "ip_count": self.count,
+            "major": self.info.hw_ip_version_major,
+            "minor": self.info.hw_ip_version_minor,
+            "queues": self.info.num_queues(),
+        })
+    }
+}
+
+impl OutputJson for FwVer {
+    fn json(&self) -> Value {
+        json!({
+            "fw_type": self.fw_type.to_string(),
+            "ip_instance": self.ip_instance,
+            "index": self.index,
+            "version": self.version,
+            "feature": self.feature,
+        })
+    }
+}
+
+impl OutputJson for IpHwInstance {
+    fn json(&self) -> Value {
+        json!({
+            "hw_id": self.hw_id.to_string(),
+            "num_instance": self.num_instance,
+            "major": self.major,
+            "minor": self.minor,
+            "revision": self.revision,
+            "harvest": self.harvest,
+            "num_base_addresses": self.num_base_addresses,
+            "base_address": self.base_address,
+        })
+    }
+}
+
+impl OutputJson for IpHwId {
+    fn json(&self) -> Value {
+        json!({
+            "hw_id": self.hw_id.to_string(),
+            "instances": self.instances.iter().map(|i| i.json()).collect::<Vec<Value>>(),
+        })
+    }
+}
+
+impl OutputJson for IpDieEntry {
+    fn json(&self) -> Value {
+        json!({
+            "die_id": self.die_id,
+            "ip_hw_ids": self.ip_hw_ids.iter().map(|i| i.json()).collect::<Vec<Value>>(),
         })
     }
 }

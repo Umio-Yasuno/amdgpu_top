@@ -87,7 +87,27 @@ impl JsonInfo for AppAmdgpuTop {
             "ver_str": vbios.ver,
             "date": vbios.date,
         }));
-        let power_profiles: Vec<String> = self.device_info.power_profiles.iter().map(|p| p.to_string()).collect();
+        let power_profiles: Vec<String> = self.device_info.power_profiles
+            .iter()
+            .map(|p| p.to_string())
+            .collect();
+        let pp_feature_mask: Vec<String> = libamdgpu_top::PpFeatureMask::get_all_enabled_feature()
+            .iter()
+            .map(|p| p.to_string())
+            .collect();
+        let hw_ip_info: Vec<Value> = self.device_info.hw_ip_info_list
+            .iter()
+            .map(|h| h.json())
+            .collect();
+        let fw_ver: Vec<Value> = self.device_info.fw_versions
+            .iter()
+            .filter(|f| f.version != 0)
+            .map(|f| f.json())
+            .collect();
+        let ip_die_entry: Vec<Value> = self.device_info.ip_die_entries
+            .iter()
+            .map(|f| f.json())
+            .collect();
 
         let link_speed_width = if self.device_info.ext_info.is_apu() {
             Value::Null
@@ -144,10 +164,25 @@ impl JsonInfo for AppAmdgpuTop {
             Value::Null
         };
 
+        let peak_fp32 = json!({
+            "value": self.device_info.ext_info.peak_gflops(),
+            "unit": "GFLOPS",
+        });
+        let peak_pixel = json!({
+            "value": self.device_info.ext_info.calc_rop_count() * self.device_info.max_gpu_clk / 1000,
+            "unit": "GP/s",
+        });
+        let peak_mbw = json!({
+            "value": self.device_info.ext_info.peak_memory_bw_gb(),
+            "unit": "GB/s",
+        });
+
         let json = json!({
             "amdgpu_top_version": amdgpu_top_version(),
             "drm_version": drm,
+            "ROCm Version": libamdgpu_top::get_rocm_version(),
             "DeviceName": self.device_info.marketing_name,
+            "DevicePath": self.device_path.json(),
             "PCI": self.device_info.pci_bus.to_string(),
             "DeviceID": self.device_info.ext_info.device_id(),
             "RevisionID": self.device_info.ext_info.pci_rev_id(),
@@ -183,7 +218,9 @@ impl JsonInfo for AppAmdgpuTop {
             "Memory Clock": mem_clk,
             "ResizableBAR": self.device_info.resizable_bar,
             "VRAM Size": self.device_info.memory_info.vram.total_heap_size,
+            "VRAM Usage Size": self.device_info.memory_info.vram.heap_usage,
             "GTT Size": self.device_info.memory_info.gtt.total_heap_size,
+            "GTT Usage Size": self.device_info.memory_info.gtt.heap_usage,
             "L1 Cache per CU": self.device_info.l1_cache_size_kib_per_cu << 10,
             "GL1 Cache per Shader Array": self.device_info.gl1_cache_size_kib_per_sa << 10,
             "L2 Cache": self.device_info.total_l2_cache_size_kib << 10,
@@ -193,7 +230,14 @@ impl JsonInfo for AppAmdgpuTop {
             "Video Caps": video_caps,
             "PCIe Link": link_speed_width,
             "Power Profiles": power_profiles,
+            "pp_feature_mask": pp_feature_mask,
             "NPU": self.xdna_device_path.as_ref().map(|x| x.device_name.clone()),
+            "Peak FP32": peak_fp32,
+            "Peak Pixel Fill-Rate": peak_pixel,
+            "Peak Memory Bandwidth": peak_mbw,
+            "Hardware IP info": hw_ip_info,
+            "Firmware info": fw_ver,
+            "IP Discovery table": ip_die_entry,
         });
 
         json

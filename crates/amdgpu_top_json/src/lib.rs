@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 use libamdgpu_top::{DevicePath, stat};
 use libamdgpu_top::app::*;
 use serde_json::{json, Value};
