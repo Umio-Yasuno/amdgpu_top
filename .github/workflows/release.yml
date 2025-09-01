@@ -1,6 +1,9 @@
 name: release
 
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - 'release-v0.11.0'
 
 permissions:
   contents: write
