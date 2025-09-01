@@ -1,4 +1,3 @@
-use anyhow::{anyhow, Context};
 use crate::{
     LibDrmAmdgpu,
     AMDGPU::{
@@ -38,17 +37,18 @@ pub struct DevicePath {
 }
 
 impl DevicePath {
-    pub fn init(&self) -> anyhow::Result<DeviceHandle> {
+    pub fn init(&self) -> Result<DeviceHandle, i32> {
         let (amdgpu_dev, _major, _minor) = {
             let libdrm_amdgpu = self.libdrm_amdgpu
                 .as_ref()
-                .ok_or("Error loading libdrm.so and libdrm_amdgpu.so")
-                .map_err(|v| anyhow!(v))?;
-            let fd = self.get_fd()?;
+                .expect("Error loading libdrm.so and libdrm_amdgpu.so");
+            let fd = self.get_fd().unwrap_or_else(|err| {
+                eprintln!("{err:#}");
+                eprintln!("{:#X?}", self);
+                panic!();
+            });
 
-            libdrm_amdgpu.init_device_handle(fd)
-                .map_err(|v| anyhow!(v))
-                .context("Failed to DeviceHandle::init")?
+            libdrm_amdgpu.init_device_handle(fd)?
         };
 
         Ok(amdgpu_dev)
