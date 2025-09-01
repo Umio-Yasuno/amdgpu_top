@@ -3,11 +3,16 @@
   <id>io.github.umio_yasuno.amdgpu_top</id>
   <name>amdgpu_top</name>
   <summary> Tool to display AMDGPU usage</summary>
-  <content_rating />
+  <content_rating type="oars-1.0" />
 
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
   <url type="homepage">https://github.com/Umio-Yasuno/amdgpu_top</url>
+
+  <developer id="io.github.umio_yasuno">
+    <name>Umio Yasuno</name>
+    <url type="contact">coelacanth_dream@protonmail.com</url>
+  </developer>
 
   <description>
     <p>
@@ -34,6 +39,61 @@
   </screenshots>
 
   <releases>
+    <release version="0.11.0" date="2025-09-02">
+      <description>
+        <p>Changelog</p>
+          <ul>
+            <li>fix Appstream metainfo by @malfisya</li>
+            <li>fix the process to get gpu_metrics when resuming from suspended
+            state</li>
+            <li>stop monitoring when no VRAM-using processes are found</li>
+            <li>fix getting sensors when resuming monitoring</li>
+            <li>stop reading PC (GRBM, GRBM2) for RDNA 4 dGPU when no VRAM-using
+            processes are found</li>
+            <li>add exclude process names (<code>amdgpu_top</code>,
+            <code>steamwebhelper</code>) for no_process_using_vram</li>
+            <li>add memory_vendor to AppDeviceInfo</li>
+            <li>fix DevicePath::init when libdrm_amdgpu is None (#133)</li>
+            <li>fix combination of <code>--single/--single-gpu</code> and
+            <code>--pci</code> options (#134)</li>
+            <li>reorder the device path list if a device is specified in the
+            options</li>
+            <li>add support for FCLK (Fabric Clock) DPM</li>
+            <li>update vram usage when pre-dropping device handle</li>
+            <li>update logic for dropping device handle</li>
+            <li>add supports_gpu_metrics field to AppDeviceInfo</li>
+            <li>fix get_rocm_version for TheRock</li>
+            <li>remove dependency on anyhow</li>
+          </ul>
+          <ul>
+            <li>xdna: update bindings for 32bit targets</li>
+          </ul>
+          <ul>
+            <li>tui: do not display average_socket_power if gpu_metrics_v3_0</li>
+            <li>tui: clear gpu_metrics_view when metrics is None</li>
+            <li>tui: check stapm_limit and current_stapm_limit</li>
+        </ul>
+        <ul>
+          <li>smi: print the suspended state</li>
+          <li>smi: print PCI power state</li>
+          <li>smi: set FdInfoSortType::GTT when the device is APU</li>
+          <li>smi: print junction temp instead of edge temp, if junction temp is available</li>
+          <li>smi: add memory temp.</li>
+          <li>smi: remove ECC status</li>
+          <li>smi: update layout for the suspending device</li>
+        </ul>
+        <ul>
+          <li>gui: do not display average_socket_power if gpu_metrics_v3_0</li>
+          <li>gui: add tab_gui mode</li>
+          <li>gui: set striped to side panel</li>
+        </ul>
+        <ul>
+          <li>add some info to json_info dump (#137)</li>
+        </ul>
+      </description>
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.11.0</url>
+    </release>
+
     <release version="0.10.5" date="2025-05-27">
       <description>
         <p>Changelog</p>
