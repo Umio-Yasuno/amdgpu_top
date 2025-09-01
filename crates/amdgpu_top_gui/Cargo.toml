@@ -9,6 +9,9 @@ authors.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["libamdgpu_top/libdrm_link"]
+
 [dependencies]
 libamdgpu_top = { workspace = true }
 eframe = { version = "0.32", default-features = false, features = [ "default_fonts", "wgpu", "persistence", "wayland", "x11" ] }

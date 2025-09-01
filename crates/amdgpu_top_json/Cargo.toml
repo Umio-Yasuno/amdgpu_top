@@ -7,6 +7,9 @@ edition.workspace = true
 repository.workspace = true
 authors.workspace = true
 
+[features]
+default = ["libamdgpu_top/libdrm_link"]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

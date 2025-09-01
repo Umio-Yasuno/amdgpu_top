@@ -52,9 +52,9 @@ libamdgpu_top = { path = "crates/libamdgpu_top", version = "0.11.0", default-fea
 
 [dependencies]
 libamdgpu_top = { workspace = true }
-amdgpu_top_tui = { path = "crates/amdgpu_top_tui/", version = "0.11.0", optional = true }
-amdgpu_top_gui = { path = "crates/amdgpu_top_gui/", version = "0.11.0", optional = true }
-amdgpu_top_json = { path = "crates/amdgpu_top_json/", version = "0.11.0", optional = true }
+amdgpu_top_tui = { path = "crates/amdgpu_top_tui/", version = "0.11.0", optional = true, default-features = false }
+amdgpu_top_gui = { path = "crates/amdgpu_top_gui/", version = "0.11.0", optional = true, default-features = false }
+amdgpu_top_json = { path = "crates/amdgpu_top_json/", version = "0.11.0", optional = true, default-features = false }
 libc = { version = "0.2", optional = true }
 
 [build-dependencies]
