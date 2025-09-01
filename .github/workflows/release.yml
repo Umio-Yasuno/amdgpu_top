@@ -38,7 +38,7 @@ jobs:
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create $VERSION --draft --verify-tag --title $VERSION
+        run: gh release create $VERSION --draft --title $VERSION
     outputs:
       version: ${{ env.VERSION }}
       pkg_ver: ${{ env.PKG_VER }}
