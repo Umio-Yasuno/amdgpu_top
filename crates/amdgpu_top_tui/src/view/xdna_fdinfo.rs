@@ -20,7 +20,7 @@ impl AppTextView {
     ) -> Result<(), fmt::Error> {
         self.text.clear();
 
-        write!(
+        writeln!(
             self.text.buf,
             " {proc_name:<PROC_NAME_LEN$}|{pid:^PID_MAX_LEN$}|{MEMORY_LABEL:^6}|{NPU_LABEL:^4}|",
             proc_name = "Name",
