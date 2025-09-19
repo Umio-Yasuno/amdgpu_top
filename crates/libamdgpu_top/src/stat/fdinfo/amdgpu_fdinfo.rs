@@ -404,6 +404,8 @@ impl FdInfoStat {
         const EXCLUDE_PROC_NAMES: &[&str] = &[
             "amdgpu_top",
             "steamwebhelper",
+            "CrGpuMain",
+            "explorer.exe",
         ];
 
         self
