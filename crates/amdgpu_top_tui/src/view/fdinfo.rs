@@ -65,7 +65,7 @@ impl AppTextView {
         for pu in &stat.proc_usage {
             if pu.ids_count == 0 { continue; }
 
-            let utf16_count = pu.name.encode_utf16().count();
+            let utf16_count = pu.name.encode_utf16().filter(|&u| u >= 0x3000).count();
             let name_len = if pu.name.len() != utf16_count {
                 PROC_NAME_LEN - utf16_count
             } else {
