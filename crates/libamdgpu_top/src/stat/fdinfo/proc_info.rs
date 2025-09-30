@@ -41,11 +41,12 @@ pub fn get_process_list() -> Vec<i32> {
     let Ok(proc_dir) = fs::read_dir("/proc") else { return Vec::new() };
     let mut proc_list: Vec<i32> = Vec::with_capacity(128);
 
-    fn filter_proc(dir_entry: &std::fs::DirEntry) -> Option<i32> {
-        let metadata = dir_entry.metadata().ok()?;
+    fn filter_proc(dir_entry: fs::DirEntry) -> Option<i32> {
         let mut buf_cmdline = [0u8; 16];
 
-        if !metadata.is_dir() { return None }
+        if !dir_entry.metadata().ok()?.is_dir() {
+            return None;
+        }
 
         let pid = dir_entry.file_name().to_str()?.parse::<i32>().ok()?;
 
@@ -67,7 +68,7 @@ pub fn get_process_list() -> Vec<i32> {
 
     for dir_entry in proc_dir {
         let Ok(dir_entry) = dir_entry else { continue };
-        if let Some(pid) = filter_proc(&dir_entry) {
+        if let Some(pid) = filter_proc(dir_entry) {
             proc_list.push(pid);
         }
     }
