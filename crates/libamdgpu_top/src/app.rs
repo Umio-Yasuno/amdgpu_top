@@ -1,6 +1,6 @@
 use crate::drmVersion;
 use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo, RasBlock, RasErrorCount};
-use crate::{AppDeviceInfo, DevicePath, stat, xdna, VramUsage, has_vcn, has_vcn_unified, has_vpe};
+use crate::{AppDeviceInfo, DevicePath, stat, xdna, VramUsage, has_vcn, has_vcn_unified};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use xdna::XdnaFdInfoStat;
 use std::sync::{Arc, Mutex};
@@ -172,14 +172,6 @@ impl AppAmdgpuTop {
             None
         };
 
-        let fdinfo = FdInfoStat {
-            has_vcn: has_vcn(&amdgpu_dev),
-            has_vcn_unified: has_vcn_unified(&amdgpu_dev),
-            has_vpe: has_vpe(&amdgpu_dev),
-            ..Default::default()
-        };
-        let xdna_fdinfo = XdnaFdInfoStat::default();
-
         let mut device_info = AppDeviceInfo::new(
             &amdgpu_dev,
             &ext_info,
@@ -192,6 +184,14 @@ impl AppAmdgpuTop {
             device_info.gfx_target_version =
                 device_path.get_gfx_target_version_from_kfd().map(|v| v.to_string());
         }
+
+        let fdinfo = FdInfoStat {
+            has_vcn: has_vcn(&amdgpu_dev),
+            has_vcn_unified: has_vcn_unified(&amdgpu_dev),
+            has_vpe: device_info.has_vpe(),
+            ..Default::default()
+        };
+        let xdna_fdinfo = XdnaFdInfoStat::default();
 
         let xdna_device_path = if device_info.has_npu {
             xdna::find_xdna_device()

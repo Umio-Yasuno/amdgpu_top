@@ -5,7 +5,7 @@ use crate::AMDGPU::{
     drm_amdgpu_memory_info,
     FW_VERSION::{FW_TYPE, FwVer},
     GPU_INFO,
-    HW_IP::HwIpInfo,
+    HW_IP::{HW_IP_TYPE, HwIpInfo},
     HwId,
     HwmonTemp,
     IpDieEntry,
@@ -200,5 +200,15 @@ impl AppDeviceInfo {
 
     pub fn menu_entry(&self) -> String {
         format!("{} ({})", self.marketing_name, self.pci_bus)
+    }
+
+    pub fn has_vpe(&self) -> bool {
+        if self.hw_ip_info_list.iter().any(|info| info.ip_type == HW_IP_TYPE::VPE) {
+            return true;
+        }
+
+        let Some(ip_die) = self.ip_die_entries.first() else { return false };
+
+        ip_die.ip_hw_ids.iter().any(|i| i.hw_id == HwId::VPE)
     }
 }

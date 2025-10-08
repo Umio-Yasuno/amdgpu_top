@@ -126,17 +126,6 @@ pub fn has_vcn_unified(amdgpu_dev: &DeviceHandle) -> bool {
     4 <= ip.info.hw_ip_version_major
 }
 
-pub fn has_vpe(amdgpu_dev: &DeviceHandle) -> bool {
-    #[cfg(debug_assertions)]
-    {
-        if let Ok(s) = std::env::var("DBG_VPE") {
-            return s == "1";
-        }
-    }
-
-    amdgpu_dev.get_hw_ip_info(HW_IP_TYPE::VPE).is_ok()
-}
-
 pub fn get_hw_ip_info_list(
     amdgpu_dev: &DeviceHandle,
     chip_class: CHIP_CLASS,
