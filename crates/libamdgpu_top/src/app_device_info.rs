@@ -202,6 +202,18 @@ impl AppDeviceInfo {
         format!("{} ({})", self.marketing_name, self.pci_bus)
     }
 
+    pub fn has_vcn(&self) -> bool {
+        self.hw_ip_info_list.iter().any(|info| info.ip_type == HW_IP_TYPE::VCN_DEC)
+    }
+
+    pub fn has_vcn_unified(&self) -> bool {
+        let Some(vcn_enc) = self.hw_ip_info_list
+            .iter()
+            .find(|info| info.ip_type == HW_IP_TYPE::VCN_ENC) else { return false };
+
+        4 <= vcn_enc.info.hw_ip_version_major
+    }
+
     pub fn has_vpe(&self) -> bool {
         if self.hw_ip_info_list.iter().any(|info| info.ip_type == HW_IP_TYPE::VPE) {
             return true;

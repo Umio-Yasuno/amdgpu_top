@@ -1,7 +1,5 @@
 use libamdgpu_top::{
     DevicePath,
-    has_vcn,
-    has_vcn_unified,
     stat::{self, FdInfoStat, ProcInfo},
 };
 
@@ -22,11 +20,7 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
             &process_list,
         );
 
-        let mut fdinfo = FdInfoStat {
-            has_vcn: has_vcn(&amdgpu_dev),
-            has_vcn_unified: has_vcn_unified(&amdgpu_dev),
-            ..Default::default()
-        };
+        let mut fdinfo = FdInfoStat::default();
 
         fdinfo.get_all_proc_usage(&proc_index);
         fdinfo.sort_proc_usage(Default::default(), false);

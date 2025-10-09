@@ -1,6 +1,6 @@
 use crate::drmVersion;
 use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo, RasBlock, RasErrorCount};
-use crate::{AppDeviceInfo, DevicePath, stat, xdna, VramUsage, has_vcn, has_vcn_unified};
+use crate::{AppDeviceInfo, DevicePath, stat, xdna, VramUsage};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use xdna::XdnaFdInfoStat;
 use std::sync::{Arc, Mutex};
@@ -186,8 +186,8 @@ impl AppAmdgpuTop {
         }
 
         let fdinfo = FdInfoStat {
-            has_vcn: has_vcn(&amdgpu_dev),
-            has_vcn_unified: has_vcn_unified(&amdgpu_dev),
+            has_vcn: device_info.has_vcn(),
+            has_vcn_unified: device_info.has_vcn_unified(),
             has_vpe: device_info.has_vpe(),
             ..Default::default()
         };
