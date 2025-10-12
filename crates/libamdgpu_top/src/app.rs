@@ -347,6 +347,19 @@ impl AppAmdgpuTop {
             &self.stat.metrics,
         );
 
+        // Strix Point, Krackan Point, Strix Halo
+        // ref: drivers/gpu/drm/amd/pm/swsmu/smu14/smu_v14_0_0_ppt.c
+        if self.stat.metrics.as_ref()
+            .and_then(|m| m.get_header())
+            .is_some_and(|h| h.format_revision == 3 && h.content_revision == 0)
+        {
+            if self.device_info.smc_fw_version.is_some_and(|ver| ver <= 0x5d4600) {
+                self.stat.activity.gfx = self.stat.activity.gfx.map(|v| v.saturating_div(100));
+            }
+
+            self.stat.activity.media = self.stat.activity.media.map(|v| v.saturating_div(100));
+        }
+
         if self.stat.activity.media.is_none() || self.stat.activity.media == Some(0) {
             let (proc_usage, _, _, _) = self.stat.fdinfo.fold_fdinfo_usage();
             self.stat.activity.media = proc_usage.media.try_into().ok();
