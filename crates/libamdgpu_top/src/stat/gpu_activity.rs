@@ -66,11 +66,11 @@ impl GpuActivity {
 
     pub fn get_from_sysfs<P: Into<PathBuf>>(sysfs_path: P) -> Self {
         let path = sysfs_path.into();
-        let [gfx, umc] = ["gpu_busy_percent", "mem_busy_percent"].map(|name| {
+        let [gfx, umc, media] = ["gpu_busy_percent", "mem_busy_percent", "vcn_busy_percent"].map(|name| {
             std::fs::read_to_string(path.join(name)).ok().and_then(|s| s.trim_end().parse().ok())
         });
 
-        Self { gfx, umc, media: None }
+        Self { gfx, umc, media }
     }
 
     pub fn is_gfx_idling(&self) -> bool {
