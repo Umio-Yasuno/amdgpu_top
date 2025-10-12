@@ -457,6 +457,35 @@ impl GuiGpuMetrics for GpuMetrics {
                 ui.end_row();
             }
         });
+
+        egui::Grid::new("GPU Metrics v3.x Throttling").show(ui, |ui| {
+            // The use of `throttle_residency_*` is not documented,
+            // and I don't have the actual gpu_metrics_v3_0 data.
+            for (label, thr) in [
+                ("PROCHOT", self.get_throttle_residency_prochot()),
+                ("SPL", self.get_throttle_residency_spl()),
+                ("FPPT", self.get_throttle_residency_fppt()),
+                ("SPPT", self.get_throttle_residency_sppt()),
+                ("THM_CORE", self.get_throttle_residency_thm_core()),
+                ("THM_GFX", self.get_throttle_residency_thm_gfx()),
+                ("THM_SOC", self.get_throttle_residency_thm_soc()),
+            ] {
+                let Some(thr) = thr else { continue };
+                ui.label(format!("{label:<8}:"));
+                ui.label(format!("{thr}"));
+                ui.end_row();
+            }
+        });
+
+        if let Some(stapm_limit) = self.get_stapm_power_limit()
+            && stapm_limit != u16::MAX
+            && let Some(current_stapm_limit) = self.get_current_stapm_power_limit()
+            && current_stapm_limit != u16::MAX
+        {
+            ui.label(format!(
+                " STAPM Limit: {stapm_limit:>5} mW, {current_stapm_limit:>5} mW (Current)"
+            ));
+        }
     }
 
     fn socket_power(&self, ui: &mut egui::Ui) {

@@ -389,6 +389,24 @@ impl AppTextView {
             writeln!(self.text.buf, " {name:<6} => Avg. {avg:>4} MHz, Cur. {cur:>4} MHz")?;
         }
 
+        // The use of `throttle_residency_*` is not documented,
+        // and I don't have the actual gpu_metrics_v3_0 data.
+        for (label, thr) in [
+            ("PROCHOT", metrics.get_throttle_residency_prochot()),
+            ("SPL", metrics.get_throttle_residency_spl()),
+            ("FPPT", metrics.get_throttle_residency_fppt()),
+            ("SPPT", metrics.get_throttle_residency_sppt()),
+            ("THM_CORE", metrics.get_throttle_residency_thm_core()),
+            ("THM_GFX", metrics.get_throttle_residency_thm_gfx()),
+            ("THM_SOC", metrics.get_throttle_residency_thm_soc()),
+        ] {
+            let Some(thr) = thr else { continue };
+            writeln!(
+                self.text.buf,
+                " {label:<8}: {thr}",
+            )?;
+        }
+
         if let Some(stapm_limit) = metrics.get_stapm_power_limit()
             && stapm_limit != u16::MAX
             && let Some(current_stapm_limit) = metrics.get_current_stapm_power_limit()
