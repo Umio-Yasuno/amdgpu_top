@@ -746,11 +746,15 @@ impl MyApp {
     }
 
     pub fn egui_vclk_dclk_plot(&self, ui: &mut egui::Ui) {
-        let [vclk, dclk, vclk1, dclk1] = [
-            &self.buf_data.history.vclk,
-            &self.buf_data.history.dclk,
-            &self.buf_data.history.vclk1,
-            &self.buf_data.history.dclk1,
+        let [avg_vclk, avg_dclk, avg_vclk1, avg_dclk1, cur_vclk, cur_dclk, cur_vclk1, cur_dclk1] = [
+            &self.buf_data.history.avg_vclk,
+            &self.buf_data.history.avg_dclk,
+            &self.buf_data.history.avg_vclk1,
+            &self.buf_data.history.avg_dclk1,
+            &self.buf_data.history.cur_vclk,
+            &self.buf_data.history.cur_dclk,
+            &self.buf_data.history.cur_vclk1,
+            &self.buf_data.history.cur_dclk1,
         ].map(|history| history.iter().map(|(i, clk)| [i, clk as f64]).collect::<Vec<[f64; 2]>>());
         let label_fmt = |name: &str, val: &PlotPoint| {
             format!("{:.1}s : {name} {:.0} MHz", val.x, val.y)
@@ -767,10 +771,14 @@ impl MyApp {
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| {
                 for (clk, name) in [
-                    (vclk, "VCLK"),
-                    (dclk, "DCLK"),
-                    (vclk1, "VCLK1"),
-                    (dclk1, "DCLK1"),
+                    (avg_vclk, "VCLK (Avg.)"),
+                    (avg_dclk, "DCLK (Avg.)"),
+                    (avg_vclk1, "VCLK1 (Avg.)"),
+                    (avg_dclk1, "DCLK1 (Avg.)"),
+                    (cur_vclk, "VCLK (Cur.)"),
+                    (cur_dclk, "DCLK (Cur.)"),
+                    (cur_vclk1, "VCLK1 (Cur.)"),
+                    (cur_dclk1, "DCLK1 (Cur.)"),
                 ] {
                     if !clk.is_empty() {
                         plot_ui.line(Line::new(name, PlotPoints::new(clk)))

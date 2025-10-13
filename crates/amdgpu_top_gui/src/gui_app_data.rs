@@ -26,10 +26,14 @@ pub struct HistoryData {
     pub gfx_activity: History<u16>,
     pub umc_activity: History<u16>,
     pub media_activity: History<u16>,
-    pub vclk: History<u16>,
-    pub dclk: History<u16>,
-    pub vclk1: History<u16>,
-    pub dclk1: History<u16>,
+    pub avg_vclk: History<u16>,
+    pub avg_dclk: History<u16>,
+    pub avg_vclk1: History<u16>,
+    pub avg_dclk1: History<u16>,
+    pub cur_vclk: History<u16>,
+    pub cur_dclk: History<u16>,
+    pub cur_vclk1: History<u16>,
+    pub cur_dclk1: History<u16>,
     pub core_temp: Option<Vec<History<u16>>>,
     pub core_power_mw: Option<Vec<History<u16>>>,
 }
@@ -129,10 +133,15 @@ impl GuiAppData {
         let umc_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
         let media_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
 
-        let vclk = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let dclk = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let vclk1 = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let dclk1 = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let avg_vclk = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let avg_dclk = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let avg_vclk1 = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let avg_dclk1 = History::new(HISTORY_LENGTH, f32::INFINITY);
+
+        let cur_vclk = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let cur_dclk = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let cur_vclk1 = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let cur_dclk1 = History::new(HISTORY_LENGTH, f32::INFINITY);
 
         let checked_core_temp = app.stat.metrics
             .as_ref()
@@ -166,10 +175,14 @@ impl GuiAppData {
                 gfx_activity,
                 umc_activity,
                 media_activity,
-                vclk,
-                dclk,
-                vclk1,
-                dclk1,
+                avg_vclk,
+                avg_dclk,
+                avg_vclk1,
+                avg_dclk1,
+                cur_vclk,
+                cur_dclk,
+                cur_vclk1,
+                cur_dclk1,
                 core_temp,
                 core_power_mw,
             },
@@ -230,17 +243,46 @@ impl GuiAppData {
             self.history.media_activity.add(secs, media);
         }
 
-        if let Some(vclk) = metrics.and_then(|m| m.get_current_vclk()) {
-            self.history.vclk.add(secs, vclk);
+        if let Some(avg_vclk) = metrics.and_then(|m| m.get_average_vclk_frequency())
+            && avg_vclk != u16::MAX
+        {
+            self.history.avg_vclk.add(secs, avg_vclk);
         }
-        if let Some(dclk) = metrics.and_then(|m| m.get_current_dclk()) {
-            self.history.dclk.add(secs, dclk);
+        if let Some(avg_dclk) = metrics.and_then(|m| m.get_average_dclk_frequency())
+            && avg_dclk != u16::MAX
+        {
+            self.history.avg_dclk.add(secs, avg_dclk);
         }
-        if let Some(vclk1) = metrics.and_then(|m| m.get_current_vclk1()) {
-            self.history.vclk1.add(secs, vclk1);
+        if let Some(avg_vclk1) = metrics.and_then(|m| m.get_average_vclk1_frequency())
+            && avg_vclk1 != u16::MAX
+        {
+            self.history.avg_vclk1.add(secs, avg_vclk1);
         }
-        if let Some(dclk1) = metrics.and_then(|m| m.get_current_dclk1()) {
-            self.history.dclk1.add(secs, dclk1);
+        if let Some(avg_dclk1) = metrics.and_then(|m| m.get_average_dclk1_frequency())
+            && avg_dclk1 != u16::MAX
+        {
+            self.history.avg_dclk1.add(secs, avg_dclk1);
+        }
+
+        if let Some(cur_vclk) = metrics.and_then(|m| m.get_current_vclk())
+            && cur_vclk != u16::MAX
+        {
+            self.history.cur_vclk.add(secs, cur_vclk);
+        }
+        if let Some(cur_dclk) = metrics.and_then(|m| m.get_current_dclk())
+            && cur_dclk != u16::MAX
+        {
+            self.history.cur_dclk.add(secs, cur_dclk);
+        }
+        if let Some(cur_vclk1) = metrics.and_then(|m| m.get_current_vclk1())
+            && cur_vclk1 != u16::MAX
+        {
+            self.history.cur_vclk1.add(secs, cur_vclk1);
+        }
+        if let Some(cur_dclk1) = metrics.and_then(|m| m.get_current_dclk1())
+            && cur_dclk1 != u16::MAX
+        {
+            self.history.cur_dclk1.add(secs, cur_dclk1);
         }
 
         if let Some(ref mut history_core_temp) = self.history.core_temp
