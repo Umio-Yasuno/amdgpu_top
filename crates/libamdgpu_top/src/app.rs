@@ -272,11 +272,24 @@ impl AppAmdgpuTop {
                 self.buf_interval += interval;
             }
         }
+
+        let (fold_proc_usage, _, _, _) = self.stat.fdinfo.fold_fdinfo_usage();
+
         {
-            let no_process_using_vram = self.stat.fdinfo.no_process_using_vram();
+            // let no_process_using_vram = self.stat.fdinfo.no_process_using_vram();
+
+            // The AMDKFD driver dose not track queues and does not show them in fdinfo.
+            let has_kfd_process = self.stat.fdinfo.has_kfd_process();
+            let is_fdinfo_idle = fold_proc_usage.gfx == 0
+                && fold_proc_usage.compute == 0
+                && fold_proc_usage.media == 0
+                && fold_proc_usage.vpe == 0
+                && fold_proc_usage.dma == 0;
 
             // TODO: those checks may not be enough
             if self.stat.activity.is_all_idling()
+                && is_fdinfo_idle
+                && !has_kfd_process
                 && !self.to_d3hot
                 && !self.no_drop_device_handle
                 && !self.device_info.is_apu
@@ -286,13 +299,15 @@ impl AppAmdgpuTop {
 
                 self.to_d3hot = true;
             } else if self.to_d3hot
-                && !no_process_using_vram
+                && (!is_fdinfo_idle || has_kfd_process)
+                // && !no_process_using_vram
                 && self.device_path.check_if_device_is_active()
             {
                 self.to_d3hot = false;
             }
 
-            self.dynamic_no_pc = no_process_using_vram;
+            // RDNA 4 GPUs report 2% GFX usage with PC sampling only.
+            self.dynamic_no_pc = is_fdinfo_idle && !has_kfd_process;
         }
 
         if self.to_d3hot {
@@ -361,8 +376,7 @@ impl AppAmdgpuTop {
         }
 
         if self.stat.activity.media.is_none() || self.stat.activity.media == Some(0) {
-            let (proc_usage, _, _, _) = self.stat.fdinfo.fold_fdinfo_usage();
-            self.stat.activity.media = proc_usage.media.try_into().ok();
+            self.stat.activity.media = fold_proc_usage.media.try_into().ok();
         }
     }
 

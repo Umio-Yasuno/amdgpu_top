@@ -400,6 +400,7 @@ impl FdInfoStat {
         (proc_usage, self.has_vcn, self.has_vcn_unified, self.has_vpe)
     }
 
+/*
     pub fn no_process_using_vram(&self) -> bool {
         const EXCLUDE_PROC_NAMES: &[&str] = &[
             "amdgpu_top",
@@ -412,5 +413,13 @@ impl FdInfoStat {
             .iter()
             .filter(|pu| !EXCLUDE_PROC_NAMES.contains(&pu.name.as_str()))
             .all(|pu| (pu.usage.vram_usage >> 10) == 0)
+    }
+*/
+
+    pub fn has_kfd_process(&self) -> bool {
+        self
+            .proc_usage
+            .iter()
+            .any(|pu| pu.is_kfd_process)
     }
 }
