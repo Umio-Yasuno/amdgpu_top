@@ -32,7 +32,7 @@ pub(crate) const GFX10_GRBM_INDEX: &[(&str, usize)] = &[
 ];
 
 pub(crate) const GRBM2_INDEX: &[(&str, usize)] = &[
-    ("Ring List Controller", 24),
+    ("RunList Controller", 24),
     ("Texture Cache", 25),
     // ("Texture Cache Resident", 26),
     ("Command Processor -  Fetcher", 28),
@@ -41,7 +41,7 @@ pub(crate) const GRBM2_INDEX: &[(&str, usize)] = &[
 ];
 
 pub(crate) const GFX9_GRBM2_INDEX: &[(&str, usize)] = &[
-    ("Ring List Controller", 24),
+    ("RunList Controller", 24),
     ("Texture Cache", 25),
     // ("Texture Cache Resident", 26),
     ("Unified Translation Cache Level-2", 15), // UTCL2
@@ -53,7 +53,7 @@ pub(crate) const GFX9_GRBM2_INDEX: &[(&str, usize)] = &[
 ];
 
 pub(crate) const GFX10_GRBM2_INDEX: &[(&str, usize)] = &[
-    ("Ring List Controller", 24),
+    ("RunList Controller", 24),
     ("Texture Cache per Pipe", 25),
     ("Unified Translation Cache Level-2", 15), // UTCL2
     ("Efficiency Arbiter", 16), // EA
@@ -65,7 +65,7 @@ pub(crate) const GFX10_GRBM2_INDEX: &[(&str, usize)] = &[
 ];
 
 pub(crate) const GFX10_3_GRBM2_INDEX: &[(&str, usize)] = &[
-    ("Ring List Controller", 26),
+    ("RunList Controller", 26),
     ("Texture Cache per Pipe", 27),
     ("Unified Translation Cache Level-2", 15), // UTCL2
     ("Efficiency Arbiter", 16), // EA
@@ -77,7 +77,7 @@ pub(crate) const GFX10_3_GRBM2_INDEX: &[(&str, usize)] = &[
 ];
 
 pub(crate) const GFX12_GRBM2_INDEX: &[(&str, usize)] = &[
-    ("Ring List Controller", 26),
+    ("RunList Controller", 26),
     ("Texture Cache per Pipe", 27),
     ("Unified Translation Cache Level-2", 15), // UTCL2
     ("Efficiency Arbiter", 16), // EA
