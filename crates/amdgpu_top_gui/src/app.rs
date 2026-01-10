@@ -363,7 +363,7 @@ impl MyApp {
                     "GFX_SCLK",
                     // some AMD GPUs support DS (Deep Sleep) state
                     0,
-                    self.buf_data.device_info.max_gpu_clk,
+                    self.buf_data.device_info.max_od_gpu_clk.unwrap_or(self.buf_data.device_info.max_gpu_clk),
                     fl!("mhz"),
                 ),
                 (
@@ -372,7 +372,7 @@ impl MyApp {
                     "GFX_MCLK",
                     // some AMD GPUs support DS (Deep Sleep) state
                     0,
-                    self.buf_data.device_info.max_mem_clk,
+                    self.buf_data.device_info.max_od_mem_clk.unwrap_or(self.buf_data.device_info.max_mem_clk),
                     fl!("mhz"),
                 ),
                 (

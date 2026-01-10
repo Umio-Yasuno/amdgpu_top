@@ -1,5 +1,6 @@
 use crate::AMDGPU::{
     ASIC_NAME,
+    CHIP_CLASS,
     DeviceHandle,
     drm_amdgpu_info_device,
     drm_amdgpu_memory_info,
@@ -31,8 +32,10 @@ pub struct AppDeviceInfo {
     pub max_system_link: Option<PCI::LINK>,
     pub min_gpu_clk: u32,
     pub max_gpu_clk: u32,
+    pub max_od_gpu_clk: Option<u32>,
     pub min_mem_clk: u32,
     pub max_mem_clk: u32,
+    pub max_od_mem_clk: Option<u32>,
     pub marketing_name: String,
     pub asic_name: ASIC_NAME,
     pub pci_bus: PCI::BUS_INFO,
@@ -73,17 +76,48 @@ impl AppDeviceInfo {
     ) -> Self {
         let (min_gpu_clk, max_gpu_clk) = amdgpu_dev.get_min_max_gpu_clock()
             .unwrap_or_else(|| (0, (ext_info.max_engine_clock() / 1000) as u32));
+        let chip_class = ext_info.get_chip_class();
         let (min_mem_clk, max_mem_clk) = amdgpu_dev.get_min_max_memory_clock()
             .unwrap_or_else(|| (0, (ext_info.max_memory_clock() / 1000) as u32));
         let resizable_bar = memory_info.check_resizable_bar();
         let is_apu = ext_info.is_apu();
         let marketing_name = device_path.device_name.clone();
         let sysfs_path = device_path.sysfs_path.clone();
-        let hw_ip_info_list = get_hw_ip_info_list(amdgpu_dev, ext_info.get_chip_class());
+        let hw_ip_info_list = get_hw_ip_info_list(amdgpu_dev, chip_class);
         let ip_die_entries = IpDieEntry::get_all_entries_from_sysfs(&sysfs_path);
         let power_profiles = PowerProfile::get_all_supported_profiles_from_sysfs(&sysfs_path);
         let asic_name = ext_info.get_asic_name();
         let gfx_target_version = ext_info.get_gfx_target_version().map(|v| v.to_string());
+
+        let max_od_gpu_clk;
+        let max_od_mem_clk;
+
+        {
+            let pp_od_clk_voltage = std::fs::read_to_string(sysfs_path.join("pp_od_clk_voltage")).ok();
+
+            if is_apu {
+                max_od_gpu_clk = None;
+                max_od_mem_clk = None;
+            } else if chip_class == CHIP_CLASS::GFX12 && let Some(s) = pp_od_clk_voltage {
+                // AMDGPU drivers do not expose reachable the boost clock of GFX12 to userspace,
+                // so we infer the boost clock from the sclk offset.
+                // https://gitlab.freedesktop.org/drm/amd/-/issues/4453
+                max_od_gpu_clk = Self::parse_od_sclk_offset(&s)
+                    .and_then(|[_min, max]| u32::try_from(max).ok())
+                    .map(|v| v + max_gpu_clk);
+                max_od_mem_clk = Self::parse_od_mclk(&s)
+                    .and_then(|[_min, max]| u32::try_from(max).ok());
+            } else if chip_class >= CHIP_CLASS::GFX10 && let Some(s) = pp_od_clk_voltage {
+                max_od_gpu_clk = Self::parse_od_sclk(&s)
+                    .and_then(|[_min, max]| u32::try_from(max).ok())
+                    .map(|v| v);
+                max_od_mem_clk = Self::parse_od_mclk(&s)
+                    .and_then(|[_min, max]| u32::try_from(max).ok());
+            } else {
+                max_od_gpu_clk = None;
+                max_od_mem_clk = None;
+            }
+        }
 
         let ecc_memory = RasErrorCount::get_from_sysfs_with_ras_block(&sysfs_path, RasBlock::UMC).is_ok();
         let has_npu = is_apu && match asic_name {
@@ -123,8 +157,10 @@ impl AppDeviceInfo {
             max_system_link: sensors.as_ref().and_then(|s| s.max_system_link),
             min_gpu_clk,
             max_gpu_clk,
+            max_od_gpu_clk,
             min_mem_clk,
             max_mem_clk,
+            max_od_mem_clk,
             marketing_name,
             asic_name,
             pci_bus: device_path.pci,
@@ -154,6 +190,42 @@ impl AppDeviceInfo {
             memory_vendor,
             supports_gpu_metrics,
         }
+    }
+
+    fn parse_mhz(s: &str) -> Option<i32> {
+        let len = s.len();
+        s.get(..len-3)?.parse::<i32>().ok()
+    }
+
+    fn parse_range(s: &str, start_str: &str) -> Option<[i32; 2]> {
+        let mut lines = s.lines();
+        let s_range = lines.find(|l| l.starts_with(start_str))?;
+        let range = {
+            let mut split = s_range
+                .trim_start_matches(start_str)
+                .split_whitespace();
+            if let [Some(min), Some(max)] = [split.next(), split.next()]
+                .map(|v| v.and_then(Self::parse_mhz))
+            {
+                Some([min, max])
+            } else {
+                None
+            }
+        };
+
+        range
+    }
+
+    fn parse_od_sclk(s: &str) -> Option<[i32; 2]> {
+        Self::parse_range(s, "SCLK:")
+    }
+
+    fn parse_od_sclk_offset(s: &str) -> Option<[i32; 2]> {
+        Self::parse_range(s, "SCLK_OFFSET:")
+    }
+
+    fn parse_od_mclk(s: &str) -> Option<[i32; 2]> {
+        Self::parse_range(s, "MCLK:")
     }
 
     pub fn get_fw_versions(amdgpu_dev: &DeviceHandle) -> Vec<FwVer> {
