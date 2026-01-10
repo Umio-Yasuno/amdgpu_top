@@ -1,5 +1,6 @@
-// GRBM: Graphics Register Bus Management
-// ref: https://rocmdocs.amd.com/en/develop/understand/gpu_arch/mi200_performance_counters.html
+// GRBM: Graphics Register Bus Manager
+// ref: https://github.com/ROCm/ROCm/blob/rocm-7.1.1/docs/conceptual/gpu-arch/mi300-mi200-performance-counters.rst#graphics-register-bus-manager-counters
+// ref: https://www.kernel.org/doc/html/latest/gpu/amdgpu/amdgpu-glossary.html
 
 pub(crate) const GRBM_INDEX: &[(&str, usize)] = &[
     ("Graphics Pipe", 31),
