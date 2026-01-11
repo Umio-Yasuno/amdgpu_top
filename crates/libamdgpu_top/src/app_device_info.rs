@@ -93,12 +93,12 @@ impl AppDeviceInfo {
         let max_od_mem_clk;
 
         {
-            let pp_od_clk_voltage = std::fs::read_to_string(sysfs_path.join("pp_od_clk_voltage")).ok();
+            let pp_od_clk_voltage = std::fs::read_to_string(sysfs_path.join("pp_od_clk_voltage"));
 
             if is_apu {
                 max_od_gpu_clk = None;
                 max_od_mem_clk = None;
-            } else if chip_class == CHIP_CLASS::GFX12 && let Some(s) = pp_od_clk_voltage {
+            } else if chip_class == CHIP_CLASS::GFX12 && let Ok(s) = pp_od_clk_voltage {
                 // AMDGPU drivers do not expose reachable the boost clock of GFX12 to userspace,
                 // so we infer the boost clock from the sclk offset.
                 // https://gitlab.freedesktop.org/drm/amd/-/issues/4453
@@ -107,7 +107,7 @@ impl AppDeviceInfo {
                     .map(|v| v + max_gpu_clk);
                 max_od_mem_clk = Self::parse_od_mclk(&s)
                     .and_then(|[_min, max]| u32::try_from(max).ok());
-            } else if chip_class >= CHIP_CLASS::GFX10 && let Some(s) = pp_od_clk_voltage {
+            } else if chip_class >= CHIP_CLASS::GFX10 && let Ok(s) = pp_od_clk_voltage {
                 max_od_gpu_clk = Self::parse_od_sclk(&s)
                     .and_then(|[_min, max]| u32::try_from(max).ok())
                     .map(|v| v);

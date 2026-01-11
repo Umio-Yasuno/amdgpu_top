@@ -396,7 +396,7 @@ impl MyApp {
                     sensors.average_power.as_ref().map(|power| power.value),
                     "Average Power",
                     0,
-                    if let Some(cap) = &sensors.power_cap { cap.current } else { 350 }, // "350 W" is not an exact value
+                    sensors.power_cap.as_ref().map(|cap| cap.current).unwrap_or(350), // "350 W" is not an exact value
                     fl!("w"),
                 ),
                 (
@@ -404,7 +404,7 @@ impl MyApp {
                     sensors.input_power.as_ref().map(|power| power.value),
                     "Input Power",
                     0,
-                    if let Some(cap) = &sensors.power_cap { cap.current } else { 350 }, // "350 W" is not an exact value
+                    sensors.power_cap.as_ref().map(|cap| cap.current).unwrap_or(350), // "350 W" is not an exact value
                     fl!("w"),
                 ),
                 (
