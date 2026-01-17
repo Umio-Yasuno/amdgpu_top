@@ -109,8 +109,7 @@ impl AppDeviceInfo {
                     .and_then(|[_min, max]| u32::try_from(max).ok());
             } else if chip_class >= CHIP_CLASS::GFX10 && let Ok(s) = pp_od_clk_voltage {
                 max_od_gpu_clk = Self::parse_od_sclk(&s)
-                    .and_then(|[_min, max]| u32::try_from(max).ok())
-                    .map(|v| v);
+                    .and_then(|[_min, max]| u32::try_from(max).ok());
                 max_od_mem_clk = Self::parse_od_mclk(&s)
                     .and_then(|[_min, max]| u32::try_from(max).ok());
             } else {
@@ -200,20 +199,17 @@ impl AppDeviceInfo {
     fn parse_range(s: &str, start_str: &str) -> Option<[i32; 2]> {
         let mut lines = s.lines();
         let s_range = lines.find(|l| l.starts_with(start_str))?;
-        let range = {
-            let mut split = s_range
-                .trim_start_matches(start_str)
-                .split_whitespace();
-            if let [Some(min), Some(max)] = [split.next(), split.next()]
-                .map(|v| v.and_then(Self::parse_mhz))
-            {
-                Some([min, max])
-            } else {
-                None
-            }
-        };
+        let mut split = s_range
+            .trim_start_matches(start_str)
+            .split_whitespace();
 
-        range
+        if let [Some(min), Some(max)] = [split.next(), split.next()]
+            .map(|v| v.and_then(Self::parse_mhz))
+        {
+            Some([min, max])
+        } else {
+            None
+        }
     }
 
     fn parse_od_sclk(s: &str) -> Option<[i32; 2]> {
