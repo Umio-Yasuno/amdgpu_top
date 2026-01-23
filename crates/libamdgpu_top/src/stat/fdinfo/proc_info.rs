@@ -9,11 +9,13 @@ pub struct ProcInfo {
     pub pid: i32,
     pub name: String,
     pub fds: Vec<i32>,
+    pub is_kfd_proc: bool,
 }
 
-fn get_fds<T: AsRef<Path>>(fd_dir_path: &mut PathBuf, device_path: &[T]) -> Vec<i32> {
-    let Ok(fd_list) = fs::read_dir(&fd_dir_path) else { return Vec::new() };
+fn get_fds<T: AsRef<Path>>(fd_dir_path: &mut PathBuf, device_path: &[T]) -> (Vec<i32>, bool) {
+    let Ok(fd_list) = fs::read_dir(&fd_dir_path) else { return (Vec::new(), false) };
     let mut fds: Vec<i32> = Vec::with_capacity(16);
+    let mut is_kfd_proc = false;
 
     for dir_entry in fd_list {
         let Ok(dir_entry) = dir_entry else { continue };
@@ -30,9 +32,13 @@ fn get_fds<T: AsRef<Path>>(fd_dir_path: &mut PathBuf, device_path: &[T]) -> Vec<
             let Some(fd) = fd.to_str().and_then(|s| s.parse::<i32>().ok()) else { continue };
             fds.push(fd);
         }
+
+        if link.starts_with("/dev/kfd") {
+            is_kfd_proc = true;
+        }
     }
 
-    fds
+    (fds, is_kfd_proc)
 }
 
 pub fn get_process_list() -> Vec<i32> {
@@ -95,7 +101,7 @@ pub fn update_index_by_all_proc<T: AsRef<Path>>(
         buf_path.push("/proc");
         buf_path.push(pid.to_string());
 
-        let fds = get_fds(&mut buf_path.join("fd/"), device_path);
+        let (fds, is_kfd_proc) = get_fds(&mut buf_path.join("fd/"), device_path);
 
         if fds.is_empty() { continue }
 
@@ -108,7 +114,7 @@ pub fn update_index_by_all_proc<T: AsRef<Path>>(
         buf_name.pop(); // trim '\n'
         let name = buf_name.clone();
 
-        vec_info.push(ProcInfo { pid, name, fds });
+        vec_info.push(ProcInfo { pid, name, fds, is_kfd_proc });
     }
 }
 

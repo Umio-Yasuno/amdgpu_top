@@ -2,11 +2,8 @@ use std::fs;
 use std::io::Read;
 use std::collections::{HashMap, HashSet};
 use std::time::Duration;
-use std::path::Path;
 use super::ProcInfo;
 use crate::stat;
-
-const KFD_PROC_PATH: &str = "/sys/class/kfd/kfd/proc/";
 
 // ref: drivers/gpu/drm/amd/amdgpu/amdgpu_fdinfo.c
 
@@ -373,14 +370,12 @@ impl FdInfoStat {
             }
         };
 
-        let is_kfd_process = Path::new(KFD_PROC_PATH).join(pid.to_string()).exists();
-
         self.proc_usage.push(ProcUsage {
             pid,
             name,
             ids_count,
             usage,
-            is_kfd_process,
+            is_kfd_process: proc_info.is_kfd_proc,
         });
     }
 
