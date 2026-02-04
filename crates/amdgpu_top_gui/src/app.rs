@@ -9,6 +9,7 @@ use egui_plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
 use libamdgpu_top::{
     AMDGPU::{GpuMetrics, MetricsInfo, RasErrorCount},
     DevicePath,
+    GuiMode,
     PCI,
     stat::{FdInfoSortType, PerfCounter, Sensors},
 };
@@ -35,7 +36,7 @@ pub struct MyApp {
     pub no_pc: bool,
     pub pause: bool,
     pub full_fdinfo_list: bool,
-    pub tab_gui: bool,
+    pub gui_mode: GuiMode,
     pub main_tab: MainTab,
     pub info_tab: InfoTab,
 }

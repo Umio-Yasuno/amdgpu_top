@@ -157,7 +157,7 @@ fn main() {
         is_dark_mode: main_opt.is_dark_mode,
         hide_fdinfo: main_opt.hide_fdinfo,
         gui_wgpu_backend: main_opt.wgpu_backend,
-        tab_gui: main_opt.tab_gui,
+        gui_mode: main_opt.gui_mode,
     };
 
     match main_opt.app_mode {

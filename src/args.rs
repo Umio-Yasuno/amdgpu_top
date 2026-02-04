@@ -1,4 +1,4 @@
-use libamdgpu_top::{GuiWgpuBackend, PCI};
+use libamdgpu_top::{GuiMode, GuiWgpuBackend, PCI};
 
 pub struct MainOpt {
     pub instance: Option<usize>, // index
@@ -16,7 +16,7 @@ pub struct MainOpt {
     pub decode_gpu_metrics: Option<String>,
     pub hide_fdinfo: bool,
     pub wgpu_backend: GuiWgpuBackend,
-    pub tab_gui: bool,
+    pub gui_mode: GuiMode,
 }
 
 impl Default for MainOpt {
@@ -37,7 +37,7 @@ impl Default for MainOpt {
             decode_gpu_metrics: None,
             hide_fdinfo: false,
             wgpu_backend: GuiWgpuBackend::Gl,
-            tab_gui: false,
+            gui_mode: GuiMode::Auto,
         }
     }
 }
@@ -257,6 +257,7 @@ impl MainOpt {
                     #[cfg(feature = "gui")]
                     {
                         opt.app_mode = AppMode::GUI;
+                        opt.gui_mode = GuiMode::Auto;
                     }
                     #[cfg(not(feature = "gui"))]
                     {
@@ -268,7 +269,7 @@ impl MainOpt {
                     #[cfg(feature = "gui")]
                     {
                         opt.app_mode = AppMode::GUI;
-                        opt.tab_gui = true;
+                        opt.gui_mode = GuiMode::Tab;
                     }
                     #[cfg(not(feature = "gui"))]
                     {

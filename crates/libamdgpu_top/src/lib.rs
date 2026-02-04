@@ -1,5 +1,8 @@
 use std::time::Duration;
 use std::path::PathBuf;
+
+use num_enum::{IntoPrimitive, TryFromPrimitive};
+
 pub use libdrm_amdgpu_sys::*;
 use libdrm_amdgpu_sys::AMDGPU::{
     CHIP_CLASS,
@@ -24,6 +27,20 @@ pub use drm_mode::*;
 mod ppfeaturemask;
 pub use ppfeaturemask::*;
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[repr(u8)]
+pub enum GuiMode {
+    Auto,
+    Single,
+    Tab,
+}
+
+impl GuiMode {
+    pub fn is_tab_mode(&self) -> bool {
+        *self == Self::Tab
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum GuiWgpuBackend {
     Gl,
@@ -39,7 +56,7 @@ pub struct UiArgs {
     pub is_dark_mode: Option<bool>, // TUI, GUI
     pub hide_fdinfo: bool, // TUI
     pub gui_wgpu_backend: GuiWgpuBackend, // GUI
-    pub tab_gui: bool, // GUI
+    pub gui_mode: GuiMode, // GUI
 }
 
 pub struct Sampling {
