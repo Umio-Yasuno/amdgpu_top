@@ -49,6 +49,7 @@ repository = "https://github.com/Umio-Yasuno/amdgpu_top"
 
 [workspace.dependencies]
 libamdgpu_top = { path = "crates/libamdgpu_top", version = "0.11.0", default-features = false }
+num_enum = "0.7.5"
 
 [dependencies]
 libamdgpu_top = { workspace = true }

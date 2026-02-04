@@ -2,7 +2,10 @@ use crate::egui;
 use crate::{collapsing, collapsing_plot, fl, label, MyApp, HEADING, BASE, SPACE, SPACE_3X};
 use crate::gui_device_info::{GuiInfo, GuiConnectorInfo, GuiHwIpInfo, GuiIpDiscovery, GuiVbiosInfo, GuiVideoCapsInfo, GuiXdnaInfo};
 
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+use num_enum::{IntoPrimitive, TryFromPrimitive};
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[repr(u8)]
 pub enum MainTab {
     #[default]
     Info,
@@ -13,7 +16,8 @@ pub enum MainTab {
     Xdna,
 }
 
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, IntoPrimitive, TryFromPrimitive)]
+#[repr(u8)]
 pub enum InfoTab {
     #[default]
     DeviceInfo,

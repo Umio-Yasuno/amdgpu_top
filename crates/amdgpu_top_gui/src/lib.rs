@@ -71,6 +71,12 @@ static PCI_BUS_ID: LazyLock<egui::Id> = LazyLock::new(|| {
 static GUI_MODE_ID: LazyLock<egui::Id> = LazyLock::new(|| {
     egui::Id::new("gui_mode")
 });
+static MAIN_TAB_ID: LazyLock<egui::Id> = LazyLock::new(|| {
+    egui::Id::new("main_tab")
+});
+static INFO_TAB_ID: LazyLock<egui::Id> = LazyLock::new(|| {
+    egui::Id::new("info_tab")
+});
 
 pub fn run(
     app_name: &str,
@@ -289,10 +295,12 @@ pub fn run(
                 let id = *PCI_BUS_ID;
                 let s: Option<String> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
 
-                if let Some(pci_bus) = s.and_then(|s| s.parse::<PCI::BUS_INFO>().ok())
-                    && gui_app.buf_vec_data.iter().any(|d| pci_bus == d.pci_bus) {
-                        gui_app.selected_pci_bus = pci_bus;
-                    }
+                if let Some(s) = s
+                    && let Ok(pci_bus) = s.parse::<PCI::BUS_INFO>()
+                    && gui_app.buf_vec_data.iter().any(|d| pci_bus == d.pci_bus)
+                {
+                    gui_app.selected_pci_bus = pci_bus;
+                }
             }
 
             if let Some(is_dark_mode) = is_dark_mode {
@@ -318,9 +326,9 @@ pub fn run(
 
             if gui_mode == GuiMode::Auto {
                 let id = *GUI_MODE_ID;
-                let gui_mode: Option<u8> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
+                let gui_mode_u8: Option<u8> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
 
-                if let Some(gui_mode) = gui_mode.and_then(|gui_mode| GuiMode::try_from(gui_mode).ok()) {
+                if let Some(v) = gui_mode_u8 && let Ok(gui_mode) = GuiMode::try_from(v) {
                     gui_app.gui_mode = gui_mode;
                 }
             } else {
@@ -332,6 +340,24 @@ pub fn run(
                     );
                     *v = gui_mode_u8;
                 });
+            }
+
+            {
+                let id = *MAIN_TAB_ID;
+                let main_tab_u8: Option<u8> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
+
+                if let Some(v) = main_tab_u8 && let Ok(main_tab) = tab_gui::MainTab::try_from(v) {
+                    gui_app.main_tab = main_tab;
+                }
+            }
+
+            {
+                let id = *INFO_TAB_ID;
+                let info_tab_u8: Option<u8> = cc.egui_ctx.data_mut(|id_map| id_map.get_persisted(id));
+
+                if let Some(v) = info_tab_u8 && let Ok(info_tab) = tab_gui::InfoTab::try_from(v) {
+                    gui_app.info_tab = info_tab;
+                }
             }
 
             Ok(Box::new(gui_app))
@@ -679,7 +705,32 @@ impl eframe::App for MyApp {
         egui::CentralPanel::default().show(
             ctx,
             |ui| if self.gui_mode.is_tab_mode() {
-                self.egui_tab_gui(ui)
+                let pre_main_tab = self.main_tab;
+                let pre_info_tab = self.info_tab;
+
+                self.egui_tab_gui(ui);
+
+                if pre_main_tab != self.main_tab {
+                    let main_tab_u8: u8 = self.main_tab.into();
+                    ctx.data_mut(|id_map| {
+                        let v = id_map.get_persisted_mut_or_insert_with(
+                            *MAIN_TAB_ID,
+                            || { main_tab_u8 },
+                        );
+                        *v = main_tab_u8;
+                    });
+                }
+
+                if pre_info_tab != self.info_tab {
+                    let info_tab_u8: u8 = self.info_tab.into();
+                    ctx.data_mut(|id_map| {
+                        let v = id_map.get_persisted_mut_or_insert_with(
+                            *INFO_TAB_ID,
+                            || { info_tab_u8 },
+                        );
+                        *v = info_tab_u8;
+                    });
+                }
             } else {
                 self.egui_central_panel(ui)
             }
