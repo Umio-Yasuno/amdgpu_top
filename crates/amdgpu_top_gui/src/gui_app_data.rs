@@ -219,10 +219,8 @@ impl GuiAppData {
             }
         }
 
-        if let Some(thr_val) = metrics.and_then(|m| m.get_indep_throttle_status())
-            && thr_val != 0
-        {
-            self.history.throttling_history.add(secs, ThrottleStatus::new(thr_val));
+        if let Some(thr_val) = metrics.and_then(|m| m.get_throttle_status_info()) {
+            self.history.throttling_history.add(secs, thr_val);
         }
 
         if let Some(ref mut sensors) = self.stat.sensors {
