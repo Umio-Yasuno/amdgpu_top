@@ -668,10 +668,8 @@ impl eframe::App for MyApp {
                         if ui.button("Tab Mode").clicked() {
                             self.gui_mode = GuiMode::Tab;
                         }
-                    } else {
-                        if ui.button("Single").clicked() {
-                            self.gui_mode = GuiMode::Single;
-                        }
+                    } else if ui.button("Single").clicked() {
+                        self.gui_mode = GuiMode::Single;
                     }
 
                     if pre_mode != self.gui_mode {
