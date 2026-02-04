@@ -93,6 +93,10 @@ const HELP_MSG: &str = concat!(
     "       This option can be combined with the \"-d\" option.\n",
     "   --gui\n",
     "       Launch GUI mode.\n",
+    "   --single-gui\n",
+    "       Launch Single GUI mode.\n",
+    "   --tab-gui\n",
+    "       Launch Tab GUI mode.\n",
     "   --smi\n",
     "       Launch Simple TUI mode. (like nvidia-smi, rocm-smi)\n",
     "   -p, --process\n",
@@ -258,6 +262,18 @@ impl MainOpt {
                     {
                         opt.app_mode = AppMode::GUI;
                         opt.gui_mode = GuiMode::Auto;
+                    }
+                    #[cfg(not(feature = "gui"))]
+                    {
+                        eprintln!("\"gui\" feature is not enabled for this build.");
+                        std::process::exit(1);
+                    }
+                },
+                "--single-gui" => {
+                    #[cfg(feature = "gui")]
+                    {
+                        opt.app_mode = AppMode::GUI;
+                        opt.gui_mode = GuiMode::Single;
                     }
                     #[cfg(not(feature = "gui"))]
                     {

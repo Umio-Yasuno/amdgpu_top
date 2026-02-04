@@ -1,6 +1,9 @@
-% AMDGPU_TOP(1)
-% Umio Yasuno <coelacanth_dream@protonmail.com>
-% 2023-12-01
+---
+title: AMDGPU_TOP(1)
+author: Umio Yasuno <coelacanth_dream@protonmail.com>
+date: 2026-02-04
+footer: v0.11.0
+---
 
 <!-- $ pandoc docs/man.amdgpu_top.md -s -t man -o docs/amdgpu_top.1 -->
 
@@ -106,6 +109,12 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 
 **\-\-gui**
 :   Launch GUI mode.
+
+**\-\-single\-gui**
+:   Launch Single GUI mode.
+
+**\-\-tab\-gui**
+:   Launch Tab GUI mode.
 
 **\-\-smi**
 :   Launch Simple TUI mode. (like nvidia-smi, rocm-smi)
