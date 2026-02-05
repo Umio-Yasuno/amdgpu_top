@@ -39,6 +39,31 @@
   </screenshots>
 
   <releases>
+    <release version="0.11.1" date="2026-02-05">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>lib: fix gfx and media activity for Strix Point, Krackan Point and Strix Halo (#139)</li>
+          <li>lib: improve to_d3hot check logic (#142)</li>
+          <li>lib: improve cpu usage calculation</li>
+          <li>lib: update kfd process detection logic</li>
+          <li>lib: rename "Ring List Controller" to "RunList Controller"</li>
+          <li>lib: apply input power workaround for SMU v13.0.5 to Granite Ridge only</li>
+        </ul>
+        <ul>
+          <li>tui: fix xdna fdinfo header</li>
+          <li>tui: print throttle_residency_* for gpu_metrics_v3_0</li>
+        </ul>
+        <ul>
+          <li>gui: print throttle_residency_* for gpu_metrics_v3_0</li>
+          <li>gui: use `max_od_gpu_clk` and `max_od_mem_clk` for Sensors plot</li>
+          <li>gui: persist GUI mode</li>
+          <li>gui: use GpuMetrics::get_throttle_status_info</li>
+          <li>gui: persist main tab and info tab</li>
+        </ul>
+      </description>
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.11.1</url>
+    </release>
     <release version="0.11.0" date="2025-09-02">
       <description>
         <p>Changelog</p>
