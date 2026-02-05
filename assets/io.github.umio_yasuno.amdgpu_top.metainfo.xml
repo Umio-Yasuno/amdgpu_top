@@ -39,6 +39,15 @@
   </screenshots>
 
   <releases>
+    <release version="0.11.2" date="2026-02-05">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>fix deps</li>
+        </ul>
+      </description>
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.11.2</url>
+    </release>
     <release version="0.11.1" date="2026-02-05">
       <description>
         <p>Changelog</p>
