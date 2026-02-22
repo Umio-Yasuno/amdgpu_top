@@ -167,7 +167,7 @@ pub fn run(
 
     siv.set_autohide_menu(false);
     siv.set_user_data(toggle_opt.clone());
-    siv.set_theme(if is_dark_mode { dark_mode() } else { Theme::default() });
+    siv.set_theme(if is_dark_mode { dark_mode() } else { light_mode() });
 
     {
         if !no_pc {
@@ -198,7 +198,7 @@ pub fn run(
                 is_dark_mode = opt.is_dark_mode;
             }
 
-            siv.set_theme(if is_dark_mode { dark_mode() } else { Theme::default() });
+            siv.set_theme(if is_dark_mode { dark_mode() } else { light_mode() });
         });
         siv.add_global_callback(Key::Esc, |siv| siv.select_menubar());
     }
@@ -302,23 +302,41 @@ pub fn run(
     siv.run();
 }
 
-fn dark_mode() -> Theme {
+fn light_mode() -> Theme {
     Theme {
             shadow: true,
             borders: BorderStyle::Simple,
+            palette: Palette::retro().with(|palette| {
+                use cursive::theme::PaletteColor::*;
+                use cursive::style::Color::Rgb;
+
+                palette[Background] = Rgb(0x1C, 0x99, 0xF3);
+                palette[View] = Rgb(0xFD, 0xFD, 0xFD);
+                palette[Primary] = Rgb(0x25, 0x26, 0x27);
+                palette[TitlePrimary] = Rgb(0xEC, 0x16, 0x16);
+
+                palette[HighlightText] = palette[View];
+                palette[Highlight] = palette[TitlePrimary];
+                palette[Shadow] = palette[Primary];
+            }),
+    }
+}
+
+fn dark_mode() -> Theme {
+    Theme {
+            shadow: false,
+            borders: BorderStyle::Simple,
             palette: Palette::terminal_default().with(|palette| {
                 use cursive::theme::PaletteColor::*;
-                use cursive::theme::BaseColor;
+                use cursive::style::Color::Rgb;
 
-                palette[Background] = BaseColor::Black.light();
+                palette[Background] = Rgb(0x7F, 0x8C, 0x8C);
+                palette[View] = Rgb(0x25, 0x26, 0x27);
+                palette[Primary] = Rgb(0xFD, 0xFD, 0xFD);
+                palette[TitlePrimary] = Rgb(0x15, 0xA0, 0x85);
 
-                palette[View] = BaseColor::Black.dark();
-                palette[Primary] = BaseColor::White.dark();
-                palette[TitlePrimary] = BaseColor::Cyan.light();
-
-                palette[Highlight] = BaseColor::Cyan.light();
-                palette[HighlightInactive] = BaseColor::Cyan.dark();
-                palette[HighlightText] = BaseColor::Black.dark();
+                palette[HighlightText] = palette[View];
+                palette[Highlight] = palette[TitlePrimary];
             }),
     }
 }
