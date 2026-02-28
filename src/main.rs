@@ -77,6 +77,21 @@ fn main() {
             amdgpu_top_json::version_json(TITLE);
             return;
         },
+        DumpMode::Process => {
+            let j = amdgpu_top_json::JsonApp::new(
+                TITLE,
+                &device_path_list,
+                1, // main_opt.refresh_period,
+                5, // ui_args.update_process_index,
+                1, // main_opt.json_iterations,
+                true, // ui_args.no_pc,
+            );
+
+            let s = j.json().to_string();
+            println!("{s}");
+
+            return;
+        },
         DumpMode::PPTable => {},
         DumpMode::NoDump => {
             match main_opt.opt_dump_mode {
