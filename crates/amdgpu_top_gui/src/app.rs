@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use eframe::wgpu::AdapterInfo;
 use crate::egui::{self, RichText, util::History};
 use crate::{BASE, MEDIUM, HISTORY_LENGTH};
@@ -21,6 +21,8 @@ const SENSORS_WIDTH: f32 = SENSORS_HEIGHT * 4.0;
 const FDINFO_LIST_HEIGHT: f32 = 208.0;
 const PLOT_HEIGHT: f32 = 208.0;
 const PLOT_WIDTH: f32 = PLOT_HEIGHT * 5.0;
+
+static CPU_PLOT_HEIGHT: OnceLock<f32> = OnceLock::new();
 
 pub struct MyApp {
     pub fdinfo_sort: FdInfoSortType,
@@ -683,13 +685,20 @@ impl MyApp {
             format!("{:.1}s : {name} {:.0} MHz", val.x, val.y)
         };
 
+        // Initialize `CPU_PLOT_HEIGHT` here as all APUs support CPU freq stats
+        let plot_height = CPU_PLOT_HEIGHT.get_or_init(|| if sensors.all_cpu_core_freq_info.len() > 8 {
+            PLOT_HEIGHT * 2.0
+        } else {
+            PLOT_HEIGHT
+        });
+
         Plot::new("Core Freq Plot")
             .allow_zoom(false)
             .allow_scroll(false)
             .show_axes([false, true])
             .label_formatter(label_fmt)
             .auto_bounds([true, true])
-            .height(PLOT_HEIGHT)
+            .height(*plot_height)
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| for (i, freq) in all_core_freq.into_iter().enumerate() {
@@ -714,7 +723,7 @@ impl MyApp {
             .show_axes([false, true])
             .label_formatter(label_fmt)
             .auto_bounds([true, true])
-            .height(PLOT_HEIGHT)
+            .height(*CPU_PLOT_HEIGHT.get().unwrap_or(&PLOT_HEIGHT))
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| for (i, mw) in all_core_power_mw.into_iter().enumerate() {
@@ -738,7 +747,7 @@ impl MyApp {
             .show_axes([false, true])
             .include_y(0.0)
             .label_formatter(label_fmt)
-            .height(PLOT_HEIGHT)
+            .height(*CPU_PLOT_HEIGHT.get().unwrap_or(&PLOT_HEIGHT))
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| for (i, temp_c) in all_core_temp.into_iter().enumerate() {
