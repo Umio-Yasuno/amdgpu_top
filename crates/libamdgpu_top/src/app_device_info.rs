@@ -246,6 +246,13 @@ impl AppDeviceInfo {
             FW_TYPE::TA,
             FW_TYPE::DMCUB,
             FW_TYPE::TOC,
+            FW_TYPE::CAP,
+            FW_TYPE::GFX_RLCP,
+            FW_TYPE::GFX_RLCV,
+            FW_TYPE::MES_KIQ,
+            FW_TYPE::MES,
+            FW_TYPE::IMU,
+            FW_TYPE::VPE,
         ];
 
         let mut fw_versions = Vec::with_capacity(24);
