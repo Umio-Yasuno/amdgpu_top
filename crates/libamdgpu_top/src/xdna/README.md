@@ -1,8 +1,6 @@
 # XDNA
-## Generate bindings for xdna-driver
+## Generate bindings
 ```
-$ bindgen --no-layout-tests --wrap-unsafe-ops header/amdxdna_accel.h > bindings.rs
+$ cd <linux_kernel>
+$ bindgen --no-layout-tests --wrap-unsafe-ops include/uapi/drm/amdxdna_accel.h -- -D__user= > <amdgpu_top_dir>/crates/libamdgpu_top/src/xdna/bindings.rs
 ```
-
-### Header source
-<https://github.com/amd/xdna-driver/blob/main/src/include/uapi/drm_local/amdxdna_accel.h>
