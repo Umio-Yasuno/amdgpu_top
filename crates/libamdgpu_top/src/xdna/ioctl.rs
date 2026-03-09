@@ -18,6 +18,7 @@ use bindings::{
     amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_CLOCK_METADATA as DRM_AMDXDNA_QUERY_CLOCK_METADATA,
     amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_FIRMWARE_VERSION as DRM_AMDXDNA_QUERY_FIRMWARE_VERSION,
     amdxdna_drm_get_param_DRM_AMDXDNA_GET_POWER_MODE as DRM_AMDXDNA_GET_POWER_MODE,
+    amdxdna_drm_get_param_DRM_AMDXDNA_QUERY_RESOURCE_INFO as DRM_AMDXDNA_QUERY_RESOURCE_INFO,
     amdxdna_power_mode_type_POWER_MODE_DEFAULT as POWER_MODE_DEFAULT,
     amdxdna_power_mode_type_POWER_MODE_LOW as POWER_MODE_LOW,
     amdxdna_power_mode_type_POWER_MODE_MEDIUM as POWER_MODE_MEDIUM,
@@ -30,6 +31,7 @@ pub use bindings::{
     amdxdna_drm_query_clock,
     amdxdna_drm_query_clock_metadata,
     amdxdna_drm_query_firmware_version,
+    amdxdna_drm_get_resource_info,
 };
 
 use core::mem::MaybeUninit;
@@ -37,7 +39,7 @@ use core::ptr;
 
 use nix::{errno::Errno, ioctl_readwrite};
 
-// red: amdxdna_drm_query_clock
+// ref: amdxdna_drm_query_clock
 #[derive(Debug, Clone)]
 pub struct XdnaClock {
     pub name: String,
@@ -145,4 +147,8 @@ pub fn get_xdna_power_mode(fd: i32) -> Result<XdnaPowerMode, Errno> {
 
 pub fn get_xdna_metadata(fd: i32) -> Result<amdxdna_drm_query_aie_metadata, Errno> {
     unsafe { get_xdna_info(fd, DRM_AMDXDNA_QUERY_AIE_METADATA) }
+}
+
+pub fn get_xdna_resource_info(fd: i32) -> Result<amdxdna_drm_get_resource_info, Errno> {
+    unsafe { get_xdna_info(fd, DRM_AMDXDNA_QUERY_RESOURCE_INFO) }
 }

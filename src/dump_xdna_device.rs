@@ -43,4 +43,5 @@ pub fn dump_xdna_device(title: &str) {
     println!("{:#?}", xdna::get_xdna_firmware_version(fd));
     println!("{:#?}", xdna::get_xdna_power_mode(fd));
     println!("{:#?}", xdna::get_xdna_metadata(fd));
+    println!("{:#?}", xdna::get_xdna_resource_info(fd));
 }
