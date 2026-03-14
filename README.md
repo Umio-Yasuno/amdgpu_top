@@ -1,6 +1,6 @@
 # AMDGPU\_TOP
-`amdgpu_top` is tool that display AMD GPU utilization, like [umr](https://gitlab.freedesktop.org/tomstdenis/umr/) or [clbr/radeontop](https://github.com/clbr/radeontop) or [intel_gpu_top](https://gitlab.freedesktop.org/drm/igt-gpu-tools/-/blob/master/man/intel_gpu_top.rst).  
-The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, and AMDGPU driver.  
+`amdgpu_top` is tool that display AMD GPU utilization, like [umr](https://gitlab.freedesktop.org/tomstdenis/umr/) or [clbr/radeontop](https://github.com/clbr/radeontop) or [intel_gpu_top](https://gitlab.freedesktop.org/drm/igt-gpu-tools/-/blob/master/man/intel_gpu_top.rst).
+The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, and AMDGPU driver.
 
 | Simple TUI<br>(like nvidia-smi, rocm-smi) | TUI | GUI |
 | :-: | :-: | :-: |
@@ -169,51 +169,51 @@ AMD Radeon Graphics (0000:08:00.0): GFX: 0%, MediaEngine: 0%, Memory: null%
 ```
 
 ### fdinfo description
-fdinfo for the AMDGPU driver shows hardware IP usage per process.  
+fdinfo for the AMDGPU driver shows hardware IP usage per process.
 
 ### VRAM
-GPU Memory.  
+GPU Memory.
 
 ### GTT
-Graphics Translation Tables.  
+Graphics Translation Tables.
 
 ### KFD
-The process of using the AMDKFD driver.  
+The process of using the AMDKFD driver.
 
 #### GFX
-GFX engine.  
+GFX engine.
 
 #### Compute/COMP
-Compute engine.  
-The AMDKFD driver dose not track queues and does not show them in fdinfo.  
+Compute engine.
+The AMDKFD driver does not track queues and does not show them in fdinfo.
 
 #### DMA
-DMA/SDMA (System DMA) engine.  
+DMA/SDMA (System DMA) engine.
 
 #### Decode/DEC
-Media decoder.  
-This is not show on VCN4 or later.  
+Media decoder.
+This is not show on VCN4 or later.
 
 #### Encode/ENC
-Media encoder.  
-This is not show on VCN4 or later.  
+Media encoder.
+This is not show on VCN4 or later.
 
 #### VCN, Media
-Media engine.  
-From VCN4, the encoding queue and decoding queue have been unified.  
-The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.  
+Media engine.
+From VCN4, the encoding queue and decoding queue have been unified.
+The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.
 
-This is the average of the video decoder/encoder and the JPEG decoder usage.  
+This is the average of the video decoder/encoder and the JPEG decoder usage.
 
 #### JPEG
-JPEG decoder.  
+JPEG decoder.
 
 #### VPE
-Video Processor Engine.  
-ref: <https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/amd/vpelib/README.md?ref_type=heads>  
+Video Processor Engine.
+ref: <https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/amd/vpelib/README.md?ref_type=heads>
 
 #### VCN_Unified, VCNU
-The video decoder/encoder usage for VCN4.  
+The video decoder/encoder usage for VCN4.
 
 ## Installation
 ### Packages
@@ -284,8 +284,8 @@ sudo dnf install libdrm-devel
         * `/drivers/gpu/drm/amd/amdgpu/{cik,nv,vi,si,soc15,soc21}.c`
 
 ## Translations
-`amdgpu_top` is using [cargo-i18n](https://github.com/kellpossible/cargo-i18n/) with [Project Fluent](https://projectfluent.org/) for translation.  
-Please refer to [pop-os/popsicle](https://github.com/pop-os/popsicle#translators) for additional supported languages.  
+`amdgpu_top` is using [cargo-i18n](https://github.com/kellpossible/cargo-i18n/) with [Project Fluent](https://projectfluent.org/) for translation.
+Please refer to [pop-os/popsicle](https://github.com/pop-os/popsicle#translators) for additional supported languages.
 
 ### Supported Languages
  * [en](./crates/amdgpu_top_gui/i18n/en/amdgpu_top_gui.ftl)
@@ -307,6 +307,6 @@ If `amdgpu_top` is not enough for you or you don't like it, try the following ap
     * User Mode Register Debugger for AMDGPU Hardware
  * [GPUOpen-Tools/radeon_gpu_profiler](https://github.com/GPUOpen-Tools/radeon_gpu_profiler)
     * for developer
-    * Radeon GPU Profiler (RGP) is a tool from AMD that allows for deep inspection of GPU workloads. 
+    * Radeon GPU Profiler (RGP) is a tool from AMD that allows for deep inspection of GPU workloads.
  * [ROCm/amdsmi](https://github.com/ROCm/amdsmi)
     * [Getting to Know Your GPU: A Deep Dive into AMD SMI — ROCm Blogs](https://rocm.blogs.amd.com/software-tools-optimization/amd-smi-overview/README.html)

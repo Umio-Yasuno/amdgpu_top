@@ -17,7 +17,7 @@ amdgpu_top - Tool to displays AMDGPU usage.
 
 # DESCRIPTION
 
-*amdgpu_top* is tool that display AMD GPU utilization, like *umr* [^1] or *clbr/radeontop* [^2]  or *intel_gpu_top* [^3] .  
+*amdgpu_top* is tool that display AMD GPU utilization, like *umr* [^1] or *clbr/radeontop* [^2]  or *intel_gpu_top* [^3] .
 The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, and AMDGPU driver.
 
 [^1]: <https://gitlab.freedesktop.org/tomstdenis/umr/>
@@ -140,45 +140,45 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 | R   | reverse sort for fdinfo             |
 
 # FDINFO DESCRIPTION
-fdinfo for the AMDGPU driver shows hardware IP usage per process.  
+fdinfo for the AMDGPU driver shows hardware IP usage per process.
 
 ## VRAM
 ## GTT
-Graphics Translation Tables.  
+Graphics Translation Tables.
 
 ## KFD
-The process of using the AMDKFD driver.  
+The process of using the AMDKFD driver.
 
 ## GFX
-GFX engine.  
+GFX engine.
 
 ## Compute/COMP
-Compute engine.  
-The AMDKFD driver dose not track queues and does not show them in fdinfo.  
+Compute engine.
+The AMDKFD driver does not track queues and does not show them in fdinfo.
 
 ## DMA
-DMA/SDMA (System DMA) engine.  
+DMA/SDMA (System DMA) engine.
 
 ## Decode/DEC
-Media decoder.  
-This is not show on RDNA 4.  
+Media decoder.
+This is not show on RDNA 4.
 
 ## Encode/ENC
-Media encoder.  
-This is not show on RDNA 4.  
+Media encoder.
+This is not show on RDNA 4.
 
 ## VCN, Media
-Media engine.  
-From VCN4, the encoding queue and decoding queue have been unified.  
-The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.  
+Media engine.
+From VCN4, the encoding queue and decoding queue have been unified.
+The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.
 
 ## JPEG
-JPEG decoder.  
+JPEG decoder.
 
 ## VPE
-Video Processor Engine.  
-ref:  
-<https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/amd/vpelib/README.md>  
+Video Processor Engine.
+ref:
+<https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/amd/vpelib/README.md>
 
 # BUGS
 <https://github.com/Umio-Yasuno/amdgpu_top/issues>

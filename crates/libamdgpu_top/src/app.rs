@@ -247,7 +247,7 @@ impl AppAmdgpuTop {
 
     // Workaround:
     // `*_get_fan_speed_rpm` is missing in `drivers/gpu/drm/amd/pm/swsmu/smu14/smu_v14_0_2_ppt.c`,
-    // so SMU v14.0.2/3 dose not have `fan1_input` in `hwmon`.
+    // so SMU v14.0.2/3 does not have `fan1_input` in `hwmon`.
     //     ref: https://gitlab.freedesktop.org/drm/amd/-/issues/4034
     //     ref: https://github.com/Umio-Yasuno/amdgpu_top/issues/123
     fn workaround_fan_rpm_for_smu_v14(&mut self) -> Option<()> {
@@ -295,7 +295,7 @@ impl AppAmdgpuTop {
         {
             // let no_process_using_vram = self.stat.fdinfo.no_process_using_vram();
 
-            // The AMDKFD driver dose not track queues and does not show them in fdinfo.
+            // The AMDKFD driver does not track queues and does not show them in fdinfo.
             let has_kfd_process = self.stat.fdinfo.has_kfd_process();
             let is_fdinfo_idle = fold_proc_usage.gfx == 0
                 && fold_proc_usage.compute == 0

@@ -72,7 +72,7 @@ impl PcieBw {
     }
 
     pub fn check_pcie_bw_support(&self, ext_info: &drm_amdgpu_info_device) -> bool {
-        // APU and RDNA GPU dose not support `pcie_bw`.
+        // APU and RDNA GPU does not support `pcie_bw`.
         // ref: https://lists.freedesktop.org/archives/amd-gfx/2020-May/049649.html
         self.path.exists()
         && !ext_info.is_apu()
