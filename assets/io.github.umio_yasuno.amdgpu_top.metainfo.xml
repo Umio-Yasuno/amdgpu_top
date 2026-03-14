@@ -169,7 +169,7 @@
           <li>add support for k10temp Tctl</li>
           <li>dynamically update power_cap</li>
           <li>implement workaround for Raphael/Granite Ridge APU reported input power</li>
-          <li>implement workaround for RDNA 4 dGPU (SMU v14.0.2/3) dose not have fan1_input</li>
+          <li>implement workaround for RDNA 4 dGPU (SMU v14.0.2/3) does not have fan1_input</li>
           <li>skip show fdinfo stat if ids_count is zero</li>
         </ul>
         <ul>
