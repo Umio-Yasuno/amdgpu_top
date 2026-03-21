@@ -17,7 +17,7 @@ amdgpu_top - Tool to displays AMDGPU usage.
 
 # DESCRIPTION
 
-*amdgpu_top* is tool that display AMD GPU utilization, like *umr* [^1] or *clbr/radeontop* [^2]  or *intel_gpu_top* [^3] .
+*amdgpu_top* is tool that display AMD GPU utilization, like *umr* [^1] or *clbr/radeontop* [^2]  or *intel_gpu_top* [^3] .  
 The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, and AMDGPU driver.
 
 [^1]: <https://gitlab.freedesktop.org/tomstdenis/umr/>

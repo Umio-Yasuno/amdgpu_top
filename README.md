@@ -1,5 +1,5 @@
 # AMDGPU\_TOP
-`amdgpu_top` is tool that display AMD GPU utilization, like [umr](https://gitlab.freedesktop.org/tomstdenis/umr/) or [clbr/radeontop](https://github.com/clbr/radeontop) or [intel_gpu_top](https://gitlab.freedesktop.org/drm/igt-gpu-tools/-/blob/master/man/intel_gpu_top.rst).
+`amdgpu_top` is tool that display AMD GPU utilization, like [umr](https://gitlab.freedesktop.org/tomstdenis/umr/) or [clbr/radeontop](https://github.com/clbr/radeontop) or [intel_gpu_top](https://gitlab.freedesktop.org/drm/igt-gpu-tools/-/blob/master/man/intel_gpu_top.rst).  
 The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, and AMDGPU driver.
 
 | Simple TUI<br>(like nvidia-smi, rocm-smi) | TUI | GUI |
@@ -184,22 +184,22 @@ The process of using the AMDKFD driver.
 GFX engine.
 
 #### Compute/COMP
-Compute engine.
+Compute engine.  
 The AMDKFD driver does not track queues and does not show them in fdinfo.
 
 #### DMA
 DMA/SDMA (System DMA) engine.
 
 #### Decode/DEC
-Media decoder.
+Media decoder.  
 This is not show on VCN4 or later.
 
 #### Encode/ENC
-Media encoder.
+Media encoder.  
 This is not show on VCN4 or later.
 
 #### VCN, Media
-Media engine.
+Media engine.  
 From VCN4, the encoding queue and decoding queue have been unified.
 The AMDGPU driver handles both decoding and encoding as contexts for the encoding engine.
 
@@ -209,7 +209,7 @@ This is the average of the video decoder/encoder and the JPEG decoder usage.
 JPEG decoder.
 
 #### VPE
-Video Processor Engine.
+Video Processor Engine.  
 ref: <https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/amd/vpelib/README.md?ref_type=heads>
 
 #### VCN_Unified, VCNU
