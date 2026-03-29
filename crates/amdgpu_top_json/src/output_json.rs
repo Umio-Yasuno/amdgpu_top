@@ -327,10 +327,13 @@ impl OutputJson for GpuMetrics {
             ("temperature_vrgfx", self.get_temperature_vrgfx()),
             ("temperature_vrsoc", self.get_temperature_vrsoc()),
             ("temperature_vrmem", self.get_temperature_vrmem()),
+            ("temperature_skin", self.get_temperature_skin()),
             ("average_cpu_power", self.get_average_cpu_power()),
             ("average_soc_power", self.get_average_soc_power()),
             // ("average_core_power", self.get_average_core_power()),
             ("average_gfx_power", self.get_average_gfx_power()),
+            ("average_ipu_power", self.get_average_ipu_power()),
+            ("average_sys_power", self.get_average_sys_power()),
             ("average_gfxclk_frequency", self.get_average_gfxclk_frequency()),
             ("average_socclk_frequency", self.get_average_socclk_frequency()),
             ("average_uclk_frequency", self.get_average_uclk_frequency()),
@@ -339,6 +342,8 @@ impl OutputJson for GpuMetrics {
             ("average_dclk_frequency", self.get_average_dclk_frequency()),
             ("average_vclk1_frequency", self.get_average_vclk1_frequency()),
             ("average_dclk1_frequency", self.get_average_dclk1_frequency()),
+            ("average_ipuclk_frequency", self.get_average_ipuclk_frequency()),
+            ("average_mpipu_frequency", self.get_average_mpipu_frequency()),
             ("current_gfxclk", self.get_current_gfxclk()),
             ("current_socclk", self.get_current_socclk()),
             ("current_uclk", self.get_current_uclk()),
@@ -347,6 +352,8 @@ impl OutputJson for GpuMetrics {
             ("current_dclk", self.get_current_dclk()),
             ("current_vclk1", self.get_current_vclk1()),
             ("current_dclk1", self.get_current_dclk1()),
+            ("current_core_maxfreq", self.get_current_core_maxfreq()),
+            ("current_gfx_maxfreq", self.get_current_gfx_maxfreq()),
             ("voltage_gfx", self.get_voltage_gfx()),
             ("voltage_soc", self.get_voltage_soc()),
             ("voltage_mem", self.get_voltage_mem()),
@@ -359,6 +366,12 @@ impl OutputJson for GpuMetrics {
             ("average_cpu_current", self.get_average_cpu_current()),
             ("average_soc_current", self.get_average_soc_current()),
             ("average_gfx_current", self.get_average_gfx_current()),
+            ("average_dram_reads", self.get_average_dram_reads()),
+            ("average_dram_writes", self.get_average_dram_reads()),
+            ("average_ipu_reads", self.get_average_ipu_reads()),
+            ("average_ipu_writes", self.get_average_ipu_reads()),
+            ("stapm_power_limit", self.get_stapm_power_limit()),
+            ("current_stapm_power_limit", self.get_current_stapm_power_limit()),
         ] {
             m.insert(
                 name.to_string(),
@@ -370,9 +383,11 @@ impl OutputJson for GpuMetrics {
             );
         }
 
-        #[allow(clippy::single_element_loop)]
         for (name, val_u32) in [
             ("average_socket_power", self.get_average_socket_power()),
+            ("average_apu_power", self.get_average_apu_power()),
+            ("average_dgpu_power", self.get_average_dgpu_power()),
+            ("average_all_core_power", self.get_average_all_core_power()),
         ] {
             m.insert(
                 name.to_string(),
@@ -392,6 +407,7 @@ impl OutputJson for GpuMetrics {
             ("average_core_power", self.get_average_core_power()),
             ("average_temperature_core", self.get_average_temperature_core()),
             ("average_temperature_l3", self.get_average_temperature_l3()),
+            ("average_ipu_activity", self.get_average_ipu_activity()),
         ] {
             m.insert(
                 name.to_string(),
