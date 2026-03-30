@@ -9,6 +9,7 @@ use libdrm_amdgpu_sys::AMDGPU::{
     DeviceHandle,
     drm_amdgpu_memory_info,
     HW_IP::{HW_IP_TYPE, HwIpInfo},
+    GpuMetrics, MetricsInfo,
 };
 
 mod app_device_info;
@@ -178,5 +179,39 @@ pub fn get_rocm_version() -> Option<String> {
         Some(ver.to_string())
     } else {
         Some(s.to_string())
+    }
+}
+
+// ref: drivers/platform/x86/amd/pmf/pmf.h
+pub struct NpuMetrics {
+    pub npuclk_freq: u16,
+    pub npu_busy: Vec<u16>,
+    pub npu_power: u16,
+    pub mpnpuclk_freq: u16,
+    pub npu_reads: u16,
+    pub npu_writes: u16,
+}
+
+pub trait GetNpuMetrics {
+    fn get_npu_metrics(&self) -> Option<NpuMetrics>;
+}
+
+impl GetNpuMetrics for GpuMetrics {
+    fn get_npu_metrics(&self) -> Option<NpuMetrics> {
+        let npuclk_freq = self.get_average_ipuclk_frequency()?;
+        let npu_busy = self.get_average_ipu_activity()?;
+        let npu_power = self.get_average_ipu_power()?;
+        let mpnpuclk_freq = self.get_average_mpipu_frequency()?;
+        let npu_reads = self.get_average_ipu_reads()?;
+        let npu_writes = self.get_average_ipu_writes()?;
+
+        Some(NpuMetrics {
+            npuclk_freq,
+            npu_busy,
+            npu_power,
+            mpnpuclk_freq,
+            npu_reads,
+            npu_writes,
+        })
     }
 }

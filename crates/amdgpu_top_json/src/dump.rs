@@ -6,6 +6,7 @@ use libamdgpu_top::{
     },
     app::AppAmdgpuTop,
     DevicePath,
+    GetNpuMetrics,
 };
 use serde_json::{json, Map, Value};
 use crate::{amdgpu_top_version, OutputJson};
@@ -250,6 +251,7 @@ impl JsonInfo for AppAmdgpuTop {
             // "fdinfo": self.stat.fdinfo.json(),
             "gpu_metrics": self.stat.metrics.as_ref().map(|m| m.json()),
             "gpu_activity": self.stat.activity.json(),
+            "npu_metrics": self.stat.metrics.as_ref().and_then(|m| m.get_npu_metrics()).map(|nm| nm.json()),
         })
     }
 }

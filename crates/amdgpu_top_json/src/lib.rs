@@ -1,6 +1,6 @@
 #![recursion_limit = "256"]
 
-use libamdgpu_top::{DevicePath, stat};
+use libamdgpu_top::{DevicePath, GetNpuMetrics, stat};
 use libamdgpu_top::app::*;
 use serde_json::{json, Value};
 use std::time::{Duration, Instant};
@@ -246,6 +246,7 @@ impl JsonDeviceInfo {
             "Total fdinfo": proc_usage.usage_json(has_vcn, has_vcn_unified, has_vpe),
             "gpu_metrics": self.app.stat.metrics.as_ref().map(|m| m.json()),
             "gpu_activity": self.app.stat.activity.json(),
+            "npu_metrics": self.app.stat.metrics.as_ref().and_then(|m| m.get_npu_metrics()).map(|nm| nm.json()),
         })
     }
 }

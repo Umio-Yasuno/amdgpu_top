@@ -6,6 +6,7 @@ use libamdgpu_top::{
     VramUsage,
     PCI,
     ConnectorInfo,
+    NpuMetrics,
     drmModePropType,
     drmModeModeInfo,
 };
@@ -596,5 +597,37 @@ impl OutputJson for IpDieEntry {
             "die_id": self.die_id,
             "ip_hw_ids": self.ip_hw_ids.iter().map(|i| i.json()).collect::<Vec<Value>>(),
         })
+    }
+}
+
+impl OutputJson for NpuMetrics {
+    fn json(&self) -> Value {
+        let mut m = Map::new();
+
+        for (s, v, u) in [
+            ("npuclk_freq", &self.npuclk_freq, "MHz"),
+            ("npu_power", &self.npu_power, "mW"),
+            ("mpnpuclk_freq", &self.mpnpuclk_freq, "MHz"),
+            ("npu_reads", &self.npu_reads, "MB/s"),
+            ("npu_writes", &self.npu_writes, "MB/s"),
+        ] {
+            m.insert(
+                s.to_string(),
+                json!({
+                    "value": v,
+                    "unit": u,
+                }),
+            );
+        }
+
+        m.insert(
+            "npu_busy".to_string(),
+            json!({
+                "value": self.npu_busy,
+                "unit": "%",
+            }),
+        );
+
+        m.into()
     }
 }
