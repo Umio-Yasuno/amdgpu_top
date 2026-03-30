@@ -39,6 +39,33 @@
   </screenshots>
 
   <releases>
+    <release version="0.11.3" date="2026-03-30">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>Add -p and --json options combination support (#153)</li>
+          <li>Fix: dose -> does in strings and comments (#156)</li>
+        </ul>
+        <ul>
+          <li>lib: NpuMetrics</li>
+        </ul>
+        <ul>
+          <li>tui: specify 24-bit color (#151)</li>
+        </ul>
+        <ul>
+          <li>gui: double the CPU plot height when APU has 8 or more cores (#155)</li>
+        </ul>
+        <ul>
+          <li>xdna: update bindings</li>
+          <li>xdna: add get_xdna_resource_info</li>
+        </ul>
+        <ul>
+          <li>json: update GpuMetrics for gpu_metrics_v3_0 and XDNA NPU</li>
+          <li>json: NpuMetrics</li>
+        </ul>
+      </description>
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.11.3</url>
+    </release>
     <release version="0.11.2" date="2026-02-05">
       <description>
         <p>Changelog</p>
