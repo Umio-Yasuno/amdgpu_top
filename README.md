@@ -2,9 +2,9 @@
 `amdgpu_top` is tool that display AMD GPU utilization, like [umr](https://gitlab.freedesktop.org/tomstdenis/umr/) or [clbr/radeontop](https://github.com/clbr/radeontop) or [intel_gpu_top](https://gitlab.freedesktop.org/drm/igt-gpu-tools/-/blob/master/man/intel_gpu_top.rst).  
 The tool displays information gathered from performance counters (GRBM, GRBM2), sensors, fdinfo, and AMDGPU driver.
 
-| Simple TUI<br>(like nvidia-smi, rocm-smi) | TUI | GUI |
-| :-: | :-: | :-: |
-| ![amdgpu_top Simple TUI](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/66c3fb7e-cb23-4a19-ab10-2bb9919a1a8a) | ![amdgpu_top TUI](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/859010d8-07b3-411c-b079-c4a837855d41) | ![amdgpu_top GUI mode](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/e3ff372e-86f9-4b82-b3c9-910b638a3c90) |
+| Simple TUI<br>(like nvidia-smi, rocm-smi) | TUI (light) | TUI (dark) | GUI |
+| :-: | :-: | :-: | :--: |
+| ![amdgpu_top Simple TUI](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/66c3fb7e-cb23-4a19-ab10-2bb9919a1a8a) | ![amdgpu_top TUI light](https://github.com/user-attachments/assets/006769be-cfdf-493e-bb0e-5e4389058a0a) | ![amdgpu_top TUI dark](https://github.com/user-attachments/assets/2e9afa33-12cc-48fd-981e-8c3c40af541b) | ![amdgpu_top GUI mode](https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/e3ff372e-86f9-4b82-b3c9-910b638a3c90) |
 
 ## Quick links
  * [Usage](#usage)
