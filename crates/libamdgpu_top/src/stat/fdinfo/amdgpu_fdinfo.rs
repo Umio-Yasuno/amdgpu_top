@@ -382,6 +382,7 @@ impl FdInfoStat {
     pub fn get_all_proc_usage(&mut self, proc_index: &[ProcInfo]) {
         self.proc_usage.clear();
         self.drm_client_ids.clear();
+        self.pid_map.clear();
         for pu in proc_index {
             self.get_proc_usage(pu);
         }
