@@ -1,6 +1,7 @@
 use std::fs;
 use std::io::Read;
 use std::collections::{HashMap, HashSet};
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 use super::ProcInfo;
 use crate::stat;
@@ -270,15 +271,15 @@ pub struct FdInfoStat {
 }
 
 impl FdInfoStat {
-    fn get_cpu_time(&mut self, pid: i32, name: &str) -> f32 {
+    fn get_cpu_time<P: AsRef<Path>>(&mut self, path: P) -> f32 {
         const OFFSET: usize = 3;
         // ref: https://manpages.org/proc/5
         const UTIME: usize = 14 - OFFSET;
         const HZ: f32 = 100.0;
-        let Ok(s) = std::fs::read_to_string(format!("/proc/{pid}/stat")) else { return 0.0 };
-        // for process names with spaces
-        let s = s.trim_start_matches(&format!("{pid} ({name}) "));
-        let mut split = s.split(' ').skip(UTIME);
+        let Ok(s) = std::fs::read_to_string(path) else { return 0.0 };
+        let Some(pos) = s.rfind(')') else { return 0.0 };
+        let Some(s) = s.get(pos+2..) else { return 0.0 };
+        let mut split = s.split_whitespace().skip(UTIME);
         let [utime, stime] = [split.next(), split.next()]
             .map(|t| t.and_then(|tt| tt.parse::<f32>().ok()).unwrap_or(0.0));
 
@@ -292,14 +293,20 @@ impl FdInfoStat {
         let mut stat = FdInfoUsage::default();
         let mut buf = String::with_capacity(2048);
         let mut ids_count = 0usize;
+        let mut path = PathBuf::with_capacity(24);
+
+        path.push("/proc");
+        path.push(pid.to_string());
+        path.push("fdinfo");
 
         for fd in &proc_info.fds {
             buf.clear();
 
             {
-                let path = format!("/proc/{pid}/fdinfo/{fd}");
+                path.push(fd.to_string());
                 let Ok(mut f) = fs::File::open(&path) else { continue };
                 if f.read_to_string(&mut buf).is_err() { continue }
+                path.pop(); // fd
             }
 
             let mut lines = buf.lines().skip_while(|l| !l.starts_with("drm-client-id"));
@@ -324,7 +331,11 @@ impl FdInfoStat {
         }
 
         let name = proc_info.name.clone();
-        let cur_cpu_time = self.get_cpu_time(pid, &name);
+        let cur_cpu_time = {
+            path.pop(); // fdinfo
+            path.push("stat");
+            self.get_cpu_time(&path)
+        };
 
         let usage = if let Some((pre_stat, pre_cpu_time)) = self.pre_proc_usage_map.get_mut(&pid) {
             // ns -> %
