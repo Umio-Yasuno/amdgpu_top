@@ -27,7 +27,7 @@ pub fn dump_xdna_device(title: &str) {
     );
 
     let mut xdna_fdinfo = xdna::XdnaFdInfoStat::default();
-    xdna_fdinfo.get_all_proc_usage(&xdna_proc_index);
+    xdna_fdinfo.update_proc_usage(&xdna_proc_index);
 
     println!("{:#?}", xdna_fdinfo.proc_usage);
 

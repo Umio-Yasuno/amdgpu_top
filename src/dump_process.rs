@@ -22,7 +22,7 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
 
         let mut fdinfo = FdInfoStat::default();
 
-        fdinfo.get_all_proc_usage(&proc_index);
+        fdinfo.update_proc_usage(&proc_index);
         fdinfo.sort_proc_usage(Default::default(), false);
 
         let total_vram_mib = memory_info.vram.total_heap_size >> 20;

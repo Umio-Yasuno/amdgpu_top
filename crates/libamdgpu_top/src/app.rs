@@ -281,8 +281,8 @@ impl AppAmdgpuTop {
                 self.stat.fdinfo.interval = fdinfo_interval;
                 self.stat.xdna_fdinfo.interval = fdinfo_interval;
 
-                self.stat.fdinfo.get_all_proc_usage(&proc_index);
-                self.stat.xdna_fdinfo.get_all_proc_usage(&xdna_proc_index);
+                self.stat.fdinfo.update_proc_usage(&proc_index);
+                self.stat.xdna_fdinfo.update_proc_usage(&xdna_proc_index);
 
                 self.buf_interval = Duration::ZERO;
             } else {

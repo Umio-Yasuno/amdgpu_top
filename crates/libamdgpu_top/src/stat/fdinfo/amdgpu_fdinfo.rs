@@ -260,7 +260,7 @@ pub struct ProcUsage {
 
 #[derive(Clone, Default)]
 pub struct FdInfoStat {
-    pub pid_map: HashMap<i32, (FdInfoUsage, f32)>,
+    pub pre_proc_usage_map: HashMap<i32, (FdInfoUsage, f32)>,
     pub drm_client_ids: HashSet<usize>,
     pub proc_usage: Vec<ProcUsage>,
     pub interval: Duration,
@@ -326,7 +326,7 @@ impl FdInfoStat {
         let name = proc_info.name.clone();
         let cur_cpu_time = self.get_cpu_time(pid, &name);
 
-        let usage = if let Some((pre_stat, pre_cpu_time)) = self.pid_map.get_mut(&pid) {
+        let usage = if let Some((pre_stat, pre_cpu_time)) = self.pre_proc_usage_map.get_mut(&pid) {
             // ns -> %
             let usage_per = stat.calc_usage(
                 pre_stat,
@@ -357,7 +357,7 @@ impl FdInfoStat {
                 stat.amd_requested_gtt,
             ];
 
-            self.pid_map.insert(pid, (stat, cur_cpu_time));
+            self.pre_proc_usage_map.insert(pid, (stat, cur_cpu_time));
 
             FdInfoUsage {
                 vram_usage,
@@ -379,7 +379,7 @@ impl FdInfoStat {
         });
     }
 
-    pub fn get_all_proc_usage(&mut self, proc_index: &[ProcInfo]) {
+    pub fn update_proc_usage(&mut self, proc_index: &[ProcInfo]) {
         self.proc_usage.clear();
         self.drm_client_ids.clear();
         for pu in proc_index {

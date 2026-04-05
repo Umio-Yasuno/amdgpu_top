@@ -17,7 +17,7 @@ pub struct XdnaProcUsage {
 
 #[derive(Clone, Default)]
 pub struct XdnaFdInfoStat {
-    pub pid_map: HashMap<i32, XdnaFdInfoUsage>,
+    pub pre_proc_usage_map: HashMap<i32, XdnaFdInfoUsage>,
     pub drm_client_ids: HashSet<usize>,
     pub proc_usage: Vec<XdnaProcUsage>,
     pub interval: Duration,
@@ -62,7 +62,7 @@ impl XdnaFdInfoStat {
             }
         }
 
-        let diff = if let Some(pre_stat) = self.pid_map.get_mut(&pid) {
+        let diff = if let Some(pre_stat) = self.pre_proc_usage_map.get_mut(&pid) {
             let tmp = stat.calc_usage(pre_stat, &self.interval);
             *pre_stat = stat;
 
@@ -75,7 +75,7 @@ impl XdnaFdInfoStat {
                 ..Default::default()
             };
 
-            self.pid_map.insert(pid, stat);
+            self.pre_proc_usage_map.insert(pid, stat);
 
             usage
         };
@@ -88,7 +88,7 @@ impl XdnaFdInfoStat {
         });
     }
 
-    pub fn get_all_proc_usage(&mut self, proc_index: &[ProcInfo]) {
+    pub fn update_proc_usage(&mut self, proc_index: &[ProcInfo]) {
         self.proc_usage.clear();
         self.drm_client_ids.clear();
         for pu in proc_index {
