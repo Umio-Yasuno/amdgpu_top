@@ -3,7 +3,7 @@ use cursive::views::{LinearLayout, TextView, Panel, ResizedView};
 use cursive::view::SizeConstraint;
 
 use libamdgpu_top::AMDGPU::{GPU_INFO, MetricsInfo};
-use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling};
+use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling, stat::FdInfoSortType};
 
 use crate::{ToggleOptions, view::*};
 
@@ -250,9 +250,15 @@ impl TuiApp {
     pub fn update(&mut self, flags: &ToggleOptions, sample: &Sampling) {
         self.app_amdgpu_top.update(sample.to_duration());
 
+        let fdinfo_sort = if flags.fdinfo_sort == FdInfoSortType::VRAM && self.app_amdgpu_top.device_info.is_apu {
+            FdInfoSortType::GTT
+        } else {
+            flags.fdinfo_sort
+        };
+
         let _ = self.layout.fdinfo_view.print_fdinfo(
             &mut self.app_amdgpu_top.stat.fdinfo,
-            flags.fdinfo_sort,
+            fdinfo_sort,
             flags.reverse_sort,
         );
 

@@ -86,11 +86,24 @@ pub fn run(
         .map(|(i, app)| SuspendedTuiApp::new(app, no_pc, app_len+i))
         .collect();
 
+    toggle_opt.indexes = vec_app.iter().map(|app| app.index).collect();
+    let selected_device_path = {
+        let first_app_device_path = vec_app.first().unwrap().app_amdgpu_top.device_path.clone();
+
+        if first_app_device_path.pci != selected_device_path.pci {
+            first_app_device_path
+        } else {
+            selected_device_path
+        }
+    };
+
     for app in vec_app.iter_mut() {
+        if app.app_amdgpu_top.device_path.pci == selected_device_path.pci {
+            toggle_opt.select_index = app.index;
+        }
+
         app.update(&toggle_opt, &Sampling::low());
     }
-
-    toggle_opt.indexes = vec_app.iter().map(|app| app.index).collect();
 
     {
         let mut device_paths: Vec<DevicePath> = device_path_list;
@@ -152,10 +165,6 @@ pub fn run(
                     .scroll_y(true)
                     .with_name(app.index.to_string())
             );
-
-            if app.app_amdgpu_top.device_path.pci == selected_device_path.pci {
-                toggle_opt.select_index = app.index;
-            }
         }
         if let Some(pos) = screen.find_layer_from_name(&toggle_opt.select_index.to_string()) {
             screen.move_to_front(pos);
