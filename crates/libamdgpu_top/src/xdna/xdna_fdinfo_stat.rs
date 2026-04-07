@@ -21,7 +21,6 @@ pub struct XdnaFdInfoStat {
     pub drm_client_ids: HashSet<usize>,
     pub proc_usage: Vec<XdnaProcUsage>,
     pub interval: Duration,
-    // pub cpu_time_map: HashMap<i32, f32>, // sec
 }
 
 impl XdnaFdInfoStat {
@@ -63,6 +62,7 @@ impl XdnaFdInfoStat {
         }
 
         if ids_count == 0 {
+            self.pre_proc_usage_map.remove(&pid);
             return;
         }
 

@@ -331,6 +331,7 @@ impl FdInfoStat {
         }
 
         if ids_count == 0 {
+            self.pre_proc_usage_map.remove(&pid);
             return;
         }
 
