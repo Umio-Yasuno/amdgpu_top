@@ -62,6 +62,10 @@ impl XdnaFdInfoStat {
             }
         }
 
+        if ids_count == 0 {
+            return;
+        }
+
         let diff = if let Some(pre_stat) = self.pre_proc_usage_map.get_mut(&pid) {
             let tmp = stat.calc_usage(pre_stat, &self.interval);
             *pre_stat = stat;

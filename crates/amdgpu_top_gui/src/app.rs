@@ -267,8 +267,6 @@ impl MyApp {
             let mib = fl!("mib");
 
             for pu in &self.buf_data.stat.fdinfo.proc_usage {
-                if pu.ids_count == 0 { continue; }
-
                 ui.label(pu.name.to_string());
                 ui.label(format!("{:>8}", pu.pid));
                 ui.label(if pu.is_kfd_process { " Y " } else { "" });
@@ -318,8 +316,6 @@ impl MyApp {
             let mib = fl!("mib");
 
             for pu in &self.buf_data.stat.xdna_fdinfo.proc_usage {
-                if pu.ids_count == 0 { continue; }
-
                 ui.label(pu.name.to_string());
                 ui.label(format!("{:>8}", pu.pid));
                 ui.label(format!("{:5} {mib}", pu.usage.total_memory >> 10));

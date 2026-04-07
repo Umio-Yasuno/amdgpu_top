@@ -330,6 +330,10 @@ impl FdInfoStat {
             }
         }
 
+        if ids_count == 0 {
+            return;
+        }
+
         let name = proc_info.name.clone();
         let cur_cpu_time = {
             path.pop(); // fdinfo
