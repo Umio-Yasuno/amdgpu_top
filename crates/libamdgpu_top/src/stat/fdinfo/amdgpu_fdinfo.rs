@@ -398,6 +398,7 @@ impl FdInfoStat {
     pub fn update_proc_usage(&mut self, proc_index: &[ProcInfo]) {
         self.proc_usage.clear();
         self.drm_client_ids.clear();
+        // TODO: memory leak, remove exited processes
         for pu in proc_index {
             self.get_proc_usage(pu);
         }
