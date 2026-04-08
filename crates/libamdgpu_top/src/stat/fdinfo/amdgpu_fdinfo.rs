@@ -297,6 +297,12 @@ impl FdInfoStat {
 
         path.push("/proc");
         path.push(pid.to_string());
+
+        if !path.exists() {
+            self.pre_proc_usage_map.remove(&pid);
+            return;
+        }
+
         path.push("fdinfo");
 
         for fd in &proc_info.fds {
@@ -328,11 +334,6 @@ impl FdInfoStat {
                     _ => {},
                 }
             }
-        }
-
-        if ids_count == 0 {
-            self.pre_proc_usage_map.remove(&pid);
-            return;
         }
 
         let name = proc_info.name.clone();

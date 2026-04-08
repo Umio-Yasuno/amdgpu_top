@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::Read;
 use std::time::Duration;
+use std::path::PathBuf;
 
 use super::XdnaFdInfoUsage;
 use crate::stat::ProcInfo;
@@ -30,14 +31,26 @@ impl XdnaFdInfoStat {
         let mut stat = XdnaFdInfoUsage::default();
         let mut buf = String::new();
         let mut ids_count = 0usize;
+        let mut path = PathBuf::with_capacity(24);
+
+        path.push("/proc");
+        path.push(pid.to_string());
+
+        if !path.exists() {
+            self.pre_proc_usage_map.remove(&pid);
+            return;
+        }
+
+        path.push("fdinfo");
 
         for fd in &proc_info.fds {
             buf.clear();
 
             {
-                let path = format!("/proc/{pid}/fdinfo/{fd}");
+                path.push(fd.to_string());
                 let Ok(mut f) = fs::File::open(&path) else { continue };
                 if f.read_to_string(&mut buf).is_err() { continue }
+                path.pop(); // fd
             }
 
             let mut lines = buf.lines().skip_while(|l| !l.starts_with("drm-client-id"));
@@ -59,11 +72,6 @@ impl XdnaFdInfoStat {
                     _ => {},
                 }
             }
-        }
-
-        if ids_count == 0 {
-            self.pre_proc_usage_map.remove(&pid);
-            return;
         }
 
         let diff = if let Some(pre_stat) = self.pre_proc_usage_map.get_mut(&pid) {
