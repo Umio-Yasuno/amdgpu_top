@@ -1,4 +1,5 @@
 use crate::egui::util::History;
+use egui_plot::PlotPoint;
 use crate::HISTORY_LENGTH;
 
 use libamdgpu_top::{AppDeviceInfo, ConnectorInfo, DevicePath, PCI};
@@ -13,55 +14,95 @@ use libamdgpu_top::stat::{
     gpu_metrics_util,
 };
 
+#[derive(Debug, Clone)]
+pub struct PlotHistory<T> {
+    pub value_history: History<T>,
+    pub vec_plotpoint: Vec<PlotPoint>,
+}
+
+impl<T: std::marker::Copy> PlotHistory<T> {
+    pub fn new() -> Self {
+        Self {
+            value_history: History::new(HISTORY_LENGTH, f32::INFINITY),
+            vec_plotpoint: Vec::new(),
+        }
+    }
+
+    pub fn add(&mut self, now: f64, value: T) {
+        self.value_history.add(now, value);
+    }
+
+    pub fn add_and_update<F>(&mut self, now: f64, value: T, data_func: F)
+    where
+        F: Fn(T) -> f64
+    {
+        self.add(now, value);
+        self.vec_plotpoint.clear();
+        self.vec_plotpoint.extend(
+            self.value_history
+                .iter()
+                .map(|(i, v)| PlotPoint::from([i, data_func(v)]))
+        );
+    }
+}
+
 #[derive(Clone)]
 pub struct HistoryData {
-    pub grbm_history: Vec<History<u8>>,
-    pub grbm2_history: Vec<History<u8>>,
-    pub vram_history: History<u64>,
-    pub gtt_history: History<u64>,
+    pub grbm_history: Vec<PlotHistory<u8>>,
+    pub grbm2_history: Vec<PlotHistory<u8>>,
+    pub vram_history: PlotHistory<u64>,
+    pub gtt_history: PlotHistory<u64>,
     pub fdinfo_history: History<FdInfoUsage>,
+    pub gfx_plot: Vec<PlotPoint>,
+    pub compute_plot: Vec<PlotPoint>,
+    pub dma_plot: Vec<PlotPoint>,
+    pub dec_plot: Vec<PlotPoint>,
+    pub enc_plot: Vec<PlotPoint>,
+    pub vcnu_plot: Vec<PlotPoint>,
+    pub vpe_plot: Vec<PlotPoint>,
     pub sensors_history: SensorsHistory,
-    pub pcie_bw_history: History<(u64, u64)>,
+    pub pcie_sent_bw_history: PlotHistory<u64>,
+    pub pcie_rec_bw_history: PlotHistory<u64>,
     pub throttling_history: History<ThrottleStatus>,
-    pub gfx_activity: History<u16>,
-    pub umc_activity: History<u16>,
-    pub media_activity: History<u16>,
-    pub avg_vclk: History<u16>,
-    pub avg_dclk: History<u16>,
-    pub avg_vclk1: History<u16>,
-    pub avg_dclk1: History<u16>,
-    pub cur_vclk: History<u16>,
-    pub cur_dclk: History<u16>,
-    pub cur_vclk1: History<u16>,
-    pub cur_dclk1: History<u16>,
-    pub core_temp: Option<Vec<History<u16>>>,
-    pub core_power_mw: Option<Vec<History<u16>>>,
+    pub gfx_activity: PlotHistory<u16>,
+    pub umc_activity: PlotHistory<u16>,
+    pub media_activity: PlotHistory<u16>,
+    pub avg_vclk: PlotHistory<u16>,
+    pub avg_dclk: PlotHistory<u16>,
+    pub avg_vclk1: PlotHistory<u16>,
+    pub avg_dclk1: PlotHistory<u16>,
+    pub cur_vclk: PlotHistory<u16>,
+    pub cur_dclk: PlotHistory<u16>,
+    pub cur_vclk1: PlotHistory<u16>,
+    pub cur_dclk1: PlotHistory<u16>,
+    pub core_temp: Option<Vec<PlotHistory<u16>>>,
+    pub core_power_mw: Option<Vec<PlotHistory<u16>>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct SensorsHistory {
-    pub sclk: History<u32>,
-    pub mclk: History<u32>,
-    pub fclk: History<u32>,
-    pub vddgfx: History<u32>,
-    pub vddnb: History<u32>,
-    pub edge_temp: History<i64>,
-    pub junction_temp: History<i64>,
-    pub memory_temp: History<i64>,
-    pub average_power: History<u32>,
-    pub input_power: History<u32>,
-    pub fan_rpm: History<u32>,
-    pub tctl: History<i64>,
-    pub core_freq: Vec<History<u32>>,
+    pub sclk: PlotHistory<u32>,
+    pub mclk: PlotHistory<u32>,
+    pub fclk: PlotHistory<u32>,
+    pub vddgfx: PlotHistory<u32>,
+    pub vddnb: PlotHistory<u32>,
+    pub edge_temp: PlotHistory<i64>,
+    pub junction_temp: PlotHistory<i64>,
+    pub memory_temp: PlotHistory<i64>,
+    pub average_power: PlotHistory<u32>,
+    pub input_power: PlotHistory<u32>,
+    pub fan_rpm: PlotHistory<u32>,
+    pub tctl: PlotHistory<i64>,
+    pub core_freq: Vec<PlotHistory<u32>>,
 }
 
 impl SensorsHistory {
     pub fn new() -> Self {
         let [sclk, mclk, fclk, vddgfx, vddnb, average_power, input_power, fan_rpm] = [0; 8]
-            .map(|_| History::new(HISTORY_LENGTH, f32::INFINITY));
+            .map(|_| PlotHistory::new());
         let [edge_temp, junction_temp, memory_temp, tctl] = [0;4]
-            .map(|_| History::new(HISTORY_LENGTH, f32::INFINITY));
-        let core_freq = vec![History::new(HISTORY_LENGTH, f32::INFINITY); 64];
+            .map(|_| PlotHistory::new());
+        let core_freq = vec![PlotHistory::new(); 64];
 
         Self { sclk, mclk, fclk, vddgfx, vddnb, edge_temp, junction_temp, memory_temp, average_power, input_power, fan_rpm, tctl, core_freq }
     }
@@ -78,7 +119,7 @@ impl SensorsHistory {
             (&mut self.fan_rpm, sensors.fan_rpm),
         ] {
             let Some(val) = val else { continue };
-            history.add(sec, val);
+            history.add_and_update(sec, val, |v| v as f64);
         }
 
         for (history, temp) in [
@@ -87,15 +128,15 @@ impl SensorsHistory {
             (&mut self.memory_temp, &sensors.memory_temp),
         ] {
             let Some(temp) = temp else { continue };
-            history.add(sec, temp.current);
+            history.add_and_update(sec, temp.current, |v| v as f64);
         }
 
         if let Some(tctl_val) = sensors.tctl {
-            self.tctl.add(sec, tctl_val / 1000);
+            self.tctl.add_and_update(sec, tctl_val / 1000, |v| v as f64);
         }
 
         for (freq, freq_history) in sensors.all_cpu_core_freq_info.iter().zip(self.core_freq.iter_mut()) {
-            freq_history.add(sec, freq.cur);
+            freq_history.add_and_update(sec, freq.cur, |v| v as f64);
         }
     }
 }
@@ -120,28 +161,29 @@ pub struct GuiAppData {
 
 impl GuiAppData {
     pub fn new(app: &AppAmdgpuTop) -> Self {
-        let vram_history = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let gtt_history = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let vram_history = PlotHistory::new();
+        let gtt_history = PlotHistory::new();
         let fdinfo_history = History::new(HISTORY_LENGTH, f32::INFINITY);
         let sensors_history = SensorsHistory::default();
-        let pcie_bw_history: History<(u64, u64)> = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let pcie_sent_bw_history = PlotHistory::new();
+        let pcie_rec_bw_history = PlotHistory::new();
         let throttling_history = History::new(HISTORY_LENGTH, f32::INFINITY);
         let [grbm_history, grbm2_history] = [&app.stat.grbm, &app.stat.grbm2].map(|pc| {
-            vec![History::<u8>::new(HISTORY_LENGTH, f32::INFINITY); pc.pc_index.len()]
+            vec![PlotHistory::new(); pc.pc_index.len()]
         });
-        let gfx_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let umc_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let media_activity = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let gfx_activity = PlotHistory::new();
+        let umc_activity = PlotHistory::new();
+        let media_activity = PlotHistory::new();
 
-        let avg_vclk = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let avg_dclk = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let avg_vclk1 = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let avg_dclk1 = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let avg_vclk = PlotHistory::new();
+        let avg_dclk = PlotHistory::new();
+        let avg_vclk1 = PlotHistory::new();
+        let avg_dclk1 = PlotHistory::new();
 
-        let cur_vclk = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let cur_dclk = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let cur_vclk1 = History::new(HISTORY_LENGTH, f32::INFINITY);
-        let cur_dclk1 = History::new(HISTORY_LENGTH, f32::INFINITY);
+        let cur_vclk = PlotHistory::new();
+        let cur_dclk = PlotHistory::new();
+        let cur_vclk1 = PlotHistory::new();
+        let cur_dclk1 = PlotHistory::new();
 
         let checked_core_temp = app.stat.metrics
             .as_ref()
@@ -151,9 +193,9 @@ impl GuiAppData {
             .and_then(|m| gpu_metrics_util::check_power_clock_array(m.get_average_core_power()));
 
         let core_temp =
-            checked_core_temp.map(|c| vec![History::<u16>::new(HISTORY_LENGTH, f32::INFINITY); c.len()]);
+            checked_core_temp.map(|c| vec![PlotHistory::new(); c.len()]);
         let core_power_mw =
-            checked_core_power_mw.map(|p| vec![History::<u16>::new(HISTORY_LENGTH, f32::INFINITY); p.len()]);
+            checked_core_power_mw.map(|p| vec![PlotHistory::new(); p.len()]);
 
         let xdna_device_path = app.xdna_device_path.clone();
         let xdna_fw_version = app.xdna_fw_version.clone();
@@ -169,8 +211,16 @@ impl GuiAppData {
                 vram_history,
                 gtt_history,
                 fdinfo_history,
+                gfx_plot: Vec::new(),
+                compute_plot: Vec::new(),
+                dma_plot: Vec::new(),
+                dec_plot: Vec::new(),
+                enc_plot: Vec::new(),
+                vcnu_plot: Vec::new(),
+                vpe_plot: Vec::new(),
                 sensors_history,
-                pcie_bw_history,
+                pcie_sent_bw_history,
+                pcie_rec_bw_history,
                 throttling_history,
                 gfx_activity,
                 umc_activity,
@@ -194,6 +244,7 @@ impl GuiAppData {
 
     pub fn update_history(&mut self, secs: f64, no_pc: bool) {
         let metrics = self.stat.metrics.as_ref();
+
         if let Some(arc_pcie_bw) = &self.stat.arc_pcie_bw {
             let lock = arc_pcie_bw.try_lock();
             if let Ok(pcie_bw) = lock
@@ -204,22 +255,25 @@ impl GuiAppData {
                 ) {
                     let sent = (sent * mps as u64) >> 20;
                     let rec = (rec * mps as u64) >> 20;
-                    self.history.pcie_bw_history.add(secs, (sent, rec));
+                    self.history.pcie_sent_bw_history.add_and_update(secs, sent, |v| v as f64);
+                    self.history.pcie_rec_bw_history.add_and_update(secs, rec, |v| v as f64);
                 }
         }
 
         if !no_pc {
-            for (pc, history) in [
+            for (pc, pc_history) in [
                 (&self.stat.grbm, &mut self.history.grbm_history),
                 (&self.stat.grbm2, &mut self.history.grbm2_history),
             ] {
-                for (pc_index, h) in pc.pc_index.iter().zip(history.iter_mut()) {
-                    h.add(secs, pc_index.usage);
+                for (pc_index, h) in pc.pc_index.iter().zip(pc_history.iter_mut()) {
+                    h.add_and_update(secs, pc_index.usage, |usage| usage as f64);
                 }
             }
         }
 
-        if let Some(thr_val) = metrics.and_then(|m| m.get_throttle_status_info()) {
+        if let Some(thr_val) = metrics.and_then(|m| m.get_throttle_status_info())
+            && !thr_val.is_zero()
+        {
             self.history.throttling_history.add(secs, thr_val);
         }
 
@@ -227,68 +281,72 @@ impl GuiAppData {
             self.history.sensors_history.add(secs, sensors);
         }
 
-        self.history.vram_history.add(secs, self.stat.vram_usage.0.vram.heap_usage);
-        self.history.gtt_history.add(secs, self.stat.vram_usage.0.gtt.heap_usage);
+        for (mem_history, value) in [
+            (&mut self.history.vram_history, self.stat.vram_usage.0.vram.heap_usage),
+            (&mut self.history.gtt_history, self.stat.vram_usage.0.gtt.heap_usage),
+        ] {
+            mem_history.add_and_update(secs, value, |usage| (usage >> 20) as f64);
+        }
+
         self.history.fdinfo_history.add(secs, self.stat.fdinfo.fold_fdinfo_usage().0);
 
-        if let Some(gfx) = self.stat.activity.gfx {
-            self.history.gfx_activity.add(secs, gfx);
-        }
-        if let Some(umc) = self.stat.activity.umc {
-            self.history.umc_activity.add(secs, umc);
-        }
-        if let Some(media) = self.stat.activity.media {
-            self.history.media_activity.add(secs, media);
-        }
-
-        if let Some(avg_vclk) = metrics.and_then(|m| m.get_average_vclk_frequency())
-            && avg_vclk != u16::MAX
-        {
-            self.history.avg_vclk.add(secs, avg_vclk);
-        }
-        if let Some(avg_dclk) = metrics.and_then(|m| m.get_average_dclk_frequency())
-            && avg_dclk != u16::MAX
-        {
-            self.history.avg_dclk.add(secs, avg_dclk);
-        }
-        if let Some(avg_vclk1) = metrics.and_then(|m| m.get_average_vclk1_frequency())
-            && avg_vclk1 != u16::MAX
-        {
-            self.history.avg_vclk1.add(secs, avg_vclk1);
-        }
-        if let Some(avg_dclk1) = metrics.and_then(|m| m.get_average_dclk1_frequency())
-            && avg_dclk1 != u16::MAX
-        {
-            self.history.avg_dclk1.add(secs, avg_dclk1);
+        for plot in [
+            &mut self.history.gfx_plot,
+            &mut self.history.compute_plot,
+            &mut self.history.dma_plot,
+            &mut self.history.dec_plot,
+            &mut self.history.enc_plot,
+            &mut self.history.vcnu_plot,
+            &mut self.history.vpe_plot,
+        ] {
+            plot.clear();
         }
 
-        if let Some(cur_vclk) = metrics.and_then(|m| m.get_current_vclk())
-            && cur_vclk != u16::MAX
-        {
-            self.history.cur_vclk.add(secs, cur_vclk);
+        for (i, usage) in self.history.fdinfo_history.iter() {
+            for (plot, engine_usage) in [
+                (&mut self.history.gfx_plot, usage.gfx),
+                (&mut self.history.compute_plot, usage.compute),
+                (&mut self.history.dma_plot, usage.dma),
+                (&mut self.history.dec_plot, usage.dec),
+                (&mut self.history.enc_plot, usage.enc),
+                (&mut self.history.vcnu_plot, usage.vcn_unified),
+                (&mut self.history.vpe_plot, usage.vpe),
+            ] {
+                plot.push(PlotPoint::from([i, engine_usage as f64]));
+            }
         }
-        if let Some(cur_dclk) = metrics.and_then(|m| m.get_current_dclk())
-            && cur_dclk != u16::MAX
-        {
-            self.history.cur_dclk.add(secs, cur_dclk);
+
+        for (activity_history, value) in [
+            (&mut self.history.gfx_activity, self.stat.activity.gfx),
+            (&mut self.history.umc_activity, self.stat.activity.umc),
+            (&mut self.history.media_activity, self.stat.activity.media),
+        ] {
+            let Some(value) = value else { continue };
+            activity_history.add_and_update(secs, value, |per| per as f64)
         }
-        if let Some(cur_vclk1) = metrics.and_then(|m| m.get_current_vclk1())
-            && cur_vclk1 != u16::MAX
-        {
-            self.history.cur_vclk1.add(secs, cur_vclk1);
-        }
-        if let Some(cur_dclk1) = metrics.and_then(|m| m.get_current_dclk1())
-            && cur_dclk1 != u16::MAX
-        {
-            self.history.cur_dclk1.add(secs, cur_dclk1);
+
+        for (clk_history, val) in [
+            (&mut self.history.avg_vclk, metrics.and_then(|m| m.get_average_vclk_frequency())),
+            (&mut self.history.avg_dclk, metrics.and_then(|m| m.get_average_dclk_frequency())),
+            (&mut self.history.avg_vclk1, metrics.and_then(|m| m.get_average_vclk1_frequency())),
+            (&mut self.history.avg_dclk1, metrics.and_then(|m| m.get_average_dclk1_frequency())),
+            (&mut self.history.cur_vclk, metrics.and_then(|m| m.get_current_vclk())),
+            (&mut self.history.cur_dclk, metrics.and_then(|m| m.get_current_dclk())),
+            (&mut self.history.cur_vclk1, metrics.and_then(|m| m.get_current_vclk1())),
+            (&mut self.history.cur_dclk1, metrics.and_then(|m| m.get_current_dclk1())),
+        ] {
+            let Some(val) = val else { continue };
+            if val == u16::MAX { continue }
+
+            clk_history.add_and_update(secs, val, |clk| clk as f64);
         }
 
         if let Some(ref mut history_core_temp) = self.history.core_temp
             && let Some(core_temp) = metrics
                 .and_then(|m| gpu_metrics_util::check_temp_array(m.get_temperature_core()))
             {
-                for (history, v) in history_core_temp.iter_mut().zip(core_temp.iter()) {
-                    history.add(secs, *v);
+                for (history, temp) in history_core_temp.iter_mut().zip(core_temp.iter()) {
+                    history.add_and_update(secs, *temp, |v| v as f64);
                 }
             }
 
@@ -296,8 +354,8 @@ impl GuiAppData {
             && let Some(core_power_mw) = metrics
                 .and_then(|m| gpu_metrics_util::check_power_clock_array(m.get_average_core_power()))
             {
-                for (history, v) in history_core_power_mw.iter_mut().zip(core_power_mw.iter()) {
-                    history.add(secs, *v);
+                for (history, power) in history_core_power_mw.iter_mut().zip(core_power_mw.iter()) {
+                    history.add_and_update(secs, *power, |v| v as f64);
                 }
             }
     }

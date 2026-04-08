@@ -1,8 +1,9 @@
 use std::sync::{Arc, Mutex, OnceLock};
 use eframe::wgpu::AdapterInfo;
-use crate::egui::{self, RichText, util::History};
+use crate::egui::{self, RichText};
 use crate::{BASE, MEDIUM, HISTORY_LENGTH};
 use crate::{GuiAppData, GuiGpuMetrics, util::*, fl};
+use crate::gui_app_data::PlotHistory;
 use crate::tab_gui::{MainTab, InfoTab};
 use egui_plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
 
@@ -75,7 +76,7 @@ impl MyApp {
         ui: &mut egui::Ui,
         pc_name: &str,
         pc: &PerfCounter,
-        history: &[History<u8>],
+        history: &[PlotHistory<u8>],
     ) {
         let label_fmt = |_s: &str, val: &PlotPoint| {
             format!("{:.1}s : {:.0}%", val.x, val.y)
@@ -89,8 +90,7 @@ impl MyApp {
                     ui.label(format!("{} {usage:3}%", &pc_index.name));
                     ui.end_row();
 
-                    let points: PlotPoints = history.iter()
-                        .map(|(i, val)| [i, val as f64]).collect();
+                    let points = history.vec_plotpoint.as_slice();
                     let line = Line::new(pc_index.name.clone(), points).fill(0.0);
 
                     default_plot(&pc_index.name)
@@ -115,12 +115,8 @@ impl MyApp {
             format!("{:.1}s : {name} {:.0} MiB", val.x, val.y)
         };
 
-        let [vram, gtt] = [
-            &self.buf_data.history.vram_history,
-            &self.buf_data.history.gtt_history,
-        ].map(|history| {
-            history.iter().map(|(i, usage)| [i, (usage >> 20) as f64]).collect()
-        });
+        let vram = self.buf_data.history.vram_history.vec_plotpoint.as_slice();
+        let gtt = self.buf_data.history.gtt_history.vec_plotpoint.as_slice();
 
         let max = std::cmp::max(
           self.buf_data.stat.vram_usage.0.vram.total_heap_size >> 20,
@@ -140,7 +136,7 @@ impl MyApp {
                     (vram, fl!("vram")),
                     (gtt, fl!("gtt"))
                 ] {
-                    plot_ui.line(Line::new(name, PlotPoints::new(usage)));
+                    plot_ui.line(Line::new(name, usage));
                 }
             });
     }
@@ -202,22 +198,22 @@ impl MyApp {
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| {
                 for (usage, name) in [
-                    (gfx, fl!("gfx")),
-                    (compute, fl!("compute")),
-                    (dma, fl!("dma")),
+                    (&self.buf_data.history.gfx_plot, fl!("gfx")),
+                    (&self.buf_data.history.compute_plot, fl!("compute")),
+                    (&self.buf_data.history.dma_plot, fl!("dma")),
                 ] {
-                    plot_ui.line(Line::new(name, PlotPoints::new(usage)));
+                    plot_ui.line(Line::new(name, usage.as_slice()));
                 }
 
                 if has_vcn_unified {
-                    plot_ui.line(Line::new(fl!("vcn_unified"), PlotPoints::new(vcnu)));
+                    plot_ui.line(Line::new(fl!("vcn_unified"), self.buf_data.history.vcnu_plot.as_slice()));
                 } else {
-                    plot_ui.line(Line::new(fl!("decode"), PlotPoints::new(dec)));
-                    plot_ui.line(Line::new(fl!("encode"), PlotPoints::new(enc)));
+                    plot_ui.line(Line::new(fl!("decode"), self.buf_data.history.dec_plot.as_slice()));
+                    plot_ui.line(Line::new(fl!("encode"), self.buf_data.history.enc_plot.as_slice()));
                 }
 
                 if has_vpe {
-                    plot_ui.line(Line::new(fl!("vpe"), PlotPoints::new(vpe)));
+                    plot_ui.line(Line::new(fl!("vpe"), self.buf_data.history.vpe_plot.as_slice()));
                 }
             });
     }
@@ -340,7 +336,9 @@ impl MyApp {
         ui.checkbox(&mut self.full_fdinfo_list, fl!("full_fdinfo_list"));
 
         if self.full_fdinfo_list || (proc_len != 0 && proc_len < 8) {
-            self.egui_fdinfo_list(ui, has_vcn_unified, has_vpe);
+            egui::ScrollArea::horizontal()
+                .auto_shrink([false, false])
+                .show(ui, |ui| self.egui_fdinfo_list(ui, has_vcn_unified, has_vpe));
         } else {
             egui::ScrollArea::both()
                 .auto_shrink([false, false])
@@ -438,8 +436,7 @@ impl MyApp {
                             format!("{:.1}s\n{:.0} {unit}", val.x, val.y)
                         }
                     };
-                    let points: PlotPoints = history.iter()
-                        .map(|(i, val)| [i, val as f64]).collect();
+                    let points = history.vec_plotpoint.as_slice();
                     let line = Line::new(label.to_string(), points).fill(0.0);
 
                     Plot::new(label)
@@ -527,10 +524,7 @@ impl MyApp {
                 ui.label(format!("{label} Temp. ({val:4} C)"));
                 ui.end_row();
 
-                let points: PlotPoints = temp_history
-                    .iter()
-                    .map(|(i, val)| [i, val as f64])
-                    .collect();
+                let points = temp_history.vec_plotpoint.as_slice();
                 let line = Line::new(label.to_string(), points).fill(0.0);
 
                 default_plot(label)
@@ -552,10 +546,7 @@ impl MyApp {
                 ui.label(format!("CPU Tctl ({:3} C)", tctl / 1000));
                 ui.end_row();
 
-                let points: PlotPoints = self.buf_data.history.sensors_history.tctl
-                    .iter()
-                    .map(|(i, val)| [i, val as f64])
-                    .collect();
+                let points = self.buf_data.history.sensors_history.tctl.vec_plotpoint.as_slice();
                 let line = Line::new(label.to_string(), points).fill(0.0);
 
                 default_plot(label)
@@ -582,19 +573,13 @@ impl MyApp {
         let fl_rec = fl!("received");
         let mib_s = fl!("mib_s");
 
-        let [sent, rec] = {
-            let [mut sent_history, mut rec_history] = [0; 2].map(|_| Vec::<[f64; 2]>::new());
+        let sent_history = &self.buf_data.history.pcie_sent_bw_history;
+        let rec_history = &self.buf_data.history.pcie_rec_bw_history;
 
-            for (i, (sent, rec)) in self.buf_data.history.pcie_bw_history.iter() {
-                sent_history.push([i, sent as f64]);
-                rec_history.push([i, rec as f64]);
-            }
-
-            [
-                Line::new(fl_sent.clone(), PlotPoints::new(sent_history)),
-                Line::new(fl_rec.clone(), PlotPoints::new(rec_history)),
-            ]
-        };
+        let [sent, rec] = [
+            Line::new(fl_sent.clone(), sent_history.vec_plotpoint.as_slice()),
+            Line::new(fl_rec.clone(), rec_history.vec_plotpoint.as_slice()),
+        ];
 
         default_plot("pcie_bw plot")
             .label_formatter(label_fmt)
@@ -607,7 +592,7 @@ impl MyApp {
                 plot_ui.line(rec);
             });
 
-        if let Some((sent, rec)) = self.buf_data.history.pcie_bw_history.latest() {
+        if let [Some(sent), Some(rec)] = [sent_history.value_history.latest(), rec_history.value_history.latest()] {
             ui.label(format!("{fl_sent}: {sent:5} {mib_s}, {fl_rec}: {rec:5} {mib_s}"));
         } else {
             ui.label(format!("{fl_sent}: _ {mib_s}, {fl_rec}: _ {mib_s}"));
@@ -633,12 +618,7 @@ impl MyApp {
             (fl_memory, &self.buf_data.history.umc_activity),
             (fl_media, &self.buf_data.history.media_activity),
         ].map(|(name, history)| {
-            let v: Vec<_> = history
-                .iter()
-                .map(|(i, act)| [i, act as f64])
-                .collect();
-
-            Line::new(name, PlotPoints::new(v))
+            Line::new(name, history.vec_plotpoint.as_slice())
         });
 
         default_plot("activity plot")
@@ -673,9 +653,9 @@ impl MyApp {
             ui.end_row();
         }
 
-        let all_core_freq: Vec<Vec<[f64; 2]>> = self.buf_data.history.sensors_history.core_freq
+        let all_core_freq: Vec<PlotPoints> = self.buf_data.history.sensors_history.core_freq
             .iter()
-            .map(|history| history.iter().map(|(i, mhz)| [i, mhz as f64]).collect())
+            .map(|history| PlotPoints::from(history.vec_plotpoint.as_slice()))
             .collect();
         let label_fmt = |name: &str, val: &PlotPoint| {
             format!("{:.1}s : {name} {:.0} MHz", val.x, val.y)
@@ -698,16 +678,16 @@ impl MyApp {
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
             .legend(Legend::default().position(Corner::LeftTop))
             .show(ui, |plot_ui| for (i, freq) in all_core_freq.into_iter().enumerate() {
-                plot_ui.line(Line::new(format!("Core{i}"), PlotPoints::new(freq)))
+                plot_ui.line(Line::new(format!("Core{i}"), freq))
             });
         ui.label(""); // \n
     }
 
     pub fn egui_core_power_plot(&self, ui: &mut egui::Ui) {
         let Some(core_power_mw) = &self.buf_data.history.core_power_mw else { return };
-        let all_core_power_mw: Vec<Vec<[f64; 2]>> = core_power_mw
+        let all_core_power_mw: Vec<PlotPoints> = core_power_mw
             .iter()
-            .map(|history| history.iter().map(|(i, mw)| [i, mw as f64]).collect())
+            .map(|history| PlotPoints::from(history.vec_plotpoint.as_slice()))
             .collect();
         let label_fmt = |name: &str, val: &PlotPoint| {
             format!("{:.1}s : {name} {:.0} mW", val.x, val.y)
@@ -722,16 +702,16 @@ impl MyApp {
             .height(*CPU_PLOT_HEIGHT.get().unwrap_or(&PLOT_HEIGHT))
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
             .legend(Legend::default().position(Corner::LeftTop))
-            .show(ui, |plot_ui| for (i, mw) in all_core_power_mw.into_iter().enumerate() {
-                plot_ui.line(Line::new(format!("Core{i}"), PlotPoints::new(mw)))
+            .show(ui, |plot_ui| for (i, power) in all_core_power_mw.into_iter().enumerate() {
+                plot_ui.line(Line::new(format!("Core{i}"), power))
             });
     }
 
     pub fn egui_core_temp_plot(&self, ui: &mut egui::Ui) {
         let Some(core_temp) = &self.buf_data.history.core_temp else { return };
-        let all_core_temp: Vec<Vec<[f64; 2]>> = core_temp
+        let all_core_temp: Vec<PlotPoints> = core_temp
             .iter()
-            .map(|history| history.iter().map(|(i, mw)| [i, mw as f64]).collect())
+            .map(|history| PlotPoints::from(history.vec_plotpoint.as_slice()))
             .collect();
         let label_fmt = |name: &str, val: &PlotPoint| {
             format!("{:.1}s : {name} {:.0} C", val.x, val.y)
@@ -746,8 +726,8 @@ impl MyApp {
             .height(*CPU_PLOT_HEIGHT.get().unwrap_or(&PLOT_HEIGHT))
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
             .legend(Legend::default().position(Corner::LeftTop))
-            .show(ui, |plot_ui| for (i, temp_c) in all_core_temp.into_iter().enumerate() {
-                plot_ui.line(Line::new(format!("Core{i}"), PlotPoints::new(temp_c)))
+            .show(ui, |plot_ui| for (i, temp) in all_core_temp.into_iter().enumerate() {
+                plot_ui.line(Line::new(format!("Core{i}"), temp))
             });
     }
 
@@ -761,7 +741,7 @@ impl MyApp {
             &self.buf_data.history.cur_dclk,
             &self.buf_data.history.cur_vclk1,
             &self.buf_data.history.cur_dclk1,
-        ].map(|history| history.iter().map(|(i, clk)| [i, clk as f64]).collect::<Vec<[f64; 2]>>());
+        ].map(|history| history.vec_plotpoint.as_slice());
         let label_fmt = |name: &str, val: &PlotPoint| {
             format!("{:.1}s : {name} {:.0} MHz", val.x, val.y)
         };
@@ -787,7 +767,7 @@ impl MyApp {
                     (cur_dclk1, "DCLK1 (Cur.)"),
                 ] {
                     if !clk.is_empty() {
-                        plot_ui.line(Line::new(name, PlotPoints::new(clk)))
+                        plot_ui.line(Line::new(name, clk))
                     }
                 }
             });

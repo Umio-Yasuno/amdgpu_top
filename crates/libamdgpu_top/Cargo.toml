@@ -15,6 +15,6 @@ libdrm_dynamic_loading = ["libdrm_amdgpu_sys/dynamic_loading"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libdrm_amdgpu_sys = { version = "0.8.12", git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs", default-features = false, rev = "5f4d7ea6d4d51b2536ac7605a4c325cac15bdfd9" }
+libdrm_amdgpu_sys = { version = "0.8.12", git = "https://github.com/Umio-Yasuno/libdrm-amdgpu-sys-rs", default-features = false, rev = "3c0de331294b7499ce9194c62e17bec990bbc9b2" }
 nix = { version = "0", default-features = false, features = [ "ioctl" ] }
 num_enum = { workspace = true }
