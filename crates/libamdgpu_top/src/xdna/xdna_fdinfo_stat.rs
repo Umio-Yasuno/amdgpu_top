@@ -103,6 +103,23 @@ impl XdnaFdInfoStat {
     pub fn update_proc_usage(&mut self, proc_index: &[ProcInfo]) {
         self.proc_usage.clear();
         self.drm_client_ids.clear();
+
+        // If a process disappears from proc_index while its usage remains in pre_proc_usage_map,
+        // it will persist in pre_proc_usage_map and needs to be removed
+        if proc_index.len() < self.pre_proc_usage_map.len() {
+            let mut path = PathBuf::with_capacity(16);
+            path.push("/proc");
+            self.pre_proc_usage_map.retain(|&pid, _| {
+                path.push(pid.to_string());
+
+                let b = path.exists();
+
+                path.pop(); // pid
+
+                b
+            });
+        }
+
         for pu in proc_index {
             self.get_proc_usage(pu);
         }
