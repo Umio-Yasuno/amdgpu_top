@@ -65,7 +65,7 @@ checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
 name = "amdgpu_top"
-version = "0.11.3"
+version = "0.11.4"
 dependencies = [
  "amdgpu_top_gui",
  "amdgpu_top_json",
@@ -77,7 +77,7 @@ dependencies = [
 
 [[package]]
 name = "amdgpu_top_gui"
-version = "0.11.3"
+version = "0.11.4"
 dependencies = [
  "eframe",
  "egui_plot",
@@ -91,7 +91,7 @@ dependencies = [
 
 [[package]]
 name = "amdgpu_top_json"
-version = "0.11.3"
+version = "0.11.4"
 dependencies = [
  "libamdgpu_top",
  "serde_json",
@@ -99,7 +99,7 @@ dependencies = [
 
 [[package]]
 name = "amdgpu_top_tui"
-version = "0.11.3"
+version = "0.11.4"
 dependencies = [
  "cursive",
  "libamdgpu_top",
@@ -2868,7 +2868,7 @@ checksum = "09edd9e8b54e49e587e4f6295a7d29c3ea94d469cb40ab8ca70b288248a81db2"
 
 [[package]]
 name = "libamdgpu_top"
-version = "0.11.3"
+version = "0.11.4"
 dependencies = [
  "libdrm_amdgpu_sys",
  "nix",
