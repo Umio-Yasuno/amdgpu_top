@@ -39,6 +39,33 @@
   </screenshots>
 
   <releases>
+    <release version="0.11.4" date="2026-04-23">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>update screenshots</li>
+          <li>update dependencies</li>
+        </ul>
+        <ul>
+          <li>lib: Fix compared values for fdinfo sorting</li>
+          <li>lib: remove duplicate read for power_cap</li>
+          <li>lib, xdna: rename pid_map to pre_proc_usage_map, rename get_all_proc_usage to update_proc_usage</li>
+          <li>lib: improve FdInfoStat::{get_cpu_time,get_proc_usage}</li>
+          <li>lib: do not push to list if ids_count equals 0</li>
+          <li>lib: remove pre proc usage from hashmap when ids_count is 0</li>
+          <li>lib, xdna: remove pre proc usage from the hashmap if the process has already exited</li>
+          <li>lib, xdna: fix memory leak of pre_proc_usage_map</li>
+        </ul>
+        <ul>
+          <li>tui: fix the case of selected device is suspended</li>
+          <li>tui: use GTT sort when VRAM sort type is selected on APU</li>
+        </ul>
+        <ul>
+          <li>gui: update plot data in data thread</li>
+        </ul>
+      </description>
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.11.4</url>
+    </release>
     <release version="0.11.3" date="2026-03-30">
       <description>
         <p>Changelog</p>
