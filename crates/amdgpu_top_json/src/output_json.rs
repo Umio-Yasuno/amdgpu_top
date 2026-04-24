@@ -364,7 +364,7 @@ impl OutputJson for GpuMetrics {
             ("average_soc_current", self.get_average_soc_current()),
             ("average_gfx_current", self.get_average_gfx_current()),
             ("average_dram_reads", self.get_average_dram_reads()),
-            ("average_dram_writes", self.get_average_dram_reads()),
+            ("average_dram_writes", self.get_average_dram_writes()),
             ("average_ipu_reads", self.get_average_ipu_reads()),
             ("average_ipu_writes", self.get_average_ipu_reads()),
             ("stapm_power_limit", self.get_stapm_power_limit()),
