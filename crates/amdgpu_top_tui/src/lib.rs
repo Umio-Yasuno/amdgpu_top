@@ -339,7 +339,7 @@ fn dark_mode() -> Theme {
                 use cursive::theme::PaletteColor::*;
                 use cursive::style::Color::Rgb;
 
-                palette[Background] = Rgb(0x7F, 0x8C, 0x8C);
+                palette[Background] = Rgb(0x35, 0x36, 0x37);
                 palette[View] = Rgb(0x25, 0x26, 0x27);
                 palette[Primary] = Rgb(0xFD, 0xFD, 0xFD);
                 palette[TitlePrimary] = Rgb(0x15, 0xA0, 0x85);
