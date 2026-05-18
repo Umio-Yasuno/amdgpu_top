@@ -2,7 +2,7 @@
 // ref: https://github.com/amd/xdna-driver/blob/main/src/driver/amdxdna/amdxdna_pci_drv.c
 
 use std::{fs, io};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::path::PathBuf;
 use crate::{DeviceType, DevicePath, PCI};
 
@@ -34,6 +34,7 @@ pub fn find_xdna_device() -> Option<DevicePath> {
         arc_proc_index,
         config_pm,
         device_type: DeviceType::AMDXDNA,
+        fd: OnceLock::new(),
     })
 }
 

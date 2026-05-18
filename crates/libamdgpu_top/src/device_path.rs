@@ -9,10 +9,11 @@ use crate::{
 };
 use crate::stat::ProcInfo;
 use std::path::PathBuf;
-use std::{fs, io};
+use std::fs;
 use std::fmt;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::os::unix::io::RawFd;
+use std::os::fd::OwnedFd;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DeviceType {
@@ -34,6 +35,7 @@ pub struct DevicePath {
     pub arc_proc_index: Arc<Mutex<Vec<ProcInfo>>>,
     pub config_pm: bool,
     pub device_type: DeviceType,
+    pub(crate) fd: OnceLock<Arc<OwnedFd>>,
 }
 
 impl DevicePath {
@@ -42,11 +44,7 @@ impl DevicePath {
             let libdrm_amdgpu = self.libdrm_amdgpu
                 .as_ref()
                 .expect("Error loading libdrm.so and libdrm_amdgpu.so");
-            let fd = self.get_fd().unwrap_or_else(|err| {
-                eprintln!("{err:#}");
-                eprintln!("{:#X?}", self);
-                panic!();
-            });
+            let fd = self.get_fd();
 
             libdrm_amdgpu.init_device_handle(fd)?
         };
@@ -54,22 +52,31 @@ impl DevicePath {
         Ok(amdgpu_dev)
     }
 
-    pub fn get_fd(&self) -> io::Result<RawFd> {
-        use std::os::unix::io::IntoRawFd;
+    pub fn get_fd(&self) -> RawFd {
+        use std::os::unix::io::AsRawFd;
 
-        let device = if self.is_amdgpu() {
-            &self.render
-        } else {
-            &self.accel
-        };
+        let owned_fd = self.fd.get_or_init(|| {
+            let device = if self.is_amdgpu() {
+                &self.render
+            } else {
+                &self.accel
+            };
 
-        // need write option for GUI context
-        // https://gitlab.freedesktop.org/mesa/mesa/-/issues/2424
-        fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(device)
-            .map(|f| f.into_raw_fd())
+            // need write option for GUI context
+            // https://gitlab.freedesktop.org/mesa/mesa/-/issues/2424
+            fs::OpenOptions::new()
+                .read(true)
+                .write(true)
+                .open(device)
+                .map(|f| Arc::new(OwnedFd::from(f)))
+                .unwrap_or_else(|err| {
+                    eprintln!("{err:#}");
+                    eprintln!("{:#X?}", self);
+                    panic!();
+                })
+        });
+
+        owned_fd.as_raw_fd()
     }
 
     pub fn get_device_path_list() -> Vec<Self> {
@@ -187,6 +194,7 @@ impl TryFrom<PCI::BUS_INFO> for DevicePath {
             arc_proc_index,
             config_pm,
             device_type: DeviceType::AMDGPU,
+            fd: OnceLock::new(),
         })
     }
 }

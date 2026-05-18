@@ -17,7 +17,7 @@ pub fn dump_xdna_device(title: &str) {
     }
 
     // for fdinfo test
-    let fd = xdna_device.get_fd().unwrap();
+    let fd = xdna_device.get_fd();
     let mut xdna_proc_index = xdna_device.arc_proc_index.lock().unwrap();
 
     stat::update_index_by_all_proc(

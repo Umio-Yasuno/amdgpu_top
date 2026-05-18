@@ -58,16 +58,13 @@ impl ModeProp {
 }
 
 pub fn connector_info(device_path: &DevicePath) -> Vec<ConnectorInfo> {
+    use std::os::fd::AsRawFd;
+
     let Some(libdrm) = device_path.libdrm_amdgpu.clone().map(LibDrm::from) else {
         return Vec::new();
     };
-    let fd = {
-        use std::os::fd::IntoRawFd;
-
-        let Some(f) = File::open(&device_path.card).ok() else { return Vec::new() };
-
-        f.into_raw_fd()
-    };
+    let Some(f) = File::open(&device_path.card).ok() else { return Vec::new() };
+    let fd = f.as_raw_fd();
 
     libdrm.set_all_client_caps(fd);
     let Some(drm_mode_res) = libdrm.get_drm_mode_resources(fd) else { return Vec::new() };
