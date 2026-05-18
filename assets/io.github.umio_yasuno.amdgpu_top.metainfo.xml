@@ -29,8 +29,12 @@
       <image>https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/66c3fb7e-cb23-4a19-ab10-2bb9919a1a8a</image>
     </screenshot>
     <screenshot type="default">
-      <caption>amdgpu_top TUI mode</caption>
-      <image>https://github.com/Umio-Yasuno/amdgpu_top/assets/53935716/859010d8-07b3-411c-b079-c4a837855d41</image>
+      <caption>amdgpu_top TUI light mode</caption>
+      <image>https://github.com/user-attachments/assets/006769be-cfdf-493e-bb0e-5e4389058a0a</image>
+    </screenshot>
+    <screenshot type="default">
+      <caption>amdgpu_top TUI dark mode</caption>
+      <image>https://github.com/user-attachments/assets/2e9afa33-12cc-48fd-981e-8c3c40af541b</image>
     </screenshot>
     <screenshot type="default">
       <caption>amdgpu_top GUI mode</caption>
@@ -39,6 +43,22 @@
   </screenshots>
 
   <releases>
+    <release version="0.11.5" date="2026-05-19">
+      <description>
+        <p>Changelog</p>
+        <ul>
+          <li>lib: update libdrm_amdgpu_sys</li>
+          <li>lib: fix fd leak #163</li>
+        </ul>
+        <ul>
+          <li>tui: change the background color in dark mode</li>
+        </ul>
+        <ul>
+          <li>json: fix average_dram_writes #161</li>
+        </ul>
+      </description>
+      <url>https://github.com/Umio-Yasuno/amdgpu_top/releases/tag/v0.11.5</url>
+    </release>
     <release version="0.11.4" date="2026-04-23">
       <description>
         <p>Changelog</p>
