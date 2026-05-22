@@ -12,7 +12,6 @@ use std::path::PathBuf;
 use std::fs;
 use std::fmt;
 use std::sync::{Arc, Mutex, OnceLock};
-use std::os::unix::io::RawFd;
 use std::os::fd::OwnedFd;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -46,15 +45,13 @@ impl DevicePath {
                 .expect("Error loading libdrm.so and libdrm_amdgpu.so");
             let fd = self.get_fd();
 
-            libdrm_amdgpu.init_device_handle(fd)?
+            libdrm_amdgpu.init_device_handle_with_fd(fd)?
         };
 
         Ok(amdgpu_dev)
     }
 
-    pub fn get_fd(&self) -> RawFd {
-        use std::os::unix::io::AsRawFd;
-
+    pub fn get_fd(&self) -> Arc<OwnedFd> {
         let owned_fd = self.fd.get_or_init(|| {
             let device = if self.is_amdgpu() {
                 &self.render
@@ -76,7 +73,7 @@ impl DevicePath {
                 })
         });
 
-        owned_fd.as_raw_fd()
+        owned_fd.clone()
     }
 
     pub fn get_device_path_list() -> Vec<Self> {

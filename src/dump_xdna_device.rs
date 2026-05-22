@@ -1,6 +1,7 @@
 // for debug
 
 use libamdgpu_top::{stat, xdna};
+use std::os::fd::AsRawFd;
 
 pub fn dump_xdna_device(title: &str) {
     println!("{title}\n");
@@ -17,7 +18,7 @@ pub fn dump_xdna_device(title: &str) {
     }
 
     // for fdinfo test
-    let fd = xdna_device.get_fd();
+    let fd = xdna_device.get_fd().as_raw_fd();
     let mut xdna_proc_index = xdna_device.arc_proc_index.lock().unwrap();
 
     stat::update_index_by_all_proc(
