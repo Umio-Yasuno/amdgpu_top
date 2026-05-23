@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, OnceLock};
 use eframe::wgpu::AdapterInfo;
 use crate::egui::{self, RichText};
 use crate::{BASE, MEDIUM, HISTORY_LENGTH};
@@ -28,9 +28,7 @@ static CPU_PLOT_HEIGHT: OnceLock<f32> = OnceLock::new();
 pub struct MyApp {
     pub fdinfo_sort: FdInfoSortType,
     pub reverse_sort: bool,
-    pub buf_data: GuiAppData,
-    pub buf_vec_data: Vec<GuiAppData>,
-    pub arc_data: Arc<Mutex<Vec<GuiAppData>>>,
+    pub buf_data: Arc<GuiAppData>,
     pub device_path_list: Vec<DevicePath>,
     pub show_sidepanel: bool,
     pub wgpu_adapter_info: Option<AdapterInfo>,
@@ -258,11 +256,12 @@ impl MyApp {
 
             ui.end_row();
 
-            self.buf_data.stat.fdinfo.sort_proc_usage(self.fdinfo_sort, self.reverse_sort);
+            let mut fdinfo = self.buf_data.stat.fdinfo.clone();
+            fdinfo.sort_proc_usage(self.fdinfo_sort, self.reverse_sort);
 
             let mib = fl!("mib");
 
-            for pu in &self.buf_data.stat.fdinfo.proc_usage {
+            for pu in &fdinfo.proc_usage {
                 ui.label(pu.name.to_string());
                 ui.label(format!("{:>8}", pu.pid));
                 ui.label(if pu.is_kfd_process { " Y " } else { "" });

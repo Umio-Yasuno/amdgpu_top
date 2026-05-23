@@ -21,6 +21,7 @@ i18n-embed = { version = "0", features = ["fluent-system", "desktop-requester"] 
 i18n-embed-fl = "0"
 rust-embed = { version = "8", features = ["debug-embed"] }
 num_enum = { workspace = true }
+arc-swap = "1.9.1"
 
 [lints.clippy]
 upper_case_acronyms = "allow"

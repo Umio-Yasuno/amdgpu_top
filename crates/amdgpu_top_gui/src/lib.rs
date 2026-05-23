@@ -1,10 +1,11 @@
-use std::sync::{Arc, Mutex, LazyLock};
+use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 use std::ops::Range;
 use eframe::egui;
 use egui::{FontFamily, FontId, Theme, RichText, ViewportBuilder};
 use egui::viewport::ViewportCommand;
 use i18n_embed::DesktopLanguageRequester;
+use arc_swap::ArcSwap;
 
 use libamdgpu_top::{
     AMDGPU::{
@@ -78,6 +79,10 @@ static INFO_TAB_ID: LazyLock<egui::Id> = LazyLock::new(|| {
     egui::Id::new("info_tab")
 });
 
+static SHARE_DATA: LazyLock<ArcSwap<Vec<Arc<GuiAppData>>>> = LazyLock::new(|| {
+    ArcSwap::new(Arc::new(Vec::new()))
+});
+
 pub fn run(
     app_name: &str,
     title_with_version: &str,
@@ -133,7 +138,12 @@ pub fn run(
         selected_pci_bus
     };
 
-    let data = vec_data
+    let vec_arc_data: Vec<Arc<_>> = vec_data
+        .iter()
+        .map(|data| Arc::new(data.clone()))
+        .collect();
+
+    let arc_data = vec_arc_data
         .iter()
         .find(|&d| selected_pci_bus == d.pci_bus)
         .unwrap_or_else(|| {
@@ -142,16 +152,16 @@ pub fn run(
         })
         .clone();
 
+    SHARE_DATA.store(Arc::new(vec_arc_data.clone()));
+
     let mut gui_app = MyApp {
-        fdinfo_sort: if data.device_info.is_apu {
+        fdinfo_sort: if arc_data.device_info.is_apu {
             FdInfoSortType::GTT
         } else {
             Default::default()
         },
         reverse_sort: false,
-        buf_data: data,
-        buf_vec_data: vec_data.clone(),
-        arc_data: Arc::new(Mutex::new(vec_data.clone())),
+        buf_data: arc_data,
         device_path_list,
         show_sidepanel: true,
         wgpu_adapter_info: None,
@@ -186,7 +196,6 @@ pub fn run(
 
     {
         let now = std::time::Instant::now();
-        let share_data = gui_app.arc_data.clone();
 
         std::thread::spawn(move || loop {
             if !no_pc {
@@ -216,10 +225,12 @@ pub fn run(
             }
 
             {
-                let lock = share_data.lock();
-                if let Ok(mut share_data) = lock {
-                    share_data.clone_from(&vec_data);
-                }
+                let vec_arc_data = vec_data
+                    .iter()
+                    .map(|data| Arc::new(data.clone()))
+                    .collect();
+
+                SHARE_DATA.store(Arc::new(vec_arc_data));
             }
 
             suspended_devices.retain(|dev| {
@@ -297,7 +308,7 @@ pub fn run(
 
                 if let Some(s) = s
                     && let Ok(pci_bus) = s.parse::<PCI::BUS_INFO>()
-                    && gui_app.buf_vec_data.iter().any(|d| pci_bus == d.pci_bus)
+                    && vec_arc_data.iter().any(|d| pci_bus == d.pci_bus)
                 {
                     gui_app.selected_pci_bus = pci_bus;
                 }
@@ -370,7 +381,7 @@ pub fn run(
 }
 
 impl MyApp {
-    fn egui_device_list(&mut self, ui: &mut egui::Ui) {
+    fn egui_device_list(&mut self, ui: &mut egui::Ui, share_data: Arc<Vec<Arc<GuiAppData>>>) {
         let selected_text = self.buf_data.device_info.menu_entry();
 
         egui::ComboBox::from_id_salt("Device List")
@@ -381,7 +392,7 @@ impl MyApp {
                         false,
                         egui::widgets::Button::selectable(true, &selected_text),
                     );
-                } else if self.buf_vec_data.iter().any(|data| data.pci_bus == device.pci) {
+                } else if share_data.iter().any(|data| data.pci_bus == device.pci) {
                     ui.selectable_value(
                         &mut self.selected_pci_bus,
                         device.pci,
@@ -536,15 +547,10 @@ impl MyApp {
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        if !self.pause {
-            {
-                let lock = self.arc_data.try_lock();
-                if let Ok(vec_data) = lock {
-                    self.buf_vec_data.clone_from(&vec_data);
-                }
-            }
+        let share_data = SHARE_DATA.load();
 
-            self.buf_data = self.buf_vec_data
+        if !self.pause {
+            self.buf_data = share_data
                 .iter()
                 .find(|&d| self.selected_pci_bus == d.pci_bus)
                 .unwrap_or_else(|| {
@@ -581,7 +587,7 @@ impl eframe::App for MyApp {
                 {
                     let pre_pci_bus = self.selected_pci_bus;
 
-                    self.egui_device_list(ui);
+                    self.egui_device_list(ui, share_data.clone());
 
                     if pre_pci_bus != self.selected_pci_bus {
                         let cur_pci_bus = self.selected_pci_bus.to_string();
