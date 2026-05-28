@@ -163,7 +163,11 @@ impl AppAmdgpuTop {
         let xdna_fdinfo = XdnaFdInfoStat::default();
 
         let xdna_device_path = if device_info.has_npu {
-            xdna::find_xdna_device()
+            xdna::find_xdna_device().and_then(|v| if v.check_xdna_fdinfo_support() {
+                Some(v)
+            } else {
+                None
+            })
         } else {
             None
         };

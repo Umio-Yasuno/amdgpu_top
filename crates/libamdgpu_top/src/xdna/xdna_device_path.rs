@@ -73,4 +73,21 @@ impl DevicePath {
                 s
             })
     }
+
+    pub fn check_xdna_fdinfo_support(&self) -> bool {
+        use std::os::fd::AsRawFd;
+
+        let owned_fd = self.get_fd();
+        let fd = owned_fd.as_raw_fd();
+        let Ok(s) = fs::read_to_string(format!("/proc/self/fdinfo/{fd}")) else { return false };
+        let lines = s.lines();
+
+        for l in lines {
+            if l.starts_with("drm-driver") {
+                return true;
+            }
+        }
+
+        false
+    }
 }
