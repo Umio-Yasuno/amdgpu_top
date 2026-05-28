@@ -490,7 +490,7 @@ pub trait GuiXdnaInfo {
 impl GuiXdnaInfo for GuiAppData {
     fn xdna_info(&self, ui: &mut egui::Ui) {
         egui::Grid::new("xdna_npu_info").show(ui, |ui| {
-            let Some(ref xdna_device_path) = self.xdna_device_path else { return };
+            let Some(xdna_device_path) = &self.xdna_device_path else { return };
 
             ui.label(fl!("pci_bus"));
             ui.label(xdna_device_path.pci.to_string());
@@ -500,9 +500,19 @@ impl GuiXdnaInfo for GuiAppData {
             ui.label(xdna_device_path.device_name.clone());
             ui.end_row();
 
-            if let Some(ref ver) = self.xdna_fw_version {
+            if let Some(ver) = &self.xdna_fw_version {
                 ui.label(fl!("fw_version"));
                 ui.label(ver.clone());
+                ui.end_row();
+            }
+
+            if let Some(res_info) = &self.xdna_resouce_info {
+                ui.label(fl!("xdna_max_clock"));
+                ui.label(format!("{} MHz", res_info.npu_clk_max));
+                ui.end_row();
+
+                ui.label(fl!("xdna_max_tops"));
+                ui.label(format!("{} TOPS", res_info.npu_tops_max));
                 ui.end_row();
             }
         });

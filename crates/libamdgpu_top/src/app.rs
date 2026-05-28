@@ -2,9 +2,10 @@ use crate::drmVersion;
 use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo, RasBlock, RasErrorCount};
 use crate::{AppDeviceInfo, DevicePath, stat, xdna, VramUsage};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
-use xdna::XdnaFdInfoStat;
+use xdna::{amdxdna_drm_get_resource_info, XdnaFdInfoStat};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+use std::os::fd::AsRawFd;
 
 pub struct AppAmdgpuTop {
     amdgpu_dev: DeviceHandle,
@@ -12,6 +13,7 @@ pub struct AppAmdgpuTop {
     pub device_path: DevicePath,
     pub xdna_device_path: Option<DevicePath>,
     pub xdna_fw_version: Option<String>,
+    pub xdna_resouce_info: Option<amdxdna_drm_get_resource_info>,
     pub stat: AppAmdgpuTopStat,
     buf_interval: Duration,
     no_drop_device_handle: bool,
@@ -172,6 +174,10 @@ impl AppAmdgpuTop {
             None
         };
         let xdna_fw_version = xdna_device_path.as_ref().and_then(|d| d.get_xdna_fw_version().ok());
+        let xdna_resouce_info = xdna_device_path.as_ref().and_then(|d| {
+            let fd = d.get_fd().as_raw_fd();
+            xdna::get_xdna_resource_info(fd).ok()
+        });
 
         let arc_proc_index = device_path.arc_proc_index.clone();
         let arc_xdna_proc_index = xdna_device_path
@@ -206,6 +212,7 @@ impl AppAmdgpuTop {
             device_path,
             xdna_device_path,
             xdna_fw_version,
+            xdna_resouce_info,
             stat: AppAmdgpuTopStat {
                 grbm,
                 grbm2,

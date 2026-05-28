@@ -13,6 +13,7 @@ use libamdgpu_top::stat::{
     Sensors,
     gpu_metrics_util,
 };
+use libamdgpu_top::xdna;
 
 #[derive(Debug, Clone)]
 pub struct PlotHistory<T> {
@@ -157,6 +158,7 @@ pub struct GuiAppData {
     pub vec_connector_info: Vec<ConnectorInfo>,
     pub xdna_device_path: Option<DevicePath>,
     pub xdna_fw_version: Option<String>,
+    pub xdna_resouce_info: Option<xdna::amdxdna_drm_get_resource_info>,
 }
 
 impl GuiAppData {
@@ -199,6 +201,7 @@ impl GuiAppData {
 
         let xdna_device_path = app.xdna_device_path.clone();
         let xdna_fw_version = app.xdna_fw_version.clone();
+        let xdna_resouce_info = app.xdna_resouce_info.clone();
 
         Self {
             stat: app.stat.clone(),
@@ -239,6 +242,7 @@ impl GuiAppData {
             vec_connector_info: libamdgpu_top::connector_info(&app.device_path),
             xdna_device_path,
             xdna_fw_version,
+            xdna_resouce_info,
         }
     }
 

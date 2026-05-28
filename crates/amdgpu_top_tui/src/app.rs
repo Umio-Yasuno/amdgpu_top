@@ -4,6 +4,7 @@ use cursive::view::SizeConstraint;
 
 use libamdgpu_top::AMDGPU::{GPU_INFO, MetricsInfo};
 use libamdgpu_top::{AppDeviceInfo, DevicePath, Sampling, stat::FdInfoSortType};
+use libamdgpu_top::xdna;
 
 use crate::{ToggleOptions, view::*};
 
@@ -79,6 +80,7 @@ impl AppLayout {
         info_bar: String,
         stat: &AppAmdgpuTopStat,
         xdna_device_path: &Option<DevicePath>,
+        xdna_res_info: &Option<xdna::amdxdna_drm_get_resource_info>,
     ) -> ResizedView<LinearLayout> {
         let is_wide_term = termsize::get().map(|s| s.cols >= WIDE_TERM_COLS).unwrap_or_default();
         let mut layout = LinearLayout::vertical()
@@ -166,7 +168,16 @@ impl AppLayout {
         }
 
         if let Some(xdna_device_path) = xdna_device_path {
-            let title = format!("XDNA fdinfo - {}", xdna_device_path.device_name);
+            let title = if let Some(res_info) = xdna_res_info {
+                format!(
+                    "XDNA fdinfo - {} / {} MHz / {} TOPS",
+                    xdna_device_path.device_name,
+                    res_info.npu_clk_max,
+                    res_info.npu_tops_max,
+                )
+            } else {
+                format!("XDNA fdinfo - {}", xdna_device_path.device_name)
+            };
             layout.add_child(self.xdna_fdinfo_view.text.resized_panel(&title, self.index));
         }
 
@@ -244,6 +255,7 @@ impl TuiApp {
             self.app_amdgpu_top.device_info.info_bar(),
             &self.app_amdgpu_top.stat,
             &self.app_amdgpu_top.xdna_device_path,
+            &self.app_amdgpu_top.xdna_resouce_info,
         )
     }
 
