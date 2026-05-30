@@ -32,11 +32,8 @@ pub fn dump_xdna_device(title: &str) {
 
     println!("{:#?}", xdna_fdinfo.proc_usage);
 
-    if let Ok(s) = std::fs::read_to_string(format!("/proc/self/fdinfo/{fd}")) {
-        if !s.contains("drm-engine-npu-amdxdna:") {
-            println!("This amdxdna driver version does not support DRM client usage stats.");
-        }
-        println!("fdinfo (raw):\n{s}");
+    if !xdna_device.check_xdna_fdinfo_support() {
+        println!("This amdxdna driver version does not support DRM client usage stats.");
     }
 
     println!("{:#?}", xdna::get_xdna_clock_metadata(fd));
