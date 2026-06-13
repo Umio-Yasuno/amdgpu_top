@@ -4013,5 +4013,10 @@
   },
   "suspended_devices": [],
   "suspended_devices_len": 0,
+  "timestamp": {
+    "millis": 1749804000000,
+    "secs": 1749804000,
+    "unit": "Unix epoch (UTC)"
+  },
   "title": "amdgpu_top v0.11.2 (git-bde2a21) (debug build)"
 }

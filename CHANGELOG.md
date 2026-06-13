@@ -1,4 +1,8 @@
 # Changelog
+## Unreleased
+### JSON
+ * add `timestamp` (Unix epoch, UTC) to the JSON output for logging
+
 ## 0.11.0 (2025-09-02)
  * fix Appstream metainfo by @malfisya
  * fix the process to get gpu_metrics when resuming from suspended state

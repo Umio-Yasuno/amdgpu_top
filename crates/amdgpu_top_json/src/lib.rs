@@ -3,7 +3,7 @@
 use libamdgpu_top::{DevicePath, GetNpuMetrics, stat};
 use libamdgpu_top::app::*;
 use serde_json::{json, Value};
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use std::path::PathBuf;
 use std::io::Write;
 
@@ -29,6 +29,17 @@ pub fn amdgpu_top_version() -> Value {
         "major": env!("CARGO_PKG_VERSION_MAJOR").parse::<u32>().unwrap_or(0),
         "minor": env!("CARGO_PKG_VERSION_MINOR").parse::<u32>().unwrap_or(0),
         "patch": env!("CARGO_PKG_VERSION_PATCH").parse::<u32>().unwrap_or(0),
+    })
+}
+
+// Unix epoch time (UTC) of the current sample, useful for logging.
+fn unix_timestamp() -> Value {
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default();
+
+    json!({
+        "secs": now.as_secs(),
+        "millis": now.as_millis(),
+        "unit": "Unix epoch (UTC)",
     })
 }
 
@@ -156,6 +167,7 @@ impl JsonApp {
             .collect();
 
         json!({
+            "timestamp": unix_timestamp(),
             "period": {
                 "duration": self.duration_time.as_millis(),
                 "unit": "ms",
