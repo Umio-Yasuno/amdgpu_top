@@ -35,7 +35,7 @@ impl SmiApp {
             name_len = GPU_NAME_LEN,
             pci = " PCI Bus",
             vram = "VRAM Usage",
-            gtt = " GTT Usage",
+            gtt = " GTT (RAM) Usage",
             pad = "",
             fan = "Fan",
             thr = "Throttle_Status",
