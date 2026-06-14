@@ -3,7 +3,7 @@
   "amdgpu_top_version": {
     "major": 0,
     "minor": 11,
-    "patch": 2
+    "patch": 5
   },
   "devices": [
     {
@@ -22,7 +22,7 @@
         },
         "Graphics Pipe": {
           "unit": "%",
-          "value": 100
+          "value": 0
         },
         "Primitive Assembly": {
           "unit": "%",
@@ -34,1536 +34,11 @@
         },
         "Shader Processor Interpolator": {
           "unit": "%",
-          "value": 97
+          "value": 0
         },
         "Texture Pipe": {
           "unit": "%",
-          "value": 96
-        }
-      },
-      "GRBM2": {
-        "Command Processor -  Compute": {
-          "unit": "%",
-          "value": 100
-        },
-        "Command Processor -  Fetcher": {
-          "unit": "%",
-          "value": 100
-        },
-        "Command Processor - Graphics": {
-          "unit": "%",
           "value": 0
-        },
-        "Efficiency Arbiter": {
-          "unit": "%",
-          "value": 96
-        },
-        "RunList Controller": {
-          "unit": "%",
-          "value": 3
-        },
-        "SDMA": {
-          "unit": "%",
-          "value": 0
-        },
-        "Texture Cache per Pipe": {
-          "unit": "%",
-          "value": 97
-        },
-        "Unified Translation Cache Level-2": {
-          "unit": "%",
-          "value": 0
-        }
-      },
-      "Info": {
-        "ASIC Name": "GFX1200",
-        "CU per Shader Array": {
-          "max": 8,
-          "min": 8
-        },
-        "Chip Class": "GFX12",
-        "DeviceID": 30096,
-        "DeviceName": "AMD Radeon RX 9060 XT",
-        "DevicePath": {
-          "DeviceID": 30096,
-          "DeviceName": "AMD Radeon RX 9060 XT",
-          "RevisionID": 192,
-          "card": "/dev/dri/card0",
-          "pci": "0000:03:00.0",
-          "render": "/dev/dri/renderD128"
-        },
-        "Firmware info": [
-          {
-            "feature": 29,
-            "fw_type": "GFX_ME",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 2930
-          },
-          {
-            "feature": 29,
-            "fw_type": "GFX_PFP",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 3010
-          },
-          {
-            "feature": 1000,
-            "fw_type": "GFX_RLC",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 12444000
-          },
-          {
-            "feature": 29,
-            "fw_type": "GFX_MEC",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 3250
-          },
-          {
-            "feature": 0,
-            "fw_type": "SMC",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 6702592
-          },
-          {
-            "feature": 813272726,
-            "fw_type": "SDMA",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 7966358
-          },
-          {
-            "feature": 3870477,
-            "fw_type": "SOS",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 3870477
-          },
-          {
-            "feature": 553648393,
-            "fw_type": "ASD",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 553648393
-          },
-          {
-            "feature": 0,
-            "fw_type": "VCN",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 152092687
-          },
-          {
-            "feature": 0,
-            "fw_type": "DMCUB",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 167774208
-          },
-          {
-            "feature": 1,
-            "fw_type": "MES_KIQ",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 137
-          },
-          {
-            "feature": 1,
-            "fw_type": "MES",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 137
-          },
-          {
-            "feature": 0,
-            "fw_type": "IMU",
-            "index": 0,
-            "ip_instance": 0,
-            "version": 204219648
-          }
-        ],
-        "GL1 Cache per Shader Array": 262144,
-        "GPU Clock": {
-          "max": 2780,
-          "min": 500
-        },
-        "GPU Family": "GC 12.0.0",
-        "GPU Type": "dGPU",
-        "GTT Size": 16360906752,
-        "GTT Usage Size": 36769792,
-        "Hardware IP info": [
-          {
-            "ip_count": 1,
-            "ip_type": "GFX",
-            "major": 12,
-            "minor": 0,
-            "queues": 1
-          },
-          {
-            "ip_count": 1,
-            "ip_type": "COMPUTE",
-            "major": 12,
-            "minor": 0,
-            "queues": 4
-          },
-          {
-            "ip_count": 2,
-            "ip_type": "DMA",
-            "major": 7,
-            "minor": 0,
-            "queues": 2
-          },
-          {
-            "ip_count": 1,
-            "ip_type": "VCN_DEC",
-            "major": 5,
-            "minor": 0,
-            "queues": 0
-          },
-          {
-            "ip_count": 1,
-            "ip_type": "VCN_ENC",
-            "major": 5,
-            "minor": 0,
-            "queues": 1
-          },
-          {
-            "ip_count": 1,
-            "ip_type": "VCN_JPEG",
-            "major": 5,
-            "minor": 0,
-            "queues": 1
-          }
-        ],
-        "IP Discovery table": [
-          {
-            "die_id": 0,
-            "ip_hw_ids": [
-              {
-                "hw_id": "MP1",
-                "instances": [
-                  {
-                    "base_address": [
-                      90112,
-                      90624,
-                      118272,
-                      14417920,
-                      14680064,
-                      14942208,
-                      15204352,
-                      15466496,
-                      15728640,
-                      37749760,
-                      38009856,
-                      38065152,
-                      52428800,
-                      52690944,
-                      52953088
-                    ],
-                    "harvest": 0,
-                    "hw_id": "MP1",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 15,
-                    "num_instance": 0,
-                    "revision": 2
-                  }
-                ]
-              },
-              {
-                "hw_id": "THM",
-                "instances": [
-                  {
-                    "base_address": [
-                      91648,
-                      37751808
-                    ],
-                    "harvest": 0,
-                    "hw_id": "THM",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 2
-                  }
-                ]
-              },
-              {
-                "hw_id": "SMUIO",
-                "instances": [
-                  {
-                    "base_address": [
-                      92160,
-                      92672,
-                      37752832,
-                      54788096
-                    ],
-                    "harvest": 0,
-                    "hw_id": "SMUIO",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 4,
-                    "num_instance": 0,
-                    "revision": 2
-                  }
-                ]
-              },
-              {
-                "hw_id": "FUSE",
-                "instances": [
-                  {
-                    "base_address": [
-                      95232,
-                      37753856
-                    ],
-                    "harvest": 0,
-                    "hw_id": "FUSE",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 2
-                  }
-                ]
-              },
-              {
-                "hw_id": "CLKA",
-                "instances": [
-                  {
-                    "base_address": [
-                      93184,
-                      37754880
-                    ],
-                    "harvest": 0,
-                    "hw_id": "CLKA",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 2
-                  },
-                  {
-                    "base_address": [
-                      93696,
-                      37755904
-                    ],
-                    "harvest": 0,
-                    "hw_id": "CLKA",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 1,
-                    "revision": 2
-                  },
-                  {
-                    "base_address": [
-                      94208,
-                      37756928
-                    ],
-                    "harvest": 0,
-                    "hw_id": "CLKA",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 2,
-                    "revision": 2
-                  },
-                  {
-                    "base_address": [
-                      94720,
-                      37757952
-                    ],
-                    "harvest": 0,
-                    "hw_id": "CLKA",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 3,
-                    "revision": 2
-                  },
-                  {
-                    "base_address": [
-                      110592,
-                      37935104
-                    ],
-                    "harvest": 0,
-                    "hw_id": "CLKA",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 4,
-                    "revision": 2
-                  },
-                  {
-                    "base_address": [
-                      111104,
-                      37936128
-                    ],
-                    "harvest": 0,
-                    "hw_id": "CLKA",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 5,
-                    "revision": 2
-                  },
-                  {
-                    "base_address": [
-                      111616,
-                      37937152
-                    ],
-                    "harvest": 0,
-                    "hw_id": "CLKA",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 6,
-                    "revision": 2
-                  },
-                  {
-                    "base_address": [
-                      112128,
-                      37938176
-                    ],
-                    "harvest": 0,
-                    "hw_id": "CLKA",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 7,
-                    "revision": 2
-                  },
-                  {
-                    "base_address": [
-                      113664,
-                      37960704
-                    ],
-                    "harvest": 0,
-                    "hw_id": "CLKA",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 8,
-                    "revision": 2
-                  }
-                ]
-              },
-              {
-                "hw_id": "PWR",
-                "instances": [
-                  {
-                    "base_address": [],
-                    "harvest": 0,
-                    "hw_id": "PWR",
-                    "major": 9,
-                    "minor": 0,
-                    "num_base_addresses": 0,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "GC",
-                "instances": [
-                  {
-                    "base_address": [
-                      4704,
-                      40960,
-                      114688,
-                      37760000
-                    ],
-                    "harvest": 0,
-                    "hw_id": "GC",
-                    "major": 12,
-                    "minor": 0,
-                    "num_base_addresses": 4,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "UVD",
-                "instances": [
-                  {
-                    "base_address": [
-                      30720,
-                      32256
-                    ],
-                    "harvest": 0,
-                    "hw_id": "UVD",
-                    "major": 5,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "MMHUB",
-                "instances": [
-                  {
-                    "base_address": [
-                      106496,
-                      37783552
-                    ],
-                    "harvest": 0,
-                    "hw_id": "MMHUB",
-                    "major": 4,
-                    "minor": 1,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "ATHUB",
-                "instances": [
-                  {
-                    "base_address": [
-                      3072,
-                      37784576
-                    ],
-                    "harvest": 0,
-                    "hw_id": "ATHUB",
-                    "major": 4,
-                    "minor": 1,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "DBGU_NBIO",
-                "instances": [
-                  {
-                    "base_address": [
-                      448,
-                      37785600
-                    ],
-                    "harvest": 0,
-                    "hw_id": "DBGU_NBIO",
-                    "major": 3,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "DFX",
-                "instances": [
-                  {
-                    "base_address": [
-                      1408,
-                      37786624
-                    ],
-                    "harvest": 0,
-                    "hw_id": "DFX",
-                    "major": 5,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "OSSSYS",
-                "instances": [
-                  {
-                    "base_address": [
-                      4256,
-                      37789696
-                    ],
-                    "harvest": 0,
-                    "hw_id": "OSSSYS",
-                    "major": 7,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "HDP",
-                "instances": [
-                  {
-                    "base_address": [
-                      3872,
-                      37790720
-                    ],
-                    "harvest": 0,
-                    "hw_id": "HDP",
-                    "major": 7,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "SDMA0",
-                "instances": [
-                  {
-                    "base_address": [
-                      4704,
-                      40960,
-                      114688,
-                      37760000
-                    ],
-                    "harvest": 0,
-                    "hw_id": "SDMA0",
-                    "major": 7,
-                    "minor": 0,
-                    "num_base_addresses": 4,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "SDMA1",
-                "instances": [
-                  {
-                    "base_address": [
-                      4704,
-                      40960,
-                      114688,
-                      37760000
-                    ],
-                    "harvest": 0,
-                    "hw_id": "SDMA1",
-                    "major": 7,
-                    "minor": 0,
-                    "num_base_addresses": 4,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "DF",
-                "instances": [
-                  {
-                    "base_address": [
-                      28672,
-                      12582912,
-                      37795840,
-                      130023424,
-                      306184192
-                    ],
-                    "harvest": 0,
-                    "hw_id": "DF",
-                    "major": 4,
-                    "minor": 15,
-                    "num_base_addresses": 5,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "DFX_DAP",
-                "instances": [
-                  {
-                    "base_address": [
-                      1440,
-                      12058624,
-                      37798912
-                    ],
-                    "harvest": 0,
-                    "hw_id": "DFX_DAP",
-                    "major": 2,
-                    "minor": 0,
-                    "num_base_addresses": 3,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "PCIE",
-                "instances": [
-                  {
-                    "base_address": [
-                      37820416,
-                      109838336,
-                      536870912
-                    ],
-                    "harvest": 0,
-                    "hw_id": "PCIE",
-                    "major": 6,
-                    "minor": 1,
-                    "num_base_addresses": 3,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "LSDMA",
-                "instances": [
-                  {
-                    "base_address": [
-                      70656,
-                      38103040
-                    ],
-                    "harvest": 0,
-                    "hw_id": "LSDMA",
-                    "major": 7,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "NBIF",
-                "instances": [
-                  {
-                    "base_address": [
-                      0,
-                      20,
-                      3360,
-                      66560,
-                      37859328,
-                      67371008
-                    ],
-                    "harvest": 0,
-                    "hw_id": "NBIF",
-                    "major": 6,
-                    "minor": 3,
-                    "num_base_addresses": 6,
-                    "num_instance": 0,
-                    "revision": 1
-                  }
-                ]
-              },
-              {
-                "hw_id": "SYSTEMHUB",
-                "instances": [
-                  {
-                    "base_address": [
-                      3744,
-                      5242880,
-                      37879808
-                    ],
-                    "harvest": 0,
-                    "hw_id": "SYSTEMHUB",
-                    "major": 2,
-                    "minor": 3,
-                    "num_base_addresses": 3,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "UMC",
-                "instances": [
-                  {
-                    "base_address": [
-                      81920,
-                      2973696,
-                      37902336
-                    ],
-                    "harvest": 0,
-                    "hw_id": "UMC",
-                    "major": 8,
-                    "minor": 14,
-                    "num_base_addresses": 3,
-                    "num_instance": 0,
-                    "revision": 0
-                  },
-                  {
-                    "base_address": [
-                      344064,
-                      3235840,
-                      37903360
-                    ],
-                    "harvest": 0,
-                    "hw_id": "UMC",
-                    "major": 8,
-                    "minor": 14,
-                    "num_base_addresses": 3,
-                    "num_instance": 1,
-                    "revision": 0
-                  },
-                  {
-                    "base_address": [
-                      606208,
-                      3497984,
-                      37904384
-                    ],
-                    "harvest": 0,
-                    "hw_id": "UMC",
-                    "major": 8,
-                    "minor": 14,
-                    "num_base_addresses": 3,
-                    "num_instance": 2,
-                    "revision": 0
-                  },
-                  {
-                    "base_address": [
-                      868352,
-                      3760128,
-                      37905408
-                    ],
-                    "harvest": 0,
-                    "hw_id": "UMC",
-                    "major": 8,
-                    "minor": 14,
-                    "num_base_addresses": 3,
-                    "num_instance": 3,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "MP0",
-                "instances": [
-                  {
-                    "base_address": [
-                      90112,
-                      90624,
-                      118272,
-                      14417920,
-                      14680064,
-                      14942208,
-                      15204352,
-                      15466496,
-                      15728640,
-                      37749760,
-                      38009856,
-                      38065152,
-                      52428800,
-                      52690944,
-                      52953088
-                    ],
-                    "harvest": 0,
-                    "hw_id": "MP0",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 15,
-                    "num_instance": 0,
-                    "revision": 2
-                  }
-                ]
-              },
-              {
-                "hw_id": "DMU",
-                "instances": [
-                  {
-                    "base_address": [
-                      18,
-                      192,
-                      13504,
-                      36864,
-                      37764096
-                    ],
-                    "harvest": 0,
-                    "hw_id": "DMU",
-                    "major": 4,
-                    "minor": 1,
-                    "num_base_addresses": 5,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "DIO",
-                "instances": [
-                  {
-                    "base_address": [
-                      37765120
-                    ],
-                    "harvest": 0,
-                    "hw_id": "DIO",
-                    "major": 127,
-                    "minor": 127,
-                    "num_base_addresses": 1,
-                    "num_instance": 0,
-                    "revision": 63
-                  }
-                ]
-              },
-              {
-                "hw_id": "Unknown(273)",
-                "instances": [
-                  {
-                    "base_address": [
-                      38110208,
-                      132121344
-                    ],
-                    "harvest": 0,
-                    "hw_id": "Unknown(273)",
-                    "major": 1,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 3
-                  }
-                ]
-              },
-              {
-                "hw_id": "DAZ",
-                "instances": [
-                  {
-                    "base_address": [
-                      4980736,
-                      37767168
-                    ],
-                    "harvest": 0,
-                    "hw_id": "DAZ",
-                    "major": 127,
-                    "minor": 127,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 63
-                  }
-                ]
-              },
-              {
-                "hw_id": "Unknown(282)",
-                "instances": [
-                  {
-                    "base_address": [
-                      12320768
-                    ],
-                    "harvest": 0,
-                    "hw_id": "Unknown(282)",
-                    "major": 14,
-                    "minor": 0,
-                    "num_base_addresses": 1,
-                    "num_instance": 0,
-                    "revision": 2
-                  }
-                ]
-              },
-              {
-                "hw_id": "Unknown(286)",
-                "instances": [
-                  {
-                    "base_address": [
-                      37761024
-                    ],
-                    "harvest": 0,
-                    "hw_id": "Unknown(286)",
-                    "major": 5,
-                    "minor": 0,
-                    "num_base_addresses": 1,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              },
-              {
-                "hw_id": "Unknown(293)",
-                "instances": [
-                  {
-                    "base_address": [
-                      38109184,
-                      132121088
-                    ],
-                    "harvest": 0,
-                    "hw_id": "Unknown(293)",
-                    "major": 1,
-                    "minor": 0,
-                    "num_base_addresses": 2,
-                    "num_instance": 0,
-                    "revision": 0
-                  }
-                ]
-              }
-            ]
-          }
-        ],
-        "L1 Cache per CU": 32768,
-        "L2 Cache": 4194304,
-        "L3 Cache": 33554432,
-        "Memory Clock": {
-          "max": 1258,
-          "min": 96
-        },
-        "NPU": null,
-        "PCI": "0000:03:00.0",
-        "PCIe Link": {
-          "max_dpm_link": {
-            "gen": 5,
-            "width": 16
-          },
-          "max_gpu_link": {
-            "gen": 5,
-            "width": 16
-          },
-          "max_system_link": {
-            "gen": 5,
-            "width": 16
-          },
-          "min_dpm_link": {
-            "gen": 1,
-            "width": 16
-          }
-        },
-        "Peak FP32": {
-          "unit": "GFLOPS",
-          "value": 22773
-        },
-        "Peak Memory Bandwidth": {
-          "unit": "GB/s",
-          "value": 322
-        },
-        "Peak Pixel Fill-Rate": {
-          "unit": "GP/s",
-          "value": 177
-        },
-        "Power Cap": {
-          "current": 164,
-          "max": 200,
-          "min": 127
-        },
-        "Power Profiles": [
-          "BOOTUP_DEFAULT",
-          "3D_FULL_SCREEN",
-          "POWER_SAVING",
-          "VIDEO",
-          "VR",
-          "COMPUTE",
-          "CUSTOM",
-          "WINDOW_3D"
-        ],
-        "ROCm Version": "7.12.0",
-        "RenderBackend": 8,
-        "RenderBackend Type": "RB Plus",
-        "ResizableBAR": true,
-        "RevisionID": 192,
-        "Shader Array per Shader Engine": 2,
-        "Shader Engine": 2,
-        "Total Compute Unit": 32,
-        "Total ROP": 64,
-        "VBIOS": {
-          "date": "2025/04/08 06:26",
-          "name": "GV-R9060XTGAMING OC-16GD/F2/11E2",
-          "pn": "113-R906XTGO-F2",
-          "ver_str": "023.004.000.068.000001"
-        },
-        "VRAM Bit width": 128,
-        "VRAM Size": 17095983104,
-        "VRAM Type": "GDDR6",
-        "VRAM Usage Size": 10112483328,
-        "VRAM Vendor": "hynix",
-        "Video Caps": {
-          "AV1": {
-            "Decode": {
-              "height": 4352,
-              "width": 8192
-            },
-            "Encode": {
-              "height": 4352,
-              "width": 8192
-            }
-          },
-          "HEVC": {
-            "Decode": {
-              "height": 4352,
-              "width": 8192
-            },
-            "Encode": {
-              "height": 4352,
-              "width": 8192
-            }
-          },
-          "JPEG": {
-            "Decode": {
-              "height": 16384,
-              "width": 16384
-            },
-            "Encode": null
-          },
-          "MPEG2": {
-            "Decode": null,
-            "Encode": null
-          },
-          "MPEG4": {
-            "Decode": null,
-            "Encode": null
-          },
-          "MPEG4_AVC": {
-            "Decode": {
-              "height": 4096,
-              "width": 4096
-            },
-            "Encode": {
-              "height": 4096,
-              "width": 4096
-            }
-          },
-          "VC1": {
-            "Decode": null,
-            "Encode": null
-          },
-          "VP9": {
-            "Decode": {
-              "height": 4352,
-              "width": 8192
-            },
-            "Encode": null
-          }
-        },
-        "amdgpu_top_version": {
-          "major": 0,
-          "minor": 11,
-          "patch": 2
-        },
-        "drm_version": {
-          "major": 3,
-          "minor": 64,
-          "patchlevel": 0
-        },
-        "gfx_target_version": "gfx1200",
-        "pp_feature_mask": [
-          "PP_SCLK_DPM_MASK",
-          "PP_MCLK_DPM_MASK",
-          "PP_PCIE_DPM_MASK",
-          "PP_SCLK_DEEP_SLEEP_MASK",
-          "PP_POWER_CONTAINMENT_MASK",
-          "PP_UVD_HANDSHAKE_MASK",
-          "PP_SMC_VOLTAGE_CONTROL_MASK",
-          "PP_VBI_TIME_SUPPORT_MASK",
-          "PP_ULV_MASK",
-          "PP_ENABLE_GFX_CG_THRU_SMU",
-          "PP_CLOCK_STRETCH_MASK",
-          "PP_OD_FUZZY_FAN_CONTROL_MASK",
-          "PP_SOCCLK_DPM_MASK",
-          "PP_DCEFCLK_DPM_MASK",
-          "PP_OVERDRIVE_MASK",
-          "PP_GFXOFF_MASK",
-          "PP_ACG_MASK",
-          "PP_STUTTER_MODE",
-          "PP_AVFS_MASK",
-          "PP_GFX_DCS_MASK"
-        ]
-      },
-      "Sensors": {
-        "Average Power": {
-          "unit": "W",
-          "value": 163
-        },
-        "CPU Core freq": [],
-        "CPU Tctl": null,
-        "Edge Critical Temperature": {
-          "unit": "C",
-          "value": 100
-        },
-        "Edge Emergency Temperature": {
-          "unit": "C",
-          "value": 105
-        },
-        "Edge Temperature": {
-          "unit": "C",
-          "value": 50
-        },
-        "FCLK": {
-          "unit": "MHz",
-          "value": 2016
-        },
-        "Fan": {
-          "unit": "RPM",
-          "value": 1812
-        },
-        "Fan Max": {
-          "unit": "RPM",
-          "value": 3500
-        },
-        "GFX Power": {
-          "unit": "W",
-          "value": 163
-        },
-        "GFX_MCLK": {
-          "unit": "MHz",
-          "value": 1258
-        },
-        "GFX_SCLK": {
-          "unit": "MHz",
-          "value": 2860
-        },
-        "Input Power": null,
-        "Junction Critical Temperature": {
-          "unit": "C",
-          "value": 110
-        },
-        "Junction Emergency Temperature": {
-          "unit": "C",
-          "value": 115
-        },
-        "Junction Temperature": {
-          "unit": "C",
-          "value": 73
-        },
-        "Memory Critical Temperature": {
-          "unit": "C",
-          "value": 108
-        },
-        "Memory Emergency Temperature": {
-          "unit": "C",
-          "value": 113
-        },
-        "Memory Temperature": {
-          "unit": "C",
-          "value": 75
-        },
-        "PCI Power State": "D0",
-        "PCIe Link Speed": {
-          "gen": 5,
-          "width": 16
-        },
-        "Power Profile": "BOOTUP_DEFAULT",
-        "VDDGFX": {
-          "unit": "mV",
-          "value": 851
-        },
-        "VDDNB": null
-      },
-      "Total fdinfo": {
-        "CPU": {
-          "unit": "%",
-          "value": 195
-        },
-        "Compute": {
-          "unit": "%",
-          "value": 0
-        },
-        "DMA": {
-          "unit": "%",
-          "value": 0
-        },
-        "Decode": null,
-        "Encode": null,
-        "GFX": {
-          "unit": "%",
-          "value": 0
-        },
-        "GTT": {
-          "unit": "MiB",
-          "value": 15
-        },
-        "Media": {
-          "unit": "%",
-          "value": 0
-        },
-        "VCN_JPEG": {
-          "unit": "%",
-          "value": 0
-        },
-        "VCN_Unified": {
-          "unit": "%",
-          "value": 0
-        },
-        "VPE": null,
-        "VRAM": {
-          "unit": "MiB",
-          "value": 9586
-        }
-      },
-      "VRAM": {
-        "Total GTT": {
-          "unit": "MiB",
-          "value": 15602
-        },
-        "Total GTT Usage": {
-          "unit": "MiB",
-          "value": 35
-        },
-        "Total VRAM": {
-          "unit": "MiB",
-          "value": 16304
-        },
-        "Total VRAM Usage": {
-          "unit": "MiB",
-          "value": 9644
-        }
-      },
-      "fdinfo": {
-        "272412": {
-          "name": "steamwebhelper",
-          "usage": {
-            "name": "steamwebhelper",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 0
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": null,
-              "Encode": null,
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 5
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": {
-                "unit": "%",
-                "value": 0
-              },
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 0
-              }
-            }
-          }
-        },
-        "274832": {
-          "name": "python3",
-          "usage": {
-            "name": "python3",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 194
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": null,
-              "Encode": null,
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 8
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": {
-                "unit": "%",
-                "value": 0
-              },
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 9586
-              }
-            }
-          }
-        },
-        "285341": {
-          "name": "amdgpu_top",
-          "usage": {
-            "name": "amdgpu_top",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 1
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": null,
-              "Encode": null,
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 2
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": {
-                "unit": "%",
-                "value": 0
-              },
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 0
-              }
-            }
-          }
-        }
-      },
-      "gpu_activity": {
-        "GFX": {
-          "unit": "%",
-          "value": 100
-        },
-        "MediaEngine": {
-          "unit": "%",
-          "value": 0
-        },
-        "Memory": {
-          "unit": "%",
-          "value": 44
-        }
-      },
-      "gpu_metrics": {
-        "Throttle Status": [
-          "PPT0"
-        ],
-        "average_all_core_power": null,
-        "average_apu_power": null,
-        "average_core_power": null,
-        "average_cpu_current": null,
-        "average_cpu_power": null,
-        "average_cpu_voltage": null,
-        "average_dclk1_frequency": 0,
-        "average_dclk_frequency": 25,
-        "average_dgpu_power": null,
-        "average_dram_reads": null,
-        "average_dram_writes": null,
-        "average_fclk_frequency": null,
-        "average_gfx_current": null,
-        "average_gfx_power": null,
-        "average_gfx_voltage": null,
-        "average_gfxclk_frequency": 2860,
-        "average_ipu_activity": null,
-        "average_ipu_power": null,
-        "average_ipu_reads": null,
-        "average_ipu_writes": null,
-        "average_ipuclk_frequency": null,
-        "average_mpipu_frequency": null,
-        "average_soc_current": null,
-        "average_soc_power": null,
-        "average_soc_voltage": null,
-        "average_socclk_frequency": null,
-        "average_socket_power": 163,
-        "average_sys_power": null,
-        "average_temperature_core": null,
-        "average_temperature_l3": null,
-        "average_uclk_frequency": 2518,
-        "average_vclk1_frequency": 0,
-        "average_vclk_frequency": 25,
-        "current_core_maxfreq": null,
-        "current_coreclk": null,
-        "current_dclk": 25,
-        "current_dclk1": 25,
-        "current_fclk": null,
-        "current_gfx_maxfreq": null,
-        "current_gfxclk": 2860,
-        "current_l3clk": null,
-        "current_socclk": 1371,
-        "current_stapm_power_limit": null,
-        "current_uclk": 1258,
-        "current_vclk": 25,
-        "current_vclk1": 25,
-        "fan_pwm": null,
-        "header": {
-          "content_revision": 3,
-          "format_revision": 1,
-          "structure_size": 120
-        },
-        "pcie_link_speed": 25,
-        "pcie_link_width": 16,
-        "stapm_power_limit": null,
-        "system_clock_counter": 174974227468781,
-        "temperature_core": null,
-        "temperature_edge": 50,
-        "temperature_gfx": null,
-        "temperature_hotspot": 73,
-        "temperature_l3": null,
-        "temperature_mem": 75,
-        "temperature_skin": null,
-        "temperature_soc": null,
-        "temperature_vrgfx": 49,
-        "temperature_vrmem": 49,
-        "temperature_vrsoc": 45,
-        "voltage_gfx": 851,
-        "voltage_mem": 1350,
-        "voltage_soc": 796
-      },
-      "npu_metrics": null,
-      "xdna_fdinfo": {}
-    },
-    {
-      "GRBM": {
-        "Color Block": {
-          "unit": "%",
-          "value": 6
-        },
-        "Depth Block": {
-          "unit": "%",
-          "value": 6
-        },
-        "Geometry Engine": {
-          "unit": "%",
-          "value": 4
-        },
-        "Graphics Pipe": {
-          "unit": "%",
-          "value": 8
-        },
-        "Primitive Assembly": {
-          "unit": "%",
-          "value": 1
-        },
-        "Shader Export": {
-          "unit": "%",
-          "value": 7
-        },
-        "Shader Processor Interpolator": {
-          "unit": "%",
-          "value": 8
-        },
-        "Texture Pipe": {
-          "unit": "%",
-          "value": 6
         }
       },
       "GRBM2": {
@@ -1573,23 +48,23 @@
         },
         "Command Processor -  Fetcher": {
           "unit": "%",
-          "value": 8
+          "value": 0
         },
         "Command Processor - Graphics": {
           "unit": "%",
-          "value": 7
+          "value": 0
         },
         "Efficiency Arbiter": {
           "unit": "%",
-          "value": 4
+          "value": 0
         },
         "Render Backend Memory Interface": {
           "unit": "%",
-          "value": 3
+          "value": 0
         },
         "RunList Controller": {
           "unit": "%",
-          "value": 10
+          "value": 0
         },
         "SDMA": {
           "unit": "%",
@@ -1597,11 +72,11 @@
         },
         "Texture Cache per Pipe": {
           "unit": "%",
-          "value": 6
+          "value": 0
         },
         "Unified Translation Cache Level-2": {
           "unit": "%",
-          "value": 3
+          "value": 0
         }
       },
       "Info": {
@@ -1735,8 +210,8 @@
         },
         "GPU Family": "GC 10.3.6",
         "GPU Type": "APU",
-        "GTT Size": 16360906752,
-        "GTT Usage Size": 1595342848,
+        "GTT Size": 16360796160,
+        "GTT Usage Size": 975273984,
         "Hardware IP info": [
           {
             "ip_count": 1,
@@ -2378,7 +853,7 @@
         "VRAM Bit width": 128,
         "VRAM Size": 536870912,
         "VRAM Type": "DDR5",
-        "VRAM Usage Size": 487604224,
+        "VRAM Usage Size": 482959360,
         "VRAM Vendor": null,
         "Video Caps": {
           "AV1": {
@@ -2438,7 +913,7 @@
         "amdgpu_top_version": {
           "major": 0,
           "minor": 11,
-          "patch": 2
+          "patch": 5
         },
         "drm_version": {
           "major": 3,
@@ -2474,50 +949,50 @@
         "CPU Core freq": [
           {
             "core_id": 0,
-            "cur_freq": 5114,
-            "max_freq": 5179,
-            "min_freq": 624,
+            "cur_freq": 4031,
+            "max_freq": 5018,
+            "min_freq": 604,
             "thread_id": 0
           },
           {
             "core_id": 1,
-            "cur_freq": 5129,
-            "max_freq": 5179,
-            "min_freq": 624,
+            "cur_freq": 4012,
+            "max_freq": 5018,
+            "min_freq": 604,
             "thread_id": 1
           },
           {
             "core_id": 2,
-            "cur_freq": 5140,
-            "max_freq": 5179,
-            "min_freq": 624,
+            "cur_freq": 4012,
+            "max_freq": 5018,
+            "min_freq": 604,
             "thread_id": 2
           },
           {
             "core_id": 3,
-            "cur_freq": 5105,
-            "max_freq": 5179,
-            "min_freq": 624,
+            "cur_freq": 4028,
+            "max_freq": 5018,
+            "min_freq": 604,
             "thread_id": 3
           },
           {
             "core_id": 4,
-            "cur_freq": 5143,
-            "max_freq": 5179,
-            "min_freq": 624,
+            "cur_freq": 4021,
+            "max_freq": 5018,
+            "min_freq": 604,
             "thread_id": 4
           },
           {
             "core_id": 5,
-            "cur_freq": 5137,
-            "max_freq": 5179,
-            "min_freq": 624,
+            "cur_freq": 3233,
+            "max_freq": 5018,
+            "min_freq": 604,
             "thread_id": 5
           }
         ],
         "CPU Tctl": {
           "unit": "C",
-          "value": 64
+          "value": 48
         },
         "Edge Critical Temperature": {
           "unit": "C",
@@ -2529,14 +1004,14 @@
         },
         "Edge Temperature": {
           "unit": "C",
-          "value": 50
+          "value": 43
         },
         "FCLK": null,
         "Fan": null,
         "Fan Max": null,
         "GFX Power": {
           "unit": "W",
-          "value": 51
+          "value": 27
         },
         "GFX_MCLK": {
           "unit": "MHz",
@@ -2548,7 +1023,7 @@
         },
         "Input Power": {
           "unit": "W",
-          "value": 51
+          "value": 27
         },
         "Junction Critical Temperature": null,
         "Junction Emergency Temperature": null,
@@ -2561,17 +1036,17 @@
         "Power Profile": null,
         "VDDGFX": {
           "unit": "mV",
-          "value": 1125
+          "value": 914
         },
         "VDDNB": {
           "unit": "mV",
-          "value": 1189
+          "value": 1194
         }
       },
       "Total fdinfo": {
         "CPU": {
           "unit": "%",
-          "value": 203
+          "value": 19
         },
         "Compute": {
           "unit": "%",
@@ -2583,7 +1058,7 @@
         },
         "Decode": {
           "unit": "%",
-          "value": 0
+          "value": 2
         },
         "Encode": {
           "unit": "%",
@@ -2591,15 +1066,15 @@
         },
         "GFX": {
           "unit": "%",
-          "value": 3
+          "value": 6
         },
         "GTT": {
           "unit": "MiB",
-          "value": 1616
+          "value": 917
         },
         "Media": {
           "unit": "%",
-          "value": 0
+          "value": 1
         },
         "VCN_JPEG": {
           "unit": "%",
@@ -2609,7 +1084,7 @@
         "VPE": null,
         "VRAM": {
           "unit": "MiB",
-          "value": 298
+          "value": 299
         }
       },
       "VRAM": {
@@ -2619,7 +1094,7 @@
         },
         "Total GTT Usage": {
           "unit": "MiB",
-          "value": 1531
+          "value": 944
         },
         "Total VRAM": {
           "unit": "MiB",
@@ -2627,418 +1102,18 @@
         },
         "Total VRAM Usage": {
           "unit": "MiB",
-          "value": 465
+          "value": 460
         }
       },
       "fdinfo": {
-        "114343": {
-          "name": "firefox-esr",
-          "usage": {
-            "name": "firefox-esr",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 4
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 3
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 1103
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 65
-              }
-            }
-          }
-        },
-        "114530": {
-          "name": "RDD Process",
-          "usage": {
-            "name": "RDD Process",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 0
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 45
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 3
-              }
-            }
-          }
-        },
-        "114703": {
-          "name": "plasma-browser-",
-          "usage": {
-            "name": "plasma-browser-",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 0
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 4
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 4
-              }
-            }
-          }
-        },
-        "123031": {
-          "name": "konsole",
-          "usage": {
-            "name": "konsole",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 0
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 8
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 0
-              }
-            }
-          }
-        },
-        "197689": {
-          "name": "konsole",
-          "usage": {
-            "name": "konsole",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 0
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 8
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 0
-              }
-            }
-          }
-        },
-        "272175": {
-          "name": "steam",
-          "usage": {
-            "name": "steam",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 2
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 20
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 2
-              }
-            }
-          }
-        },
-        "272384": {
-          "name": "steamwebhelper",
-          "usage": {
-            "name": "steamwebhelper",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 2
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 86
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 2
-              }
-            }
-          }
-        },
-        "272412": {
-          "name": "steamwebhelper",
-          "usage": {
-            "name": "steamwebhelper",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 0
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 10
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 0
-              }
-            }
-          }
-        },
-        "274832": {
+        "13180": {
           "name": "python3",
           "usage": {
             "name": "python3",
             "usage": {
               "CPU": {
                 "unit": "%",
-                "value": 194
+                "value": 0
               },
               "Compute": {
                 "unit": "%",
@@ -3062,7 +1137,7 @@
               },
               "GTT": {
                 "unit": "MiB",
-                "value": 8
+                "value": 4
               },
               "Media": {
                 "unit": "%",
@@ -3081,10 +1156,10 @@
             }
           }
         },
-        "277437": {
-          "name": "dolphin",
+        "20083": {
+          "name": "konsole",
           "usage": {
-            "name": "dolphin",
+            "name": "konsole",
             "usage": {
               "CPU": {
                 "unit": "%",
@@ -3131,7 +1206,57 @@
             }
           }
         },
-        "2775": {
+        "23404": {
+          "name": "amdgpu_top",
+          "usage": {
+            "name": "amdgpu_top",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 2
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 2
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_Unified": null,
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 0
+              }
+            }
+          }
+        },
+        "2892": {
           "name": "Xwayland",
           "usage": {
             "name": "Xwayland",
@@ -3162,7 +1287,7 @@
               },
               "GTT": {
                 "unit": "MiB",
-                "value": 47
+                "value": 37
               },
               "Media": {
                 "unit": "%",
@@ -3176,62 +1301,12 @@
               "VPE": null,
               "VRAM": {
                 "unit": "MiB",
-                "value": 17
+                "value": 18
               }
             }
           }
         },
-        "285341": {
-          "name": "amdgpu_top",
-          "usage": {
-            "name": "amdgpu_top",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 1
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 2
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 0
-              }
-            }
-          }
-        },
-        "2883": {
+        "3011": {
           "name": "ksmserver",
           "usage": {
             "name": "ksmserver",
@@ -3281,7 +1356,7 @@
             }
           }
         },
-        "2885": {
+        "3013": {
           "name": "kded6",
           "usage": {
             "name": "kded6",
@@ -3331,7 +1406,7 @@
             }
           }
         },
-        "2963": {
+        "3065": {
           "name": "plasmashell",
           "usage": {
             "name": "plasmashell",
@@ -3362,7 +1437,7 @@
               },
               "GTT": {
                 "unit": "MiB",
-                "value": 145
+                "value": 75
               },
               "Media": {
                 "unit": "%",
@@ -3376,12 +1451,12 @@
               "VPE": null,
               "VRAM": {
                 "unit": "MiB",
-                "value": 155
+                "value": 160
               }
             }
           }
         },
-        "3021": {
+        "3140": {
           "name": "kaccess",
           "usage": {
             "name": "kaccess",
@@ -3431,107 +1506,7 @@
             }
           }
         },
-        "3175": {
-          "name": "xwaylandvideobr",
-          "usage": {
-            "name": "xwaylandvideobr",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 0
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 6
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 8
-              }
-            }
-          }
-        },
-        "3180": {
-          "name": "kalendarac",
-          "usage": {
-            "name": "kalendarac",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 0
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 4
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 4
-              }
-            }
-          }
-        },
-        "3206": {
+        "3325": {
           "name": "DiscoverNotifie",
           "usage": {
             "name": "DiscoverNotifie",
@@ -3581,7 +1556,57 @@
             }
           }
         },
-        "3216": {
+        "3326": {
+          "name": "kalendarac",
+          "usage": {
+            "name": "kalendarac",
+            "usage": {
+              "CPU": {
+                "unit": "%",
+                "value": 0
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 0
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 4
+              },
+              "Media": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_Unified": null,
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 4
+              }
+            }
+          }
+        },
+        "3331": {
           "name": "kup-daemon",
           "usage": {
             "name": "kup-daemon",
@@ -3631,7 +1656,7 @@
             }
           }
         },
-        "3461": {
+        "3624": {
           "name": "kdeconnectd",
           "usage": {
             "name": "kdeconnectd",
@@ -3681,14 +1706,14 @@
             }
           }
         },
-        "4342": {
-          "name": "konsole",
+        "5177": {
+          "name": "firefox-esr",
           "usage": {
-            "name": "konsole",
+            "name": "firefox-esr",
             "usage": {
               "CPU": {
                 "unit": "%",
-                "value": 0
+                "value": 15
               },
               "Compute": {
                 "unit": "%",
@@ -3708,11 +1733,11 @@
               },
               "GFX": {
                 "unit": "%",
-                "value": 0
+                "value": 6
               },
               "GTT": {
                 "unit": "MiB",
-                "value": 4
+                "value": 736
               },
               "Media": {
                 "unit": "%",
@@ -3726,65 +1751,65 @@
               "VPE": null,
               "VRAM": {
                 "unit": "MiB",
-                "value": 4
+                "value": 73
               }
             }
           }
         },
-        "48407": {
-          "name": "krunner",
+        "5426": {
+          "name": "RDD Process",
           "usage": {
-            "name": "krunner",
+            "name": "RDD Process",
             "usage": {
               "CPU": {
                 "unit": "%",
-                "value": 0
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 62
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
                 "value": 2
+              },
+              "Compute": {
+                "unit": "%",
+                "value": 0
+              },
+              "DMA": {
+                "unit": "%",
+                "value": 0
+              },
+              "Decode": {
+                "unit": "%",
+                "value": 2
+              },
+              "Encode": {
+                "unit": "%",
+                "value": 0
+              },
+              "GFX": {
+                "unit": "%",
+                "value": 0
+              },
+              "GTT": {
+                "unit": "MiB",
+                "value": 18
+              },
+              "Media": {
+                "unit": "%",
+                "value": 1
+              },
+              "VCN_JPEG": {
+                "unit": "%",
+                "value": 0
+              },
+              "VCN_Unified": null,
+              "VPE": null,
+              "VRAM": {
+                "unit": "MiB",
+                "value": 9
               }
             }
           }
         },
-        "63310": {
-          "name": "gwenview",
+        "5652": {
+          "name": "plasma-browser-",
           "usage": {
-            "name": "gwenview",
+            "name": "plasma-browser-",
             "usage": {
               "CPU": {
                 "unit": "%",
@@ -3812,7 +1837,7 @@
               },
               "GTT": {
                 "unit": "MiB",
-                "value": 8
+                "value": 4
               },
               "Media": {
                 "unit": "%",
@@ -3826,57 +1851,7 @@
               "VPE": null,
               "VRAM": {
                 "unit": "MiB",
-                "value": 0
-              }
-            }
-          }
-        },
-        "7192": {
-          "name": "dolphin",
-          "usage": {
-            "name": "dolphin",
-            "usage": {
-              "CPU": {
-                "unit": "%",
-                "value": 0
-              },
-              "Compute": {
-                "unit": "%",
-                "value": 0
-              },
-              "DMA": {
-                "unit": "%",
-                "value": 0
-              },
-              "Decode": {
-                "unit": "%",
-                "value": 0
-              },
-              "Encode": {
-                "unit": "%",
-                "value": 0
-              },
-              "GFX": {
-                "unit": "%",
-                "value": 0
-              },
-              "GTT": {
-                "unit": "MiB",
-                "value": 8
-              },
-              "Media": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_JPEG": {
-                "unit": "%",
-                "value": 0
-              },
-              "VCN_Unified": null,
-              "VPE": null,
-              "VRAM": {
-                "unit": "MiB",
-                "value": 0
+                "value": 4
               }
             }
           }
@@ -3889,7 +1864,7 @@
         },
         "MediaEngine": {
           "unit": "%",
-          "value": 0
+          "value": 1
         },
         "Memory": {
           "unit": "%",
@@ -3914,13 +1889,13 @@
         "average_cpu_power": null,
         "average_cpu_voltage": null,
         "average_dclk1_frequency": null,
-        "average_dclk_frequency": 25,
+        "average_dclk_frequency": 300,
         "average_dgpu_power": null,
         "average_dram_reads": null,
         "average_dram_writes": null,
         "average_fclk_frequency": 3000,
         "average_gfx_current": null,
-        "average_gfx_power": 19968,
+        "average_gfx_power": 4803,
         "average_gfx_voltage": null,
         "average_gfxclk_frequency": 600,
         "average_ipu_activity": null,
@@ -3930,16 +1905,16 @@
         "average_ipuclk_frequency": null,
         "average_mpipu_frequency": null,
         "average_soc_current": null,
-        "average_soc_power": 16660,
+        "average_soc_power": 12846,
         "average_soc_voltage": null,
         "average_socclk_frequency": 1200,
-        "average_socket_power": 51,
+        "average_socket_power": 27,
         "average_sys_power": null,
         "average_temperature_core": null,
         "average_temperature_l3": null,
         "average_uclk_frequency": 3000,
         "average_vclk1_frequency": null,
-        "average_vclk_frequency": 25,
+        "average_vclk_frequency": 400,
         "current_core_maxfreq": null,
         "current_coreclk": [
           65535,
@@ -3974,7 +1949,7 @@
         "pcie_link_speed": null,
         "pcie_link_width": null,
         "stapm_power_limit": null,
-        "system_clock_counter": 174974229519679,
+        "system_clock_counter": 2709135483108,
         "temperature_core": [
           65535,
           65535,
@@ -3986,7 +1961,7 @@
           65535
         ],
         "temperature_edge": null,
-        "temperature_gfx": 5025,
+        "temperature_gfx": 4300,
         "temperature_hotspot": null,
         "temperature_l3": [
           65535,
@@ -3994,7 +1969,7 @@
         ],
         "temperature_mem": null,
         "temperature_skin": null,
-        "temperature_soc": 5700,
+        "temperature_soc": 4750,
         "temperature_vrgfx": null,
         "temperature_vrmem": null,
         "temperature_vrsoc": null,
@@ -4006,12 +1981,22 @@
       "xdna_fdinfo": {}
     }
   ],
-  "devices_len": 2,
+  "devices_len": 1,
   "period": {
-    "duration": 1010,
+    "duration": 1006,
     "unit": "ms"
   },
-  "suspended_devices": [],
-  "suspended_devices_len": 0,
-  "title": "amdgpu_top v0.11.2 (git-bde2a21) (debug build)"
+  "suspended_devices": [
+    {
+      "DeviceID": 30096,
+      "DeviceName": "AMD Radeon RX 9060 XT",
+      "RevisionID": 192,
+      "card": "/dev/dri/card0",
+      "pci": "0000:03:00.0",
+      "render": "/dev/dri/renderD128"
+    }
+  ],
+  "suspended_devices_len": 1,
+  "timestamp": "2026-06-14T10:10:31.197455510+00:00",
+  "title": "amdgpu_top v0.11.5 (git-5ab55bc) (debug build)"
 }

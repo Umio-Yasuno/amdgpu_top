@@ -1,5 +1,6 @@
 #![recursion_limit = "256"]
 
+use chrono::{DateTime,Utc};
 use libamdgpu_top::{DevicePath, GetNpuMetrics, stat};
 use libamdgpu_top::app::*;
 use serde_json::{json, Value};
@@ -44,6 +45,7 @@ pub struct JsonApp {
     pub amdgpu_top_version: Value,
     pub rocm_version: Value,
     pub title: String,
+    pub timestamp: DateTime<Utc>,
 }
 
 impl JsonApp {
@@ -93,7 +95,12 @@ impl JsonApp {
             amdgpu_top_version: amdgpu_top_version(),
             rocm_version: libamdgpu_top::get_rocm_version().map_or(Value::Null, Value::String),
             title: title.to_string(),
+            timestamp: Utc::now(),
         }
+    }
+
+    fn update_timestamp(&mut self) {
+        self.timestamp = Utc::now();
     }
 
     pub fn update(&mut self) {
@@ -167,6 +174,7 @@ impl JsonApp {
             "amdgpu_top_version": self.amdgpu_top_version,
             "ROCm version": self.rocm_version,
             "title": self.title,
+            "timestamp": self.timestamp.to_rfc3339(),
         })
     }
 
@@ -174,6 +182,7 @@ impl JsonApp {
         let mut n = 0;
 
         loop {
+            self.update_timestamp();
             self.update();
 
             let s = self.json().to_string();
