@@ -1,6 +1,6 @@
 #![recursion_limit = "256"]
 
-use chrono::{DateTime,Utc};
+use chrono::{DateTime, Utc};
 use libamdgpu_top::{DevicePath, GetNpuMetrics, stat};
 use libamdgpu_top::app::*;
 use serde_json::{json, Value};
@@ -198,6 +198,7 @@ impl JsonApp {
 
     pub fn run_fifo(&mut self, fifo_path: PathBuf) {
         loop {
+            self.update_timestamp();
             self.update();
 
             let s = self.json().to_string();
