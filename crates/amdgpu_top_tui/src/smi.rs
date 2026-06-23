@@ -163,6 +163,12 @@ impl SmiApp {
         if self.app_amdgpu_top.device_info.is_apu && let Some(sensors) = sensors {
             writeln!(self.info_text.buf)?;
 
+            if let Some(vddnb) = sensors.vddnb {
+                write!(self.info_text.buf, " VDDNB:{:>4}mV", vddnb)?;
+            } else {
+                write!(self.info_text.buf, " VDDNB:____mV")?;
+            }
+
             if let Some(tctl) = sensors.tctl {
                 write!(self.info_text.buf, " Tctl:{:>3}C", tctl / 1000)?;
             } else {
