@@ -66,6 +66,46 @@ pub fn dump_process(title: &str, list: &[DevicePath]) {
                 "",
                 pu.usage.amd_evicted_vram >> 10,
             );
+
+            println!(
+                "{:28} DRM Total: VRAM {:5} MiB, {:6} GTT {:5} MiB {} CPU {:5} MiB",
+                "",
+                pu.usage.drm_total_vram >> 10,
+                "",
+                pu.usage.drm_total_gtt >> 10,
+                "",
+                pu.usage.drm_total_cpu >> 10,
+            );
+
+            println!(
+                "{:28}DRM Shared: VRAM {:5} MiB, {:6} GTT {:5} MiB {} CPU {:5} MiB",
+                "",
+                pu.usage.drm_shared_vram >> 10,
+                "",
+                pu.usage.drm_shared_gtt >> 10,
+                "",
+                pu.usage.drm_shared_cpu >> 10,
+            );
+
+            println!(
+                "{:26}DRM Resident: VRAM {:5} MiB, {:6} GTT {:5} MiB {} CPU {:5} MiB",
+                "",
+                pu.usage.drm_resident_vram >> 10,
+                "",
+                pu.usage.drm_resident_gtt >> 10,
+                "",
+                pu.usage.drm_resident_cpu >> 10,
+            );
+
+            println!(
+                "{:25}DRM Purgeable: VRAM {:5} MiB, {:6} GTT {:5} MiB {} CPU {:5} MiB",
+                "",
+                pu.usage.drm_purgeable_vram >> 10,
+                "",
+                pu.usage.drm_purgeable_gtt >> 10,
+                "",
+                pu.usage.drm_purgeable_cpu >> 10,
+            );
         }
 
         println!();

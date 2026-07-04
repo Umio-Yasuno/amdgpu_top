@@ -18,6 +18,18 @@ pub struct FdInfoUsage {
     pub amd_evicted_vram: u64, // KiB, from Linux Kernel v6.4
     pub amd_requested_vram: u64, // KiB, from Linux Kernel v6.4
     pub amd_requested_gtt: u64, // KiB, from Linux Kernel v6.4
+    pub drm_total_vram: u64,
+    pub drm_total_gtt: u64,
+    pub drm_total_cpu: u64,
+    pub drm_shared_vram: u64,
+    pub drm_shared_gtt: u64,
+    pub drm_shared_cpu: u64,
+    pub drm_resident_vram: u64,
+    pub drm_resident_gtt: u64,
+    pub drm_resident_cpu: u64,
+    pub drm_purgeable_vram: u64,
+    pub drm_purgeable_gtt: u64,
+    pub drm_purgeable_cpu: u64,
     pub gfx: i64, // ns, %
     pub compute: i64, // ns, %
     pub dma: i64, // ns, %
@@ -44,6 +56,18 @@ impl std::ops::Add for FdInfoUsage {
             amd_evicted_vram: self.amd_evicted_vram + other.amd_evicted_vram,
             amd_requested_vram: self.amd_requested_vram + other.amd_requested_vram,
             amd_requested_gtt: self.amd_requested_gtt + other.amd_requested_gtt,
+            drm_total_vram: self.drm_total_vram + other.drm_total_vram,
+            drm_total_gtt: self.drm_total_gtt + other.drm_total_gtt,
+            drm_total_cpu: self.drm_total_cpu + other.drm_total_cpu,
+            drm_shared_vram: self.drm_shared_vram + other.drm_shared_vram,
+            drm_shared_gtt: self.drm_shared_gtt + other.drm_shared_gtt,
+            drm_shared_cpu: self.drm_shared_cpu + other.drm_shared_cpu,
+            drm_resident_vram: self.drm_resident_vram + other.drm_resident_vram,
+            drm_resident_gtt: self.drm_resident_gtt + other.drm_resident_gtt,
+            drm_resident_cpu: self.drm_resident_cpu + other.drm_resident_cpu,
+            drm_purgeable_vram: self.drm_purgeable_vram + other.drm_purgeable_vram,
+            drm_purgeable_gtt: self.drm_purgeable_gtt + other.drm_purgeable_gtt,
+            drm_purgeable_cpu: self.drm_purgeable_cpu + other.drm_purgeable_cpu,
             gfx: self.gfx + other.gfx,
             compute: self.compute + other.compute,
             dma: self.dma + other.dma,
@@ -66,6 +90,70 @@ impl FdInfoUsage {
     pub fn id_parse(s: &str) -> Option<usize> {
         const LEN: usize = "drm-client-id:\t".len();
         s.get(LEN..)?.parse().ok()
+    }
+
+    pub fn drm_memory_stat_parse(&mut self, line: &str) {
+        enum DrmMemoryType {
+            Total,
+            Shared,
+            Resident,
+            Purgeable,
+        }
+
+        enum DrmMemoryRegion {
+            Cpu,
+            Vram,
+            Gtt,
+        }
+
+        let Some((mem_region, size)) = line.split_once('\t') else { return };
+        let (mem_type, region) = {
+            const MEM_REGION_PREFIX: usize = "drm-".len();
+            let Some(mem_region) = mem_region.get(MEM_REGION_PREFIX..) else { return };
+            let Some((mem_type, region)) = mem_region.split_once('-') else { return };
+
+            let mem_type = match mem_type {
+                "total" => DrmMemoryType::Total,
+                "shared" => DrmMemoryType::Shared,
+                "resident" => DrmMemoryType::Resident,
+                "purgeable" => DrmMemoryType::Purgeable,
+                _ => return,
+            };
+            let region = match region {
+                "cpu:" => DrmMemoryRegion::Cpu,
+                "vram:" => DrmMemoryRegion::Vram,
+                "gtt:" => DrmMemoryRegion::Gtt,
+                _ => return,
+            };
+
+            (mem_type, region)
+        };
+
+        let size = {
+            let Some((val, unit)) = size.split_once(' ') else { return };
+            let shift = if unit == "MiB" { 10 } else { 0 };
+
+            let Some(size) = val.parse::<u64>()
+                .ok()
+                .map(|v| v << shift) else { return };
+
+            size
+        };
+
+        match (mem_type, region) {
+            (DrmMemoryType::Total, DrmMemoryRegion::Cpu) => self.drm_total_cpu += size,
+            (DrmMemoryType::Total, DrmMemoryRegion::Vram) => self.drm_total_vram += size,
+            (DrmMemoryType::Total, DrmMemoryRegion::Gtt) => self.drm_total_gtt += size,
+            (DrmMemoryType::Shared, DrmMemoryRegion::Cpu) => self.drm_shared_cpu += size,
+            (DrmMemoryType::Shared, DrmMemoryRegion::Vram) => self.drm_shared_vram += size,
+            (DrmMemoryType::Shared, DrmMemoryRegion::Gtt) => self.drm_shared_gtt += size,
+            (DrmMemoryType::Resident, DrmMemoryRegion::Cpu) => self.drm_resident_cpu += size,
+            (DrmMemoryType::Resident, DrmMemoryRegion::Vram) => self.drm_resident_vram += size,
+            (DrmMemoryType::Resident, DrmMemoryRegion::Gtt) => self.drm_resident_gtt += size,
+            (DrmMemoryType::Purgeable, DrmMemoryRegion::Cpu) => self.drm_purgeable_cpu += size,
+            (DrmMemoryType::Purgeable, DrmMemoryRegion::Vram) => self.drm_purgeable_vram += size,
+            (DrmMemoryType::Purgeable, DrmMemoryRegion::Gtt) => self.drm_purgeable_gtt += size,
+        }
     }
 
     pub fn mem_usage_parse(&mut self, s: &str) {
@@ -234,6 +322,18 @@ impl FdInfoUsage {
             amd_evicted_vram: self.amd_evicted_vram,
             amd_requested_vram: self.amd_requested_vram,
             amd_requested_gtt: self.amd_requested_gtt,
+            drm_total_vram: self.drm_total_vram,
+            drm_total_gtt: self.drm_total_gtt,
+            drm_total_cpu: self.drm_total_cpu,
+            drm_shared_vram: self.drm_shared_vram,
+            drm_shared_gtt: self.drm_shared_gtt,
+            drm_shared_cpu: self.drm_shared_cpu,
+            drm_resident_vram: self.drm_resident_vram,
+            drm_resident_gtt: self.drm_resident_gtt,
+            drm_resident_cpu: self.drm_resident_cpu,
+            drm_purgeable_vram: self.drm_purgeable_vram,
+            drm_purgeable_gtt: self.drm_purgeable_gtt,
+            drm_purgeable_cpu: self.drm_purgeable_cpu,
             gfx,
             compute,
             dma,
@@ -331,6 +431,10 @@ impl FdInfoStat {
                     "drm-engine" => stat.engine_parse(l),
                     "amd-evicte" => stat.evicted_vram_parse(l),
                     "amd-reques" => stat.requested_vram_parse(l),
+                    "drm-total-" |
+                    "drm-shared" |
+                    "drm-reside" |
+                    "drm-purgea" => stat.drm_memory_stat_parse(l),
                     _ => {},
                 }
             }
@@ -365,6 +469,18 @@ impl FdInfoStat {
                 amd_evicted_vram,
                 amd_requested_vram,
                 amd_requested_gtt,
+                drm_total_vram,
+                drm_total_gtt,
+                drm_total_cpu,
+                drm_shared_vram,
+                drm_shared_gtt,
+                drm_shared_cpu,
+                drm_resident_vram,
+                drm_resident_gtt,
+                drm_resident_cpu,
+                drm_purgeable_vram,
+                drm_purgeable_gtt,
+                drm_purgeable_cpu,
             ] = [
                 stat.vram_usage,
                 stat.gtt_usage,
@@ -372,6 +488,18 @@ impl FdInfoStat {
                 stat.amd_evicted_vram,
                 stat.amd_requested_vram,
                 stat.amd_requested_gtt,
+                stat.drm_total_vram,
+                stat.drm_total_gtt,
+                stat.drm_total_cpu,
+                stat.drm_shared_vram,
+                stat.drm_shared_gtt,
+                stat.drm_shared_cpu,
+                stat.drm_resident_vram,
+                stat.drm_resident_gtt,
+                stat.drm_resident_cpu,
+                stat.drm_purgeable_vram,
+                stat.drm_purgeable_gtt,
+                stat.drm_purgeable_cpu,
             ];
 
             self.pre_proc_usage_map.insert(pid, (stat, cur_cpu_time));
@@ -383,6 +511,18 @@ impl FdInfoStat {
                 amd_evicted_vram,
                 amd_requested_vram,
                 amd_requested_gtt,
+                drm_total_vram,
+                drm_total_gtt,
+                drm_total_cpu,
+                drm_shared_vram,
+                drm_shared_gtt,
+                drm_shared_cpu,
+                drm_resident_vram,
+                drm_resident_gtt,
+                drm_resident_cpu,
+                drm_purgeable_vram,
+                drm_purgeable_gtt,
+                drm_purgeable_cpu,
                 ..Default::default()
             }
         };
