@@ -310,3 +310,6 @@ If `amdgpu_top` is not enough for you or you don't like it, try the following ap
     * Radeon GPU Profiler (RGP) is a tool from AMD that allows for deep inspection of GPU workloads.
  * [ROCm/amdsmi](https://github.com/ROCm/amdsmi)
     * [Getting to Know Your GPU: A Deep Dive into AMD SMI — ROCm Blogs](https://rocm.blogs.amd.com/software-tools-optimization/amd-smi-overview/README.html)
+
+## Limited XDNA NPU Support
+Support for XDNA NPU is currently limited as the developers do not have access to the necessary hardware for verification.
