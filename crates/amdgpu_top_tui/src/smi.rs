@@ -4,7 +4,7 @@ use cursive::view::{Nameable, Scrollable};
 use cursive::views::{HideableView, LinearLayout, TextContent, TextView, Panel};
 
 use libamdgpu_top::AMDGPU::MetricsInfo;
-use libamdgpu_top::{stat, DevicePath, Sampling, UiArgs};
+use libamdgpu_top::{stat, DevicePath, Sampling, UiArgs, GetNpuMetrics};
 use stat::{GfxoffMonitor, GfxoffStatus, FdInfoSortType};
 
 use crate::{Text, AppTextView};
@@ -138,7 +138,9 @@ impl SmiApp {
             write!(self.info_text.buf, "  ____RPM ")?;
         }
 
-        if let Some(thr) = self.app_amdgpu_top.stat.metrics.as_ref().and_then(|m| m.get_throttle_status_info()) {
+        let gpu_metrics = self.app_amdgpu_top.stat.metrics.as_ref();
+
+        if let Some(thr) = gpu_metrics.and_then(|m| m.get_throttle_status_info()) {
             let thr = format!("{:?}", thr.get_all_throttler());
             write!(
                 self.info_text.buf,
@@ -160,6 +162,7 @@ impl SmiApp {
             write!(self.info_text.buf, "{s:<THR_LEN$}|")?;
         }
 
+        // CPU/APU Info
         if self.app_amdgpu_top.device_info.is_apu && let Some(sensors) = sensors {
             writeln!(self.info_text.buf)?;
 
@@ -180,6 +183,41 @@ impl SmiApp {
                 " CPU freq (100MHz)",
                 true,
             )?;
+        }
+
+        let xdna_device_path = self.app_amdgpu_top.xdna_device_path.as_ref();
+        let xdna_res_info = self.app_amdgpu_top.xdna_resouce_info.as_ref();
+        let npu_metrics = gpu_metrics.and_then(|m| m.get_npu_metrics());
+
+        // NPU Info
+        if let (
+            Some(xdna_device_path),
+            Some(xdna_res_info),
+            Some(npu_metrics),
+        ) = (
+            xdna_device_path,
+            xdna_res_info,
+            npu_metrics,
+        ) {
+            writeln!(self.info_text.buf)?;
+            write!(
+                self.info_text.buf,
+                " NPU: [{}] {}TOPS {:4}/{:4}MHz {:5}mW",
+                xdna_device_path.device_name,
+                xdna_res_info.npu_tops_max,
+                npu_metrics.npuclk_freq,
+                xdna_res_info.npu_clk_max,
+                npu_metrics.npu_power,
+            )?;
+
+            write!(self.info_text.buf, " [")?;
+
+            for busy in npu_metrics.npu_busy.iter() {
+                write!(self.info_text.buf, "{busy:3}%,")?;
+            }
+
+            let _ = self.info_text.buf.pop(); // remove ','
+            write!(self.info_text.buf, "]")?;
         }
 
         self.info_text.set();
