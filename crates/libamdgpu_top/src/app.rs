@@ -344,6 +344,7 @@ impl AppAmdgpuTop {
             }
 
             self.stat.metrics = None;
+            self.stat.activity = GpuActivity { gfx: None, umc: None, media: None };
             return;
         };
 
