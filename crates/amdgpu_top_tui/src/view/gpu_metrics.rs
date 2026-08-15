@@ -287,7 +287,12 @@ impl AppTextView {
         ])?;
 
         // socket_power(&mut self.text.buf, metrics)?;
-        avg_activity(&mut self.text.buf, metrics)?;
+
+        /*
+            average_vcn_activity in gpu_metrics_v3_0 needs correction
+            ref: https://lists.freedesktop.org/archives/amd-gfx/2026-August/149943.html
+        */
+        // avg_activity(&mut self.text.buf, metrics)?;
 
         if let [Some(dram_reads), Some(dram_writes)] = [
             metrics.get_average_dram_reads(),
