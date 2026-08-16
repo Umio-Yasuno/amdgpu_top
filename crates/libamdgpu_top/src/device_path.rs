@@ -7,6 +7,7 @@ use crate::{
     },
     PCI,
 };
+use crate::AGT_NO_DROP;
 use crate::stat::ProcInfo;
 use std::path::PathBuf;
 use std::fs;
@@ -141,7 +142,12 @@ impl DevicePath {
     }
 
     pub fn check_if_device_is_active(&self) -> bool {
-        // for env where CONFIG_PM is disabled
+        // Intentionally wake / activate device
+        if *AGT_NO_DROP {
+            return true;
+        }
+
+        // for the system where CONFIG_PM is disabled
         if !self.config_pm {
             return true;
         }

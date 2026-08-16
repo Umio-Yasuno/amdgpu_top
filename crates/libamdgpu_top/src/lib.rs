@@ -1,3 +1,4 @@
+use std::sync::LazyLock;
 use std::time::Duration;
 use std::path::PathBuf;
 
@@ -215,3 +216,13 @@ impl GetNpuMetrics for GpuMetrics {
         })
     }
 }
+
+// for debugging
+// TODO: add cli option
+pub(crate) static AGT_NO_DROP: LazyLock<bool> = LazyLock::new(|| {
+    if let Ok(s) = std::env::var("AGT_NO_DROP") {
+        s == "1"
+    } else {
+        false
+    }
+});

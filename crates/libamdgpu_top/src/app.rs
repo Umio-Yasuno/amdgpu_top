@@ -1,6 +1,5 @@
-use crate::drmVersion;
+use crate::{AGT_NO_DROP, AppDeviceInfo, DevicePath, drmVersion, stat, xdna, VramUsage};
 use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo, RasBlock, RasErrorCount};
-use crate::{AppDeviceInfo, DevicePath, stat, xdna, VramUsage};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use xdna::{amdxdna_drm_get_resource_info, XdnaFdInfoStat};
 use std::sync::{Arc, Mutex};
@@ -16,7 +15,6 @@ pub struct AppAmdgpuTop {
     pub xdna_resouce_info: Option<amdxdna_drm_get_resource_info>,
     pub stat: AppAmdgpuTopStat,
     buf_interval: Duration,
-    no_drop_device_handle: bool,
     dynamic_no_pc: bool, // to transition APU into GFXOFF state or dGPU into D3Hot state
     to_d3hot: bool,
 }
@@ -94,13 +92,13 @@ impl AppAmdgpuTop {
         device_path_list: &[DevicePath],
         opt: T,
     ) -> Vec<Self> {
-        let vec_json_device: Vec<Self> = device_path_list.iter().filter_map(|device_path| {
+        let vec_apps: Vec<Self> = device_path_list.iter().filter_map(|device_path| {
             let amdgpu_dev = device_path.init().ok()?;
 
             Self::new(amdgpu_dev, device_path.clone(), opt.as_ref())
         }).collect();
 
-        vec_json_device
+        vec_apps
     }
 
     pub fn new(amdgpu_dev: DeviceHandle, device_path: DevicePath, opt: &AppOption) -> Option<Self> {
@@ -109,11 +107,6 @@ impl AppAmdgpuTop {
         let ext_info = amdgpu_dev.device_info().ok()?;
         let asic_name = ext_info.get_asic_name();
         let memory_info = amdgpu_dev.memory_info().ok()?;
-        let no_drop_device_handle = if let Ok(s) = std::env::var("AGT_NO_DROP") {
-            s == "1"
-        } else {
-            false
-        };
 
         let [grbm, grbm2] = {
             let chip_class = ext_info.get_chip_class();
@@ -228,7 +221,6 @@ impl AppAmdgpuTop {
                 memory_error_count,
             },
             buf_interval: Duration::ZERO,
-            no_drop_device_handle,
             dynamic_no_pc: false,
             to_d3hot: false,
         })
@@ -319,7 +311,7 @@ impl AppAmdgpuTop {
                 && is_fdinfo_idle
                 && !has_kfd_process
                 && !self.to_d3hot
-                && !self.no_drop_device_handle
+                && !*AGT_NO_DROP
                 && !self.device_info.is_apu
             {
                 self.stat.vram_usage.update_usage(&self.amdgpu_dev);
@@ -334,7 +326,7 @@ impl AppAmdgpuTop {
                 self.to_d3hot = false;
             }
 
-            // RDNA 4 GPUs report 2% GFX usage with PC sampling only.
+            // RDNA 4 GPUs report 2% GFX usage with PC sampling only: this raises power draw by a few watts
             self.dynamic_no_pc = is_fdinfo_idle && !has_kfd_process;
         }
 
