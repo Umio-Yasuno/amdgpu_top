@@ -1,4 +1,4 @@
-use crate::{AGT_NO_DROP, AppDeviceInfo, DevicePath, drmVersion, stat, xdna, VramUsage};
+use crate::{AGT_NO_DROP, AppDeviceInfo, DevicePath, drmVersion, load_libamdgpu_top_keep_active, stat, xdna, VramUsage};
 use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo, RasBlock, RasErrorCount};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use xdna::{amdxdna_drm_get_resource_info, XdnaFdInfoStat};
@@ -312,6 +312,7 @@ impl AppAmdgpuTop {
                 && !has_kfd_process
                 && !self.to_d3hot
                 && !*AGT_NO_DROP
+                && !load_libamdgpu_top_keep_active()
                 && !self.device_info.is_apu
             {
                 self.stat.vram_usage.update_usage(&self.amdgpu_dev);
