@@ -90,7 +90,3 @@ assets = [
     { source = "docs/amdgpu_top.1", dest = "/usr/share/man/man1/", mode = "644" },
 ]
 
-# cargo-appimage
-[package.metadata.appimage]
-assets = ["assets/"]
-
