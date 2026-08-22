@@ -1,4 +1,4 @@
-use libamdgpu_top::{GuiMode, GuiWgpuBackend, PCI};
+use libamdgpu_top::{GuiMode, GuiWgpuBackend, PCI, set_libamdgpu_top_keep_active};
 
 pub struct MainOpt {
     pub instance: Option<usize>, // index
@@ -379,6 +379,9 @@ impl MainOpt {
                 "--vk" | "--vulkan" => opt.wgpu_backend = GuiWgpuBackend::Vulkan,
                 "--xdna" => {
                     opt.dump_mode = DumpMode::Xdna;
+                },
+                "--keep-active" => {
+                    set_libamdgpu_top_keep_active();
                 },
                 _ => {
                     eprintln!("Unknown option: {arg}");

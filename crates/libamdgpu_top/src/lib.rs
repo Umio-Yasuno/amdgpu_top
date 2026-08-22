@@ -1,4 +1,4 @@
-use std::sync::LazyLock;
+use std::sync::{atomic::{AtomicBool, Ordering}, LazyLock};
 use std::time::Duration;
 use std::path::PathBuf;
 
@@ -226,3 +226,17 @@ pub(crate) static AGT_NO_DROP: LazyLock<bool> = LazyLock::new(|| {
         false
     }
 });
+
+static AGT_KEEP_ACTIVE: AtomicBool = AtomicBool::new(false);
+
+pub fn set_libamdgpu_top_keep_active() {
+    AGT_KEEP_ACTIVE.store(true, Ordering::Relaxed);
+}
+
+pub fn unset_libamdgpu_top_keep_active() {
+    AGT_KEEP_ACTIVE.store(false, Ordering::Relaxed);
+}
+
+fn load_libamdgpu_top_keep_active() -> bool {
+    AGT_KEEP_ACTIVE.load(Ordering::Relaxed)
+}
