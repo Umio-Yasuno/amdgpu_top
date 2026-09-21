@@ -5,7 +5,7 @@ use crate::{BASE, MEDIUM, HISTORY_LENGTH};
 use crate::{GuiAppData, GuiGpuMetrics, util::*, fl};
 use crate::gui_app_data::PlotHistory;
 use crate::tab_gui::{MainTab, InfoTab};
-use egui_plot::{Corner, Legend, Line, Plot, PlotPoint, PlotPoints};
+use egui_plot::{Corner, HoverPosition, Legend, Line, Plot, PlotPoints};
 
 use libamdgpu_top::{
     AMDGPU::{GpuMetrics, MetricsInfo, RasErrorCount},
@@ -76,9 +76,6 @@ impl MyApp {
         pc: &PerfCounter,
         history: &[PlotHistory<u8>],
     ) {
-        let label_fmt = |_s: &str, val: &PlotPoint| {
-            format!("{:.1}s : {:.0}%", val.x, val.y)
-        };
         let mut n = 1;
 
         egui::Grid::new(pc_name).spacing(SPACING).show(ui, |ui| {
@@ -95,7 +92,12 @@ impl MyApp {
                         .allow_scroll(false)
                         .include_y(0.0)
                         .include_y(100.0)
-                        .label_formatter(label_fmt)
+                        .label_formatter(|pos| match pos {
+                            HoverPosition::NearDataPoint { position, .. } => {
+                                Some(format!("{:.1}s : {:.0}%", position.x, position.y))
+                            },
+                            _ => None,
+                        })
                         .auto_bounds([true, false])
                         .height(SENSORS_HEIGHT / 2.0)
                         .width(SENSORS_WIDTH)
@@ -109,10 +111,6 @@ impl MyApp {
     }
 
     pub fn egui_vram_plot(&self, ui: &mut egui::Ui) {
-        let label_fmt = |name: &str, val: &PlotPoint| {
-            format!("{:.1}s : {name} {:.0} MiB", val.x, val.y)
-        };
-
         let vram = self.buf_data.history.vram_history.vec_plotpoint.as_slice();
         let gtt = self.buf_data.history.gtt_history.vec_plotpoint.as_slice();
 
@@ -124,7 +122,12 @@ impl MyApp {
         default_plot("VRAM Plot")
             .allow_scroll(false)
             .include_y(max as f64)
-            .label_formatter(label_fmt)
+            .label_formatter(|pos| match pos {
+                HoverPosition::NearDataPoint { plot_name, position, .. } => {
+                    Some(format!("{:.1}s : {plot_name} {:.0} MiB", position.x, position.y))
+                },
+                _ => None,
+            })
             .auto_bounds([true, false])
             .height(PLOT_HEIGHT)
             .width(PLOT_WIDTH.min(ui.available_width()))
@@ -161,10 +164,6 @@ impl MyApp {
     }
 
     pub fn egui_fdinfo_plot(&self, ui: &mut egui::Ui, has_vcn_unified: bool, has_vpe: bool) {
-        let label_fmt = |name: &str, val: &PlotPoint| {
-            format!("{:.1}s : {name} {:.0}%", val.x, val.y)
-        };
-
         let [mut gfx, mut compute, mut dma, mut dec, mut enc, mut vcnu, mut vpe] = [0; 7]
             .map(|_| Vec::<[f64; 2]>::with_capacity(HISTORY_LENGTH.end));
 
@@ -189,7 +188,12 @@ impl MyApp {
             .allow_scroll(false)
             .include_y(100.0)
             .show_axes([false, true])
-            .label_formatter(label_fmt)
+            .label_formatter(|pos| match pos {
+                HoverPosition::NearDataPoint { plot_name, position, .. } => {
+                    Some(format!("{:.1}s : {plot_name} {:.0}%", position.x, position.y))
+                },
+                _ => None,
+            })
             .auto_bounds([true, false])
             .height(PLOT_HEIGHT)
             .width(PLOT_WIDTH.min(ui.available_width()))
@@ -428,13 +432,6 @@ impl MyApp {
 
                     ui.end_row();
 
-                    let label_fmt = move |_name: &str, val: &PlotPoint| {
-                        if let Some(per) = per {
-                            format!("{:.1}s\n{:.0} {unit} ({per:>3}%)", val.x, val.y)
-                        } else {
-                            format!("{:.1}s\n{:.0} {unit}", val.x, val.y)
-                        }
-                    };
                     let points = history.vec_plotpoint.as_slice();
                     let line = Line::new(label.to_string(), points).fill(0.0);
 
@@ -444,7 +441,21 @@ impl MyApp {
                         .include_y(min)
                         .include_y(max)
                         .show_axes(false)
-                        .label_formatter(label_fmt)
+                        .label_formatter(|pos| match pos {
+                            HoverPosition::NearDataPoint { position, .. } => {
+                                let point_per = if min == 0 {
+                                    Some(position.y * 100.0 / f64::from(max))
+                                } else {
+                                    None
+                                };
+                                if let Some(point_per) = point_per {
+                                    Some(format!("{:.1}s\n{:.0} {unit} ({point_per:>3}%)", position.x, position.y))
+                                } else {
+                                    Some(format!("{:.1}s\n{:.0} {unit}", position.x, position.y))
+                                }
+                            },
+                            _ => None,
+                        })
                         .auto_bounds([true, false])
                         .height(SENSORS_HEIGHT)
                         .width(SENSORS_WIDTH)
@@ -503,9 +514,6 @@ impl MyApp {
 
     pub fn egui_temp_plot(&self, ui: &mut egui::Ui) {
         let Some(sensors) = self.buf_data.stat.sensors.as_ref() else { return };
-        let label_fmt = |_name: &str, val: &PlotPoint| {
-            format!("{:.1}s\n{:.0} C", val.x, val.y)
-        };
         ui.style_mut().override_font_id = Some(MEDIUM);
         let mut n = 1;
 
@@ -528,7 +536,12 @@ impl MyApp {
 
                 default_plot(label)
                     .include_y(max)
-                    .label_formatter(label_fmt)
+                    .label_formatter(|pos| match pos {
+                        HoverPosition::NearDataPoint { position, .. } => {
+                            Some(format!("{:.1}s\n{:.0} C", position.x, position.y))
+                        },
+                        _ => None,
+                    })
                     .auto_bounds([true, true])
                     .height(SENSORS_HEIGHT)
                     .width(SENSORS_WIDTH)
@@ -551,7 +564,12 @@ impl MyApp {
                 default_plot(label)
                     .include_y(0)
                     .include_y(100)
-                    .label_formatter(label_fmt)
+                    .label_formatter(|pos| match pos {
+                        HoverPosition::NearDataPoint { position, .. } => {
+                            Some(format!("{:.1}s\n{:.0} C", position.x, position.y))
+                        },
+                        _ => None,
+                    })
                     .auto_bounds([true, true])
                     .height(SENSORS_HEIGHT)
                     .width(SENSORS_WIDTH)
@@ -564,10 +582,6 @@ impl MyApp {
     }
 
     pub fn egui_pcie_bw(&self, ui: &mut egui::Ui) {
-        let label_fmt = |name: &str, val: &PlotPoint| {
-            format!("{:.1}s : {name} {:.0} {}", val.x, val.y, fl!("mib_s"))
-        };
-
         let fl_sent = fl!("sent");
         let fl_rec = fl!("received");
         let mib_s = fl!("mib_s");
@@ -581,7 +595,12 @@ impl MyApp {
         ];
 
         default_plot("pcie_bw plot")
-            .label_formatter(label_fmt)
+            .label_formatter(|pos| match pos {
+                HoverPosition::NearDataPoint { plot_name, position, .. } => {
+                    Some(format!("{:.1}s : {plot_name} {:.0} {}", position.x, position.y, fl!("mib_s")))
+                },
+                _ => None,
+            })
             .auto_bounds([true, true])
             .height(PLOT_HEIGHT)
             .width(PLOT_WIDTH.min(ui.available_width()))
@@ -599,9 +618,6 @@ impl MyApp {
     }
 
     pub fn egui_activity(&self, ui: &mut egui::Ui) {
-        let label_fmt = |name: &str, val: &PlotPoint| {
-            format!("{:.1}s : {name} {:.0}%", val.x, val.y)
-        };
         let fl_gfx = fl!("gfx");
         let fl_memory = fl!("memory");
         let fl_media = fl!("media");
@@ -624,7 +640,12 @@ impl MyApp {
             .allow_scroll(false)
             .include_y(0.0)
             .include_y(100.0)
-            .label_formatter(label_fmt)
+            .label_formatter(|pos| match pos {
+                HoverPosition::NearDataPoint { plot_name, position, .. } => {
+                    Some(format!("{:.1}s : {plot_name} {:.0}%", position.x, position.y))
+                },
+                _ => None,
+            })
             .show_axes([false, true])
             .height(PLOT_HEIGHT)
             .width(PLOT_WIDTH.min(ui.available_width()))
@@ -656,9 +677,6 @@ impl MyApp {
             .iter()
             .map(|history| PlotPoints::from(history.vec_plotpoint.as_slice()))
             .collect();
-        let label_fmt = |name: &str, val: &PlotPoint| {
-            format!("{:.1}s : {name} {:.0} MHz", val.x, val.y)
-        };
 
         // Initialize `CPU_PLOT_HEIGHT` here as all APUs support CPU freq stats
         let plot_height = CPU_PLOT_HEIGHT.get_or_init(|| if sensors.all_cpu_core_freq_info.len() > 8 {
@@ -671,7 +689,12 @@ impl MyApp {
             .allow_zoom(false)
             .allow_scroll(false)
             .show_axes([false, true])
-            .label_formatter(label_fmt)
+            .label_formatter(|pos| match pos {
+                HoverPosition::NearDataPoint { plot_name, position, .. } => {
+                    Some(format!("{:.1}s : {plot_name} {:.0} MHz", position.x, position.y))
+                },
+                _ => None,
+            })
             .auto_bounds([true, true])
             .height(*plot_height)
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
@@ -688,15 +711,17 @@ impl MyApp {
             .iter()
             .map(|history| PlotPoints::from(history.vec_plotpoint.as_slice()))
             .collect();
-        let label_fmt = |name: &str, val: &PlotPoint| {
-            format!("{:.1}s : {name} {:.0} mW", val.x, val.y)
-        };
 
         Plot::new("Core Power Plot")
             .allow_zoom(false)
             .allow_scroll(false)
             .show_axes([false, true])
-            .label_formatter(label_fmt)
+            .label_formatter(|pos| match pos {
+                HoverPosition::NearDataPoint { plot_name, position, .. } => {
+                    Some(format!("{:.1}s : {plot_name} {:.0} mW", position.x, position.y))
+                },
+                _ => None,
+            })
             .auto_bounds([true, true])
             .height(*CPU_PLOT_HEIGHT.get().unwrap_or(&PLOT_HEIGHT))
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
@@ -712,16 +737,18 @@ impl MyApp {
             .iter()
             .map(|history| PlotPoints::from(history.vec_plotpoint.as_slice()))
             .collect();
-        let label_fmt = |name: &str, val: &PlotPoint| {
-            format!("{:.1}s : {name} {:.0} C", val.x, val.y)
-        };
 
         Plot::new("Core Temperature Plot")
             .allow_zoom(false)
             .allow_scroll(false)
             .show_axes([false, true])
             .include_y(0.0)
-            .label_formatter(label_fmt)
+            .label_formatter(|pos| match pos {
+                HoverPosition::NearDataPoint { plot_name, position, .. } => {
+                    Some(format!("{:.1}s : {plot_name} {:.0} C", position.x, position.y))
+                },
+                _ => None,
+            })
             .height(*CPU_PLOT_HEIGHT.get().unwrap_or(&PLOT_HEIGHT))
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
             .legend(Legend::default().position(Corner::LeftTop))
@@ -741,16 +768,18 @@ impl MyApp {
             &self.buf_data.history.cur_vclk1,
             &self.buf_data.history.cur_dclk1,
         ].map(|history| history.vec_plotpoint.as_slice());
-        let label_fmt = |name: &str, val: &PlotPoint| {
-            format!("{:.1}s : {name} {:.0} MHz", val.x, val.y)
-        };
 
         Plot::new("VCLK/DCLK Plot")
             .allow_zoom(false)
             .allow_scroll(false)
             .show_axes([false, true])
             .include_y(0.0)
-            .label_formatter(label_fmt)
+            .label_formatter(|pos| match pos {
+                HoverPosition::NearDataPoint { plot_name, position, .. } => {
+                    Some(format!("{:.1}s : {plot_name} {:.0} MHz", position.x, position.y))
+                },
+                _ => None,
+            })
             .height(PLOT_HEIGHT)
             .width(PLOT_WIDTH.min(ui.available_width() - 100.0))
             .legend(Legend::default().position(Corner::LeftTop))

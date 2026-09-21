@@ -546,7 +546,9 @@ impl MyApp {
 }
 
 impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn logic(&mut self, _ctx: &egui::Context, _frame: &mut eframe::Frame) {}
+
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let share_data = SHARE_DATA.load();
 
         if !self.pause {
@@ -565,24 +567,22 @@ impl eframe::App for MyApp {
             pub const CLOSE_KEY: KeyboardShortcut =
                 KeyboardShortcut::new(Modifiers::CTRL, Key::Q);
 
-            if ctx.input_mut(|i| i.consume_shortcut(&CLOSE_KEY)) {
-                ctx.send_viewport_cmd(ViewportCommand::Close);
+            if ui.ctx().input_mut(|i| i.consume_shortcut(&CLOSE_KEY)) {
+                ui.ctx().send_viewport_cmd(ViewportCommand::Close);
             }
+
+            ui.global_style_mut(|style| {
+                if self.gui_mode.is_tab_mode() {
+                    style.override_font_id = Some(MEDIUM);
+                } else {
+                    style.override_font_id = Some(BASE);
+                }
+            });
+            ui.ctx().clear_animations();
+            ui.ctx().request_repaint_after(Duration::from_millis(500));
         }
 
-        {
-            let mut style = (*ctx.style()).clone();
-            if self.gui_mode.is_tab_mode() {
-                style.override_font_id = Some(MEDIUM);
-            } else {
-                style.override_font_id = Some(BASE);
-            }
-            ctx.set_style(style);
-        }
-
-        ctx.clear_animations();
-
-        egui::TopBottomPanel::top("menu bar").show(ctx, |ui| {
+        egui::Panel::top("menu bar").show(ui, |ui| {
             ui.horizontal(|ui| {
                 {
                     let pre_pci_bus = self.selected_pci_bus;
@@ -592,7 +592,7 @@ impl eframe::App for MyApp {
                     if pre_pci_bus != self.selected_pci_bus {
                         let cur_pci_bus = self.selected_pci_bus.to_string();
 
-                        ctx.data_mut(|id_map| {
+                        ui.ctx().data_mut(|id_map| {
                             let v = id_map.get_persisted_mut_or_insert_with(
                                 *PCI_BUS_ID,
                                 || { cur_pci_bus.clone() },
@@ -612,7 +612,7 @@ impl eframe::App for MyApp {
                     );
 
                     if res.changed() {
-                        ctx.data_mut(|id_map| {
+                        ui.ctx().data_mut(|id_map| {
                             let v = id_map.get_persisted_mut_or_insert_with(
                                 *SIDE_PANEL_STATE_ID,
                                 || { self.show_sidepanel },
@@ -624,7 +624,7 @@ impl eframe::App for MyApp {
                 }
 
                 {
-                    let pre_theme = ctx.theme();
+                    let pre_theme = ui.ctx().theme();
 
                     if self.gui_mode.is_tab_mode() {
                         egui::widgets::global_theme_preference_switch(ui);
@@ -632,10 +632,10 @@ impl eframe::App for MyApp {
                         egui::widgets::global_theme_preference_buttons(ui);
                     }
 
-                    let cur_theme = ctx.theme();
+                    let cur_theme = ui.ctx().theme();
 
                     if pre_theme != cur_theme {
-                        ctx.data_mut(|id_map| {
+                        ui.ctx().data_mut(|id_map| {
                             let v = id_map.get_persisted_mut_or_insert_with(
                                 *THEME_ID,
                                 || { cur_theme },
@@ -648,15 +648,15 @@ impl eframe::App for MyApp {
 
                 if self.gui_mode.is_tab_mode() {
                     if ui.button("-").clicked() {
-                        egui::gui_zoom::zoom_out(ctx);
+                        egui::gui_zoom::zoom_out(ui.ctx());
                     }
                     if ui.button("+").clicked() {
-                        egui::gui_zoom::zoom_in(ctx);
+                        egui::gui_zoom::zoom_in(ui.ctx());
                     }
                     if ui.button("↻").clicked() {
-                        ctx.set_zoom_factor(1.0);
+                        ui.ctx().set_zoom_factor(1.0);
                     }
-                    ui.label(format!("🔍 {:>3.0}%", ctx.zoom_factor() * 100.0));
+                    ui.label(format!("🔍 {:>3.0}%", ui.ctx().zoom_factor() * 100.0));
                     ui.separator();
                 }
 
@@ -680,7 +680,7 @@ impl eframe::App for MyApp {
 
                     if pre_mode != self.gui_mode {
                         let gui_mode_u8: u8 = self.gui_mode.into();
-                        ctx.data_mut(|id_map| {
+                        ui.ctx().data_mut(|id_map| {
                             let v = id_map.get_persisted_mut_or_insert_with(
                                 *GUI_MODE_ID,
                                 || { gui_mode_u8 },
@@ -695,19 +695,19 @@ impl eframe::App for MyApp {
 
             if !self.gui_mode.is_tab_mode() { ui.horizontal(|ui| {
                 egui::gui_zoom::zoom_menu_buttons(ui);
-                ui.label(format!("{:>3.0}%", ctx.zoom_factor() * 100.0));
+                ui.label(format!("{:>3.0}%", ui.ctx().zoom_factor() * 100.0));
                 ui.separator();
 
-                quit_button(ctx, ui);
+                quit_button(ui);
             }); }
         });
 
         if !self.gui_mode.is_tab_mode() && self.show_sidepanel {
-            egui::SidePanel::left(*SIDE_PANEL_ID).show(ctx, |ui| self.egui_side_panel(ui));
+            egui::Panel::left(*SIDE_PANEL_ID).show(ui, |ui| self.egui_side_panel(ui));
         }
 
         egui::CentralPanel::default().show(
-            ctx,
+            ui,
             |ui| if self.gui_mode.is_tab_mode() {
                 let pre_main_tab = self.main_tab;
                 let pre_info_tab = self.info_tab;
@@ -716,7 +716,7 @@ impl eframe::App for MyApp {
 
                 if pre_main_tab != self.main_tab {
                     let main_tab_u8: u8 = self.main_tab.into();
-                    ctx.data_mut(|id_map| {
+                    ui.ctx().data_mut(|id_map| {
                         let v = id_map.get_persisted_mut_or_insert_with(
                             *MAIN_TAB_ID,
                             || { main_tab_u8 },
@@ -727,7 +727,7 @@ impl eframe::App for MyApp {
 
                 if pre_info_tab != self.info_tab {
                     let info_tab_u8: u8 = self.info_tab.into();
-                    ctx.data_mut(|id_map| {
+                    ui.ctx().data_mut(|id_map| {
                         let v = id_map.get_persisted_mut_or_insert_with(
                             *INFO_TAB_ID,
                             || { info_tab_u8 },
@@ -739,14 +739,12 @@ impl eframe::App for MyApp {
                 self.egui_central_panel(ui)
             }
         );
-
-        ctx.request_repaint_after(Duration::from_millis(500));
     }
 }
 
-fn quit_button(ctx: &egui::Context, ui: &mut egui::Ui) {
+fn quit_button(ui: &mut egui::Ui) {
     if ui.button(RichText::new(fl!("quit") + " (Ctrl+Q)")).clicked() {
-        ctx.send_viewport_cmd(ViewportCommand::Close);
+        ui.ctx().send_viewport_cmd(ViewportCommand::Close);
     };
 }
 
