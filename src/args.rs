@@ -121,9 +121,9 @@ const HELP_MSG: &str = concat!(
     "   --xdna\n",
     "       Dump XDNA NPU info.\n",
     "   --dark, --dark-mode\n",
-    "       Set to the dark mode. (TUI/GUI)\n",
+    "       Set to the dark mode. (TUI/GUI) (env: AGT_DARK_THEME_MODE)\n",
     "   --light, --light-mode\n",
-    "       Set to the light mode. (TUI/GUI)\n",
+    "       Set to the light mode. (TUI/GUI) (env: AGT_LIGHT_THEME_MODE)\n",
     "   --hide-fdinfo\n",
     "       Hide fdinfo panel and launch. (TUI)\n",
     "   --gl, --opengl\n",
@@ -159,6 +159,16 @@ impl MainOpt {
     pub fn parse() -> Self {
         let mut opt = Self::default();
         let mut skip = false;
+
+        if std::env::var("AGT_DARK_THEME_MODE").is_ok_and(|v| v == "1") {
+            opt.is_dark_mode = Some(true);
+        } else if std::env::var("AGT_LIGHT_THEME_MODE").is_ok_and(|v| v == "1") {
+            opt.is_dark_mode = Some(false);
+        }
+
+        if std::env::var("AGT_TUI_HIDE_FDINFO").is_ok_and(|v| v == "1") {
+            opt.hide_fdinfo = true;
+        }
 
         let args = &std::env::args().skip(1).collect::<Vec<String>>();
 
