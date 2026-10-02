@@ -7,7 +7,7 @@ use crate::{
     },
     PCI,
 };
-use crate::{AGT_NO_DROP, load_libamdgpu_top_keep_active};
+use crate::load_libamdgpu_top_keep_active;
 use crate::stat::ProcInfo;
 use std::path::PathBuf;
 use std::fs;
@@ -142,11 +142,6 @@ impl DevicePath {
     }
 
     pub fn check_if_device_is_active(&self) -> bool {
-        // Intentionally wake / activate device
-        if *AGT_NO_DROP {
-            return true;
-        }
-
         // Intentionally wake / activate device
         if load_libamdgpu_top_keep_active() {
             return true;
