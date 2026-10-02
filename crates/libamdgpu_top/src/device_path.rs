@@ -115,7 +115,7 @@ impl DevicePath {
             let render = self.render.to_str()?;
             if !render.starts_with(PRE) { return None }
 
-            format!("drm_render_minor {}", &render.get(PRE_LEN..)?)
+            format!("drm_render_minor {}", render.get(PRE_LEN..)?)
         };
 
         let dirs = fs::read_dir("/sys/class/kfd/kfd/topology/nodes/").ok()?;
