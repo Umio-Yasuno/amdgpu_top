@@ -92,15 +92,15 @@ Dump XDNA NPU info.
 .TP
 \f[B]\-\-dark\f[R], \f[B]\-\-dark\-mode\f[R]
 Set to the dark mode.
-(TUI/GUI)
+(TUI/GUI) (env: AGT_DARK_THEME_MODE)
 .TP
 \f[B]\-\-light\f[R], \f[B]\-\-light\-mode\f[R]
 Set to the light mode.
-(TUI/GUI)
+(TUI/GUI) (env: AGT_LIGHT_THEME_MODE)
 .TP
 \f[B]\-\-hide\-fdinfo\f[R]
 Hide fdinfo panel and launch.
-(TUI)
+(TUI) (env: AGT_TUI_HIDE_FDINFO)
 .TP
 \f[B]\-\-gl\f[R], \f[B]\-\-opengl\f[R]
 Use OpenGL API to the GUI backend.
@@ -108,6 +108,12 @@ Use OpenGL API to the GUI backend.
 \f[B]\-\-vk\f[R], \f[B]\-\-vulkan\f[R]
 Use Vulkan API to the GUI backend, and use APU/iGPU for GUI rendering if
 it is available.
+.TP
+\f[B]\-\-keep\-\-active\f[R]
+For debugging.
+Keeps the device active while the application is running, preventing
+transitions to the D3 state.
+(env: AGT_KEEP_ACTIVE)
 .TP
 \f[B]\-d\f[R], \f[B]\-\-dump\f[R]
 Dump AMDGPU info.

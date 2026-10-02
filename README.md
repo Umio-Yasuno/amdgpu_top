@@ -77,6 +77,10 @@ FLAGS:
        This option can be combined with the "-d" option.
    --gui
        Launch GUI mode.
+   --single-gui
+       Launch Single GUI mode.
+   --tab-gui
+       Launch Tab GUI mode.
    --smi
        Launch Simple TUI mode. (like nvidia-smi, rocm-smi)
    -p, --process
@@ -98,17 +102,22 @@ FLAGS:
    --drm_info, --drm-info
        Dump DRM info.
        Inspired by https://gitlab.freedesktop.org/emersion/drm_info
-    --xdna
+   --xdna
        Dump XDNA NPU info.
    --dark, --dark-mode
-       Set to the dark mode. (TUI/GUI)
+       Set to the dark mode. (TUI/GUI) (env: AGT_DARK_THEME_MODE)
    --light, --light-mode
-       Set to the light mode. (TUI/GUI)
+       Set to the light mode. (TUI/GUI) (env: AGT_LIGHT_THEME_MODE)
+   --hide-fdinfo
+       Hide fdinfo panel and launch. (TUI)
    --gl, --opengl
        Use OpenGL API to the GUI backend.
    --vk, --vulkan
        Use Vulkan API to the GUI backend,
        and use APU/iGPU for GUI rendering if it is available.
+   --keep-active
+       For debugging. Keeps the device active while the application is running,
+       preventing transitions to the D3 state. (env: AGT_KEEP_ACTIVE)
    -V, --version
        Print version information.
    -h, --help
