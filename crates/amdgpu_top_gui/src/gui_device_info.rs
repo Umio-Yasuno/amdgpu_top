@@ -449,7 +449,7 @@ pub trait GuiModeProp {
 
 impl GuiModeProp for &(ModeProp, u64) {
     fn ui(&self, conn_name: &str, ui: &mut egui::Ui) {
-        collapsing_with_id(ui, &self.0.name, &format!("{} {conn_name}", &self.0.name), false, |ui| {
+        collapsing_with_id(ui, &self.0.name, &format!("{} {conn_name}", self.0.name), false, |ui| {
             egui::Grid::new(&self.0.name).show(ui, |ui| {
                 ui.label("type");
                 ui.label(self.0.prop_type.to_string());

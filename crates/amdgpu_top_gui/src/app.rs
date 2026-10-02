@@ -82,7 +82,7 @@ impl MyApp {
             for (pc_index, history) in pc.pc_index.iter().zip(history.iter()) {
                 egui::Grid::new(&pc_index.name).show(ui, |ui| {
                     let usage = pc_index.usage;
-                    ui.label(format!("{} {usage:3}%", &pc_index.name));
+                    ui.label(format!("{} {usage:3}%", pc_index.name));
                     ui.end_row();
 
                     let points = history.vec_plotpoint.as_slice();
