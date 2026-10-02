@@ -125,12 +125,15 @@ const HELP_MSG: &str = concat!(
     "   --light, --light-mode\n",
     "       Set to the light mode. (TUI/GUI) (env: AGT_LIGHT_THEME_MODE)\n",
     "   --hide-fdinfo\n",
-    "       Hide fdinfo panel and launch. (TUI)\n",
+    "       Hide fdinfo panel and launch. (TUI) (env: AGT_TUI_HIDE_FDINFO)\n",
     "   --gl, --opengl\n",
     "       Use OpenGL API to the GUI backend.\n",
     "   --vk, --vulkan\n",
     "       Use Vulkan API to the GUI backend,\n",
     "       and use APU/iGPU for GUI rendering if it is available.\n",
+    "   --keep-active\n",
+    "       For debugging. Keeps the device active while the application is running,\n",
+    "       preventing transitions to the D3 state. (env: AGT_KEEP_ACTIVE)\n",
     "   -V, --version\n",
     "       Print version information.\n",
     "   -h, --help\n",
@@ -168,6 +171,10 @@ impl MainOpt {
 
         if std::env::var("AGT_TUI_HIDE_FDINFO").is_ok_and(|v| v == "1") {
             opt.hide_fdinfo = true;
+        }
+
+        if std::env::var("AGT_KEEP_ACTIVE").is_ok_and(|v| v == "1") {
+            set_libamdgpu_top_keep_active();
         }
 
         let args = &std::env::args().skip(1).collect::<Vec<String>>();

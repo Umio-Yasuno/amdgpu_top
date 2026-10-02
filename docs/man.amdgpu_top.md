@@ -81,19 +81,22 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 :   Dump XDNA NPU info.
 
 **\-\-dark**, **\-\-dark-mode**
-:   Set to the dark mode. (TUI/GUI)
+:   Set to the dark mode. (TUI/GUI) (env: AGT_DARK_THEME_MODE)
 
 **\-\-light**, **\-\-light-mode**
-:   Set to the light mode. (TUI/GUI)
+:   Set to the light mode. (TUI/GUI) (env: AGT_LIGHT_THEME_MODE)
 
 **\-\-hide-fdinfo**
-:   Hide fdinfo panel and launch. (TUI)
+:   Hide fdinfo panel and launch. (TUI) (env: AGT_TUI_HIDE_FDINFO)
 
 **\-\-gl**, **\-\-opengl**
 :   Use OpenGL API to the GUI backend.
 
 **\-\-vk**, **\-\-vulkan**
 :   Use Vulkan API to the GUI backend, and use APU/iGPU for GUI rendering if it is available.
+
+**\-\-keep\-\-active**
+:   For debugging. Keeps the device active while the application is running, preventing transitions to the D3 state. (env: AGT_KEEP_ACTIVE)
 
 **\-d**, **\-\-dump**
 :   Dump AMDGPU info. (Specifications, VRAM, PCI, ResizableBAR, VBIOS, Video caps) This option can be combined with the "-J" option.
