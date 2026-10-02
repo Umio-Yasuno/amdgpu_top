@@ -217,16 +217,6 @@ impl GetNpuMetrics for GpuMetrics {
     }
 }
 
-// for debugging
-// TODO: add cli option
-pub(crate) static AGT_NO_DROP: LazyLock<bool> = LazyLock::new(|| {
-    if let Ok(s) = std::env::var("AGT_NO_DROP") {
-        s == "1"
-    } else {
-        false
-    }
-});
-
 static AGT_KEEP_ACTIVE: AtomicBool = AtomicBool::new(false);
 
 pub fn set_libamdgpu_top_keep_active() {
