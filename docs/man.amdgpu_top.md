@@ -66,7 +66,7 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 :   Display only the selected GPU/APU.
 
 **\-\-no\-pc**
-:   The application does not read the performance counter (GRBM, GRBM2) if this flag is set. Reading the performance counter may deactivate the power saving feature of APU/GPU.
+:   The application does not read the performance counter (GRBM, GRBM2) if this flag is set. Reading the performance counter may deactivate the power saving feature of APU/GPU. (env: AGT_NO_PC)
 
 **\-gm**, **\-\-gpu_metrics**, **\-\-gpu-metrics**
 :   Dump gpu_metrics for all AMD GPUs. https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gpu-metrics

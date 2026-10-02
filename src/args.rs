@@ -108,7 +108,7 @@ const HELP_MSG: &str = concat!(
     "   --no-pc\n",
     "       The application does not read the performance counter (GRBM, GRBM2)\n",
     "       if this flag is set.\n",
-    "       Reading the performance counter may deactivate the power saving feature of APU/GPU.\n",
+    "       Reading the performance counter may deactivate the power saving feature of APU/GPU. (env: AGT_NO_PC)\n",
     "   -gm, --gpu_metrics, --gpu-metrics\n",
     "       Dump gpu_metrics for all AMD GPUs.\n",
     "       https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gpu-metrics\n",
@@ -167,6 +167,10 @@ impl MainOpt {
             opt.is_dark_mode = Some(true);
         } else if std::env::var("AGT_LIGHT_THEME_MODE").is_ok_and(|v| v == "1") {
             opt.is_dark_mode = Some(false);
+        }
+
+        if std::env::var("AGT_NO_PC").is_ok_and(|v| v == "1") {
+            opt.no_pc = true;
         }
 
         if std::env::var("AGT_TUI_HIDE_FDINFO").is_ok_and(|v| v == "1") {
