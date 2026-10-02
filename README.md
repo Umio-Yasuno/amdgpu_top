@@ -92,7 +92,7 @@ FLAGS:
    --no-pc
        The application does not read the performance counter (GRBM, GRBM2)
        if this flag is set.
-       Reading the performance counter may deactivate the power saving feature of APU/GPU.
+       Reading the performance counter may deactivate the power saving feature of APU/GPU. (env: AGT_NO_PC)
    -gm, --gpu_metrics, --gpu-metrics
        Dump gpu_metrics for all AMD GPUs.
        https://www.kernel.org/doc/html/latest/gpu/amdgpu/thermal.html#gpu-metrics
@@ -109,7 +109,7 @@ FLAGS:
    --light, --light-mode
        Set to the light mode. (TUI/GUI) (env: AGT_LIGHT_THEME_MODE)
    --hide-fdinfo
-       Hide fdinfo panel and launch. (TUI)
+       Hide fdinfo panel and launch. (TUI) (env: AGT_TUI_HIDE_FDINFO)
    --gl, --opengl
        Use OpenGL API to the GUI backend.
    --vk, --vulkan
