@@ -21,7 +21,6 @@
   </description>
 
   <launchable type="desktop-id">amdgpu_top.desktop</launchable>
-  <launchable type="desktop-id">amdgpu_top-tui.desktop</launchable>
 
   <screenshots>
     <screenshot type="default">

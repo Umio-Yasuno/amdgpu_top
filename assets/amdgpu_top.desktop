@@ -1,7 +1,20 @@
 [Desktop Entry]
-Type=Application
-Name=AMDGPU TOP (GUI)
-GenericName=AMDGPU Monitoring Tool
-Exec=amdgpu_top --gui
+Actions=TAB;TUI;SMI;
 Categories=System;Monitor;
+Exec=amdgpu_top --gui
+GenericName=AMDGPU Monitoring Tool
 Icon=utilities-system-monitor
+Name=AMDGPU TOP (GUI)
+Type=Application
+
+[Desktop Action SMI]
+Exec=x-terminal-emulator -e "amdgpu_top --smi"
+Name=AMDGPU TOP (SMI)
+
+[Desktop Action TAB]
+Exec=amdgpu_top --tab-gui
+Name=AMDGPU TOP (TAB GUI)
+
+[Desktop Action TUI]
+Exec=x-terminal-emulator -e "amdgpu_top"
+Name=AMDGPU TOP (TUI)
