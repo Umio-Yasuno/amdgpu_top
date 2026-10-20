@@ -2,9 +2,10 @@
 // ref: https://github.com/amd/xdna-driver/blob/main/src/driver/amdxdna/amdxdna_pci_drv.c
 
 use std::{fs, io};
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
 use crate::{DeviceType, DevicePath, PCI};
+use std::os::fd::{AsFd, AsRawFd};
 
 pub fn find_xdna_device() -> Option<DevicePath> {
     let [accel, sysfs_path] = find_accel_path_and_sysfs_path()?;
@@ -34,7 +35,6 @@ pub fn find_xdna_device() -> Option<DevicePath> {
         arc_proc_index,
         config_pm,
         device_type: DeviceType::AMDXDNA,
-        fd: OnceLock::new(),
     })
 }
 
@@ -74,20 +74,19 @@ impl DevicePath {
             })
     }
 
-    pub fn check_xdna_fdinfo_support(&self) -> bool {
-        use std::os::fd::AsRawFd;
+}
 
-        let owned_fd = self.get_fd();
-        let fd = owned_fd.as_raw_fd();
-        let Ok(s) = fs::read_to_string(format!("/proc/self/fdinfo/{fd}")) else { return false };
-        let lines = s.lines();
+pub fn check_xdna_fdinfo_support(fd: impl AsFd) -> bool {
+    let fd = fd.as_fd();
+    let raw_fd = fd.as_raw_fd();
+    let Ok(s) = fs::read_to_string(format!("/proc/self/fdinfo/{raw_fd}")) else { return false };
+    let lines = s.lines();
 
-        for l in lines {
-            if l.starts_with("drm-driver") {
-                return true;
-            }
+    for l in lines {
+        if l.starts_with("drm-driver") {
+            return true;
         }
-
-        false
     }
+
+    false
 }

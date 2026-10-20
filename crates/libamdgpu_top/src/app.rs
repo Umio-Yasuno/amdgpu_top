@@ -2,6 +2,7 @@ use crate::{AppDeviceInfo, DevicePath, drmVersion, load_libamdgpu_top_keep_activ
 use crate::AMDGPU::{DeviceHandle, GPU_INFO, GpuMetrics, MetricsInfo, RasBlock, RasErrorCount};
 use stat::{FdInfoStat, GpuActivity, Sensors, PcieBw, PerfCounter, ProcInfo};
 use xdna::{amdxdna_drm_get_resource_info, XdnaFdInfoStat};
+use std::cell::OnceCell;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::os::fd::AsRawFd;
@@ -157,19 +158,25 @@ impl AppAmdgpuTop {
         };
         let xdna_fdinfo = XdnaFdInfoStat::default();
 
+        let xdna_device_file = OnceCell::new();
         let xdna_device_path = if device_info.has_npu {
-            xdna::find_xdna_device().and_then(|v| if v.check_xdna_fdinfo_support() {
-                Some(v)
-            } else {
-                None
+            xdna::find_xdna_device().and_then(|xd| {
+                let f = xdna_device_file.get_or_init(|| {
+                    std::fs::OpenOptions::new().read(true).write(true).open(&xd.accel).unwrap()
+                });
+
+                if xdna::check_xdna_fdinfo_support(f) {
+                    Some(xd)
+                } else {
+                    None
+                }
             })
         } else {
             None
         };
         let xdna_fw_version = xdna_device_path.as_ref().and_then(|d| d.get_xdna_fw_version().ok());
-        let xdna_resouce_info = xdna_device_path.as_ref().and_then(|d| {
-            let fd = d.get_fd().as_raw_fd();
-            xdna::get_xdna_resource_info(fd).ok()
+        let xdna_resouce_info = xdna_device_file.get().as_ref().and_then(|fd| {
+            xdna::get_xdna_resource_info(fd.as_raw_fd()).ok()
         });
 
         let arc_proc_index = device_path.arc_proc_index.clone();

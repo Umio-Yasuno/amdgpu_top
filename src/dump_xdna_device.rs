@@ -17,8 +17,7 @@ pub fn dump_xdna_device(title: &str) {
         println!("FW Version: {fw_ver}");
     }
 
-    // for fdinfo test
-    let fd = xdna_device.get_fd().as_raw_fd();
+    let f = std::fs::OpenOptions::new().read(true).write(true).open(&xdna_device.accel).unwrap();
     let mut xdna_proc_index = xdna_device.arc_proc_index.lock().unwrap();
 
     stat::update_index_by_all_proc(
@@ -32,9 +31,11 @@ pub fn dump_xdna_device(title: &str) {
 
     println!("{:#?}", xdna_fdinfo.proc_usage);
 
-    if !xdna_device.check_xdna_fdinfo_support() {
+    if xdna::check_xdna_fdinfo_support(&f) {
         println!("This amdxdna driver version does not support DRM client usage stats.");
     }
+
+    let fd = f.as_raw_fd();
 
     println!("{:#?}", xdna::get_xdna_clock_metadata(fd));
     println!("{:#?}", xdna::get_xdna_hardware_version(fd));
