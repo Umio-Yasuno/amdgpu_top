@@ -28,9 +28,9 @@ impl std::ops::Add for XdnaFdInfoUsage {
 }
 
 #[test]
-fn test_xdna_fdinfo_parse() {
+fn test_legacy_xdna_fdinfo_parse() {
     let mut usage = XdnaFdInfoUsage::default();
-    let s = std::fs::read_to_string("src/xdna/fdinfo_sample.txt").unwrap();
+    let s = std::fs::read_to_string("src/xdna/legacy_fdinfo_sample.txt").unwrap();
 
     let lines = s.lines().skip_while(|l| !l.starts_with("drm-client-id"));
 
@@ -52,6 +52,36 @@ fn test_xdna_fdinfo_parse() {
         shared_memory: 4096,
         active_memory: 0,
         npu: 76360,
+    };
+
+    assert!(usage == RESULT);
+}
+
+#[test]
+fn test_xdna_fdinfo_parse() {
+    let mut usage = XdnaFdInfoUsage::default();
+    let s = std::fs::read_to_string("src/xdna/fdinfo_sample.txt").unwrap();
+
+    let lines = s.lines().skip_while(|l| !l.starts_with("drm-client-id"));
+
+    for l in lines {
+        let Some(s) = l.get(0..13) else { continue };
+
+        match s {
+            "drm-total-mem" => usage.total_memory_usage_parse(l),
+            "drm-shared-me" => usage.shared_memory_usage_parse(l),
+            "drm-active-me" => usage.active_memory_usage_parse(l),
+            "drm-engine-np" => usage.legacy_engine_usage_parse(l),
+            "drm-engine-am" => usage.engine_usage_parse(l),
+            _ => {},
+        }
+    }
+
+    const RESULT: XdnaFdInfoUsage = XdnaFdInfoUsage {
+        total_memory: 67632,
+        shared_memory: 0,
+        active_memory: 0,
+        npu: 14003870,
     };
 
     assert!(usage == RESULT);
