@@ -2,6 +2,7 @@ use std::time::Duration;
 use crate::stat;
 
 // ref: https://github.com/amd/xdna-driver
+// ref: https://www.kernel.org/doc/html/latest/accel/amdxdna/amdnpu.html#amdxdna-drm-client-usage-stats-implementation
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, PartialOrd)]
 pub struct XdnaFdInfoUsage {
@@ -40,7 +41,8 @@ fn test_xdna_fdinfo_parse() {
             "drm-total-mem" => usage.total_memory_usage_parse(l),
             "drm-shared-me" => usage.shared_memory_usage_parse(l),
             "drm-active-me" => usage.active_memory_usage_parse(l),
-            "drm-engine-np" => usage.engine_usage_parse(l),
+            "drm-engine-np" => usage.legacy_engine_usage_parse(l),
+            "drm-engine-am" => usage.engine_usage_parse(l),
             _ => {},
         }
     }
@@ -92,8 +94,19 @@ impl XdnaFdInfoUsage {
         }
     }
 
+    pub fn legacy_engine_usage_parse(&mut self, s: &str) {
+        const LEGACY_ENGINE_USAGE_PREFIX_LEN: usize = "drm-engine-npu-amdxdna:\t".len();
+        const NS: usize = " ns".len();
+
+        let ends = s.len() - NS;
+        let Some(ns) = s.get(LEGACY_ENGINE_USAGE_PREFIX_LEN..ends)
+            .and_then(|s| s.parse::<i64>().ok()) else { return };
+
+        self.npu += ns;
+    }
+
     pub fn engine_usage_parse(&mut self, s: &str) {
-        const ENGINE_USAGE_PREFIX_LEN: usize = "drm-engine-npu-amdxdna:\t".len();
+        const ENGINE_USAGE_PREFIX_LEN: usize = "drm-engine-amdxdna_accel_driver:\t".len();
         const NS: usize = " ns".len();
 
         let ends = s.len() - NS;

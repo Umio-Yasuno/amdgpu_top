@@ -68,7 +68,8 @@ impl XdnaFdInfoStat {
                     "drm-total-mem" => stat.total_memory_usage_parse(l),
                     "drm-shared-me" => stat.shared_memory_usage_parse(l),
                     "drm-active-me" => stat.active_memory_usage_parse(l),
-                    "drm-engine-np" => stat.engine_usage_parse(l),
+                    "drm-engine-np" => stat.legacy_engine_usage_parse(l),
+                    "drm-engine-am" => stat.engine_usage_parse(l),
                     _ => {},
                 }
             }
