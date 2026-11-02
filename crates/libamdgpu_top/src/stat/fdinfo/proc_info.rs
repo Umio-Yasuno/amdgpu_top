@@ -21,19 +21,22 @@ fn get_fds<T: AsRef<Path>>(fd_dir_path: &mut PathBuf, device_path: &[T]) -> (Vec
         let Ok(dir_entry) = dir_entry else { continue };
         let fd = dir_entry.file_name();
         let link = {
-            fd_dir_path.push(fd.clone());
-            let Ok(link) = fs::read_link(&fd_dir_path) else { continue };
+            fd_dir_path.push(&fd);
+            let Ok(link) = fs::read_link(&fd_dir_path) else {
+                fd_dir_path.pop();
+                continue
+            };
             fd_dir_path.pop();
             link
         };
 
         // e.g. "/dev/dri/renderD128" or "/dev/dri/card0"
-        if device_path.iter().any(|path| link.starts_with(path)) {
+        if device_path.iter().any(|path| link == path.as_ref()){
             let Some(fd) = fd.to_str().and_then(|s| s.parse::<i32>().ok()) else { continue };
             fds.push(fd);
         }
 
-        if link.starts_with("/dev/kfd") {
+        if !is_kfd_proc && &link == "/dev/kfd" {
             is_kfd_proc = true;
         }
     }
@@ -46,23 +49,31 @@ pub fn get_process_list() -> Vec<i32> {
 
     let Ok(proc_dir) = fs::read_dir("/proc") else { return Vec::new() };
     let mut proc_list: Vec<i32> = Vec::with_capacity(128);
+    let mut buf_cmdline_path = PathBuf::with_capacity(32);
 
-    fn filter_proc(dir_entry: fs::DirEntry) -> Option<i32> {
+    fn filter_proc(dir_entry: fs::DirEntry, buf_cmdline_path: &mut PathBuf) -> Option<i32> {
         let mut buf_cmdline = [0u8; 16];
+        let pid = dir_entry.file_name().to_str()?.parse::<i32>().ok()?;
+        if pid == 1 { return None } // init process, systemd
 
         if !dir_entry.metadata().ok()?.is_dir() {
             return None;
         }
 
-        let pid = dir_entry.file_name().to_str()?.parse::<i32>().ok()?;
-
-        if pid == 1 { return None } // init process, systemd
-
         // filter systemd processes from fdinfo target
         // gnome-shell share the AMDGPU driver context with systemd processes
         {
-            let mut f = fs::File::open(format!("/proc/{pid}/cmdline")).ok()?;
+            buf_cmdline_path.push(pid.to_string());
+            buf_cmdline_path.push("cmdline");
+            let Ok(mut f) = fs::File::open(&buf_cmdline_path) else {
+                buf_cmdline_path.pop(); // pid
+                buf_cmdline_path.pop(); // "cmdline"
+
+                return None;
+            };
             let _ = f.read_exact(&mut buf_cmdline);
+            buf_cmdline_path.pop(); // pid
+            buf_cmdline_path.pop(); // "cmdline"
 
             if SYSTEMD_CMDLINE.iter().any(|path| buf_cmdline.starts_with(path)) {
                 return None;
@@ -72,9 +83,11 @@ pub fn get_process_list() -> Vec<i32> {
         Some(pid)
     }
 
+    buf_cmdline_path.push("/proc");
+
     for dir_entry in proc_dir {
         let Ok(dir_entry) = dir_entry else { continue };
-        if let Some(pid) = filter_proc(dir_entry) {
+        if let Some(pid) = filter_proc(dir_entry, &mut buf_cmdline_path) {
             proc_list.push(pid);
         }
     }
@@ -100,11 +113,13 @@ pub fn update_index_by_all_proc<T: AsRef<Path>>(
 
         buf_path.push("/proc");
         buf_path.push(pid.to_string());
+        buf_path.push("fd/");
 
-        let (fds, is_kfd_proc) = get_fds(&mut buf_path.join("fd/"), device_path);
+        let (fds, is_kfd_proc) = get_fds(&mut buf_path, device_path);
 
-        if fds.is_empty() { continue }
+        if fds.is_empty() && !is_kfd_proc { continue }
 
+        buf_path.pop(); // "fd/"
         buf_path.push("comm");
 
         // Maximum 16 characters
@@ -158,7 +173,7 @@ pub fn spawn_update_index_thread(
 
             let lock = device_path.arc_proc_index.lock();
             if let Ok(mut index) = lock {
-                index.clone_from(&buf_index);
+                std::mem::swap(&mut *index, &mut buf_index);
             }
         }
 
