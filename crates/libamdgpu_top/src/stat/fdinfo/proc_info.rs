@@ -1,5 +1,6 @@
 use std::io::Read;
 use std::fs;
+use std::sync::Arc;
 use std::time::Duration;
 use std::path::{Path, PathBuf};
 use crate::DevicePath;
@@ -7,7 +8,7 @@ use crate::DevicePath;
 #[derive(Debug, Default, Clone)]
 pub struct ProcInfo {
     pub pid: i32,
-    pub name: String,
+    pub name: Arc<String>,
     pub fds: Vec<i32>,
     pub is_kfd_proc: bool,
 }
@@ -127,7 +128,7 @@ pub fn update_index_by_all_proc<T: AsRef<Path>>(
         let Ok(mut f) = fs::File::open(&buf_path) else { continue };
         if f.read_to_string(&mut buf_name).is_err() { continue }
         buf_name.pop(); // trim '\n'
-        let name = buf_name.clone();
+        let name = Arc::new(buf_name.clone());
 
         vec_info.push(ProcInfo { pid, name, fds, is_kfd_proc });
     }

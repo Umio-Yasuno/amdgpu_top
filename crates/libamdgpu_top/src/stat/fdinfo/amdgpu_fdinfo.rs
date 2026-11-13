@@ -2,6 +2,7 @@ use std::fs;
 use std::io::Read;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Duration;
 use super::ProcInfo;
 use crate::stat;
@@ -353,7 +354,7 @@ impl FdInfoUsage {
 #[derive(Clone, Debug, Default, Eq, PartialEq, PartialOrd)]
 pub struct ProcUsage {
     pub pid: i32,
-    pub name: String,
+    pub name: Arc<String>,
     pub ids_count: usize,
     pub usage: FdInfoUsage,
     pub is_kfd_process: bool,
