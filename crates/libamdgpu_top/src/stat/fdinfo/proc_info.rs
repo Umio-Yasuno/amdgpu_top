@@ -13,8 +13,7 @@ pub struct ProcInfo {
     pub is_kfd_proc: bool,
 }
 
-fn get_fds<T: AsRef<Path>>(fd_dir_path: &mut PathBuf, device_path: &[T]) -> (Vec<i32>, bool) {
-    let Ok(fd_list) = fs::read_dir(&fd_dir_path) else { return (Vec::new(), false) };
+fn get_fds<T: AsRef<Path>>(fd_list: fs::ReadDir, fd_dir_path: &mut PathBuf, device_path: &[T]) -> (Vec<i32>, bool) {
     let mut fds: Vec<i32> = Vec::with_capacity(16);
     let mut is_kfd_proc = false;
 
@@ -116,7 +115,8 @@ pub fn update_index_by_all_proc<T: AsRef<Path>>(
         buf_path.push(pid.to_string());
         buf_path.push("fd/");
 
-        let (fds, is_kfd_proc) = get_fds(&mut buf_path, device_path);
+        let Ok(fd_list) = fs::read_dir(&buf_path) else { continue };
+        let (fds, is_kfd_proc) = get_fds(fd_list, &mut buf_path, device_path);
 
         if fds.is_empty() && !is_kfd_proc { continue }
 
