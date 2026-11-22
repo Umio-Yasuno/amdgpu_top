@@ -103,7 +103,7 @@ pub fn update_index_by_all_proc<T: AsRef<Path>>(
     vec_info.clear();
 
     let mut buf_path = PathBuf::with_capacity(32);
-    let mut buf_name = String::with_capacity(16);
+    let mut buf_name = Vec::with_capacity(16);
 
     for p in all_proc {
         buf_path.clear();
@@ -126,9 +126,10 @@ pub fn update_index_by_all_proc<T: AsRef<Path>>(
         // Maximum 16 characters
         // https://www.kernel.org/doc/html/latest/filesystems/proc.html#proc-pid-comm-proc-pid-task-tid-comm
         let Ok(mut f) = fs::File::open(&buf_path) else { continue };
-        if f.read_to_string(&mut buf_name).is_err() { continue }
-        buf_name.pop(); // trim '\n'
-        let name = Arc::new(buf_name.clone());
+        if f.read_to_end(&mut buf_name).is_err() { continue };
+        let mut name = String::from_utf8_lossy_owned(buf_name.clone());
+        name.pop(); // trim '\n'
+        let name = Arc::new(name);
 
         vec_info.push(ProcInfo { pid, name, fds, is_kfd_proc });
     }
