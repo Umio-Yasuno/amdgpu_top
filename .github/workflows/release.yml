@@ -109,8 +109,6 @@ jobs:
         run: mold -run cargo install cargo-deb
       - name: Install cargo-generate-rpm
         run: mold -run cargo install cargo-generate-rpm
-      - name: Install xbuild
-        run: mold -run cargo install xbuild
       - name: Build binary
         run: mold -run cargo build --release --no-default-features --features="package"
       - name: Upload binary
@@ -151,20 +149,6 @@ jobs:
             gh release upload --clobber "$VERSION" ./target/generate-rpm/amdgpu_top-${{ env.PKG_VER }}-1.x86_64.rpm
           else
             gh release upload --clobber "$VERSION" ./target/generate-rpm/amdgpu_top-${{ env.PKG_VER }}-1.aarch64.rpm
-          fi
-      - name: Build AppImage
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ "${RUSTC_HOST_ARCH}" == "x86_64-unknown-linux-gnu" ]; then
-            mold -run x build --platform linux --format appimage --release --arch x64
-            cp ./target/x/release/linux/x64/amdgpu_top.AppImage amdgpu_top-x86_64.AppImage
-            gh release upload --clobber "$VERSION" amdgpu_top-x86_64.AppImage
-          else
-            mold -run x build --platform linux --format appimage --release --arch arm64
-            cp ./target/x/release/linux/arm64/amdgpu_top.AppImage amdgpu_top-aarch64.AppImage
-            gh release upload --clobber "$VERSION" amdgpu_top-aarch64.AppImage
           fi
       - name: Build Deb Package without GUI
         shell: bash
