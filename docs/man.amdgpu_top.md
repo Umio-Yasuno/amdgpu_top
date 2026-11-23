@@ -1,8 +1,8 @@
 ---
 title: AMDGPU_TOP(1)
 author: Umio Yasuno <coelacanth_dream@protonmail.com>
-date: 2026-02-04
-footer: v0.11.0
+date: 2026-11-24
+footer: v0.11.5
 ---
 
 <!-- $ pandoc docs/man.amdgpu_top.md -s -t man -o docs/amdgpu_top.1 -->
@@ -54,7 +54,7 @@ The tool displays information gathered from performance counters (GRBM, GRBM2), 
 :   Update interval in seconds of the process index for fdinfo. (default: 5s)
 
 **\-\-json_fifo** *`<String>`*, **\-\-json-fifo** *`<String>`*
-:   Output JSON formatted data to FIFO (named pipe) for other application and scripts.
+:   Output JSON formatted data to FIFO (named pipe) for other application and scripts. (deprecated)
 
 **--decode-gm** *`<Path>`*, **--decode-gpu-metrics** *`<Path>`*
 :   Decode the specified gpu_metrics file.

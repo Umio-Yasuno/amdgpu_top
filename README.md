@@ -127,7 +127,7 @@ OPTIONS:
    -u <u64>, --update-process-index <u64>
        Update interval in seconds of the process index for fdinfo. (default: 5s)
    --json_fifo, --json-fifo <String>
-       Output JSON formatted data to FIFO (named pipe) for other application and scripts.
+       Output JSON formatted data to FIFO (named pipe) for other application and scripts. (deprecated)
    --decode-gm <Path>, --decode-gpu-metrics <Path>
        Decode the specified gpu_metrics file.
 ```

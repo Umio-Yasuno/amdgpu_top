@@ -149,7 +149,7 @@ const HELP_MSG: &str = concat!(
     "   -u <u64>, --update-process-index <u64>\n",
     "       Update interval in seconds of the process index for fdinfo. (default: 5s)\n",
     "   --json_fifo, --json-fifo <String>\n",
-    "       Output JSON formatted data to FIFO (named pipe) for other application and scripts.\n",
+    "       Output JSON formatted data to FIFO (named pipe) for other application and scripts. (deprecated)\n",
     "   --decode-gm <Path>, --decode-gpu-metrics <Path>\n",
     "       Decode the specified gpu_metrics file.\n",
 );
@@ -200,6 +200,7 @@ impl MainOpt {
                 "--json-fifo" | "--json_fifo" => {
                     #[cfg(feature = "json")]
                     {
+                        eprintln!("JSON FIFO mode is deprecated.");
                         let s = if let Some(val_str) = args.get(idx+1) {
                             if val_str.starts_with('-') {
                                 eprintln!("missing argument: \"--json-fifo <String/Path>\"");
